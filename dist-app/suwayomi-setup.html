@@ -3,100 +3,400 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#141414" />
+  <meta name="theme-color" content="#0b0d12" />
   <title>Yomu · Mihon Bridge</title>
   <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
   <style>
-    body{background:#111;color:#f6f3ee;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .bridge{max-width:1040px;margin:0 auto;padding:32px 20px 80px}.bridge-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.bridge a{color:inherit}.bridge h1{font-size:36px;line-height:1.05;margin:6px 0}.muted{color:#a9a39b;line-height:1.55}.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:18px;backdrop-filter:blur(18px);margin-bottom:18px}.status{display:flex;align-items:center;gap:10px}.dot{width:10px;height:10px;border-radius:999px;background:#777}.dot.ok{background:#77d487}.dot.bad{background:#ff7b70}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.actions button,.back{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:10px 14px;font:inherit;cursor:pointer}.actions button.primary{background:#e8a23a;color:#17120b;border-color:#e8a23a;font-weight:800}.actions button:disabled{opacity:.45;cursor:default}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:16px}.src{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.035);cursor:pointer}.src input{margin-top:4px;accent-color:#e8a23a}.src strong{display:block}.src small{display:block;color:#9e9890;margin-top:3px}.count{font-variant-numeric:tabular-nums}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0c0c0c;border-radius:12px;padding:12px;overflow:auto;color:#d7d2ca}.hidden{display:none!important}@media(max-width:600px){.bridge h1{font-size:30px}.bridge-head{align-items:flex-start;flex-direction:column}}
+    /* Theme tokens come from the app stylesheet above, so this page follows
+       light/dark with the rest of Yomu instead of hardcoding a dark palette. */
+    body{margin:0;background:var(--bg);color:var(--text);
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+    .wrap{max-width:760px;margin:0 auto;padding:24px 18px 96px}
+    a{color:inherit}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--dim)}
+    h1{font-size:26px;line-height:1.15;margin:4px 0 0}
+    .sub{color:var(--muted);line-height:1.5;margin:8px 0 0;font-size:14px}
+    .chip{border:1px solid var(--line);background:var(--surface);color:var(--text);
+          border-radius:999px;padding:7px 12px;font-size:13px;text-decoration:none;white-space:nowrap}
+
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+    .status{display:flex;align-items:center;gap:10px;font-weight:650}
+    .dot{width:9px;height:9px;border-radius:999px;background:var(--faint);flex:none}
+    .dot.ok{background:#77d487}.dot.bad{background:var(--bad)}
+    .note{color:var(--muted);font-size:13.5px;line-height:1.55;margin:8px 0 0}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+          background:var(--bg);border:1px solid var(--hairline);border-radius:10px;
+          padding:10px 12px;margin-top:10px;overflow-x:auto;white-space:pre;color:var(--muted)}
+
+    /* One row per source family. The bridge reports every language as its own
+       source (92 of them, 40 being NamiComi), which is what made this screen
+       unusable; rows collapse the family and the language becomes a select. */
+    .rows{margin-top:6px}
+    .row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--hairline)}
+    .row:first-child{border-top:0}
+    .row input[type=checkbox]{width:19px;height:19px;accent-color:var(--accent);flex:none;margin:0}
+    .row .name{flex:1;min-width:0}
+    .row .name b{font-weight:600;font-size:14.5px;display:block;
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row .name span{display:block;color:var(--dim);font-size:12px;margin-top:2px}
+    .row select{background:var(--raised);color:var(--text);border:1px solid var(--line);
+                border-radius:8px;padding:5px 7px;font-size:12.5px;max-width:118px}
+    .tag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:5px;
+         padding:2px 6px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+    .tag.have{color:var(--accent);border-color:var(--accentLine)}
+    .tag.adult{color:var(--warn);border-color:var(--warnLine)}
+
+    .bar{position:sticky;bottom:0;margin-top:16px;padding:12px 0 max(12px,env(safe-area-inset-bottom));
+         background:linear-gradient(to top,var(--bg) 72%,transparent);
+         display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .bar .count{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+    button.go{background:var(--accent);color:var(--accentText);border:0;border-radius:999px;
+              padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}
+    button.go:disabled{opacity:.45;cursor:default}
+    button.link{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;
+                cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+
+    .adultbar{display:flex;align-items:center;gap:10px;margin-top:12px;
+              color:var(--muted);font-size:13px;cursor:pointer}
+    .adultbar input{width:18px;height:18px;accent-color:var(--accent);margin:0;flex:none}
+    .hidden{display:none!important}
+    @media(max-width:520px){
+      .row select{max-width:92px}
+      h1{font-size:22px}
+    }
   </style>
 </head>
 <body>
-  <main class="bridge">
-    <div class="bridge-head">
-      <div><div class="muted" style="text-transform:uppercase;letter-spacing:.16em;font-size:12px">Yomu Sources</div><h1>Mihon / Suwayomi bridge</h1><div class="muted">Use Keiyoushi/Mihon sources in Yomu through Suwayomi. Pick 6–20 without changing the reader UI.</div></div>
-      <a class="back" href="/sources">← Sources</a>
+<main class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Yomu sources</div>
+      <h1>Mihon bridge</h1>
     </div>
+    <a class="chip" href="/sources">Done</a>
+  </div>
 
-    <section class="panel">
-      <strong>Keiyoushi ready</strong>
-      <p class="muted">This Yomu build includes a Suwayomi Docker stack with the Keiyoushi extension store already registered. Start <code>suwayomi/docker-compose.yml</code>, install the extensions you want in Suwayomi, then connect the Worker below.</p>
-    </section>
+  <section class="card">
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText">Checking…</span></div>
+    <p id="statusNote" class="note"></p>
+    <div id="setup" class="hidden">
+      <div class="code">npx wrangler secret put SUWAYOMI_URL
+npx wrangler secret put SUWAYOMI_AUTH_HEADER
+npx wrangler deploy</div>
+      <p class="note">Suwayomi has to be reachable from Cloudflare over HTTPS. The bundled
+        Docker stack already registers the Keiyoushi store; generate the auth header with
+        <code>./scripts/make-suwayomi-auth.sh yomu YOUR_PASSWORD</code>.</p>
+    </div>
+  </section>
 
-    <section class="panel">
-      <div id="status" class="status"><span id="dot" class="dot"></span><strong id="statusText">Checking bridge…</strong></div>
-      <p id="statusNote" class="muted">Yomu is checking whether this Worker can reach your Suwayomi server.</p>
-      <div id="configure" class="hidden">
-        <div class="code"># Keiyoushi is already configured in suwayomi/docker-compose.yml<br>npx wrangler secret put SUWAYOMI_URL<br>npx wrangler secret put SUWAYOMI_AUTH_HEADER</div>
-        <p class="muted">SUWAYOMI_URL must be reachable from Cloudflare over the internet. The included Docker stack uses Basic auth. Generate the exact header with <code>./scripts/make-suwayomi-auth.sh yomu YOUR_PASSWORD</code>.</p>
-      </div>
-    </section>
+  <section id="picker" class="card hidden">
+    <div id="pickerHead"></div>
+    <div id="rows" class="rows"></div>
+    <label class="adultbar" id="adultWrap">
+      <input type="checkbox" id="adult" />
+      <span id="adultLabel">Show 18+ sources</span>
+    </label>
+  </section>
 
-    <section id="picker" class="panel hidden">
-      <div style="display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap">
-        <div><strong>Installed Suwayomi sources</strong><div class="muted">These are the extensions/sources you installed from Keiyoushi in Suwayomi. Pick at least 6; Yomu keeps each one as an independent fallback source.</div></div>
-        <div class="count"><span id="selectedCount">0</span> selected</div>
-      </div>
-      <div class="actions">
-        <button id="six">Select recommended 6</button>
-        <button id="twenty">Select first 20</button>
-        <button id="clear">Clear</button>
-        <button id="install" class="primary" disabled>Install into Yomu</button>
-      </div>
-      <div id="grid" class="grid"></div>
-    </section>
+  <div id="bar" class="bar hidden">
+    <button id="save" class="go">Add sources</button>
+    <span class="count" id="count"></span>
+    <button id="reset" class="link">Reset to suggested</button>
+  </div>
 
-    <section id="done" class="panel hidden">
-      <strong>Sources installed.</strong>
-      <p id="doneText" class="muted"></p>
-      <div class="actions"><a class="back" href="/sources">Open Yomu Sources</a><a class="back" href="/discover">Discover titles</a></div>
-    </section>
-  </main>
+  <p id="saved" class="note hidden" style="margin-top:14px"></p>
+</main>
+
 <script>
 (() => {
-  const KEY='yomu.v1.collection';
-  const el=id=>document.getElementById(id);
-  const state={sources:[],selected:new Set()};
-  const safe=()=>state.sources.filter(s=>!String(s.contentWarning||'').match(/adult|explicit|mature|mixed|nsfw/i));
-  function currentCollection(){
-    try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v&&typeof v==='object')return {revision:Number.isInteger(v.revision)?v.revision:0,sources:Array.isArray(v.sources)?v.sources:[],library:Array.isArray(v.library)?v.library:[],progress:v.progress&&typeof v.progress==='object'?v.progress:{}}}catch{}
-    return {revision:0,sources:[],library:[],progress:{}};
+  'use strict';
+  const COLLECTION_KEY = 'yomu.v1.collection';
+  const ADULT_KEY      = 'yomu.v1.adult';
+  const PREFIX         = 'mihon-';
+
+  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'dark'; } catch {}
+
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- storage ---------------------------------------------------- */
+
+  function readCollection() {
+    try {
+      const v = JSON.parse(localStorage.getItem(COLLECTION_KEY) || 'null');
+      if (v && typeof v === 'object') {
+        return {
+          revision: Number.isInteger(v.revision) ? v.revision : 0,
+          sources:  Array.isArray(v.sources)  ? v.sources  : [],
+          library:  Array.isArray(v.library)  ? v.library  : [],
+          progress: v.progress && typeof v.progress === 'object' ? v.progress : {},
+        };
+      }
+    } catch {}
+    return { revision: 0, sources: [], library: [], progress: {} };
   }
-  function setStatus(kind,title,note){el('dot').className='dot '+kind;el('statusText').textContent=title;el('statusNote').textContent=note||''}
-  function updateCount(){el('selectedCount').textContent=state.selected.size;el('install').disabled=state.selected.size<6||state.selected.size>20;document.querySelectorAll('[data-id]').forEach(row=>{row.querySelector('input').checked=state.selected.has(row.dataset.id)})}
-  function render(){
-    const list=safe().sort((a,b)=>String(a.displayName||a.name).localeCompare(String(b.displayName||b.name)));
-    el('grid').innerHTML='';
-    for(const s of list){
-      const label=document.createElement('label');label.className='src';label.dataset.id=String(s.id);
-      const input=document.createElement('input');input.type='checkbox';input.addEventListener('change',()=>{input.checked?state.selected.add(String(s.id)):state.selected.delete(String(s.id));if(state.selected.size>20){state.selected.delete(String(s.id));input.checked=false}updateCount()});
-      const copy=document.createElement('div');const strong=document.createElement('strong');strong.textContent=s.displayName||s.name||('Source '+s.id);const small=document.createElement('small');small.textContent=[s.lang||'unknown language',s.supportsLatest?'latest feed':'popular/search'].join(' · ');copy.append(strong,small);label.append(input,copy);el('grid').append(label);
+
+  const adultAllowed = () => { try { return localStorage.getItem(ADULT_KEY) === 'on'; } catch { return false; } };
+
+  /* ---------- shaping the bridge's source list --------------------------- */
+
+  // Suwayomi lists one source per (extension x language): 92 rows, 40 of them
+  // NamiComi. Collapse to the family and keep the languages as options.
+  const familyOf = (s) => String(s.displayName || s.name || `Source ${s.id}`).replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const normalise = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // NSFW is gated behind the toggle. MIXED only means the source carries a mix
+  // of ratings -- the old page treated it as adult and so silently dropped Weeb
+  // Central, Comick and MangaFire, which are the reason to run a bridge at all.
+  const isAdult = (s) => /nsfw|adult|explicit|porn/i.test(String(s.contentWarning || ''));
+  const isMixed = (s) => /mixed/i.test(String(s.contentWarning || ''));
+
+  function toFamilies(sources, installedExtensionNames) {
+    const byFamily = new Map();
+    for (const s of sources) {
+      if (String(s.id) === '0') continue; // "Local source" reads the server's own disk
+      const family = familyOf(s);
+      let f = byFamily.get(family);
+      if (!f) {
+        f = { family, variants: [], adult: false, mixed: false, alreadyInYomu: false };
+        byFamily.set(family, f);
+      }
+      f.variants.push({ id: String(s.id), lang: String(s.lang || '??') });
+      f.adult = f.adult || isAdult(s);
+      f.mixed = f.mixed || isMixed(s);
     }
-    updateCount();
+
+    const have = installedExtensionNames.map(normalise);
+    for (const f of byFamily.values()) {
+      const key = normalise(f.family);
+      f.alreadyInYomu = have.some((h) => h && (key.startsWith(h) || h.startsWith(key)));
+      f.variants.sort((a, b) => (a.lang === 'en' ? -1 : b.lang === 'en' ? 1 : a.lang.localeCompare(b.lang)));
+    }
+    return [...byFamily.values()].sort((a, b) => {
+      // What the bridge adds that Yomu does not already have goes first.
+      if (a.alreadyInYomu !== b.alreadyInYomu) return a.alreadyInYomu ? 1 : -1;
+      return a.family.localeCompare(b.family);
+    });
   }
-  function selectN(n){state.selected.clear();for(const s of safe().slice().sort((a,b)=>(a.lang==='en'?0:1)-(b.lang==='en'?0:1)||String(a.displayName||a.name).localeCompare(String(b.displayName||b.name))).slice(0,n))state.selected.add(String(s.id));updateCount()}
-  el('six').onclick=()=>selectN(6);el('twenty').onclick=()=>selectN(20);el('clear').onclick=()=>{state.selected.clear();updateCount()};
-  el('install').onclick=()=>{
-    const col=currentCollection();
-    const selected=state.sources.filter(s=>state.selected.has(String(s.id)));
-    const byId=new Map(col.sources.map(s=>[s.id,s]));
-    for(const s of selected){
-      const id='mihon-'+s.id;
-      byId.set(id,{id,label:s.displayName||s.name||('Mihon '+s.id),category:'Mihon / Suwayomi',kind:'api',url:location.origin+'/api/suwayomi/source/'+encodeURIComponent(s.id)+'/',enabled:true});
+
+  /* ---------- state ------------------------------------------------------ */
+
+  const state = { families: [], chosen: new Map(), installed: new Set() };
+
+  /** Suggested set: English, not already covered by a native Yomu extension. */
+  function suggest() {
+    state.chosen.clear();
+    for (const f of state.families) {
+      if (f.alreadyInYomu) continue;
+      if (f.adult && !adultAllowed()) continue;
+      const en = f.variants.find((v) => v.lang === 'en');
+      if (en) state.chosen.set(f.family, en.id);
     }
-    const builtIns=col.sources.filter(s=>!String(s.id).startsWith('mihon-'));
-    const mihon=[...byId.values()].filter(s=>String(s.id).startsWith('mihon-'));
-    const next={...col,revision:col.revision+1,sources:[...builtIns,...mihon]};
-    localStorage.setItem(KEY,JSON.stringify(next));
-    el('doneText').textContent='Added '+selected.length+' Mihon-compatible sources. MangaDex stays enabled as a separate fallback.';
-    el('done').classList.remove('hidden');el('done').scrollIntoView({behavior:'smooth',block:'center'});
-  };
-  fetch('/api/suwayomi/status').then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
-    if(!j.configured){setStatus('bad','Bridge not configured','Set SUWAYOMI_URL on the Worker, deploy again, then reopen this page.');el('configure').classList.remove('hidden');return}
-    if(!j.reachable){setStatus('bad','Suwayomi is configured but unreachable',j.error||'Check the URL/auth and make sure Cloudflare can reach it.');el('configure').classList.remove('hidden');return}
-    setStatus('ok','Connected to Suwayomi',j.sources+' installed source'+(j.sources===1?'':'s')+' available from '+j.server+'.');
-    return fetch('/api/suwayomi/sources').then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);state.sources=j.sources||[];el('picker').classList.remove('hidden');render();selectN(Math.min(6,safe().length))});
-  }).catch(err=>{setStatus('bad','Bridge check failed',err.message||String(err));el('configure').classList.remove('hidden')});
+  }
+
+  /** Anything already installed stays chosen, so reopening is not destructive. */
+  function adoptInstalled() {
+    for (const f of state.families) {
+      const match = f.variants.find((v) => state.installed.has(PREFIX + v.id));
+      if (match) state.chosen.set(f.family, match.id);
+    }
+  }
+
+  /* ---------- rendering -------------------------------------------------- */
+
+  function visibleFamilies() {
+    return state.families.filter((f) => !f.adult || adultAllowed());
+  }
+
+  function render() {
+    const families = visibleFamilies();
+    const fresh = families.filter((f) => !f.alreadyInYomu).length;
+
+    $('pickerHead').innerHTML =
+      `<p class="note" style="margin:0 0 10px">` +
+      `<b style="color:var(--text)">${fresh} source${fresh === 1 ? '' : 's'} Yomu does not already have.</b> ` +
+      `Suggested ones are ticked. Pick a language per source; each one becomes its own ` +
+      `fallback in Yomu.</p>`;
+
+    const rows = $('rows');
+    rows.textContent = '';
+
+    for (const f of families) {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = state.chosen.has(f.family);
+      box.setAttribute('aria-label', f.family);
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      const b = document.createElement('b');
+      b.textContent = f.family;
+      const span = document.createElement('span');
+      span.textContent = f.variants.length === 1
+        ? f.variants[0].lang
+        : `${f.variants.length} languages`;
+      name.append(b, span);
+
+      // Language picker, only where there is a choice to make.
+      let select = null;
+      if (f.variants.length > 1) {
+        select = document.createElement('select');
+        for (const v of f.variants) {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = v.lang;
+          select.append(opt);
+        }
+        select.value = state.chosen.get(f.family) ?? f.variants[0].id;
+        select.addEventListener('change', () => {
+          if (state.chosen.has(f.family)) state.chosen.set(f.family, select.value);
+          updateBar();
+        });
+      }
+
+      box.addEventListener('change', () => {
+        if (box.checked) state.chosen.set(f.family, select ? select.value : f.variants[0].id);
+        else state.chosen.delete(f.family);
+        updateBar();
+      });
+
+      row.append(box, name);
+      if (f.adult)         row.append(tag('18+', 'adult'));
+      else if (f.mixed)    row.append(tag('mixed', ''));
+      if (f.alreadyInYomu) row.append(tag('in Yomu', 'have'));
+      if (select)          row.append(select);
+
+      // The whole row is a hit target; the controls handle their own clicks.
+      row.addEventListener('click', (e) => {
+        if (e.target === box || e.target === select) return;
+        box.checked = !box.checked;
+        box.dispatchEvent(new Event('change'));
+      });
+
+      rows.append(row);
+    }
+
+    $('picker').classList.remove('hidden');
+    $('bar').classList.remove('hidden');
+    updateBar();
+  }
+
+  function tag(text, kind) {
+    const el = document.createElement('span');
+    el.className = 'tag' + (kind ? ' ' + kind : '');
+    el.textContent = text;
+    return el;
+  }
+
+  function updateBar() {
+    const n = state.chosen.size;
+    $('save').textContent = n === 0 ? 'Remove all bridge sources' : `Add ${n} source${n === 1 ? '' : 's'}`;
+    $('count').textContent = state.installed.size ? `${state.installed.size} installed now` : '';
+  }
+
+  /* ---------- saving ----------------------------------------------------- */
+
+  $('save').addEventListener('click', () => {
+    const collection = readCollection();
+    const keep = collection.sources.filter((s) => !String(s.id).startsWith(PREFIX));
+
+    const added = [];
+    for (const [family, id] of state.chosen) {
+      const lang = state.families.find((f) => f.family === family)
+        ?.variants.find((v) => v.id === id)?.lang;
+      added.push({
+        id: PREFIX + id,
+        label: lang && lang !== 'en' ? `${family} (${lang})` : family,
+        category: 'Mihon / Suwayomi',
+        kind: 'api',
+        url: `${location.origin}/api/suwayomi/source/${encodeURIComponent(id)}/`,
+        enabled: true,
+      });
+    }
+
+    localStorage.setItem(COLLECTION_KEY, JSON.stringify({
+      ...collection,
+      revision: collection.revision + 1,
+      sources: [...keep, ...added],
+    }));
+
+    state.installed = new Set(added.map((s) => s.id));
+    const saved = $('saved');
+    saved.textContent = added.length
+      ? `Saved. ${added.length} bridge source${added.length === 1 ? '' : 's'} enabled on this device — MangaDex and the Yomu extensions are untouched.`
+      : 'Saved. All bridge sources removed from this device.';
+    saved.classList.remove('hidden');
+    updateBar();
+  });
+
+  $('reset').addEventListener('click', () => { suggest(); render(); });
+
+  $('adult').addEventListener('change', (e) => {
+    try { localStorage.setItem(ADULT_KEY, e.target.checked ? 'on' : 'off'); } catch {}
+    if (!e.target.checked) {
+      for (const f of state.families) if (f.adult) state.chosen.delete(f.family);
+    }
+    render();
+  });
+
+  /* ---------- boot ------------------------------------------------------- */
+
+  function fail(title, note, showSetup) {
+    $('dot').className = 'dot bad';
+    $('statusText').textContent = title;
+    $('statusNote').textContent = note || '';
+    if (showSetup) $('setup').classList.remove('hidden');
+  }
+
+  (async () => {
+    $('adult').checked = adultAllowed();
+
+    let status;
+    try {
+      status = await (await fetch('/api/suwayomi/status')).json();
+    } catch (err) {
+      return fail('Could not reach Yomu', err.message || String(err), false);
+    }
+
+    if (!status.configured) {
+      return fail('Bridge not set up yet',
+        'Point the Worker at your Suwayomi server, deploy, then reopen this page.', true);
+    }
+    if (!status.reachable) {
+      return fail('Suwayomi is set up but not answering',
+        status.error || 'Check the URL and auth, and that Cloudflare can reach it. A trycloudflare tunnel URL changes every restart.', true);
+    }
+
+    $('dot').className = 'dot ok';
+    $('statusText').textContent = 'Connected';
+    $('statusNote').textContent = `${status.sources} sources on ${status.server}.`;
+
+    // Knowing which extensions Yomu already has is what lets this page lead with
+    // what the bridge actually adds. It is not worth failing over.
+    let extensionNames = [];
+    try {
+      const ext = await (await fetch('/api/ext/sources')).json();
+      extensionNames = (ext.extensions || []).map((e) => e.name);
+    } catch {}
+
+    let list;
+    try {
+      list = await (await fetch('/api/suwayomi/sources')).json();
+      if (list.error) throw new Error(list.error);
+    } catch (err) {
+      return fail('Connected, but the source list failed', err.message || String(err), false);
+    }
+
+    state.families  = toFamilies(list.sources || [], extensionNames);
+    state.installed = new Set(readCollection().sources
+      .map((s) => String(s.id)).filter((id) => id.startsWith(PREFIX)));
+
+    if (state.installed.size) adoptInstalled(); else suggest();
+    render();
+  })();
 })();
 </script>
 </body>

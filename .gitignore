@@ -1,5 +1,7 @@
 # Never commit credentials or the source engine's local state.
 suwayomi/.env
+.dev.vars
+.dev.vars.*
 suwayomi/.auth-header-b64
 suwayomi/data/
 suwayomi/*.log
