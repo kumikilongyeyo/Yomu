@@ -29,6 +29,39 @@ export function normalizeBase(input?: string): string | null {
   }
 }
 
+/**
+ * Every Suwayomi server configured, in preference order.
+ *
+ * SUWAYOMI_URL takes a list -- comma, space or newline separated -- so the
+ * bridge can be pointed at more than one machine: a desktop that is usually on
+ * and a laptop that sometimes is, say. They are tried in order and the first
+ * that answers is used, which also means a tunnel URL that has rotated simply
+ * falls through to the next rather than taking the bridge down.
+ *
+ * A single URL is still a list of one, so nothing configured today changes.
+ */
+export function suwayomiBases(env: SuwayomiEnv): string[] {
+  return (env.SUWAYOMI_URL ?? '')
+    .split(/[\s,]+/)
+    .map((part) => normalizeBase(part))
+    .filter((base): base is string => !!base);
+}
+
+/**
+ * The server that answered last, so a dead one is not retried on every call.
+ * Isolate-local and short-lived: Workers run many isolates, and this is a
+ * latency hint rather than state anything depends on.
+ */
+let preferredBase: { url: string; at: number } | null = null;
+const PREFERRED_TTL_MS = 5 * 60 * 1000;
+
+function orderedBases(env: SuwayomiEnv): string[] {
+  const bases = suwayomiBases(env);
+  const preferred = preferredBase && Date.now() - preferredBase.at < PREFERRED_TTL_MS ? preferredBase.url : null;
+  if (!preferred || !bases.includes(preferred)) return bases;
+  return [preferred, ...bases.filter((b) => b !== preferred)];
+}
+
 export function suwayomiHeaders(env: SuwayomiEnv): Record<string, string> {
   const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' };
   if (env.SUWAYOMI_AUTH_HEADER?.trim()) headers.Authorization = env.SUWAYOMI_AUTH_HEADER.trim();
@@ -36,27 +69,49 @@ export function suwayomiHeaders(env: SuwayomiEnv): Record<string, string> {
 }
 
 export async function suwayomiGraphQL<T = AnyObject>(env: SuwayomiEnv, query: string, variables: AnyObject = {}): Promise<T> {
-  const base = normalizeBase(env.SUWAYOMI_URL);
-  if (!base) throw new ExtensionError('Suwayomi is not configured. Set SUWAYOMI_URL on this Worker.', 'suwayomi', 'config');
-
-  let response: Response;
-  try {
-    response = await fetch(`${base}/api/graphql`, {
-      method: 'POST',
-      headers: suwayomiHeaders(env),
-      body: JSON.stringify({ query, variables }),
-      signal: AbortSignal.timeout(20_000),
-    });
-  } catch (error: any) {
-    throw new ExtensionError('Suwayomi is offline.', 'suwayomi', error?.name === 'TimeoutError' ? 'timeout' : 'network');
+  const bases = orderedBases(env);
+  if (!bases.length) {
+    throw new ExtensionError('Suwayomi is not configured. Set SUWAYOMI_URL on this Worker.', 'suwayomi', 'config');
   }
-  if (!response.ok) throw new ExtensionError(`Suwayomi returned HTTP ${response.status}.`, 'suwayomi', 'http');
 
-  const payload = (await response.json()) as AnyObject;
-  if (payload.errors?.length && !payload.data) {
-    throw new ExtensionError(payload.errors[0]?.message || 'Suwayomi rejected the request.', 'suwayomi', 'graphql');
+  let lastError: ExtensionError | null = null;
+  for (const base of bases) {
+    let response: Response;
+    try {
+      response = await fetch(`${base}/api/graphql`, {
+        method: 'POST',
+        headers: suwayomiHeaders(env),
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(20_000),
+      });
+    } catch (error: any) {
+      // Unreachable: a machine that is off, or a tunnel URL that has rotated.
+      // Try the next server rather than reporting the bridge down.
+      lastError = new ExtensionError('Suwayomi is offline.', 'suwayomi', error?.name === 'TimeoutError' ? 'timeout' : 'network');
+      continue;
+    }
+    if (!response.ok) {
+      lastError = new ExtensionError(`Suwayomi returned HTTP ${response.status}.`, 'suwayomi', 'http');
+      continue;
+    }
+
+    const payload = (await response.json()) as AnyObject;
+    if (payload.errors?.length && !payload.data) {
+      // It answered, so the server is up -- a query it rejects is not a reason
+      // to fail over to a different machine.
+      preferredBase = { url: base, at: Date.now() };
+      throw new ExtensionError(payload.errors[0]?.message || 'Suwayomi rejected the request.', 'suwayomi', 'graphql');
+    }
+    preferredBase = { url: base, at: Date.now() };
+    return payload.data as T;
   }
-  return payload.data as T;
+
+  throw lastError ?? new ExtensionError('Suwayomi is offline.', 'suwayomi', 'network');
+}
+
+/** The server currently answering, for status and for the image proxy. */
+export function activeSuwayomiBase(env: SuwayomiEnv): string | null {
+  return orderedBases(env)[0] ?? null;
 }
 
 export const SOURCE_FIELDS = `

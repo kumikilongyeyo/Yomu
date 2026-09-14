@@ -14,7 +14,8 @@ import {
   fetchMangaAndChapters,
   fetchSourceManga,
   getSuwayomiSources,
-  normalizeBase,
+  activeSuwayomiBase,
+  suwayomiBases,
 } from './providers/suwayomi';
 import { handleCatalog, handleExtensions } from './routes-extensions';
 
@@ -128,16 +129,22 @@ function toChapter(ch: AnyObject) {
 }
 
 async function proxySuwayomiImage(request: Request, env: Env, url: URL): Promise<Response> {
-  const base = normalizeBase(env.SUWAYOMI_URL);
-  if (!base) return json({ error: 'Suwayomi is not configured.' }, 503);
+  const bases = suwayomiBases(env);
+  if (!bases.length) return json({ error: 'Suwayomi is not configured.' }, 503);
   const raw = url.searchParams.get('path');
   if (!raw) return json({ error: 'Missing Suwayomi image path.' }, 400);
 
+  // Resolved against whichever server is answering, but accepted only if it
+  // lands on one of the configured origins -- several servers may be set, and
+  // none of them makes this an open proxy.
+  const base = activeSuwayomiBase(env) ?? bases[0];
   let target: URL;
   try {
-    const baseUrl = new URL(base);
+    const allowed = new Set(bases.map((b) => new URL(b).origin));
     target = new URL(raw, `${base}/`);
-    if (target.origin !== baseUrl.origin) return json({ error: 'Refusing an image outside the configured Suwayomi server.' }, 403);
+    if (!allowed.has(target.origin)) {
+      return json({ error: 'Refusing an image outside the configured Suwayomi servers.' }, 403);
+    }
   } catch {
     return json({ error: 'Invalid Suwayomi image URL.' }, 400);
   }
@@ -166,13 +173,29 @@ async function handleSuwayomi(request: Request, env: Env, url: URL): Promise<Res
   if (request.method !== 'GET') return json({ error: 'Only GET is supported on the Yomu source bridge.' }, 405);
 
   if (url.pathname === '/api/suwayomi/status') {
-    const base = normalizeBase(env.SUWAYOMI_URL);
-    if (!base) return json({ configured: false, sources: 0 });
+    const bases = suwayomiBases(env);
+    if (!bases.length) return json({ configured: false, sources: 0 });
     try {
+      // Ask first: whichever server answers becomes the active one, so the
+      // host reported below is the one actually serving, not just the first
+      // configured.
       const sources = await getSuwayomiSources(env);
-      return json({ configured: true, reachable: true, sources: sources.length, server: new URL(base).host }, 200, 'no-store');
+      const base = activeSuwayomiBase(env) ?? bases[0];
+      return json({
+        configured: true,
+        reachable: true,
+        sources: sources.length,
+        server: new URL(base).host,
+        ...(bases.length > 1 ? { servers: bases.map((b) => new URL(b).host) } : {}),
+      }, 200, 'no-store');
     } catch (error: any) {
-      return json({ configured: true, reachable: false, sources: 0, error: error?.message ?? 'Could not reach Suwayomi.' }, 502);
+      return json({
+        configured: true,
+        reachable: false,
+        sources: 0,
+        servers: bases.map((b) => new URL(b).host),
+        error: error?.message ?? 'Could not reach Suwayomi.',
+      }, 502);
     }
   }
 
