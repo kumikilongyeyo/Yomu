@@ -1,0 +1,188 @@
+{
+  "id": "webtoons",
+  "name": "Webtoons.com",
+  "version": 1,
+  "base": "https://www.webtoons.com",
+  "hosts": [
+    "www.webtoons.com",
+    "m.webtoons.com",
+    "webtoon-phinf.pstatic.net",
+    "webtoons-static.pstatic.net"
+  ],
+  "defaultCategory": "webtoon",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 4,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/en/originals",
+      "cacheTtl": 900,
+      "parse": {
+        "type": "html",
+        "list": "ul.webtoon_list li",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "selector": "a",
+            "attr": "data-title-no"
+          },
+          "title": {
+            "selector": "strong.title"
+          },
+          "author": {
+            "selector": "div.author"
+          },
+          "cover": {
+            "selector": "img",
+            "attr": "src"
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/en/originals",
+      "query": {
+        "sortOrder": "UPDATE"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "ul.webtoon_list li",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "selector": "a",
+            "attr": "data-title-no"
+          },
+          "title": {
+            "selector": "strong.title"
+          },
+          "author": {
+            "selector": "div.author"
+          },
+          "cover": {
+            "selector": "img",
+            "attr": "src"
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/en/search",
+      "query": {
+        "keyword": "{{rawQuery}}"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "ul.webtoon_list li",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "selector": "a",
+            "attr": "data-title-no"
+          },
+          "title": {
+            "selector": "strong.title"
+          },
+          "author": {
+            "selector": "div.author"
+          },
+          "cover": {
+            "selector": "img",
+            "attr": "src"
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "/episodeList",
+      "query": {
+        "titleNo": "{{id}}"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "fields": {
+          "title": {
+            "selector": "h1.subj"
+          },
+          "author": {
+            "selector": ".author_area",
+            "transform": [
+              {
+                "replace": "author info",
+                "with": "",
+                "flags": "gi"
+              },
+              {
+                "trim": true
+              }
+            ]
+          },
+          "genres": {
+            "selector": "h2.genre",
+            "many": true
+          },
+          "synopsis": {
+            "selector": "p.summary"
+          },
+          "status": {
+            "selector": ".day_info"
+          }
+        }
+      }
+    },
+    "chapters": {
+      "path": "https://m.webtoons.com/api/v1/webtoon/{{id}}/episodes",
+      "query": {
+        "pageSize": "300"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "result.episodeList",
+        "limit": 3000,
+        "fields": {
+          "id": {
+            "path": "viewerLink"
+          },
+          "number": {
+            "path": "episodeNo"
+          },
+          "name": {
+            "path": "episodeTitle"
+          },
+          "publishedAt": {
+            "path": "exposureDateMillis",
+            "transform": [
+              {
+                "date": "unixms"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "{{chapterId}}",
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "html",
+        "list": "img._images",
+        "limit": 400,
+        "fields": {
+          "url": {
+            "selector": "",
+            "attr": "data-url"
+          }
+        }
+      }
+    }
+  }
+}

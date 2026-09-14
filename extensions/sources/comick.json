@@ -1,0 +1,218 @@
+{
+  "id": "comick",
+  "name": "Comick",
+  "version": 1,
+  "base": "https://api.comick.dev",
+  "hosts": [
+    "api.comick.dev",
+    "meo.comick.pictures"
+  ],
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 4,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/v1.0/search",
+      "query": {
+        "sort": "follow",
+        "page": "{{page}}",
+        "limit": "50"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 900,
+      "parse": {
+        "type": "json",
+        "list": "",
+        "limit": 50,
+        "fields": {
+          "id": {
+            "path": "hid"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "desc"
+          },
+          "year": {
+            "path": "year"
+          },
+          "category": {
+            "path": "country",
+            "transform": [
+              {
+                "map": {
+                  "kr": "manhwa",
+                  "cn": "manhua",
+                  "hk": "manhua",
+                  "jp": "manga",
+                  "*": "manga"
+                }
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "md_covers[0].b2key"
+          },
+          "cover": {
+            "template": "https://meo.comick.pictures/{{coverFile}}"
+          },
+          "altTitles": {
+            "path": "md_titles",
+            "transform": [
+              {
+                "pluck": "title"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "uploaded_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/v1.0/search",
+      "query": {
+        "sort": "uploaded",
+        "page": "{{page}}",
+        "limit": "50"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "",
+        "limit": 50,
+        "fields": {
+          "id": {
+            "path": "hid"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "desc"
+          },
+          "year": {
+            "path": "year"
+          },
+          "category": {
+            "path": "country",
+            "transform": [
+              {
+                "map": {
+                  "kr": "manhwa",
+                  "cn": "manhua",
+                  "hk": "manhua",
+                  "jp": "manga",
+                  "*": "manga"
+                }
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "md_covers[0].b2key"
+          },
+          "cover": {
+            "template": "https://meo.comick.pictures/{{coverFile}}"
+          },
+          "altTitles": {
+            "path": "md_titles",
+            "transform": [
+              {
+                "pluck": "title"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "uploaded_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/v1.0/search",
+      "query": {
+        "q": "{{rawQuery}}",
+        "page": "{{page}}",
+        "limit": "50"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "",
+        "limit": 50,
+        "fields": {
+          "id": {
+            "path": "hid"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "desc"
+          },
+          "year": {
+            "path": "year"
+          },
+          "category": {
+            "path": "country",
+            "transform": [
+              {
+                "map": {
+                  "kr": "manhwa",
+                  "cn": "manhua",
+                  "hk": "manhua",
+                  "jp": "manga",
+                  "*": "manga"
+                }
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "md_covers[0].b2key"
+          },
+          "cover": {
+            "template": "https://meo.comick.pictures/{{coverFile}}"
+          },
+          "altTitles": {
+            "path": "md_titles",
+            "transform": [
+              {
+                "pluck": "title"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "uploaded_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

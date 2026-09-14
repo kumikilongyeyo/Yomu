@@ -1,0 +1,12 @@
+# Never commit credentials or the source engine's local state.
+suwayomi/.env
+suwayomi/.auth-header-b64
+suwayomi/data/
+suwayomi/*.log
+suwayomi/fg.log
+
+node_modules/
+.wrangler/
+dist/
+.DS_Store
+*.log

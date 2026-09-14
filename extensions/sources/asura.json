@@ -1,0 +1,364 @@
+{
+  "id": "asura",
+  "name": "Asura Scans",
+  "version": 2,
+  "base": "https://api.asurascans.com",
+  "hosts": [
+    "api.asurascans.com",
+    "cdn.asurascans.com",
+    "asuracomic.net"
+  ],
+  "defaultCategory": "manhwa",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 4,
+    "perSeconds": 1
+  },
+  "headers": {
+    "Referer": "https://asuracomic.net/"
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/api/series",
+      "query": {
+        "page": "{{page}}"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 900,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "slug"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description",
+            "transform": [
+              {
+                "replace": "<[^>]+>",
+                "with": " ",
+                "flags": "g"
+              },
+              {
+                "trim": true
+              }
+            ]
+          },
+          "cover": {
+            "path": "cover"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "release_year"
+          },
+          "genres": {
+            "path": "genres",
+            "transform": [
+              {
+                "pluck": "name"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "last_chapter_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/api/series",
+      "query": {
+        "page": "{{page}}",
+        "sort": "update"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "slug"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description",
+            "transform": [
+              {
+                "replace": "<[^>]+>",
+                "with": " ",
+                "flags": "g"
+              },
+              {
+                "trim": true
+              }
+            ]
+          },
+          "cover": {
+            "path": "cover"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "release_year"
+          },
+          "genres": {
+            "path": "genres",
+            "transform": [
+              {
+                "pluck": "name"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "last_chapter_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/api/series",
+      "query": {
+        "page": "{{page}}",
+        "search": "{{rawQuery}}"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "slug"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description",
+            "transform": [
+              {
+                "replace": "<[^>]+>",
+                "with": " ",
+                "flags": "g"
+              },
+              {
+                "trim": true
+              }
+            ]
+          },
+          "cover": {
+            "path": "cover"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "release_year"
+          },
+          "genres": {
+            "path": "genres",
+            "transform": [
+              {
+                "pluck": "name"
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "last_chapter_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "/api/series/{{id}}",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "fields": {
+          "id": {
+            "path": "series.slug"
+          },
+          "title": {
+            "path": "series.title"
+          },
+          "synopsis": {
+            "path": "series.description",
+            "transform": [
+              {
+                "replace": "<[^>]+>",
+                "with": " ",
+                "flags": "g"
+              },
+              {
+                "trim": true
+              }
+            ]
+          },
+          "cover": {
+            "path": "series.cover"
+          },
+          "category": {
+            "path": "series.type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "status": {
+            "path": "series.status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "series.release_year"
+          },
+          "genres": {
+            "path": "series.genres",
+            "transform": [
+              {
+                "pluck": "name"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "chapters": {
+      "path": "/api/series/{{id}}/chapters",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 3000,
+        "fields": {
+          "seriesSlug": {
+            "path": "series_slug"
+          },
+          "chapterSlug": {
+            "path": "slug"
+          },
+          "id": {
+            "template": "{{seriesSlug}}/chapters/{{chapterSlug}}"
+          },
+          "number": {
+            "path": "number"
+          },
+          "name": {
+            "template": "Chapter {{number}}"
+          },
+          "pageCount": {
+            "path": "page_count"
+          },
+          "publishedAt": {
+            "path": "published_at",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "/api/series/{{chapterId}}",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "json",
+        "list": "data.chapter.pages",
+        "limit": 400,
+        "fields": {
+          "url": {
+            "path": "url"
+          }
+        }
+      }
+    }
+  }
+}

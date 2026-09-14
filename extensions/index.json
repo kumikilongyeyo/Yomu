@@ -1,0 +1,152 @@
+{
+  "schema": "yomu.extension-index/1",
+  "updatedAt": "2026-09-14T00:00:00Z",
+  "extensions": [
+    {
+      "id": "weebcentral",
+      "name": "Weeb Central",
+      "version": 2,
+      "language": "en",
+      "content": [
+        "manga",
+        "manhwa",
+        "manhua"
+      ],
+      "module": "sources/weebcentral.json",
+      "hosts": [
+        "weebcentral.com",
+        "temp.compsci88.com",
+        "scans-hot.planeptune.us",
+        "planeptune.us"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": true,
+        "chapters": true,
+        "pages": true
+      }
+    },
+    {
+      "id": "flamecomics",
+      "name": "Flame Comics",
+      "version": 2,
+      "language": "en",
+      "content": [
+        "manhwa",
+        "manhua",
+        "manga"
+      ],
+      "module": "sources/flamecomics.json",
+      "hosts": [
+        "flamecomics.xyz",
+        "cdn.flamecomics.xyz"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": true,
+        "chapters": true,
+        "pages": true
+      }
+    },
+    {
+      "id": "webtoons",
+      "name": "Webtoons.com",
+      "version": 1,
+      "language": "en",
+      "content": [
+        "webtoon"
+      ],
+      "module": "sources/webtoons.json",
+      "hosts": [
+        "www.webtoons.com",
+        "m.webtoons.com",
+        "webtoon-phinf.pstatic.net",
+        "webtoons-static.pstatic.net"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": true,
+        "chapters": true,
+        "pages": true
+      }
+    },
+    {
+      "id": "asura",
+      "name": "Asura Scans",
+      "version": 2,
+      "language": "en",
+      "content": [
+        "manhwa",
+        "manhua"
+      ],
+      "module": "sources/asura.json",
+      "hosts": [
+        "api.asurascans.com",
+        "cdn.asurascans.com",
+        "asuracomic.net"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": true,
+        "chapters": true,
+        "pages": true
+      }
+    },
+    {
+      "id": "namicomi",
+      "name": "NamiComi",
+      "version": 1,
+      "language": "en",
+      "content": [
+        "webtoon",
+        "manhwa",
+        "manga"
+      ],
+      "module": "sources/namicomi.json",
+      "hosts": [
+        "api.namicomi.com",
+        "uploads.namicomi.com"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": true,
+        "chapters": true,
+        "pages": true
+      }
+    },
+    {
+      "id": "comick",
+      "name": "Comick",
+      "version": 1,
+      "language": "en",
+      "content": [
+        "manhwa",
+        "manhua",
+        "manga"
+      ],
+      "module": "sources/comick.json",
+      "hosts": [
+        "api.comick.dev",
+        "meo.comick.pictures"
+      ],
+      "capabilities": {
+        "search": true,
+        "popular": true,
+        "latest": true,
+        "details": false,
+        "chapters": false,
+        "pages": false
+      }
+    }
+  ]
+}

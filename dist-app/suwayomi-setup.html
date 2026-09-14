@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#141414" />
+  <title>Yomu · Mihon Bridge</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    body{background:#111;color:#f6f3ee;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .bridge{max-width:1040px;margin:0 auto;padding:32px 20px 80px}.bridge-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.bridge a{color:inherit}.bridge h1{font-size:36px;line-height:1.05;margin:6px 0}.muted{color:#a9a39b;line-height:1.55}.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:18px;backdrop-filter:blur(18px);margin-bottom:18px}.status{display:flex;align-items:center;gap:10px}.dot{width:10px;height:10px;border-radius:999px;background:#777}.dot.ok{background:#77d487}.dot.bad{background:#ff7b70}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.actions button,.back{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:10px 14px;font:inherit;cursor:pointer}.actions button.primary{background:#e8a23a;color:#17120b;border-color:#e8a23a;font-weight:800}.actions button:disabled{opacity:.45;cursor:default}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:16px}.src{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.035);cursor:pointer}.src input{margin-top:4px;accent-color:#e8a23a}.src strong{display:block}.src small{display:block;color:#9e9890;margin-top:3px}.count{font-variant-numeric:tabular-nums}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0c0c0c;border-radius:12px;padding:12px;overflow:auto;color:#d7d2ca}.hidden{display:none!important}@media(max-width:600px){.bridge h1{font-size:30px}.bridge-head{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <main class="bridge">
+    <div class="bridge-head">
+      <div><div class="muted" style="text-transform:uppercase;letter-spacing:.16em;font-size:12px">Yomu Sources</div><h1>Mihon / Suwayomi bridge</h1><div class="muted">Use Keiyoushi/Mihon sources in Yomu through Suwayomi. Pick 6–20 without changing the reader UI.</div></div>
+      <a class="back" href="/sources">← Sources</a>
+    </div>
+
+    <section class="panel">
+      <strong>Keiyoushi ready</strong>
+      <p class="muted">This Yomu build includes a Suwayomi Docker stack with the Keiyoushi extension store already registered. Start <code>suwayomi/docker-compose.yml</code>, install the extensions you want in Suwayomi, then connect the Worker below.</p>
+    </section>
+
+    <section class="panel">
+      <div id="status" class="status"><span id="dot" class="dot"></span><strong id="statusText">Checking bridge…</strong></div>
+      <p id="statusNote" class="muted">Yomu is checking whether this Worker can reach your Suwayomi server.</p>
+      <div id="configure" class="hidden">
+        <div class="code"># Keiyoushi is already configured in suwayomi/docker-compose.yml<br>npx wrangler secret put SUWAYOMI_URL<br>npx wrangler secret put SUWAYOMI_AUTH_HEADER</div>
+        <p class="muted">SUWAYOMI_URL must be reachable from Cloudflare over the internet. The included Docker stack uses Basic auth. Generate the exact header with <code>./scripts/make-suwayomi-auth.sh yomu YOUR_PASSWORD</code>.</p>
+      </div>
+    </section>
+
+    <section id="picker" class="panel hidden">
+      <div style="display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap">
+        <div><strong>Installed Suwayomi sources</strong><div class="muted">These are the extensions/sources you installed from Keiyoushi in Suwayomi. Pick at least 6; Yomu keeps each one as an independent fallback source.</div></div>
+        <div class="count"><span id="selectedCount">0</span> selected</div>
+      </div>
+      <div class="actions">
+        <button id="six">Select recommended 6</button>
+        <button id="twenty">Select first 20</button>
+        <button id="clear">Clear</button>
+        <button id="install" class="primary" disabled>Install into Yomu</button>
+      </div>
+      <div id="grid" class="grid"></div>
+    </section>
+
+    <section id="done" class="panel hidden">
+      <strong>Sources installed.</strong>
+      <p id="doneText" class="muted"></p>
+      <div class="actions"><a class="back" href="/sources">Open Yomu Sources</a><a class="back" href="/discover">Discover titles</a></div>
+    </section>
+  </main>
+<script>
+(() => {
+  const KEY='yomu.v1.collection';
+  const el=id=>document.getElementById(id);
+  const state={sources:[],selected:new Set()};
+  const safe=()=>state.sources.filter(s=>!String(s.contentWarning||'').match(/adult|explicit|mature|mixed|nsfw/i));
+  function currentCollection(){
+    try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v&&typeof v==='object')return {revision:Number.isInteger(v.revision)?v.revision:0,sources:Array.isArray(v.sources)?v.sources:[],library:Array.isArray(v.library)?v.library:[],progress:v.progress&&typeof v.progress==='object'?v.progress:{}}}catch{}
+    return {revision:0,sources:[],library:[],progress:{}};
+  }
+  function setStatus(kind,title,note){el('dot').className='dot '+kind;el('statusText').textContent=title;el('statusNote').textContent=note||''}
+  function updateCount(){el('selectedCount').textContent=state.selected.size;el('install').disabled=state.selected.size<6||state.selected.size>20;document.querySelectorAll('[data-id]').forEach(row=>{row.querySelector('input').checked=state.selected.has(row.dataset.id)})}
+  function render(){
+    const list=safe().sort((a,b)=>String(a.displayName||a.name).localeCompare(String(b.displayName||b.name)));
+    el('grid').innerHTML='';
+    for(const s of list){
+      const label=document.createElement('label');label.className='src';label.dataset.id=String(s.id);
+      const input=document.createElement('input');input.type='checkbox';input.addEventListener('change',()=>{input.checked?state.selected.add(String(s.id)):state.selected.delete(String(s.id));if(state.selected.size>20){state.selected.delete(String(s.id));input.checked=false}updateCount()});
+      const copy=document.createElement('div');const strong=document.createElement('strong');strong.textContent=s.displayName||s.name||('Source '+s.id);const small=document.createElement('small');small.textContent=[s.lang||'unknown language',s.supportsLatest?'latest feed':'popular/search'].join(' · ');copy.append(strong,small);label.append(input,copy);el('grid').append(label);
+    }
+    updateCount();
+  }
+  function selectN(n){state.selected.clear();for(const s of safe().slice().sort((a,b)=>(a.lang==='en'?0:1)-(b.lang==='en'?0:1)||String(a.displayName||a.name).localeCompare(String(b.displayName||b.name))).slice(0,n))state.selected.add(String(s.id));updateCount()}
+  el('six').onclick=()=>selectN(6);el('twenty').onclick=()=>selectN(20);el('clear').onclick=()=>{state.selected.clear();updateCount()};
+  el('install').onclick=()=>{
+    const col=currentCollection();
+    const selected=state.sources.filter(s=>state.selected.has(String(s.id)));
+    const byId=new Map(col.sources.map(s=>[s.id,s]));
+    for(const s of selected){
+      const id='mihon-'+s.id;
+      byId.set(id,{id,label:s.displayName||s.name||('Mihon '+s.id),category:'Mihon / Suwayomi',kind:'api',url:location.origin+'/api/suwayomi/source/'+encodeURIComponent(s.id)+'/',enabled:true});
+    }
+    const builtIns=col.sources.filter(s=>!String(s.id).startsWith('mihon-'));
+    const mihon=[...byId.values()].filter(s=>String(s.id).startsWith('mihon-'));
+    const next={...col,revision:col.revision+1,sources:[...builtIns,...mihon]};
+    localStorage.setItem(KEY,JSON.stringify(next));
+    el('doneText').textContent='Added '+selected.length+' Mihon-compatible sources. MangaDex stays enabled as a separate fallback.';
+    el('done').classList.remove('hidden');el('done').scrollIntoView({behavior:'smooth',block:'center'});
+  };
+  fetch('/api/suwayomi/status').then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
+    if(!j.configured){setStatus('bad','Bridge not configured','Set SUWAYOMI_URL on the Worker, deploy again, then reopen this page.');el('configure').classList.remove('hidden');return}
+    if(!j.reachable){setStatus('bad','Suwayomi is configured but unreachable',j.error||'Check the URL/auth and make sure Cloudflare can reach it.');el('configure').classList.remove('hidden');return}
+    setStatus('ok','Connected to Suwayomi',j.sources+' installed source'+(j.sources===1?'':'s')+' available from '+j.server+'.');
+    return fetch('/api/suwayomi/sources').then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);state.sources=j.sources||[];el('picker').classList.remove('hidden');render();selectN(Math.min(6,safe().length))});
+  }).catch(err=>{setStatus('bad','Bridge check failed',err.message||String(err));el('configure').classList.remove('hidden')});
+})();
+</script>
+</body>
+</html>

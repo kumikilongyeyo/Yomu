@@ -1,0 +1,90 @@
+{
+  "schema": "yomu.chapter-manifest/1",
+  "chapterId": "fx-glass-garden:c2",
+  "sourceSeriesId": "fx-glass-garden",
+  "manifestVersion": "fx-2-1",
+  "pageListVersion": 1,
+  "expiresAt": null,
+  "pages": [
+    {
+      "key": "p001",
+      "index": 0,
+      "url": "fixtures/fx-glass-garden/c2/p001.png",
+      "width": 800,
+      "height": 1150
+    },
+    {
+      "key": "p002",
+      "index": 1,
+      "url": "fixtures/fx-glass-garden/c2/p002.png",
+      "width": 800,
+      "height": 1287
+    },
+    {
+      "key": "p003",
+      "index": 2,
+      "url": "fixtures/fx-glass-garden/c2/p003.png",
+      "width": 800,
+      "height": 1164
+    },
+    {
+      "key": "p004",
+      "index": 3,
+      "url": "fixtures/fx-glass-garden/c2/p004.png"
+    },
+    {
+      "key": "p005",
+      "index": 4,
+      "url": "fixtures/fx-glass-garden/c2/p005.png",
+      "width": 800,
+      "height": 1178
+    },
+    {
+      "key": "p006",
+      "index": 5,
+      "url": "fixtures/fx-glass-garden/c2/p006.png",
+      "width": 800,
+      "height": 1315
+    },
+    {
+      "key": "p007",
+      "index": 6,
+      "url": "fixtures/fx-glass-garden/c2/p007.png",
+      "width": 800,
+      "height": 1192
+    },
+    {
+      "key": "p008",
+      "index": 7,
+      "url": "fixtures/fx-glass-garden/c2/p008.png"
+    },
+    {
+      "key": "p009",
+      "index": 8,
+      "url": "fixtures/fx-glass-garden/c2/p009.png",
+      "width": 800,
+      "height": 1206
+    },
+    {
+      "key": "p010",
+      "index": 9,
+      "url": "fixtures/fx-glass-garden/c2/p010.png",
+      "width": 800,
+      "height": 1343
+    },
+    {
+      "key": "p011",
+      "index": 10,
+      "url": "fixtures/fx-glass-garden/c2/p011.png",
+      "width": 800,
+      "height": 1220
+    },
+    {
+      "key": "p012",
+      "index": 11,
+      "url": "fixtures/fx-glass-garden/c2/p012.png",
+      "width": 800,
+      "height": 1357
+    }
+  ]
+}

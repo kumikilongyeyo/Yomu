@@ -1,0 +1,25 @@
+services:
+  suwayomi:
+    image: ghcr.io/suwayomi/suwayomi-server:stable
+    container_name: yomu-suwayomi
+    environment:
+      - TZ=Asia/Manila
+      - BIND_IP=0.0.0.0
+      - BIND_PORT=4567
+      - WEB_UI_ENABLED=true
+      - WEB_UI_CHANNEL=stable
+      - EXTENSION_STORES=["https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.pb"]
+      - MAX_SOURCES_IN_PARALLEL=6
+      - UPDATE_INTERVAL=6
+      - UPDATE_MANGA_INFO=true
+      - UPDATE_EXCLUDE_UNREAD=false
+      - UPDATE_EXCLUDE_STARTED=false
+      - UPDATE_EXCLUDE_COMPLETED=true
+      - AUTH_MODE=basic_auth
+      - AUTH_USERNAME=${SUWAYOMI_USER:-yomu}
+      - AUTH_PASSWORD=${SUWAYOMI_PASSWORD}
+    volumes:
+      - ./data:/home/suwayomi/.local/share/Tachidesk
+    ports:
+      - "${SUWAYOMI_PORT:-4567}:4567"
+    restart: unless-stopped

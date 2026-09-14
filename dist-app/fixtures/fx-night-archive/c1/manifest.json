@@ -1,0 +1,130 @@
+{
+  "schema": "yomu.chapter-manifest/1",
+  "chapterId": "fx-night-archive:c1",
+  "sourceSeriesId": "fx-night-archive",
+  "manifestVersion": "fx-1-1",
+  "pageListVersion": 1,
+  "expiresAt": null,
+  "pages": [
+    {
+      "key": "p001",
+      "index": 0,
+      "url": "fixtures/fx-night-archive/c1/p001.png"
+    },
+    {
+      "key": "p002",
+      "index": 1,
+      "url": "fixtures/fx-night-archive/c1/p002.png"
+    },
+    {
+      "key": "p003",
+      "index": 2,
+      "url": "fixtures/fx-night-archive/c1/p003.png"
+    },
+    {
+      "key": "p004",
+      "index": 3,
+      "url": "fixtures/fx-night-archive/c1/p004.png"
+    },
+    {
+      "key": "p005",
+      "index": 4,
+      "url": "fixtures/fx-night-archive/c1/p005.png"
+    },
+    {
+      "key": "p006",
+      "index": 5,
+      "url": "fixtures/fx-night-archive/c1/p006.png"
+    },
+    {
+      "key": "p007",
+      "index": 6,
+      "url": "fixtures/fx-night-archive/c1/p007.png"
+    },
+    {
+      "key": "p008",
+      "index": 7,
+      "url": "fixtures/fx-night-archive/c1/p008.png"
+    },
+    {
+      "key": "p009",
+      "index": 8,
+      "url": "fixtures/fx-night-archive/c1/p009.png"
+    },
+    {
+      "key": "p010",
+      "index": 9,
+      "url": "fixtures/fx-night-archive/c1/p010.png"
+    },
+    {
+      "key": "p011",
+      "index": 10,
+      "url": "fixtures/fx-night-archive/c1/p011.png"
+    },
+    {
+      "key": "p012",
+      "index": 11,
+      "url": "fixtures/fx-night-archive/c1/p012.png"
+    },
+    {
+      "key": "p013",
+      "index": 12,
+      "url": "fixtures/fx-night-archive/c1/p013.png"
+    },
+    {
+      "key": "p014",
+      "index": 13,
+      "url": "fixtures/fx-night-archive/c1/p014.png"
+    },
+    {
+      "key": "p015",
+      "index": 14,
+      "url": "fixtures/fx-night-archive/c1/p015.png"
+    },
+    {
+      "key": "p016",
+      "index": 15,
+      "url": "fixtures/fx-night-archive/c1/p016.png"
+    },
+    {
+      "key": "p017",
+      "index": 16,
+      "url": "fixtures/fx-night-archive/c1/p017.png"
+    },
+    {
+      "key": "p018",
+      "index": 17,
+      "url": "fixtures/fx-night-archive/c1/p018.png"
+    },
+    {
+      "key": "p019",
+      "index": 18,
+      "url": "fixtures/fx-night-archive/c1/p019.png"
+    },
+    {
+      "key": "p020",
+      "index": 19,
+      "url": "fixtures/fx-night-archive/c1/p020.png"
+    },
+    {
+      "key": "p021",
+      "index": 20,
+      "url": "fixtures/fx-night-archive/c1/p021.png"
+    },
+    {
+      "key": "p022",
+      "index": 21,
+      "url": "fixtures/fx-night-archive/c1/p022.png"
+    },
+    {
+      "key": "p023",
+      "index": 22,
+      "url": "fixtures/fx-night-archive/c1/p023.png"
+    },
+    {
+      "key": "p024",
+      "index": 23,
+      "url": "fixtures/fx-night-archive/c1/p024.png"
+    }
+  ]
+}

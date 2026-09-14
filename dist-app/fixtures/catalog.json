@@ -1,0 +1,72 @@
+{
+  "schema": "yomu.fixture-catalog/1",
+  "series": [
+    {
+      "id": "fx-night-archive",
+      "title": "Night Archive",
+      "author": "Fixture Studio",
+      "synopsis": "LOCAL FIXTURE CONTENT, generated procedurally for reader development. Not a real publication and not sourced from any third party.",
+      "category": "manga",
+      "genres": [
+        "Mystery",
+        "Slice of life",
+        "Supernatural"
+      ],
+      "chapters": [
+        {
+          "id": "fx-night-archive:c3",
+          "number": 3,
+          "name": "The Quiet Door",
+          "pageCount": 18,
+          "publishedAt": 1789324617679,
+          "manifestPath": "fixtures/fx-night-archive/c3/manifest.json"
+        },
+        {
+          "id": "fx-night-archive:c2",
+          "number": 2,
+          "name": "A Tide of Memories",
+          "pageCount": 120,
+          "publishedAt": 1789087017679,
+          "manifestPath": "fixtures/fx-night-archive/c2/manifest.json"
+        },
+        {
+          "id": "fx-night-archive:c1",
+          "number": 1,
+          "name": "After the Last Train",
+          "pageCount": 24,
+          "publishedAt": 1788568617679,
+          "manifestPath": "fixtures/fx-night-archive/c1/manifest.json"
+        }
+      ]
+    },
+    {
+      "id": "fx-glass-garden",
+      "title": "Glass Garden",
+      "author": "Fixture Studio",
+      "synopsis": "LOCAL FIXTURE CONTENT. Exercises the failure and oversize paths.",
+      "category": "manhwa",
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "chapters": [
+        {
+          "id": "fx-glass-garden:c2",
+          "number": 2,
+          "name": "Under Glass",
+          "pageCount": 12,
+          "publishedAt": 1789324617679,
+          "manifestPath": "fixtures/fx-glass-garden/c2/manifest.json"
+        },
+        {
+          "id": "fx-glass-garden:c1",
+          "number": 1,
+          "name": "The Missing Letter",
+          "pageCount": 10,
+          "publishedAt": 1789087017679,
+          "manifestPath": "fixtures/fx-glass-garden/c1/manifest.json"
+        }
+      ]
+    }
+  ]
+}

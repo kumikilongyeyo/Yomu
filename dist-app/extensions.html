@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#141414" />
+  <title>Yomu · Extensions</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    body{background:#111;color:#f6f3ee;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .bridge{max-width:1040px;margin:0 auto;padding:32px 20px 80px}.bridge-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.bridge a{color:inherit}.bridge h1{font-size:36px;line-height:1.05;margin:6px 0}.muted{color:#a9a39b;line-height:1.55}.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:18px;backdrop-filter:blur(18px);margin-bottom:18px}.status{display:flex;align-items:center;gap:10px}.dot{width:10px;height:10px;border-radius:999px;background:#777;flex:none}.dot.ok{background:#77d487}.dot.bad{background:#ff7b70}.dot.warn{background:#e8a23a}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.actions button,.back,.mini{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:10px 14px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}.actions button.primary{background:#e8a23a;color:#17120b;border-color:#e8a23a;font-weight:800}.actions button:disabled{opacity:.45;cursor:default}.mini{padding:6px 11px;font-size:13px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px}.tab{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cfc9c1;border-radius:999px;padding:8px 15px;font:inherit;cursor:pointer}.tab[aria-selected=true]{background:#e8a23a;color:#17120b;border-color:#e8a23a;font-weight:700}
+    .ext{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.035);margin-bottom:10px;flex-wrap:wrap}
+    .ext .body{flex:1 1 260px;min-width:0}.ext strong{display:block;font-size:16px}.ext small{display:block;color:#9e9890;margin-top:4px;line-height:1.5}
+    .pill{display:inline-block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.16);color:#cfc9c1;margin:6px 6px 0 0}
+    .pill.on{background:rgba(119,212,135,.16);border-color:rgba(119,212,135,.4);color:#9fe4ab}.pill.off{background:rgba(255,123,112,.14);border-color:rgba(255,123,112,.38);color:#ffb1aa}.pill.na{opacity:.45}
+    .tier{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8f8a83;margin:26px 0 10px}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0c0c0c;border-radius:12px;padding:12px;overflow:auto;color:#d7d2ca;font-size:13px}
+    .hidden{display:none!important}@media(max-width:600px){.bridge h1{font-size:30px}.bridge-head{align-items:flex-start;flex-direction:column}.ext{padding:14px}}
+  </style>
+</head>
+<body>
+  <main class="bridge">
+    <div class="bridge-head">
+      <div>
+        <div class="muted" style="text-transform:uppercase;letter-spacing:.16em;font-size:12px">Yomu Sources</div>
+        <h1>Extension manager</h1>
+        <div class="muted">Yomu extensions are declarative source adapters loaded from a repository. Updating an adapter there fixes a source here &mdash; no redeploy.</div>
+      </div>
+      <a class="back" href="/sources">&larr; Sources</a>
+    </div>
+
+    <section class="panel">
+      <div class="status"><span id="dot" class="dot"></span><strong id="statusText">Loading registry&hellip;</strong></div>
+      <p id="statusNote" class="muted"></p>
+      <div class="actions">
+        <button id="refresh">Check for updates</button>
+        <button id="installAll" class="primary" disabled>Enable all in Yomu</button>
+        <a class="back" href="/suwayomi-setup.html">Mihon bridge &rarr;</a>
+      </div>
+    </section>
+
+    <div class="tabs" id="tabs">
+      <button class="tab" data-tab="installed" aria-selected="true">Installed</button>
+      <button class="tab" data-tab="available" aria-selected="false">Available</button>
+      <button class="tab" data-tab="updates" aria-selected="false">Updates</button>
+      <button class="tab" data-tab="broken" aria-selected="false">Broken</button>
+      <button class="tab" data-tab="disabled" aria-selected="false">Disabled</button>
+    </div>
+
+    <section class="panel">
+      <div id="list"></div>
+      <p id="empty" class="muted hidden">Nothing here.</p>
+    </section>
+
+    <section class="panel">
+      <div class="tier" style="margin-top:0">Source priority</div>
+      <div class="muted">Yomu tries providers in this order and falls through on failure, so one dead source never blocks a title.</div>
+      <div class="code" id="priority">1. Yomu extensions<br>2. MangaDex (native)<br>3. Suwayomi bridge (fallback)</div>
+      <div class="status" style="margin-top:12px"><span id="suwaDot" class="dot"></span><span id="suwaText" class="muted">Checking Suwayomi&hellip;</span></div>
+    </section>
+  </main>
+<script>
+(() => {
+  const KEY='yomu.v1.collection';
+  const el=id=>document.getElementById(id);
+  const state={exts:[],broken:[],tab:'installed',enabled:new Set()};
+
+  const collection=()=>{
+    try{
+      const v=JSON.parse(localStorage.getItem(KEY)||'null');
+      if(v&&typeof v==='object')return{revision:Number.isInteger(v.revision)?v.revision:0,sources:Array.isArray(v.sources)?v.sources:[],library:Array.isArray(v.library)?v.library:[],progress:v.progress&&typeof v.progress==='object'?v.progress:{}};
+    }catch{}
+    return{revision:0,sources:[],library:[],progress:{}};
+  };
+  const save=next=>{try{localStorage.setItem(KEY,JSON.stringify(next));}catch{}};
+  const extSourceId=id=>'yomuext-'+id;
+
+  const readEnabled=()=>{
+    state.enabled=new Set(collection().sources.filter(s=>String(s.id).startsWith('yomuext-')&&s.enabled!==false).map(s=>String(s.id).slice(8)));
+  };
+
+  function setEnabled(ext,on){
+    const col=collection();
+    const id=extSourceId(ext.id);
+    const rest=col.sources.filter(s=>s.id!==id);
+    if(on){
+      rest.push({id,label:ext.name,category:'Yomu Extensions',kind:'api',url:location.origin+'/api/ext/source/'+encodeURIComponent(ext.id)+'/',enabled:true});
+    }
+    save({...col,revision:col.revision+1,sources:rest});
+    readEnabled();render();
+  }
+
+  const capPills=c=>['search','popular','latest','details','chapters','pages']
+    .map(k=>`<span class="pill ${c&&c[k]?'on':'na'}">${k}</span>`).join('');
+
+  const when=ts=>{
+    if(!ts)return 'never';
+    const s=Math.round((Date.now()-ts)/1000);
+    if(s<60)return s+'s ago';
+    if(s<3600)return Math.round(s/60)+'m ago';
+    return Math.round(s/3600)+'h ago';
+  };
+
+  function rows(){
+    if(state.tab==='broken')
+      return state.broken.map(b=>({broken:true,id:b.id,name:b.id,reason:b.reason}));
+    if(state.tab==='disabled')
+      return state.exts.filter(e=>!state.enabled.has(e.id));
+    if(state.tab==='installed')
+      return state.exts.filter(e=>state.enabled.has(e.id));
+    if(state.tab==='updates')
+      return state.exts.filter(e=>e.updateAvailable);
+    return state.exts;
+  }
+
+  function render(){
+    const list=el('list');const data=rows();
+    el('empty').classList.toggle('hidden',data.length>0);
+    el('empty').textContent=state.tab==='broken'?'No broken extensions. Every entry in the registry validated.':
+      state.tab==='updates'?'Everything is on the newest version in the registry.':
+      state.tab==='installed'?'No extensions enabled yet. Open Available and enable a few.':'Nothing here.';
+    list.innerHTML='';
+    for(const e of data){
+      const div=document.createElement('div');div.className='ext';
+      if(e.broken){
+        div.innerHTML=`<span class="dot bad"></span><div class="body"><strong>${e.id}</strong><small>Rejected by validation: ${e.reason}</small></div>`;
+        list.append(div);continue;
+      }
+      const on=state.enabled.has(e.id);
+      const cls=e.status==='ok'?'ok':e.status==='failing'?'bad':'warn';
+      const health=e.status==='failing'
+        ? `last failure ${when(e.lastFailedAt)} &mdash; ${e.lastError||'unknown error'}`
+        : e.lastOkAt? `last success ${when(e.lastOkAt)}${e.lastLatencyMs?` (${e.lastLatencyMs}ms)`:''}`
+        : 'not called yet this session';
+      div.innerHTML=`
+        <span class="dot ${cls}" title="${e.status}"></span>
+        <div class="body">
+          <strong>${e.name} <span class="muted" style="font-weight:400">v${e.version}</span></strong>
+          <small>${e.language} &middot; ${(e.content||[]).join(', ')} &middot; ${health}</small>
+          <small>${(e.hosts||[]).join(', ')}</small>
+          <div>${capPills(e.capabilities)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="mini" data-toggle="${e.id}">${on?'Disable':'Enable'}</button>
+        </div>`;
+      list.append(div);
+    }
+    list.querySelectorAll('[data-toggle]').forEach(b=>{
+      b.onclick=()=>{
+        const ext=state.exts.find(x=>x.id===b.dataset.toggle);
+        if(ext)setEnabled(ext,!state.enabled.has(ext.id));
+      };
+    });
+  }
+
+  el('tabs').onclick=ev=>{
+    const t=ev.target.closest('.tab');if(!t)return;
+    state.tab=t.dataset.tab;
+    el('tabs').querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',String(x===t)));
+    render();
+  };
+
+  el('installAll').onclick=()=>{
+    const col=collection();
+    const keep=col.sources.filter(s=>!String(s.id).startsWith('yomuext-'));
+    const added=state.exts.map(e=>({id:extSourceId(e.id),label:e.name,category:'Yomu Extensions',kind:'api',url:location.origin+'/api/ext/source/'+encodeURIComponent(e.id)+'/',enabled:true}));
+    save({...col,revision:col.revision+1,sources:[...keep,...added]});
+    readEnabled();render();
+  };
+
+  async function load(force){
+    const dot=el('dot');
+    try{
+      const r=await fetch('/api/ext/sources'+(force?'?t='+Date.now():''));
+      const j=await r.json();
+      if(j.error)throw new Error(j.error);
+      state.exts=j.extensions||[];state.broken=j.broken||[];
+      dot.className='dot ok';
+      el('statusText').textContent=`${state.exts.length} extension${state.exts.length===1?'':'s'} loaded`;
+      el('statusNote').textContent=j.source==='repo'
+        ? `Loaded from the extension repository at ${j.repo}. Adapter updates there reach Yomu without a redeploy.`
+        : 'Loaded from the adapters bundled with this Worker. Set the EXTENSIONS_REPO variable to load them from GitHub instead and pick up updates automatically.';
+      el('installAll').disabled=state.exts.length===0;
+    }catch(err){
+      dot.className='dot bad';
+      el('statusText').textContent='Could not load the extension registry';
+      el('statusNote').textContent=err.message||String(err);
+    }
+    readEnabled();render();
+  }
+
+  el('refresh').onclick=async()=>{
+    el('refresh').disabled=true;
+    try{await fetch('/api/ext/refresh?t='+Date.now());await load(true);}finally{el('refresh').disabled=false;}
+  };
+
+  fetch('/api/catalog/status').then(r=>r.json()).then(j=>{
+    const s=j.suwayomi||{};
+    el('suwaDot').className='dot '+(s.online?'ok':s.configured?'bad':'');
+    el('suwaText').textContent=s.online
+      ? `Suwayomi online — ${s.sources} bridge source${s.sources===1?'':'s'} available as fallback.`
+      : s.configured? 'Suwayomi is configured but offline. Yomu works normally; only Suwayomi-backed providers are unavailable.'
+      : 'Suwayomi is not configured. Yomu works normally without it.';
+  }).catch(()=>{el('suwaText').textContent='Suwayomi status unavailable. Yomu works normally without it.';});
+
+  load(false);
+})();
+</script>
+</body>
+</html>

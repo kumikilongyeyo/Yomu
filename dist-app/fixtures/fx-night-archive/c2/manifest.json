@@ -1,0 +1,850 @@
+{
+  "schema": "yomu.chapter-manifest/1",
+  "chapterId": "fx-night-archive:c2",
+  "sourceSeriesId": "fx-night-archive",
+  "manifestVersion": "fx-2-1",
+  "pageListVersion": 1,
+  "expiresAt": null,
+  "pages": [
+    {
+      "key": "p001",
+      "index": 0,
+      "url": "fixtures/fx-night-archive/c2/p001.png",
+      "width": 800,
+      "height": 1150
+    },
+    {
+      "key": "p002",
+      "index": 1,
+      "url": "fixtures/fx-night-archive/c2/p002.png",
+      "width": 800,
+      "height": 1287
+    },
+    {
+      "key": "p003",
+      "index": 2,
+      "url": "fixtures/fx-night-archive/c2/p003.png",
+      "width": 800,
+      "height": 1164
+    },
+    {
+      "key": "p004",
+      "index": 3,
+      "url": "fixtures/fx-night-archive/c2/p004.png",
+      "width": 800,
+      "height": 1301
+    },
+    {
+      "key": "p005",
+      "index": 4,
+      "url": "fixtures/fx-night-archive/c2/p005.png",
+      "width": 800,
+      "height": 1178
+    },
+    {
+      "key": "p006",
+      "index": 5,
+      "url": "fixtures/fx-night-archive/c2/p006.png",
+      "width": 800,
+      "height": 1315
+    },
+    {
+      "key": "p007",
+      "index": 6,
+      "url": "fixtures/fx-night-archive/c2/p007.png",
+      "width": 800,
+      "height": 1192
+    },
+    {
+      "key": "p008",
+      "index": 7,
+      "url": "fixtures/fx-night-archive/c2/p008.png",
+      "width": 800,
+      "height": 1329
+    },
+    {
+      "key": "p009",
+      "index": 8,
+      "url": "fixtures/fx-night-archive/c2/p009.png",
+      "width": 800,
+      "height": 1206
+    },
+    {
+      "key": "p010",
+      "index": 9,
+      "url": "fixtures/fx-night-archive/c2/p010.png",
+      "width": 800,
+      "height": 1343
+    },
+    {
+      "key": "p011",
+      "index": 10,
+      "url": "fixtures/fx-night-archive/c2/p011.png",
+      "width": 800,
+      "height": 1220
+    },
+    {
+      "key": "p012",
+      "index": 11,
+      "url": "fixtures/fx-night-archive/c2/p012.png",
+      "width": 800,
+      "height": 1357
+    },
+    {
+      "key": "p013",
+      "index": 12,
+      "url": "fixtures/fx-night-archive/c2/p013.png",
+      "width": 800,
+      "height": 1234
+    },
+    {
+      "key": "p014",
+      "index": 13,
+      "url": "fixtures/fx-night-archive/c2/p014.png",
+      "width": 800,
+      "height": 1371
+    },
+    {
+      "key": "p015",
+      "index": 14,
+      "url": "fixtures/fx-night-archive/c2/p015.png",
+      "width": 800,
+      "height": 1248
+    },
+    {
+      "key": "p016",
+      "index": 15,
+      "url": "fixtures/fx-night-archive/c2/p016.png",
+      "width": 800,
+      "height": 1385
+    },
+    {
+      "key": "p017",
+      "index": 16,
+      "url": "fixtures/fx-night-archive/c2/p017.png",
+      "width": 800,
+      "height": 1262
+    },
+    {
+      "key": "p018",
+      "index": 17,
+      "url": "fixtures/fx-night-archive/c2/p018.png",
+      "width": 800,
+      "height": 1399
+    },
+    {
+      "key": "p019",
+      "index": 18,
+      "url": "fixtures/fx-night-archive/c2/p019.png",
+      "width": 800,
+      "height": 1276
+    },
+    {
+      "key": "p020",
+      "index": 19,
+      "url": "fixtures/fx-night-archive/c2/p020.png",
+      "width": 800,
+      "height": 1153
+    },
+    {
+      "key": "p021",
+      "index": 20,
+      "url": "fixtures/fx-night-archive/c2/p021.png",
+      "width": 800,
+      "height": 1290
+    },
+    {
+      "key": "p022",
+      "index": 21,
+      "url": "fixtures/fx-night-archive/c2/p022.png",
+      "width": 800,
+      "height": 1167
+    },
+    {
+      "key": "p023",
+      "index": 22,
+      "url": "fixtures/fx-night-archive/c2/p023.png",
+      "width": 800,
+      "height": 1304
+    },
+    {
+      "key": "p024",
+      "index": 23,
+      "url": "fixtures/fx-night-archive/c2/p024.png",
+      "width": 800,
+      "height": 1181
+    },
+    {
+      "key": "p025",
+      "index": 24,
+      "url": "fixtures/fx-night-archive/c2/p025.png",
+      "width": 800,
+      "height": 1318
+    },
+    {
+      "key": "p026",
+      "index": 25,
+      "url": "fixtures/fx-night-archive/c2/p026.png",
+      "width": 800,
+      "height": 1195
+    },
+    {
+      "key": "p027",
+      "index": 26,
+      "url": "fixtures/fx-night-archive/c2/p027.png",
+      "width": 800,
+      "height": 1332
+    },
+    {
+      "key": "p028",
+      "index": 27,
+      "url": "fixtures/fx-night-archive/c2/p028.png",
+      "width": 800,
+      "height": 1209
+    },
+    {
+      "key": "p029",
+      "index": 28,
+      "url": "fixtures/fx-night-archive/c2/p029.png",
+      "width": 800,
+      "height": 1346
+    },
+    {
+      "key": "p030",
+      "index": 29,
+      "url": "fixtures/fx-night-archive/c2/p030.png",
+      "width": 800,
+      "height": 1223
+    },
+    {
+      "key": "p031",
+      "index": 30,
+      "url": "fixtures/fx-night-archive/c2/p031.png",
+      "width": 800,
+      "height": 1360
+    },
+    {
+      "key": "p032",
+      "index": 31,
+      "url": "fixtures/fx-night-archive/c2/p032.png",
+      "width": 800,
+      "height": 1237
+    },
+    {
+      "key": "p033",
+      "index": 32,
+      "url": "fixtures/fx-night-archive/c2/p033.png",
+      "width": 800,
+      "height": 1374
+    },
+    {
+      "key": "p034",
+      "index": 33,
+      "url": "fixtures/fx-night-archive/c2/p034.png",
+      "width": 800,
+      "height": 1251
+    },
+    {
+      "key": "p035",
+      "index": 34,
+      "url": "fixtures/fx-night-archive/c2/p035.png",
+      "width": 800,
+      "height": 1388
+    },
+    {
+      "key": "p036",
+      "index": 35,
+      "url": "fixtures/fx-night-archive/c2/p036.png",
+      "width": 800,
+      "height": 1265
+    },
+    {
+      "key": "p037",
+      "index": 36,
+      "url": "fixtures/fx-night-archive/c2/p037.png",
+      "width": 800,
+      "height": 1402
+    },
+    {
+      "key": "p038",
+      "index": 37,
+      "url": "fixtures/fx-night-archive/c2/p038.png",
+      "width": 800,
+      "height": 1279
+    },
+    {
+      "key": "p039",
+      "index": 38,
+      "url": "fixtures/fx-night-archive/c2/p039.png",
+      "width": 800,
+      "height": 1156
+    },
+    {
+      "key": "p040",
+      "index": 39,
+      "url": "fixtures/fx-night-archive/c2/p040.png",
+      "width": 800,
+      "height": 1293
+    },
+    {
+      "key": "p041",
+      "index": 40,
+      "url": "fixtures/fx-night-archive/c2/p041.png",
+      "width": 800,
+      "height": 1170
+    },
+    {
+      "key": "p042",
+      "index": 41,
+      "url": "fixtures/fx-night-archive/c2/p042.png",
+      "width": 800,
+      "height": 1307
+    },
+    {
+      "key": "p043",
+      "index": 42,
+      "url": "fixtures/fx-night-archive/c2/p043.png",
+      "width": 800,
+      "height": 1184
+    },
+    {
+      "key": "p044",
+      "index": 43,
+      "url": "fixtures/fx-night-archive/c2/p044.png",
+      "width": 800,
+      "height": 1321
+    },
+    {
+      "key": "p045",
+      "index": 44,
+      "url": "fixtures/fx-night-archive/c2/p045.png",
+      "width": 800,
+      "height": 1198
+    },
+    {
+      "key": "p046",
+      "index": 45,
+      "url": "fixtures/fx-night-archive/c2/p046.png",
+      "width": 800,
+      "height": 1335
+    },
+    {
+      "key": "p047",
+      "index": 46,
+      "url": "fixtures/fx-night-archive/c2/p047.png",
+      "width": 800,
+      "height": 1212
+    },
+    {
+      "key": "p048",
+      "index": 47,
+      "url": "fixtures/fx-night-archive/c2/p048.png",
+      "width": 800,
+      "height": 1349
+    },
+    {
+      "key": "p049",
+      "index": 48,
+      "url": "fixtures/fx-night-archive/c2/p049.png",
+      "width": 800,
+      "height": 1226
+    },
+    {
+      "key": "p050",
+      "index": 49,
+      "url": "fixtures/fx-night-archive/c2/p050.png",
+      "width": 800,
+      "height": 1363
+    },
+    {
+      "key": "p051",
+      "index": 50,
+      "url": "fixtures/fx-night-archive/c2/p051.png",
+      "width": 800,
+      "height": 1240
+    },
+    {
+      "key": "p052",
+      "index": 51,
+      "url": "fixtures/fx-night-archive/c2/p052.png",
+      "width": 800,
+      "height": 1377
+    },
+    {
+      "key": "p053",
+      "index": 52,
+      "url": "fixtures/fx-night-archive/c2/p053.png",
+      "width": 800,
+      "height": 1254
+    },
+    {
+      "key": "p054",
+      "index": 53,
+      "url": "fixtures/fx-night-archive/c2/p054.png",
+      "width": 800,
+      "height": 1391
+    },
+    {
+      "key": "p055",
+      "index": 54,
+      "url": "fixtures/fx-night-archive/c2/p055.png",
+      "width": 800,
+      "height": 1268
+    },
+    {
+      "key": "p056",
+      "index": 55,
+      "url": "fixtures/fx-night-archive/c2/p056.png",
+      "width": 800,
+      "height": 1405
+    },
+    {
+      "key": "p057",
+      "index": 56,
+      "url": "fixtures/fx-night-archive/c2/p057.png",
+      "width": 800,
+      "height": 1282
+    },
+    {
+      "key": "p058",
+      "index": 57,
+      "url": "fixtures/fx-night-archive/c2/p058.png",
+      "width": 800,
+      "height": 1159
+    },
+    {
+      "key": "p059",
+      "index": 58,
+      "url": "fixtures/fx-night-archive/c2/p059.png",
+      "width": 800,
+      "height": 1296
+    },
+    {
+      "key": "p060",
+      "index": 59,
+      "url": "fixtures/fx-night-archive/c2/p060.png",
+      "width": 800,
+      "height": 1173
+    },
+    {
+      "key": "p061",
+      "index": 60,
+      "url": "fixtures/fx-night-archive/c2/p061.png",
+      "width": 800,
+      "height": 1310
+    },
+    {
+      "key": "p062",
+      "index": 61,
+      "url": "fixtures/fx-night-archive/c2/p062.png",
+      "width": 800,
+      "height": 1187
+    },
+    {
+      "key": "p063",
+      "index": 62,
+      "url": "fixtures/fx-night-archive/c2/p063.png",
+      "width": 800,
+      "height": 1324
+    },
+    {
+      "key": "p064",
+      "index": 63,
+      "url": "fixtures/fx-night-archive/c2/p064.png",
+      "width": 800,
+      "height": 1201
+    },
+    {
+      "key": "p065",
+      "index": 64,
+      "url": "fixtures/fx-night-archive/c2/p065.png",
+      "width": 800,
+      "height": 1338
+    },
+    {
+      "key": "p066",
+      "index": 65,
+      "url": "fixtures/fx-night-archive/c2/p066.png",
+      "width": 800,
+      "height": 1215
+    },
+    {
+      "key": "p067",
+      "index": 66,
+      "url": "fixtures/fx-night-archive/c2/p067.png",
+      "width": 800,
+      "height": 1352
+    },
+    {
+      "key": "p068",
+      "index": 67,
+      "url": "fixtures/fx-night-archive/c2/p068.png",
+      "width": 800,
+      "height": 1229
+    },
+    {
+      "key": "p069",
+      "index": 68,
+      "url": "fixtures/fx-night-archive/c2/p069.png",
+      "width": 800,
+      "height": 1366
+    },
+    {
+      "key": "p070",
+      "index": 69,
+      "url": "fixtures/fx-night-archive/c2/p070.png",
+      "width": 800,
+      "height": 1243
+    },
+    {
+      "key": "p071",
+      "index": 70,
+      "url": "fixtures/fx-night-archive/c2/p071.png",
+      "width": 800,
+      "height": 1380
+    },
+    {
+      "key": "p072",
+      "index": 71,
+      "url": "fixtures/fx-night-archive/c2/p072.png",
+      "width": 800,
+      "height": 1257
+    },
+    {
+      "key": "p073",
+      "index": 72,
+      "url": "fixtures/fx-night-archive/c2/p073.png",
+      "width": 800,
+      "height": 1394
+    },
+    {
+      "key": "p074",
+      "index": 73,
+      "url": "fixtures/fx-night-archive/c2/p074.png",
+      "width": 800,
+      "height": 1271
+    },
+    {
+      "key": "p075",
+      "index": 74,
+      "url": "fixtures/fx-night-archive/c2/p075.png",
+      "width": 800,
+      "height": 1408
+    },
+    {
+      "key": "p076",
+      "index": 75,
+      "url": "fixtures/fx-night-archive/c2/p076.png",
+      "width": 800,
+      "height": 1285
+    },
+    {
+      "key": "p077",
+      "index": 76,
+      "url": "fixtures/fx-night-archive/c2/p077.png",
+      "width": 800,
+      "height": 1162
+    },
+    {
+      "key": "p078",
+      "index": 77,
+      "url": "fixtures/fx-night-archive/c2/p078.png",
+      "width": 800,
+      "height": 1299
+    },
+    {
+      "key": "p079",
+      "index": 78,
+      "url": "fixtures/fx-night-archive/c2/p079.png",
+      "width": 800,
+      "height": 1176
+    },
+    {
+      "key": "p080",
+      "index": 79,
+      "url": "fixtures/fx-night-archive/c2/p080.png",
+      "width": 800,
+      "height": 1313
+    },
+    {
+      "key": "p081",
+      "index": 80,
+      "url": "fixtures/fx-night-archive/c2/p081.png",
+      "width": 800,
+      "height": 1190
+    },
+    {
+      "key": "p082",
+      "index": 81,
+      "url": "fixtures/fx-night-archive/c2/p082.png",
+      "width": 800,
+      "height": 1327
+    },
+    {
+      "key": "p083",
+      "index": 82,
+      "url": "fixtures/fx-night-archive/c2/p083.png",
+      "width": 800,
+      "height": 1204
+    },
+    {
+      "key": "p084",
+      "index": 83,
+      "url": "fixtures/fx-night-archive/c2/p084.png",
+      "width": 800,
+      "height": 1341
+    },
+    {
+      "key": "p085",
+      "index": 84,
+      "url": "fixtures/fx-night-archive/c2/p085.png",
+      "width": 800,
+      "height": 1218
+    },
+    {
+      "key": "p086",
+      "index": 85,
+      "url": "fixtures/fx-night-archive/c2/p086.png",
+      "width": 800,
+      "height": 1355
+    },
+    {
+      "key": "p087",
+      "index": 86,
+      "url": "fixtures/fx-night-archive/c2/p087.png",
+      "width": 800,
+      "height": 1232
+    },
+    {
+      "key": "p088",
+      "index": 87,
+      "url": "fixtures/fx-night-archive/c2/p088.png",
+      "width": 800,
+      "height": 1369
+    },
+    {
+      "key": "p089",
+      "index": 88,
+      "url": "fixtures/fx-night-archive/c2/p089.png",
+      "width": 800,
+      "height": 1246
+    },
+    {
+      "key": "p090",
+      "index": 89,
+      "url": "fixtures/fx-night-archive/c2/p090.png",
+      "width": 800,
+      "height": 1383
+    },
+    {
+      "key": "p091",
+      "index": 90,
+      "url": "fixtures/fx-night-archive/c2/p091.png",
+      "width": 800,
+      "height": 1260
+    },
+    {
+      "key": "p092",
+      "index": 91,
+      "url": "fixtures/fx-night-archive/c2/p092.png",
+      "width": 800,
+      "height": 1397
+    },
+    {
+      "key": "p093",
+      "index": 92,
+      "url": "fixtures/fx-night-archive/c2/p093.png",
+      "width": 800,
+      "height": 1274
+    },
+    {
+      "key": "p094",
+      "index": 93,
+      "url": "fixtures/fx-night-archive/c2/p094.png",
+      "width": 800,
+      "height": 1151
+    },
+    {
+      "key": "p095",
+      "index": 94,
+      "url": "fixtures/fx-night-archive/c2/p095.png",
+      "width": 800,
+      "height": 1288
+    },
+    {
+      "key": "p096",
+      "index": 95,
+      "url": "fixtures/fx-night-archive/c2/p096.png",
+      "width": 800,
+      "height": 1165
+    },
+    {
+      "key": "p097",
+      "index": 96,
+      "url": "fixtures/fx-night-archive/c2/p097.png",
+      "width": 800,
+      "height": 1302
+    },
+    {
+      "key": "p098",
+      "index": 97,
+      "url": "fixtures/fx-night-archive/c2/p098.png",
+      "width": 800,
+      "height": 1179
+    },
+    {
+      "key": "p099",
+      "index": 98,
+      "url": "fixtures/fx-night-archive/c2/p099.png",
+      "width": 800,
+      "height": 1316
+    },
+    {
+      "key": "p100",
+      "index": 99,
+      "url": "fixtures/fx-night-archive/c2/p100.png",
+      "width": 800,
+      "height": 1193
+    },
+    {
+      "key": "p101",
+      "index": 100,
+      "url": "fixtures/fx-night-archive/c2/p101.png",
+      "width": 800,
+      "height": 1330
+    },
+    {
+      "key": "p102",
+      "index": 101,
+      "url": "fixtures/fx-night-archive/c2/p102.png",
+      "width": 800,
+      "height": 1207
+    },
+    {
+      "key": "p103",
+      "index": 102,
+      "url": "fixtures/fx-night-archive/c2/p103.png",
+      "width": 800,
+      "height": 1344
+    },
+    {
+      "key": "p104",
+      "index": 103,
+      "url": "fixtures/fx-night-archive/c2/p104.png",
+      "width": 800,
+      "height": 1221
+    },
+    {
+      "key": "p105",
+      "index": 104,
+      "url": "fixtures/fx-night-archive/c2/p105.png",
+      "width": 800,
+      "height": 1358
+    },
+    {
+      "key": "p106",
+      "index": 105,
+      "url": "fixtures/fx-night-archive/c2/p106.png",
+      "width": 800,
+      "height": 1235
+    },
+    {
+      "key": "p107",
+      "index": 106,
+      "url": "fixtures/fx-night-archive/c2/p107.png",
+      "width": 800,
+      "height": 1372
+    },
+    {
+      "key": "p108",
+      "index": 107,
+      "url": "fixtures/fx-night-archive/c2/p108.png",
+      "width": 800,
+      "height": 1249
+    },
+    {
+      "key": "p109",
+      "index": 108,
+      "url": "fixtures/fx-night-archive/c2/p109.png",
+      "width": 800,
+      "height": 1386
+    },
+    {
+      "key": "p110",
+      "index": 109,
+      "url": "fixtures/fx-night-archive/c2/p110.png",
+      "width": 800,
+      "height": 1263
+    },
+    {
+      "key": "p111",
+      "index": 110,
+      "url": "fixtures/fx-night-archive/c2/p111.png",
+      "width": 800,
+      "height": 1400
+    },
+    {
+      "key": "p112",
+      "index": 111,
+      "url": "fixtures/fx-night-archive/c2/p112.png",
+      "width": 800,
+      "height": 1277
+    },
+    {
+      "key": "p113",
+      "index": 112,
+      "url": "fixtures/fx-night-archive/c2/p113.png",
+      "width": 800,
+      "height": 1154
+    },
+    {
+      "key": "p114",
+      "index": 113,
+      "url": "fixtures/fx-night-archive/c2/p114.png",
+      "width": 800,
+      "height": 1291
+    },
+    {
+      "key": "p115",
+      "index": 114,
+      "url": "fixtures/fx-night-archive/c2/p115.png",
+      "width": 800,
+      "height": 1168
+    },
+    {
+      "key": "p116",
+      "index": 115,
+      "url": "fixtures/fx-night-archive/c2/p116.png",
+      "width": 800,
+      "height": 1305
+    },
+    {
+      "key": "p117",
+      "index": 116,
+      "url": "fixtures/fx-night-archive/c2/p117.png",
+      "width": 800,
+      "height": 1182
+    },
+    {
+      "key": "p118",
+      "index": 117,
+      "url": "fixtures/fx-night-archive/c2/p118.png",
+      "width": 800,
+      "height": 1319
+    },
+    {
+      "key": "p119",
+      "index": 118,
+      "url": "fixtures/fx-night-archive/c2/p119.png",
+      "width": 800,
+      "height": 1196
+    },
+    {
+      "key": "p120",
+      "index": 119,
+      "url": "fixtures/fx-night-archive/c2/p120.png",
+      "width": 800,
+      "height": 1333
+    }
+  ]
+}

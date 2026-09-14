@@ -1,0 +1,344 @@
+{
+  "id": "namicomi",
+  "name": "NamiComi",
+  "version": 1,
+  "base": "https://api.namicomi.com",
+  "hosts": [
+    "api.namicomi.com",
+    "uploads.namicomi.com"
+  ],
+  "defaultCategory": "webtoon",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 5,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/title/search",
+      "query": {
+        "limit": "32",
+        "includes[]": "cover_art"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 900,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "id"
+          },
+          "title": {
+            "path": "attributes.title.en"
+          },
+          "synopsis": {
+            "path": "attributes.description.en"
+          },
+          "category": {
+            "path": "attributes.type",
+            "transform": [
+              {
+                "map": {
+                  "manwha": "manhwa",
+                  "manhwa": "manhwa",
+                  "manhua": "manhua",
+                  "manga": "manga",
+                  "webtoon": "webtoon",
+                  "*": "webtoon"
+                }
+              }
+            ]
+          },
+          "status": {
+            "path": "attributes.publicationStatus",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "attributes.year"
+          },
+          "updatedAt": {
+            "path": "attributes.updatedAt",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "relationships[type=cover_art].attributes.fileName"
+          },
+          "cover": {
+            "template": "https://uploads.namicomi.com/covers/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/title/search",
+      "query": {
+        "limit": "32",
+        "includes[]": "cover_art"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "id"
+          },
+          "title": {
+            "path": "attributes.title.en"
+          },
+          "synopsis": {
+            "path": "attributes.description.en"
+          },
+          "category": {
+            "path": "attributes.type",
+            "transform": [
+              {
+                "map": {
+                  "manwha": "manhwa",
+                  "manhwa": "manhwa",
+                  "manhua": "manhua",
+                  "manga": "manga",
+                  "webtoon": "webtoon",
+                  "*": "webtoon"
+                }
+              }
+            ]
+          },
+          "status": {
+            "path": "attributes.publicationStatus",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "attributes.year"
+          },
+          "updatedAt": {
+            "path": "attributes.updatedAt",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "relationships[type=cover_art].attributes.fileName"
+          },
+          "cover": {
+            "template": "https://uploads.namicomi.com/covers/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/title/search",
+      "query": {
+        "limit": "32",
+        "includes[]": "cover_art",
+        "title": "{{rawQuery}}"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "id"
+          },
+          "title": {
+            "path": "attributes.title.en"
+          },
+          "synopsis": {
+            "path": "attributes.description.en"
+          },
+          "category": {
+            "path": "attributes.type",
+            "transform": [
+              {
+                "map": {
+                  "manwha": "manhwa",
+                  "manhwa": "manhwa",
+                  "manhua": "manhua",
+                  "manga": "manga",
+                  "webtoon": "webtoon",
+                  "*": "webtoon"
+                }
+              }
+            ]
+          },
+          "status": {
+            "path": "attributes.publicationStatus",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "attributes.year"
+          },
+          "updatedAt": {
+            "path": "attributes.updatedAt",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "relationships[type=cover_art].attributes.fileName"
+          },
+          "cover": {
+            "template": "https://uploads.namicomi.com/covers/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "/title/{{id}}",
+      "query": {
+        "includes[]": "cover_art"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "fields": {
+          "id": {
+            "path": "data.id"
+          },
+          "title": {
+            "path": "data.attributes.title.en"
+          },
+          "synopsis": {
+            "path": "data.attributes.description.en"
+          },
+          "category": {
+            "path": "data.attributes.type",
+            "transform": [
+              {
+                "map": {
+                  "manwha": "manhwa",
+                  "manhwa": "manhwa",
+                  "manhua": "manhua",
+                  "manga": "manga",
+                  "*": "webtoon"
+                }
+              }
+            ]
+          },
+          "status": {
+            "path": "data.attributes.publicationStatus",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "year": {
+            "path": "data.attributes.year"
+          },
+          "coverFile": {
+            "path": "data.relationships[type=cover_art].attributes.fileName"
+          },
+          "cover": {
+            "template": "https://uploads.namicomi.com/covers/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "chapters": {
+      "path": "/chapter",
+      "query": {
+        "titleId": "{{id}}",
+        "limit": "100"
+      },
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "list": "data",
+        "limit": 1000,
+        "fields": {
+          "id": {
+            "path": "id"
+          },
+          "number": {
+            "path": "attributes.chapter",
+            "transform": [
+              {
+                "number": true
+              }
+            ]
+          },
+          "name": {
+            "path": "attributes.name",
+            "transform": [
+              {
+                "default": ""
+              }
+            ]
+          },
+          "publishedAt": {
+            "path": "attributes.publishAt",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "/images/chapter/{{chapterId}}",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "json",
+        "list": "data.chapter.data",
+        "limit": 400,
+        "fields": {
+          "hash": {
+            "path": "data.chapter.hash",
+            "root": true
+          },
+          "file": {
+            "path": ""
+          },
+          "url": {
+            "template": "https://uploads.namicomi.com/data/{{hash}}/{{file}}"
+          }
+        }
+      }
+    }
+  }
+}

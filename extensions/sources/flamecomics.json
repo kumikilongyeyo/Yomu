@@ -1,0 +1,332 @@
+{
+  "id": "flamecomics",
+  "name": "Flame Comics",
+  "version": 2,
+  "base": "https://flamecomics.xyz",
+  "hosts": [
+    "flamecomics.xyz",
+    "cdn.flamecomics.xyz"
+  ],
+  "defaultCategory": "manhwa",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 4,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/browse",
+      "cacheTtl": 900,
+      "parse": {
+        "type": "json",
+        "extract": {
+          "regex": "<script id=\"__NEXT_DATA__\" type=\"application/json\">(.*?)</script>",
+          "group": 1
+        },
+        "list": "props.pageProps.series",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "series_id"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "genres": {
+            "path": "categories"
+          },
+          "author": {
+            "path": "author",
+            "transform": [
+              {
+                "first": true
+              }
+            ]
+          },
+          "year": {
+            "path": "year"
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "last_edit",
+            "transform": [
+              {
+                "date": "unix"
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "cover"
+          },
+          "cover": {
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/browse",
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "extract": {
+          "regex": "<script id=\"__NEXT_DATA__\" type=\"application/json\">(.*?)</script>",
+          "group": 1
+        },
+        "list": "props.pageProps.series",
+        "limit": 60,
+        "fields": {
+          "id": {
+            "path": "series_id"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "genres": {
+            "path": "categories"
+          },
+          "author": {
+            "path": "author",
+            "transform": [
+              {
+                "first": true
+              }
+            ]
+          },
+          "year": {
+            "path": "year"
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "updatedAt": {
+            "path": "last_edit",
+            "transform": [
+              {
+                "date": "unix"
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "cover"
+          },
+          "cover": {
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/browse",
+      "cacheTtl": 900,
+      "parse": {
+        "type": "json",
+        "extract": {
+          "regex": "<script id=\"__NEXT_DATA__\" type=\"application/json\">(.*?)</script>",
+          "group": 1
+        },
+        "list": "props.pageProps.series",
+        "limit": 400,
+        "filter": [
+          {
+            "field": "title",
+            "contains": "{{rawQuery}}"
+          }
+        ],
+        "fields": {
+          "id": {
+            "path": "series_id"
+          },
+          "title": {
+            "path": "title"
+          },
+          "synopsis": {
+            "path": "description"
+          },
+          "category": {
+            "path": "type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "genres": {
+            "path": "categories"
+          },
+          "author": {
+            "path": "author",
+            "transform": [
+              {
+                "first": true
+              }
+            ]
+          },
+          "year": {
+            "path": "year"
+          },
+          "status": {
+            "path": "status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "coverFile": {
+            "path": "cover"
+          },
+          "cover": {
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/{{coverFile}}"
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "/series/{{id}}",
+      "cacheTtl": 600,
+      "parse": {
+        "type": "json",
+        "extract": {
+          "regex": "<script id=\"__NEXT_DATA__\" type=\"application/json\">(.*?)</script>",
+          "group": 1
+        },
+        "fields": {
+          "id": {
+            "path": "props.pageProps.series.series_id"
+          },
+          "title": {
+            "path": "props.pageProps.series.title"
+          },
+          "altTitles": {
+            "path": "props.pageProps.series.altTitles"
+          },
+          "synopsis": {
+            "path": "props.pageProps.series.description"
+          },
+          "category": {
+            "path": "props.pageProps.series.type",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "genres": {
+            "path": "props.pageProps.series.tags"
+          },
+          "author": {
+            "path": "props.pageProps.series.author",
+            "transform": [
+              {
+                "first": true
+              }
+            ]
+          },
+          "year": {
+            "path": "props.pageProps.series.year"
+          },
+          "status": {
+            "path": "props.pageProps.series.status",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "cover": {
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/thumbnail.webp"
+          }
+        },
+        "chapters": {
+          "list": "props.pageProps.chapters",
+          "fields": {
+            "seriesId": {
+              "path": "series_id"
+            },
+            "token": {
+              "path": "token"
+            },
+            "id": {
+              "template": "{{seriesId}}/{{token}}"
+            },
+            "number": {
+              "path": "chapter",
+              "transform": [
+                {
+                  "number": true
+                }
+              ]
+            },
+            "name": {
+              "template": "Chapter {{number}}"
+            },
+            "publishedAt": {
+              "path": "release_date",
+              "transform": [
+                {
+                  "date": "unix"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "/series/{{chapterId}}",
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "json",
+        "extract": {
+          "regex": "<script id=\"__NEXT_DATA__\" type=\"application/json\">(.*?)</script>",
+          "group": 1
+        },
+        "list": "props.pageProps.chapter.images",
+        "limit": 400,
+        "fields": {
+          "name": {
+            "path": "name"
+          },
+          "url": {
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{chapterId}}/{{name}}"
+          }
+        }
+      }
+    }
+  }
+}
