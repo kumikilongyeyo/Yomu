@@ -178,7 +178,11 @@ async function fetchJson(url: string, ttl: number): Promise<unknown> {
   const response = await fetch(url, {
     headers: { Accept: 'application/json', 'User-Agent': 'Yomu-ExtensionRegistry/1' },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    cf: { cacheEverything: true, cacheTtl: ttl },
+    // A ttl of 0 means do not involve the edge cache at all. Passing
+    // cacheEverything with cacheTtl: 0 is not the same thing -- it still
+    // consults the cache, which is how a forced refresh ended up reading a
+    // stale index back.
+    ...(ttl > 0 ? { cf: { cacheEverything: true, cacheTtl: ttl } } : {}),
   } as RequestInit);
   if (!response.ok) throw new ExtensionError(`registry fetch returned HTTP ${response.status}`, undefined, 'registry');
   return response.json();
@@ -194,7 +198,14 @@ export async function loadRegistry(repoUrl: string | null | undefined, force = f
 
   if (repo) {
     try {
-      const raw = await fetchJson(`${repo}/index.json${force ? `?t=${Date.now()}` : ''}`, force ? 0 : INDEX_TTL_SECONDS);
+      // The index is 3KB and is the only thing that says a new adapter version
+      // exists, so it is never held at the edge. It used to be cached for
+      // fifteen minutes, with a forced refresh reading a cache-busted URL
+      // instead -- which meant the refresh fetched the new index while every
+      // ordinary read went on serving the cached old one, and "Check for
+      // updates" could not actually update anything. Per-isolate memoisation
+      // in routes-extensions is what keeps this cheap.
+      const raw = await fetchJson(`${repo}/index.json`, 0);
       if (isPlainObject(raw) && Array.isArray((raw as any).extensions)) {
         index = raw as unknown as RegistryIndex;
         source = 'repo';
