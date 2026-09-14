@@ -12,3 +12,7 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Local Source Forge dependencies/state
+tools/source-forge/node_modules/
+tools/source-forge/.cache/
