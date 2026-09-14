@@ -369,6 +369,7 @@ function toSummary(record: Record<string, unknown>, d: Descriptor): SeriesSummar
     ...(asStringArray(record.genres) ? { genres: asStringArray(record.genres)!.slice(0, 25) } : {}),
     ...(category ? { category } : {}),
     ...(asString(record.status) ? { status: asString(record.status)!.toLowerCase() } : {}),
+    ...(d.nsfw ? { nsfw: true } : {}),
     ...(asString(record.cover) ? { cover: asString(record.cover)! } : {}),
     ...(asNumber(record.updatedAt) ? { updatedAt: asNumber(record.updatedAt)! } : {}),
     ...(asStringArray(record.altTitles) ? { altTitles: asStringArray(record.altTitles)!.slice(0, 12) } : {}),

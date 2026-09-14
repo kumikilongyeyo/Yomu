@@ -21,6 +21,12 @@ export interface SeriesSummary {
   status?: string;
   cover?: string;
   updatedAt?: number;
+  /**
+   * Adult content, as the provider itself classifies it -- a MangaDex
+   * erotica/pornographic rating, or a source the registry marks nsfw. Carried
+   * separately from `category` because a title is both a manhwa and adult.
+   */
+  nsfw?: boolean;
   /** Cross-provider identity hints, used for deduplication. */
   altTitles?: string[];
   year?: number;

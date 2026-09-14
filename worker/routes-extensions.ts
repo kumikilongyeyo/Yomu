@@ -14,9 +14,9 @@ import { loadRegistry } from './extensions/registry';
 import type { LoadedExtension, RegistrySnapshot } from './extensions/registry';
 import { descriptorAllowsImage, seriesIdForChapter } from './extensions/runtime';
 import { allHealth, getHealth } from './extensions/health';
-import { mangadexProvider } from './providers/mangadex';
+import { createMangadexProvider, mangadexProvider } from './providers/mangadex';
 import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from './providers/suwayomi';
-import { DEFAULT_RANK, dedupe, fromAll, rankByRelevance, withFallback } from './catalog';
+import { DEFAULT_RANK, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
 import type { SeriesSummary } from './extensions/types';
 
@@ -101,11 +101,18 @@ const proxied = (origin: string, extId: string, s: SeriesSummary): SeriesSummary
 /* --- provider assembly ------------------------------------------------- */
 
 /** Everything Yomu can read from right now, ranked. */
-export async function buildProviders(env: Env, origin: string, includeSuwayomi = true): Promise<Provider[]> {
+export async function buildProviders(
+  env: Env,
+  origin: string,
+  includeSuwayomi = true,
+  adult = false,
+): Promise<Provider[]> {
   const providers: Provider[] = [];
   const snapshot = await registry(env);
 
   for (const loaded of snapshot.loaded) {
+    // An adult source contributes nothing at all while the gate is closed.
+    if (loaded.entry.nsfw && !adult) continue;
     providers.push({
       id: `ext:${loaded.entry.id}`,
       name: loaded.entry.name,
@@ -120,7 +127,7 @@ export async function buildProviders(env: Env, origin: string, includeSuwayomi =
     name: 'MangaDex',
     kind: 'native',
     rank: DEFAULT_RANK.native,
-    extension: mangadexProvider,
+    extension: adult ? createMangadexProvider(true) : mangadexProvider,
   });
 
   // Suwayomi is strictly optional: unconfigured or offline simply means fewer
@@ -272,6 +279,27 @@ export async function handleExtensions(request: Request, env: Env, url: URL): Pr
   }
 }
 
+/**
+ * Another name for the same title, for a second search round.
+ *
+ * Prefers a name the reader did not type that is written in the Latin
+ * alphabet, because that is the spelling the other sources will have indexed:
+ * a search for "Na Honjaman Level-Up" yields "Solo Leveling", which is how
+ * every scanlation site files it. Null when there is nothing new to try.
+ */
+function otherSpelling(entry: { title: string; altTitles?: string[] }, query: string): string | null {
+  const typed = normalizeTitle(query);
+  for (const name of [entry.title, ...(entry.altTitles ?? [])]) {
+    if (!name) continue;
+    const latin = /^[ -~]+$/.test(name) && /[A-Za-z]/.test(name);
+    if (!latin) continue;
+    const key = normalizeTitle(name);
+    if (!key || key === typed) continue;
+    return name;
+  }
+  return null;
+}
+
 /* --- catalog routes ---------------------------------------------------- */
 
 export async function handleCatalog(request: Request, env: Env, url: URL): Promise<Response> {
@@ -305,31 +333,69 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
     const kind = listing[1] as 'popular' | 'latest' | 'search';
     const q = url.searchParams.get('q')?.trim() ?? '';
     if (kind === 'search' && !q) return json({ series: [] });
+    const adult = url.searchParams.get('adult') === '1';
 
     // Suwayomi is excluded from broad listings: it is a fallback, and fanning
     // out to a home server for a browse grid is slow for little gain.
-    const providers = (await buildProviders(env, origin, false)).filter((p) => p.kind !== 'suwayomi');
-    const results = await fromAll(providers, (p) =>
-      kind === 'search' ? p.extension.search(q, 1) : kind === 'latest' ? p.extension.latest(1) : p.extension.popular(1),
-    );
+    const providers = (await buildProviders(env, origin, false, adult)).filter((p) => p.kind !== 'suwayomi');
 
-    const merged = dedupe(
-      results.map(({ provider, value }) => ({
-        provider,
-        series: value.series.map((s) =>
-          provider.kind === 'extension' ? proxied(origin, provider.id.replace(/^ext:/, ''), s) : s,
-        ),
-      })),
-    );
+    type Batch = Array<{ provider: Provider; value: { series: SeriesSummary[] } }>;
+    const run = (query: string): Promise<Batch> =>
+      fromAll(providers, (p) =>
+        kind === 'search'
+          ? p.extension.search(query, 1)
+          : kind === 'latest'
+            ? p.extension.latest(1)
+            : p.extension.popular(1),
+      );
+
+    const collect = (batches: Batch[]) =>
+      dedupe(
+        batches.flat().map(({ provider, value }) => ({
+          provider,
+          series: value.series.map((s) =>
+            provider.kind === 'extension' ? proxied(origin, provider.id.replace(/^ext:/, ''), s) : s,
+          ),
+        })),
+      );
+
+    const results = await run(q);
+    let merged = collect([results]);
     // Providers answer in whatever order they finish, so a search has to be
     // re-ranked against the query or one source's loose matches bury the title.
-    const ordered = kind === 'search' ? rankByRelevance(merged, q) : merged;
+    let ordered = kind === 'search' ? rankByRelevance(merged, q) : merged;
+    let alsoSearched: string | null = null;
+
+    if (kind === 'search') {
+      // Cross-language search. Only MangaDex indexes a title's other spellings,
+      // so a romanised Japanese, Korean or Chinese query finds the work but
+      // comes back with MangaDex as its only source -- the scanlation sites
+      // carry it under its English name and never saw the query. When the best
+      // match is that thinly corroborated, ask again under the name it is filed
+      // under elsewhere and merge both rounds.
+      const top = ordered[0];
+      if (top && top.providers.length * 2 < providers.length && relevance(top, q) >= 0.75) {
+        const alias = otherSpelling(top, q);
+        if (alias) {
+          merged = collect([results, await run(alias)]);
+          // Still ranked against what was typed, not against the alias.
+          ordered = rankByRelevance(merged, q);
+          alsoSearched = alias;
+        }
+      }
+    }
+
+    // Belt and braces: MangaDex is already filtered by rating and adult
+    // extensions never joined, but a source that self-reports nsfw per title
+    // must not slip through a merge either.
+    if (!adult) ordered = ordered.filter((e) => !e.nsfw);
 
     return json(
       {
         series: ordered,
         providersTried: results.length,
         providersTotal: providers.length,
+        ...(alsoSearched ? { alsoSearched } : {}),
       },
       200,
       kind === 'search' ? 'private, max-age=120' : 'private, max-age=300',

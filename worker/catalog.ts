@@ -198,6 +198,8 @@ export function dedupe(
     entry.synopsis ||= s.synopsis;
     entry.cover ??= s.cover;
     entry.category ??= s.category;
+    // One provider rating a title adult is enough for the whole merged entry.
+    if (s.nsfw) entry.nsfw = true;
     entry.status ??= s.status;
     entry.year ??= s.year;
     entry.anilistId ??= s.anilistId;

@@ -71,13 +71,24 @@ function toSummary(item: any): SeriesSummary {
     ...(Number.isFinite(year) && year > 0 ? { year } : {}),
     ...(alts.length ? { altTitles: alts } : {}),
     ...(attr.updatedAt && Date.parse(attr.updatedAt) ? { updatedAt: Date.parse(attr.updatedAt) } : {}),
+    ...(/^(erotica|pornographic)$/i.test(String(attr.contentRating ?? '')) ? { nsfw: true } : {}),
     mangadexId: String(item.id),
   };
 }
 
-const LIST_QS = 'includes[]=cover_art&includes[]=author&contentRating[]=safe&contentRating[]=suggestive&limit=32';
+/**
+ * MangaDex rates every title, so the adult gate here is a filter rather than a
+ * guess: with the gate closed Yomu asks only for safe and suggestive, and the
+ * erotica and pornographic ratings never leave MangaDex.
+ */
+const RATINGS_SAFE = '&contentRating[]=safe&contentRating[]=suggestive';
+const RATINGS_ADULT = RATINGS_SAFE + '&contentRating[]=erotica&contentRating[]=pornographic';
+const listQs = (adult: boolean) =>
+  `includes[]=cover_art&includes[]=author&limit=32${adult ? RATINGS_ADULT : RATINGS_SAFE}`;
 
-export const mangadexProvider: YomuExtension = {
+export function createMangadexProvider(adult = false): YomuExtension {
+  const LIST_QS = listQs(adult);
+  const provider: YomuExtension = {
   id: 'mangadex',
   name: 'MangaDex',
 
@@ -99,12 +110,12 @@ export const mangadexProvider: YomuExtension = {
   async getSeries(id: string): Promise<Series> {
     const data = await md(`/manga/${encodeURIComponent(id)}?includes[]=cover_art&includes[]=author&includes[]=artist`);
     if (!data?.data) throw new ExtensionError('MangaDex could not load that title.', 'mangadex', 'parse');
-    return { ...toSummary(data.data), chapters: await mangadexProvider.getChapters(id) };
+    return { ...toSummary(data.data), chapters: await provider.getChapters(id) };
   },
 
   async getChapters(id: string): Promise<Chapter[]> {
     const qs =
-      'translatedLanguage[]=en&order[chapter]=asc&limit=500&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica';
+      `translatedLanguage[]=en&order[chapter]=asc&limit=500${adult ? RATINGS_ADULT : RATINGS_SAFE}`;
     const data = await md(`/manga/${encodeURIComponent(id)}/feed?${qs}`);
     return (data.data ?? [])
       .map((c: any, index: number) => {
@@ -129,4 +140,9 @@ export const mangadexProvider: YomuExtension = {
     if (!base || !hash || !files.length) throw new ExtensionError('That chapter has no readable pages.', 'mangadex', 'parse');
     return files.map((file, index) => ({ key: `${chapterId}-${index}`, index, url: `${base}/data/${hash}/${file}` }));
   },
-};
+  };
+  return provider;
+}
+
+/** The safe-by-default instance. Adult listings need createMangadexProvider(true). */
+export const mangadexProvider: YomuExtension = createMangadexProvider(false);
