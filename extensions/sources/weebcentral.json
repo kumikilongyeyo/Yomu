@@ -1,13 +1,15 @@
 {
   "id": "weebcentral",
   "name": "Weeb Central",
-  "version": 2,
+  "version": 3,
   "base": "https://weebcentral.com",
   "hosts": [
     "weebcentral.com",
     "temp.compsci88.com",
-    "scans-hot.planeptune.us",
-    "planeptune.us"
+    "planeptune.us",
+    "lastation.us",
+    "lowee.us",
+    "compsci88.com"
   ],
   "endpoints": {
     "popular": {

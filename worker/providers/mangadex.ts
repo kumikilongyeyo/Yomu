@@ -114,9 +114,29 @@ export function createMangadexProvider(adult = false): YomuExtension {
   },
 
   async getChapters(id: string): Promise<Chapter[]> {
-    const qs =
-      `translatedLanguage[]=en&order[chapter]=asc&limit=500${adult ? RATINGS_ADULT : RATINGS_SAFE}`;
-    const data = await md(`/manga/${encodeURIComponent(id)}/feed?${qs}`);
+    // 500 is MangaDex's page size, not a title's chapter count. Read once and a
+    // long-running series is silently truncated -- Martial Peak has 3,918
+    // English chapters and came back with 500, so the newest 3,418 simply did
+    // not exist as far as Yomu was concerned. Paged until the feed runs out,
+    // with a ceiling so one pathological title cannot spend the whole request
+    // budget.
+    const PAGE = 500;
+    const MAX_CHAPTERS = 5000;
+    const rows: any[] = [];
+    for (let offset = 0; offset < MAX_CHAPTERS; offset += PAGE) {
+      const qs =
+        `translatedLanguage[]=en&order[chapter]=asc&limit=${PAGE}&offset=${offset}` +
+        (adult ? RATINGS_ADULT : RATINGS_SAFE);
+      const page = await md(`/manga/${encodeURIComponent(id)}/feed?${qs}`);
+      const batch = page.data ?? [];
+      rows.push(...batch);
+      if (batch.length < PAGE) break;
+      // `total` is authoritative when present; without it the short page above
+      // is what ends the loop.
+      if (Number.isFinite(page.total) && rows.length >= page.total) break;
+    }
+
+    const data = { data: rows };
     return (data.data ?? [])
       .map((c: any, index: number) => {
         const attr = c.attributes ?? {};

@@ -1,11 +1,11 @@
 {
   "schema": "yomu.extension-index/1",
-  "updatedAt": "2026-09-14T12:32:17Z",
+  "updatedAt": "2026-09-14T14:23:17Z",
   "extensions": [
     {
       "id": "weebcentral",
       "name": "Weeb Central",
-      "version": 2,
+      "version": 3,
       "language": "en",
       "content": [
         "manga",
@@ -16,8 +16,10 @@
       "hosts": [
         "weebcentral.com",
         "temp.compsci88.com",
-        "scans-hot.planeptune.us",
-        "planeptune.us"
+        "planeptune.us",
+        "lastation.us",
+        "lowee.us",
+        "compsci88.com"
       ],
       "capabilities": {
         "search": true,
