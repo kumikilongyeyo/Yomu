@@ -153,6 +153,7 @@ const PAGES_DIR = 'dist-app';
 const ASSETS = [
   { file: 'yomu-overrides.css', tag: '<link rel="stylesheet" href="/yomu-overrides.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-shell.js', tag: '<script src="/yomu-shell.js" defer></scr' + 'ipt>' },
 ];
 
 for (const { file: assetFile } of ASSETS) {

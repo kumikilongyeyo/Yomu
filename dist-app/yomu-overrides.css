@@ -108,6 +108,253 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Home and Library: the kit's tile grid
+ *
+ * The app already renders what the kit describes -- a featured hero carousel,
+ * filter segments, a cover grid with freshness badges and a save button. It
+ * differs in shape, not in structure: its tile is a cover with a separate card
+ * footer beneath, where the kit's is a 2:3 cover with the copy laid over a
+ * gradient. That is a restyle, so it is done here rather than waiting on the
+ * Expo source.
+ *
+ * The grid, hero and tiles are all plain DOM with semantic class names, and
+ * none of these selectors touch anything minified.
+ * ------------------------------------------------------------------ */
+
+/* Six 2:3 tiles need more than the app's 1120px column. */
+.g-main {
+  max-width: 1440px;
+}
+
+/* "Six desktop columns, 12px gaps. Four columns below 1100px." */
+.home-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px) {
+  .home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  /* "Cover grid stays two columns." */
+  .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* "Hero 208px with 12px radius" / "Mobile hero 176px."
+   The slide carries both .hero and .hero-slide, and .hero sets its own height
+   plus a min-height of 240px on small screens -- which would floor anything
+   set here. Matching both classes outranks it, and min-height is cleared so
+   the height actually applies. */
+.hero.hero-slide {
+  height: 208px;
+  min-height: 0;
+  border-radius: 12px;
+}
+@media (max-width: 767px) {
+  .hero.hero-slide { height: 176px; min-height: 0; }
+
+  /* On a phone the app flows the hero copy below the art with 120px of top
+     padding, which needs a hero far taller than 176px and simply clipped the
+     title. The kit anchors the copy over the artwork instead, and scales it:
+     "Hero 176px ... h1 21px, max-width 235px, p 12px". */
+  .hero__copy {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    right: 16px;
+    padding: 0;
+    max-width: 260px;
+  }
+  /* The kit's mobile hero carries title, one line and the CTA -- no source
+     kicker, which is what the 18px of overflow was. The source is on the
+     title card anyway. */
+  .hero__kicker { display: none; }
+  .hero__title { font-size: 19px; margin: 0 0 4px; }
+  .hero__line { font-size: 12px; -webkit-line-clamp: 1; margin-bottom: 9px; }
+  .hero__acts button { min-height: 44px; }
+  /* The app's mobile shade is top-to-bottom; over anchored copy it wants to
+     darken the left and the foot, as the kit's hero stack does. */
+  .hero__shade {
+    background:
+      linear-gradient(90deg, #05070bf2 4%, #05070ba8 52%, #05070b30 86%),
+      linear-gradient(#0000 40%, #05070bd9);
+  }
+}
+
+/* The tile becomes the cover, with everything laid over it. */
+.tile-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  background: #172531;
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.tile-card__open {
+  position: absolute;
+  inset: 0;
+}
+.tile-card__cover {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  border-bottom: 0;
+}
+/* Softly blurred dark lower edge, then the sharp gradient the copy sits on.
+   Both hang off the cover so they stay under .freshness and the footer. */
+.tile-card__cover::before {
+  content: '';
+  position: absolute;
+  inset: 53% -12px -12px;
+  background: #101a25b3;
+  filter: blur(18px);
+  pointer-events: none;
+}
+.tile-card__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #07101922 0, transparent 40%, #0c151b70 66%, #0c151bf5 100%);
+  pointer-events: none;
+}
+.tile-card__footer {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 0;
+  gap: 4px;
+  z-index: 1;
+}
+.tile-card__title {
+  font-size: 12px;
+  line-height: 1.3;
+}
+@media (max-width: 767px) {
+  .tile-card__title { font-size: 13px; }
+}
+.tile-card__source,
+.tile-card__chapter {
+  font-size: 11px !important;
+}
+/* Chapter count and status read as chrome over artwork; the title and its
+   source are what the grid is for. */
+.tile-card__status {
+  display: none;
+}
+
+/* The save button is the kit's bookmark: top-right, clear of the badge. */
+.tile-card__save {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  top: 6px;
+  right: 6px;
+}
+@media (max-width: 767px) {
+  /* "Keep a 44px interactive hit target on mobile." */
+  .tile-card__save { width: 44px; height: 44px; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Status tags
+ *
+ * The app draws freshness as a coloured text pill. These are the kit's
+ * editorial shapes, set as a background at the asset's own proportions --
+ * height fixed, width from aspect-ratio, so neither axis is stretched. The
+ * label stays in the accessibility tree; only its rendering is replaced.
+ * ------------------------------------------------------------------ */
+.freshness {
+  height: 22px;
+  padding: 0;
+  border-radius: 0;
+  max-width: calc(100% - 52px);
+  background: none no-repeat left center / contain !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  overflow: visible;
+}
+.freshness--new {
+  aspect-ratio: 152 / 32;
+  background-image: url('/tags/new-chapter.svg') !important;
+}
+.freshness--updated {
+  aspect-ratio: 114 / 32;
+  background-image: url('/tags/hottest.svg') !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * Desktop sidebar
+ *
+ * The kit puts a 184px rail on desktop and keeps a bottom bar for phones.
+ * Yomu uses its floating dock at every width, so above 1100px the rail takes
+ * over and the dock stands down. The markup is injected by yomu-shell.js.
+ * ------------------------------------------------------------------ */
+#yomu-sidebar { display: none; }
+
+@media (min-width: 1101px) {
+  #yomu-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: 184px;
+    padding: 26px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-right: 1px solid var(--line);
+    background: linear-gradient(120deg, #34445450, #15232b99);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .yomu-sidebar__brand {
+    height: 34px;
+    margin: 0 10px 24px;
+    background: url('/brand/yomu-wordmark-ivory.svg') left center / contain no-repeat;
+  }
+  :root[data-mode='light'] .yomu-sidebar__brand {
+    background-image: url('/brand/yomu-wordmark-ink.svg');
+  }
+
+  .yomu-sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .yomu-sidebar__item svg { width: 19px; height: 19px; flex: none; }
+  .yomu-sidebar__item:hover { background: #a9bcc61a; color: var(--text); }
+  .yomu-sidebar__item.is-active {
+    background: #a9bcc627;
+    border: 1px solid var(--line);
+    box-shadow: inset 3px 0 var(--accent);
+    color: var(--text);
+  }
+  .yomu-sidebar__item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .yomu-sidebar__note {
+    margin: auto 12px 0;
+    color: var(--faint);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* The rail replaces the dock at this width, and the shell moves over.
+     The rail carries the wordmark, so the masthead should not repeat it. */
+  .dock { display: none; }
+  .masthead > a[aria-label="Yomu home"] { visibility: hidden; }
+  .g-app { padding-left: 184px; }
+  .g-main { padding-bottom: 40px; }
+}
+
+/* ------------------------------------------------------------------ *
  * Sources screen
  *
  * Each source occupied three stacked rows: name and status, then a
