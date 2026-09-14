@@ -77,6 +77,20 @@
     .tags img{height:22px;width:auto;max-width:100%;object-fit:contain;object-position:left top}
 
 
+    /* --- the resting state: history and feed rows --- */
+    .lede{color:var(--muted);font-size:13.5px;line-height:1.6;margin:16px 2px 0;max-width:640px}
+    #suggest h2{font-size:15px;font-weight:650;margin:22px 2px 10px;letter-spacing:-.01em}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{display:inline-flex;align-items:center;border:1px solid var(--line);
+          border-radius:999px;background:var(--surface);overflow:hidden}
+    .chip:hover{border-color:var(--accentLine)}
+    .chip__go{border:0;background:none;color:var(--text);font:inherit;font-size:13px;
+              padding:9px 4px 9px 14px;cursor:pointer;max-width:240px;
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chip__x{border:0;background:none;color:var(--faint);font:inherit;font-size:15px;
+             line-height:1;padding:9px 12px 9px 6px;cursor:pointer}
+    .chip__x:hover{color:var(--bad)}
+    .feed .grid{margin-top:0}
     .empty{color:var(--muted);font-size:14px;line-height:1.6;padding:32px 4px;text-align:center}
     .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:6px}
 
@@ -114,10 +128,12 @@
   <p class="meta" id="meta"></p>
   <div id="results" class="grid"></div>
 
-  <div class="empty" id="empty">
-    <b>One title, every source.</b>
-    Search by English, or by a romanised Japanese, Korean or Chinese name —
-    “Kimetsu no Yaiba” finds Demon Slayer wherever it is carried.
+  <div id="suggest">
+    <p class="lede">Search by English, or by a romanised Japanese, Korean or Chinese name —
+      “Kimetsu no Yaiba” finds Demon Slayer wherever it is carried.</p>
+    <section id="history" class="hidden"></section>
+    <section id="feed-popular" class="feed hidden"></section>
+    <section id="feed-latest" class="feed hidden"></section>
   </div>
 </main>
 
@@ -205,11 +221,71 @@
     return out;
   }
 
+  /** One result tile. Shared by search results and the suggestion rows. */
+  function buildTile(entry, have) {
+    // Readable first, then enabled on this device; the catalog already put
+    // the best-ranked provider first within each group.
+    const rank = (p) => {
+      const id = appSourceId(p.id);
+      return (canRead(id) ? 0 : 2) + (have.has(id) ? 0 : 1);
+    };
+    const ranked = [...entry.providers].sort((a, b) => rank(a) - rank(b));
+    const best = ranked[0];
+    const readable = canRead(appSourceId(best.id));
+
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'tile';
+
+    const art = document.createElement('div');
+    art.className = 'tile-art';
+    if (entry.cover) {
+      const img = document.createElement('img');
+      img.src = entry.cover;
+      // The adjacent title supplies the accessible name.
+      img.alt = '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      art.append(img);
+    }
+
+    const tags = document.createElement('div');
+    tags.className = 'tags';
+    for (const badge of badgesFor(entry)) {
+      const img = document.createElement('img');
+      img.src = badge.src;
+      img.alt = badge.alt;
+      tags.append(img);
+    }
+
+    const copy = document.createElement('div');
+    copy.className = 'tile-copy';
+    const title = document.createElement('span');
+    title.className = 't';
+    title.textContent = entry.title;
+    const sources = document.createElement('small');
+    sources.textContent = ranked.map((p) => p.name).join(' · ');
+    sources.title = sources.textContent;
+    copy.append(title, sources);
+
+    tile.append(art, tags, copy);
+
+    if (readable) {
+      tile.addEventListener('click', () => open(best.seriesId, appSourceId(best.id)));
+      tile.title = `${entry.title} — read on ${best.name}`;
+    } else {
+      tile.disabled = true;
+      tile.title = `${entry.title} — no enabled source can serve this title yet`;
+    }
+    return tile;
+  }
+
   function render(payload, query) {
     const results = $('results');
     const entries = payload.series ?? [];
     results.textContent = '';
-    $('empty').classList.toggle('hidden', entries.length > 0 || !!query);
+    // Suggestions are the resting state; results replace them.
+    $('suggest').classList.toggle('hidden', !!query);
 
     if (query && !entries.length) {
       $('meta').innerHTML = `Nothing for <b>${escapeHtml(query)}</b> across ${payload.providersTotal ?? 0} sources.`;
@@ -225,66 +301,101 @@
       `${payload.providersTried ?? 0} of ${payload.providersTotal ?? 0} sources${alsoLine}`;
 
     const have = enabledSourceIds();
+    for (const entry of entries) results.append(buildTile(entry, have));
+  }
 
-    for (const entry of entries) {
-      // Readable first, then enabled on this device; the catalog already put
-      // the best-ranked provider first within each group.
-      const rank = (p) => {
-        const id = appSourceId(p.id);
-        return (canRead(id) ? 0 : 2) + (have.has(id) ? 0 : 1);
-      };
-      const ranked = [...entry.providers].sort((a, b) => rank(a) - rank(b));
-      const best = ranked[0];
-      const readable = canRead(appSourceId(best.id));
+  /* --- the resting state ------------------------------------------------- *
+   *
+   * An empty search page is a dead end, so it carries what you searched before
+   * and two rows drawn from the catalog's own feeds. These are real orderings,
+   * not invented ones: "popular" is each provider's own popular endpoint --
+   * MangaDex by follower count, Comick by follows -- and "updated" is ordered
+   * by the latest uploaded chapter. After merging, neither is a global ranking,
+   * so they are labelled for what they are.
+   * -------------------------------------------------------------------- */
 
-      const tile = document.createElement('button');
-      tile.type = 'button';
-      tile.className = 'tile';
+  const HISTORY_KEY = 'yomu.v1.searchHistory';
+  const HISTORY_MAX = 8;
 
-      const art = document.createElement('div');
-      art.className = 'tile-art';
-      if (entry.cover) {
-        const img = document.createElement('img');
-        img.src = entry.cover;
-        // The adjacent title supplies the accessible name, and describing a
-        // concealed cover would defeat concealing it.
-        img.alt = '';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        art.append(img);
-      }
+  const history = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter((s) => typeof s === 'string').slice(0, HISTORY_MAX) : [];
+    } catch { return []; }
+  };
+  const remember = (query) => {
+    try {
+      const next = [query, ...history().filter((h) => h.toLowerCase() !== query.toLowerCase())];
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next.slice(0, HISTORY_MAX)));
+    } catch {}
+  };
+  const forget = (query) => {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history().filter((h) => h !== query)));
+    } catch {}
+  };
 
-      const tags = document.createElement('div');
-      tags.className = 'tags';
-      for (const badge of badgesFor(entry)) {
-        const img = document.createElement('img');
-        img.src = badge.src;
-        img.alt = badge.alt;
-        tags.append(img);
-      }
+  function renderHistory() {
+    const box = $('history');
+    const items = history();
+    box.textContent = '';
+    box.classList.toggle('hidden', !items.length);
+    if (!items.length) return;
 
-      const copy = document.createElement('div');
-      copy.className = 'tile-copy';
-      const title = document.createElement('span');
-      title.className = 't';
-      title.textContent = entry.title;
-      const sources = document.createElement('small');
-      sources.textContent = ranked.map((p) => p.name).join(' · ');
-      sources.title = sources.textContent;
-      copy.append(title, sources);
+    const heading = document.createElement('h2');
+    heading.textContent = 'Recent searches';
+    box.append(heading);
 
-      tile.append(art, tags, copy);
+    const row = document.createElement('div');
+    row.className = 'chips';
+    for (const item of items) {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
 
-      if (readable) {
-        tile.addEventListener('click', () => open(best.seriesId, appSourceId(best.id)));
-        tile.title = `${entry.title} — read on ${best.name}`;
-      } else {
-        tile.disabled = true;
-        tile.title = `${entry.title} — no enabled source can serve this title yet`;
-      }
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'chip__go';
+      go.textContent = item;
+      go.addEventListener('click', () => { $('q').value = item; search(item); });
 
-      results.append(tile);
+      const drop = document.createElement('button');
+      drop.type = 'button';
+      drop.className = 'chip__x';
+      drop.setAttribute('aria-label', `Forget "${item}"`);
+      drop.textContent = '×';
+      drop.addEventListener('click', () => { forget(item); renderHistory(); });
+
+      chip.append(go, drop);
+      row.append(chip);
     }
+    box.append(row);
+  }
+
+  async function renderFeeds() {
+    const have = enabledSourceIds();
+    const rows = [
+      { id: 'feed-popular', title: 'Popular on your sources', url: '/api/catalog/popular' },
+      { id: 'feed-latest', title: 'New chapters', url: '/api/catalog/latest' },
+    ];
+
+    await Promise.all(rows.map(async ({ id, title, url }) => {
+      const box = $(id);
+      try {
+        const payload = await (await fetch(url, { signal: AbortSignal.timeout(25000) })).json();
+        const entries = (payload.series || []).slice(0, 12);
+        if (!entries.length) return;
+        box.textContent = '';
+        const heading = document.createElement('h2');
+        heading.textContent = title;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        for (const entry of entries) grid.append(buildTile(entry, have));
+        box.append(heading, grid);
+        box.classList.remove('hidden');
+      } catch {
+        // A feed that will not load simply is not offered.
+      }
+    }));
   }
 
   const escapeHtml = (s) =>
@@ -302,7 +413,8 @@
       inFlight?.abort();
       $('wrap').classList.remove('busy');
       render({ series: [] }, '');
-      history.replaceState(null, '', '/find.html');
+      renderHistory();
+      window.history.replaceState(null, '', '/find.html');
       return;
     }
 
@@ -310,7 +422,7 @@
     const controller = new AbortController();
     inFlight = controller;
     $('wrap').classList.add('busy');
-    history.replaceState(null, '', `/find.html?q=${encodeURIComponent(query)}`);
+    window.history.replaceState(null, '', `/find.html?q=${encodeURIComponent(query)}`);
 
     try {
       // Never adult. 18+ lives on its own page, behind its own gate; nothing
@@ -321,6 +433,7 @@
       if (controller.signal.aborted || query !== lastQuery) return;
       if (!res.ok) throw new Error(payload?.error || `HTTP ${res.status}`);
       render(payload, query);
+      if (payload.series?.length) { remember(query); renderHistory(); }
     } catch (err) {
       if (err?.name === 'AbortError') return;
       $('results').textContent = '';
@@ -353,7 +466,9 @@
   /* --- boot -------------------------------------------------------------- */
 
   await learnCapabilities();
+  renderHistory();
   const initial = new URLSearchParams(location.search).get('q') ?? '';
+  if (!initial) renderFeeds();
   if (initial) { $('q').value = initial; search(initial); }
   else if (matchMedia('(min-width: 768px)').matches) $('q').focus();
 })();
