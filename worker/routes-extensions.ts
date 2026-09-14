@@ -146,13 +146,21 @@ export async function buildProviders(
     try {
       const sources = await getSuwayomiSources(env);
       const image = (path: string) => `${origin}/api/suwayomi/image?path=${encodeURIComponent(path)}`;
+      // Suwayomi rates a source, not a work: MIXED only means the source
+      // carries a range, so only an explicitly adult source is gated.
+      const sourceIsAdult = (s: any) => /nsfw|adult|explicit|porn/i.test(String(s?.contentWarning ?? ''));
+
       for (const source of sources.filter((s: any) => s?.id != null && (s.lang === 'en' || s.lang === 'all')).slice(0, 30)) {
+        const nsfw = sourceIsAdult(source);
+        // An adult bridge source contributes nothing while the gate is closed,
+        // exactly like an adult extension.
+        if (nsfw && !adult) continue;
         providers.push({
           id: `suwayomi:${source.id}`,
           name: `${source.displayName || source.name} (Suwayomi)`,
           kind: 'suwayomi',
           rank: DEFAULT_RANK.suwayomi,
-          extension: suwayomiSourceProvider(env, String(source.id), String(source.displayName || source.name), image),
+          extension: suwayomiSourceProvider(env, String(source.id), String(source.displayName || source.name), image, nsfw),
         });
       }
     } catch {
@@ -345,9 +353,13 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
     if (kind === 'search' && !q) return json({ series: [] });
     const adult = url.searchParams.get('adult') === '1';
 
-    // Suwayomi is excluded from broad listings: it is a fallback, and fanning
-    // out to a home server for a browse grid is slow for little gain.
-    const providers = (await buildProviders(env, origin, false, adult)).filter((p) => p.kind !== 'suwayomi');
+    // Suwayomi is excluded from ordinary listings: it is a fallback, and
+    // fanning out to a home server for a browse grid is slow for little gain.
+    // The 18+ search is the exception -- bridging is how an adult catalog gets
+    // any breadth at all, since only MangaDex and Comick rate their own titles,
+    // and that page is a deliberate, narrower surface where the wait is earned.
+    const providers = (await buildProviders(env, origin, adult, adult))
+      .filter((p) => adult || p.kind !== 'suwayomi');
 
     type Batch = Array<{ provider: Provider; value: { series: SeriesSummary[] } }>;
     const run = (query: string): Promise<Batch> =>

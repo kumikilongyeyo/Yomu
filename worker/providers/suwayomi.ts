@@ -167,6 +167,13 @@ export function suwayomiSourceProvider(
   sourceId: string,
   sourceName: string,
   imageUrl: (path: string) => string,
+  /**
+   * The source is adult, per Suwayomi's own contentWarning. Every title it
+   * returns is marked so, because a bridged source is the one kind Yomu cannot
+   * rate per title: Suwayomi reports the rating for the source, not the work.
+   * Marking the source is what keeps its titles off the normal surfaces.
+   */
+  nsfw = false,
 ): YomuExtension {
   const toSummary = (m: AnyObject): SeriesSummary => {
     const updatedSec = Number(m.chaptersLastFetchedAt ?? m.lastFetchedAt ?? 0);
@@ -179,6 +186,7 @@ export function suwayomiSourceProvider(
       ...(m.status ? { status: String(m.status).toLowerCase() } : {}),
       ...(m.thumbnailUrl ? { cover: imageUrl(m.thumbnailUrl) } : {}),
       ...(updatedSec > 0 ? { updatedAt: updatedSec * 1000 } : {}),
+      ...(nsfw ? { nsfw: true } : {}),
     };
   };
   const toChapter = (c: AnyObject, i: number): Chapter => {
