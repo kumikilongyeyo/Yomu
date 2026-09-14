@@ -1,0 +1,192 @@
+/*
+ * Yomu UI overrides.
+ *
+ * These belong in the Expo project's own styles. That project was never handed
+ * over -- dist-app/ is build output and _expo/static/css/glass-*.css is
+ * generated with a content hash -- so they live in a file of their own that the
+ * Worker links into every HTML response (see worker/index.ts). Keeping them out
+ * of the generated stylesheet means a future `expo export` cannot quietly drop
+ * them, and leaves them readable.
+ *
+ * Everything here is presentation only. No rule changes what a control does,
+ * and none of it depends on the minified class names in the JS bundle -- these
+ * are the semantic class names the app writes itself.
+ *
+ * When the Expo source turns up, fold these into it and delete this file.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Sources screen
+ *
+ * Each source occupied three stacked rows: name and status, then a
+ * right-aligned strip of reorder/enable/remove buttons, then a full-width
+ * "Group" text input -- about 105px per source, so two sources filled a phone
+ * screen before the add form even started. The controls all still exist; they
+ * are just no longer all shouting at once.
+ * ------------------------------------------------------------------ */
+
+/* The per-source Group field is a rename box people touch once, if ever. It
+   costs a full row on every source, so it waits until the row is being used. */
+.source-row .source-group-field {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height .18s ease, opacity .18s ease, margin .18s ease;
+  margin-top: -6px;
+  pointer-events: none;
+}
+.source-row:hover .source-group-field,
+.source-row:focus-within .source-group-field {
+  max-height: 60px;
+  opacity: 1;
+  margin-top: 0;
+  pointer-events: auto;
+}
+
+/* Four 38px buttons would not fit beside the name on a phone, so the narrow
+   layout gave them a line of their own -- a whole extra row per source for
+   controls you use when reordering and never again. At 32px they fit, so the
+   row goes back to grip | name | tools on one line. */
+.source-row .source-tools button {
+  width: 32px;
+  height: 32px;
+}
+.source-row .source-tools {
+  gap: 0;
+  grid-column: auto;
+  justify-content: flex-end;
+}
+.source-row {
+  grid-template-columns: auto 1fr auto;
+  padding: 9px 12px;
+  row-gap: 4px;
+}
+/* The group field still spans the row, on the rare occasion it is showing. */
+.source-row .source-group-field {
+  grid-column: 1 / -1;
+}
+
+/* Name, health, host and kind were four stacked blocks, so every source was
+   four lines tall to say one thing. The name keeps its line; the three details
+   share the next one. */
+.source-row .row-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.source-row .row-copy h3 {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.3;
+}
+.source-row .row-copy .src-health,
+.source-row .row-copy small,
+.source-row .row-copy .preset-host {
+  font-size: 11.5px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+/* .src-health is display:flex with width:100%, so it took the whole column and
+   pushed everything after it onto another line. Sized to its content, the
+   status and the host share one line. */
+.source-row .row-copy .src-health {
+  display: inline-flex;
+  width: auto;
+  margin-top: 0;
+}
+.source-row .row-copy .src-health,
+.source-row .row-copy small,
+.source-row .row-copy .preset-host {
+  flex: 0 0 auto;
+}
+/* On a phone the kind repeats the group heading right above it ("Yomu
+   extensions", "Built in"), so it is the one detail worth dropping to keep the
+   row to two lines. It comes back as soon as there is room. */
+@media (max-width: 520px) {
+  .source-row .row-copy .preset-host {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Add a source
+ *
+ * The form sat permanently open: three inputs, five kind cards and a button,
+ * roughly half a phone screen, for something used once per source. Only the URL
+ * line shows until you put the cursor in it, at which point the rest appears.
+ *
+ * :has() scopes this to the add-source panel specifically -- .quality-row (the
+ * Kind cards) appears nowhere else -- so other .g-panel sections are untouched.
+ * ------------------------------------------------------------------ */
+.g-panel:has(.quality-row):not(:focus-within) > *:nth-child(n + 3) {
+  display: none;
+}
+.g-panel:has(.quality-row) {
+  transition: padding .18s ease;
+}
+.g-panel:has(.quality-row):not(:focus-within) {
+  padding-bottom: 16px;
+}
+
+/* The kind cards were five blocks of title-plus-paragraph in a row that could
+   not fit them. Wrapping keeps every option reachable without a scroll. */
+.quality-row {
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ *
+ * Vertical rhythm
+ *
+ * Section headings carried more space than the content between them.
+ * ------------------------------------------------------------------ */
+.group-label {
+  margin: 16px 4px 6px;
+}
+.section-line {
+  margin: 20px 0 12px;
+}
+.settings-group {
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------------ *
+ * 18+ veil
+ *
+ * Covers and pages from an adult source are blurred until the reader asks for
+ * them. Light enough that colour and composition still read -- enough to know
+ * what you are looking at and whether you want it -- without the detail.
+ * The script that applies data-yomu-veil lives in yomu-gate.js.
+ * ------------------------------------------------------------------ */
+[data-yomu-veil='on'] img {
+  filter: blur(5px);
+  transform: scale(1.08);
+}
+[data-yomu-veil='on'] {
+  overflow: hidden;
+  position: relative;
+}
+[data-yomu-veil='on']::after {
+  content: '18+';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 2;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 4px;
+  color: var(--warn);
+  background: var(--scrim);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .source-row .source-group-field,
+  .g-panel:has(.quality-row) {
+    transition: none;
+  }
+}
