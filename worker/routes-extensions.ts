@@ -16,7 +16,7 @@ import { descriptorAllowsImage, seriesIdForChapter } from './extensions/runtime'
 import { allHealth, getHealth } from './extensions/health';
 import { mangadexProvider } from './providers/mangadex';
 import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from './providers/suwayomi';
-import { DEFAULT_RANK, dedupe, fromAll, withFallback } from './catalog';
+import { DEFAULT_RANK, dedupe, fromAll, rankByRelevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
 import type { SeriesSummary } from './extensions/types';
 
@@ -321,10 +321,13 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
         ),
       })),
     );
+    // Providers answer in whatever order they finish, so a search has to be
+    // re-ranked against the query or one source's loose matches bury the title.
+    const ordered = kind === 'search' ? rankByRelevance(merged, q) : merged;
 
     return json(
       {
-        series: merged,
+        series: ordered,
         providersTried: results.length,
         providersTotal: providers.length,
       },

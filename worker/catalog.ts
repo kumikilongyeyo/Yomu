@@ -208,9 +208,19 @@ export function dedupe(
     for (const key of hardKeys(entry)) byHardKey.set(key, entry);
   };
 
-  const compatible = (entry: CatalogEntry, s: SeriesSummary): boolean => {
-    // If both sides know the author or the year, they must agree.
-    if (entry.author && s.author) {
+  /**
+   * @param exactTitle the two records already agree on the normalised title.
+   *
+   * The author check exists to stop fuzzy matches collapsing distinct works
+   * ("Solo Leveling" / "Solo Leveling: Ragnarok"). It must not arbitrate an
+   * exact title match, because providers disagree about what "author" means --
+   * MangaDex credits the publisher "Yuewen Manhua" for the same title Flame
+   * Comics credits to "Little Bleary Zhao", and the veto split one work into
+   * two results. Year still applies: it is a fact both sides measure the same
+   * way.
+   */
+  const compatible = (entry: CatalogEntry, s: SeriesSummary, exactTitle = false): boolean => {
+    if (!exactTitle && entry.author && s.author) {
       const a = normalizeTitle(entry.author);
       const b = normalizeTitle(s.author);
       if (a && b && similarity(a, b) < 0.6) return false;
@@ -241,22 +251,26 @@ export function dedupe(
       const key = normalizeTitle(s.title);
       if (!key) continue;
 
-      const exact = (byExactTitle.get(key) ?? []).find((e) => compatible(e, s));
+      const exact = (byExactTitle.get(key) ?? []).find((e) => compatible(e, s, true));
       if (exact) {
         attach(exact, provider, s);
         continue;
       }
 
-      // Fall back to fuzzy matching against titles and their alternates.
+      // Fall back to matching against titles and their alternates. An exact
+      // hit on any name pair counts as an exact title match even when it lands
+      // on an alternate: MangaDex files Solo Leveling under "Na Honjaman
+      // Level-Up" with "Solo Leveling" as an alternate, and crediting Chugong
+      // where the scanlation sites credit someone else must not split it off.
       let fuzzy: CatalogEntry | undefined;
+      const mine = [s.title, ...(s.altTitles ?? [])].map(normalizeTitle).filter(Boolean);
       for (const candidate of entries) {
-        if (!compatible(candidate, s)) continue;
-        const names = [candidate.title, ...(candidate.altTitles ?? [])].map(normalizeTitle);
-        const mine = [s.title, ...(s.altTitles ?? [])].map(normalizeTitle);
-        if (names.some((n) => mine.some((m) => n === m || similarity(n, m) >= SIMILARITY_THRESHOLD))) {
-          fuzzy = candidate;
-          break;
-        }
+        const names = [candidate.title, ...(candidate.altTitles ?? [])].map(normalizeTitle).filter(Boolean);
+        const exactName = names.some((n) => mine.includes(n));
+        if (!exactName && !names.some((n) => mine.some((m) => similarity(n, m) >= SIMILARITY_THRESHOLD))) continue;
+        if (!compatible(candidate, s, exactName)) continue;
+        fuzzy = candidate;
+        break;
       }
       if (fuzzy) {
         attach(fuzzy, provider, s);
@@ -273,6 +287,49 @@ export function dedupe(
   }
 
   return entries;
+}
+
+/**
+ * How well a merged title answers the query, 0..1.
+ *
+ * Providers each return their own idea of "relevant", and merging them without
+ * re-ranking leaves one source's loose matches sitting above the title the
+ * reader actually typed. Scored against the title and its alternates, so a
+ * match on a romanised or localised name counts.
+ */
+export function relevance(entry: CatalogEntry, query: string): number {
+  const q = normalizeTitle(query);
+  if (!q) return 0;
+  let best = 0;
+  for (const name of [entry.title, ...(entry.altTitles ?? [])]) {
+    const n = normalizeTitle(name ?? '');
+    if (!n) continue;
+    const score =
+      n === q ? 1
+      : n.startsWith(q) || q.startsWith(n) ? Math.max(0.9, similarity(n, q))
+      : n.includes(q) ? Math.max(0.8, similarity(n, q))
+      : similarity(n, q);
+    if (score > best) best = score;
+  }
+  return best;
+}
+
+/**
+ * Order search results by what was asked for, then by corroboration.
+ *
+ * Relevance leads, so the title the reader typed is first whichever provider
+ * happened to answer soonest. Provider count only breaks ties, which is what
+ * puts the copy carried by three sources above an equally-named one carried by
+ * one -- without letting a well-stocked title outrank a better match.
+ */
+export function rankByRelevance(entries: CatalogEntry[], query: string): CatalogEntry[] {
+  return entries
+    .map((entry) => ({ entry, score: relevance(entry, query) }))
+    .sort((a, b) =>
+      b.score - a.score ||
+      b.entry.providers.length - a.entry.providers.length ||
+      a.entry.title.localeCompare(b.entry.title))
+    .map(({ entry }) => entry);
 }
 
 /** Chapters for a title, taken from the first provider that has any. */
