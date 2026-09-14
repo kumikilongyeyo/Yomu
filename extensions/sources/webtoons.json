@@ -1,7 +1,7 @@
 {
   "id": "webtoons",
   "name": "Webtoons.com",
-  "version": 2,
+  "version": 3,
   "base": "https://www.webtoons.com",
   "hosts": [
     "www.webtoons.com",
@@ -93,8 +93,19 @@
           "cover": {
             "selector": "img",
             "attr": "src"
+          },
+          "link": {
+            "selector": "a",
+            "attr": "href"
           }
-        }
+        },
+        "filter": [
+          {
+            "field": "link",
+            "matches": "/canvas/",
+            "negate": true
+          }
+        ]
       }
     },
     "series": {
