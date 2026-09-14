@@ -2,3 +2,5 @@ node_modules/
 .chromium-ready
 .env
 .env.local
+
+.sessions/
