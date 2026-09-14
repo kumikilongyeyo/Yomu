@@ -53,60 +53,38 @@
     const label = document.createElement('div');
     label.className = 'group-label';
     label.id = SETTINGS_ROW_ID + '-label';
-    label.textContent = 'Content'; // the stylesheet uppercases it, like the app's own
+    label.textContent = 'Content';
 
     const group = document.createElement('section');
     group.className = 'settings-group glass';
     group.id = SETTINGS_ROW_ID;
 
-    const row = document.createElement('label');
+    // A link, not a switch. Adult titles are kept out of Home, Search,
+    // Library and Continue Reading entirely, so there is nothing here for a
+    // toggle to reveal -- 18+ has its own page, and the switch lives on it
+    // next to the thing it governs.
+    const row = document.createElement('a');
     row.className = 'setting-link';
-    row.style.cursor = 'pointer';
+    row.href = '/adult.html';
+    row.style.textDecoration = 'none';
 
     const copy = document.createElement('div');
     copy.className = 'row-copy';
     const h3 = document.createElement('h3');
-    h3.textContent = 'Show 18+';
+    h3.textContent = '18+ content';
     const small = document.createElement('small');
-    small.textContent =
-      'Include adult-rated titles in search and browsing. Their covers stay blurred until you tap them.';
+    small.textContent = adultAllowed()
+      ? 'On. Adult titles appear only on the 18+ page.'
+      : 'Off. Adult titles are hidden everywhere.';
     copy.append(h3, small);
 
-    const box = document.createElement('input');
-    box.type = 'checkbox';
-    box.checked = adultAllowed();
-    box.style.cssText = 'width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0';
-    box.addEventListener('change', () => {
-      try { localStorage.setItem(ADULT_KEY, box.checked ? 'on' : 'off'); } catch {}
-      applyVeil();
-    });
+    const chevron = document.createElement('span');
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.textContent = '›';
+    chevron.style.cssText = 'color:var(--dim);font-size:20px;flex:none';
 
-    row.append(copy, box);
+    row.append(copy, chevron);
     group.append(row);
-
-    // The switch that answers "how do I unblur this". Tapping a cover reveals
-    // one; this turns the veil off for good.
-    const blurRow = document.createElement('label');
-    blurRow.className = 'setting-link';
-    blurRow.style.cursor = 'pointer';
-    const blurCopy = document.createElement('div');
-    blurCopy.className = 'row-copy';
-    const blurH3 = document.createElement('h3');
-    blurH3.textContent = 'Blur 18+ covers';
-    const blurSmall = document.createElement('small');
-    blurSmall.textContent = 'Hide the detail until you tap. Turn this off to see adult covers and pages straight away.';
-    blurCopy.append(blurH3, blurSmall);
-    const blurBox = document.createElement('input');
-    blurBox.type = 'checkbox';
-    blurBox.checked = blurAdult();
-    blurBox.style.cssText = 'width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0';
-    blurBox.addEventListener('change', () => {
-      try { localStorage.setItem(BLUR_KEY, blurBox.checked ? 'on' : 'off'); } catch {}
-      applyVeil();
-    });
-    blurRow.append(blurCopy, blurBox);
-    group.append(blurRow);
-
     return { label, group };
   }
 

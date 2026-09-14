@@ -497,6 +497,103 @@
   .yomu-continue__go { min-height: 44px; line-height: 32px; }
 }
 
+/* Press and hold a card for two seconds to start picking. The sweep is the
+   only signal that a wait is happening, so it runs for exactly the hold. */
+.yomu-continue__card {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.yomu-continue__card::after {
+  content: '';
+  position: absolute;
+  inset: 0 100% 0 0;
+  background: var(--accentSoft);
+  pointer-events: none;
+}
+.yomu-continue__card.is-holding::after {
+  inset: 0;
+  transition: inset 2s linear;
+}
+
+.yomu-continue__card.is-selecting {
+  cursor: pointer;
+}
+.yomu-continue__card.is-picked {
+  border-color: var(--accentLine);
+  background: linear-gradient(140deg, #ffc45f1f, #14212bb3);
+}
+.yomu-continue__card.is-selecting .yomu-continue__go {
+  opacity: .45;
+  pointer-events: none;
+}
+.yomu-continue__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+}
+.yomu-continue__card.is-picked .yomu-continue__check {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.yomu-continue__card.is-picked .yomu-continue__check::after {
+  content: '';
+  position: absolute;
+  inset: 5px 4px 6px 4px;
+  border: 2px solid var(--accentText);
+  border-top: 0;
+  border-right: 0;
+  transform: rotate(-45deg);
+}
+
+.yomu-continue__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.yomu-continue__count {
+  flex: 1;
+  min-width: 90px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.yomu-continue__bar button {
+  font: inherit;
+  font-size: 13px;
+  border-radius: 999px;
+  padding: 8px 14px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.yomu-continue__quiet {
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--text);
+}
+.yomu-continue__danger {
+  border: 0;
+  background: var(--bad);
+  color: #1b0d10;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yomu-continue__card.is-holding::after { transition: none; inset: 0; }
+}
+
 /* ------------------------------------------------------------------ *
  * Sources screen
  *

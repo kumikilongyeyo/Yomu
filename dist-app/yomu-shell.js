@@ -94,24 +94,28 @@
   /* ------------------------------------------------------------------ *
    * Continue Reading
    *
-   * The kit puts a row of resume cards between the hero and the grid. The web
-   * Home has no such section at all -- the app only builds one on its native
-   * screen -- so unlike everything else this is new DOM rather than a restyle.
+   * The kit puts a row of resume cards under the hero. The web Home has no
+   * such section -- the app only builds one on its native screen -- so unlike
+   * the rest of the kit work this is new DOM rather than a restyle.
    *
-   * It is assembled from what the app already stores, and nothing is fetched:
+   * Assembled from what the app already stores, fetching nothing:
    *   yomu.v1.resume.<account>.<seriesId>  ->  { anchor: { chapterId, pageIndex } }
    *   yomu.v1.collection .library[]        ->  { sourceId, id, title, cover, total }
    *
    * The resume key does not record which source a title came from, so a title
    * only appears once it is in the library, which is where the source lives.
-   * That is a real limit: read something without saving it and it will not show
-   * here. Better than guessing a source and sending the reader to a 404.
+   * Read something without saving it and it will not show here -- better than
+   * guessing a source and sending the reader to a 404.
    * ------------------------------------------------------------------ */
 
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const CONTINUE_ID = 'yomu-continue';
   const MAX_CARDS = 6;
+  const HOLD_MS = 2000;
+
+  /** Series ids picked for removal, or null when not selecting. */
+  let selection = null;
 
   function resumeEntries() {
     const out = [];
@@ -142,6 +146,10 @@
     for (const { seriesId, anchor } of resumeEntries()) {
       const entry = saved.find((t) => String(t.id) === seriesId && !t.hidden);
       if (!entry || !entry.sourceId) continue;
+      // Home is a normal surface, so nothing adult belongs on it -- not even
+      // something you were part-way through. 18+ has its own page.
+      if (String(entry.category || '').toLowerCase() === 'adult') continue;
+
       const total = Number(entry.total);
       // pageIndex is within the chapter, so this is progress through the
       // chapter being read -- not through the series, which nothing records.
@@ -150,6 +158,7 @@
         ? Math.min(100, Math.round(((Number(anchor.pageIndex) || 0) + 1) / pages * 100))
         : null;
       items.push({
+        seriesId,
         title: entry.title || 'Untitled',
         cover: entry.cover,
         sourceId: entry.sourceId,
@@ -161,58 +170,190 @@
     return items.slice(0, MAX_CARDS);
   }
 
+  /* --- selection ------------------------------------------------------- */
+
+  function forget(seriesIds) {
+    for (const id of seriesIds) {
+      try { localStorage.removeItem(RESUME_PREFIX + id); } catch {}
+    }
+  }
+
+  const inSelection = () => selection !== null;
+
+  function toggleSelected(seriesId) {
+    if (!selection) return;
+    if (selection.has(seriesId)) selection.delete(seriesId);
+    else selection.add(seriesId);
+    if (!selection.size) selection = null;
+    mountContinue();
+  }
+
+  /* --- rendering ------------------------------------------------------- */
+
+  /**
+   * Press and hold for two seconds to start picking cards to remove.
+   *
+   * A hold rather than a tap because the card's whole job is to be tapped, and
+   * because this deletes reading position -- the one thing here that reopening
+   * the title will not bring back. The card fills while held, so the wait is
+   * visible and letting go plainly cancels it. Holding drops straight into
+   * selection with that card already picked, so removing several is the same
+   * gesture plus taps.
+   */
+  function attachHold(card, item) {
+    let timer = null;
+    const stop = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+      card.classList.remove('is-holding');
+    };
+    card.addEventListener('pointerdown', (event) => {
+      if (inSelection() || (event.button != null && event.button !== 0)) return;
+      card.classList.add('is-holding');
+      timer = setTimeout(() => {
+        stop();
+        selection = new Set([item.seriesId]);
+        mountContinue();
+      }, HOLD_MS);
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel']) {
+      card.addEventListener(type, stop);
+    }
+  }
+
+  function buildCard(item) {
+    const card = document.createElement('article');
+    card.className = 'yomu-continue__card';
+
+    const cover = document.createElement('div');
+    cover.className = 'yomu-continue__cover';
+    if (item.cover) cover.style.backgroundImage = 'url("' + item.cover + '")';
+
+    const info = document.createElement('div');
+    info.className = 'yomu-continue__info';
+
+    const name = document.createElement('strong');
+    name.textContent = item.title;
+
+    const meta = document.createElement('small');
+    meta.textContent = [
+      item.chapters ? item.chapters + ' chapters' : null,
+      item.percent == null ? null : item.percent + '% through',
+    ].filter(Boolean).join(' · ') || 'In progress';
+
+    const bar = document.createElement('progress');
+    if (item.percent == null) bar.removeAttribute('value');
+    else { bar.max = 100; bar.value = item.percent; }
+
+    const go = document.createElement('a');
+    go.className = 'yomu-continue__go';
+    go.href = '/read/' + encodeURIComponent(item.chapterId)
+      + '?source=' + encodeURIComponent(item.sourceId);
+    go.textContent = 'Continue Chapter →';
+
+    info.append(name, meta, bar, go);
+    card.append(cover, info);
+
+    if (inSelection()) {
+      const picked = selection.has(item.seriesId);
+      card.classList.add('is-selecting');
+      card.classList.toggle('is-picked', picked);
+      card.setAttribute('role', 'checkbox');
+      card.setAttribute('aria-checked', String(picked));
+      card.setAttribute('aria-label', item.title);
+      card.tabIndex = 0;
+
+      const mark = document.createElement('span');
+      mark.className = 'yomu-continue__check';
+      mark.setAttribute('aria-hidden', 'true');
+      card.append(mark);
+
+      // While picking, the card is a checkbox -- nothing navigates.
+      go.setAttribute('aria-hidden', 'true');
+      go.tabIndex = -1;
+      card.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleSelected(item.seriesId);
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        toggleSelected(item.seriesId);
+      });
+    } else {
+      attachHold(card, item);
+    }
+
+    return card;
+  }
+
+  function buildBar(items) {
+    const bar = document.createElement('div');
+    bar.className = 'yomu-continue__bar';
+
+    const count = document.createElement('span');
+    count.className = 'yomu-continue__count';
+    count.textContent = selection.size + ' selected';
+
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'yomu-continue__quiet';
+    const everything = selection.size === items.length;
+    all.textContent = everything ? 'Select none' : 'Select all';
+    all.addEventListener('click', () => {
+      selection = everything ? null : new Set(items.map((i) => i.seriesId));
+      mountContinue();
+    });
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'yomu-continue__danger';
+    remove.textContent = 'Remove ' + selection.size;
+    remove.addEventListener('click', () => {
+      forget([...selection]);
+      selection = null;
+      mountContinue();
+    });
+
+    const done = document.createElement('button');
+    done.type = 'button';
+    done.className = 'yomu-continue__quiet';
+    done.textContent = 'Done';
+    done.addEventListener('click', () => { selection = null; mountContinue(); });
+
+    bar.append(count, all, remove, done);
+    return bar;
+  }
+
   function buildContinue(items) {
     const section = document.createElement('section');
     section.id = CONTINUE_ID;
+    if (inSelection()) section.classList.add('is-selecting');
 
     const head = document.createElement('div');
     head.className = 'yomu-continue__head';
     const h2 = document.createElement('h2');
     h2.textContent = 'Continue Reading';
-    const all = document.createElement('a');
-    all.href = '/library';
-    all.className = 'yomu-continue__all';
-    all.textContent = 'See All →';
-    head.append(h2, all);
+    head.append(h2);
+
+    if (inSelection()) {
+      const hint = document.createElement('span');
+      hint.className = 'yomu-continue__all';
+      hint.textContent = 'Tap cards to pick';
+      head.append(hint);
+    } else {
+      const all = document.createElement('a');
+      all.href = '/library';
+      all.className = 'yomu-continue__all';
+      all.textContent = 'See All →';
+      head.append(all);
+    }
 
     const row = document.createElement('div');
     row.className = 'yomu-continue__row';
-
-    for (const item of items) {
-      const card = document.createElement('article');
-      card.className = 'yomu-continue__card';
-
-      const cover = document.createElement('div');
-      cover.className = 'yomu-continue__cover';
-      if (item.cover) cover.style.backgroundImage = `url("${item.cover}")`;
-
-      const info = document.createElement('div');
-      info.className = 'yomu-continue__info';
-
-      const name = document.createElement('strong');
-      name.textContent = item.title;
-
-      const meta = document.createElement('small');
-      meta.textContent = [
-        item.chapters ? `${item.chapters} chapters` : null,
-        item.percent == null ? null : `${item.percent}% through`,
-      ].filter(Boolean).join(' · ') || 'In progress';
-
-      const bar = document.createElement('progress');
-      if (item.percent == null) bar.removeAttribute('value');
-      else { bar.max = 100; bar.value = item.percent; }
-
-      const go = document.createElement('a');
-      go.className = 'yomu-continue__go';
-      go.href = `/read/${encodeURIComponent(item.chapterId)}?source=${encodeURIComponent(item.sourceId)}`;
-      go.textContent = 'Continue Chapter →';
-
-      info.append(name, meta, bar, go);
-      card.append(cover, info);
-      row.append(card);
-    }
+    for (const item of items) row.append(buildCard(item));
 
     section.append(head, row);
+    if (inSelection()) section.append(buildBar(items));
     return section;
   }
 
@@ -223,17 +364,25 @@
     // Anchored to the hero rather than to the section below it: the app grows a
     // "Your library" section once anything is saved, so "the first .home-sec"
     // is not a stable position -- and React re-renders .g-main, which leaves an
-    // unmanaged node wherever it likes. Re-asserting the position on every tick
-    // is what keeps it under the hero instead of drifting to the top.
+    // unmanaged node wherever it likes. Re-asserting on every tick is what
+    // keeps it under the hero instead of drifting to the top.
     const anchor = document.querySelector('.hero-pagination')
       ?? document.querySelector('.hero-carousel');
     if (!anchor || !anchor.parentNode) return;
 
     const items = continueItems();
     let section = document.getElementById(CONTINUE_ID);
-    if (!items.length) { section?.remove(); return; }
+    if (!items.length) { selection = null; section?.remove(); return; }
 
-    const signature = items.map((i) => `${i.chapterId}:${i.percent}`).join('|');
+    // A card that vanished while it was picked must not keep the bar alive.
+    if (selection) {
+      const live = new Set(items.map((i) => i.seriesId));
+      for (const id of [...selection]) if (!live.has(id)) selection.delete(id);
+      if (!selection.size) selection = null;
+    }
+
+    const signature = items.map((i) => i.chapterId + ':' + i.percent).join('|')
+      + '#' + (selection ? [...selection].sort().join(',') : '');
     if (!section || section.dataset.signature !== signature) {
       const built = buildContinue(items);
       built.dataset.signature = signature;

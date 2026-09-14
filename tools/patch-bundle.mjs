@@ -182,7 +182,9 @@ if (!failed) {
       }
     }
 
-    const missing = ASSETS.filter((a) => !html.includes(a.file));
+    // Matched on the href/src, not the bare filename: a page that merely
+    // mentions an asset in a comment must not be mistaken for one that links it.
+    const missing = ASSETS.filter((a) => !html.includes('"/' + a.file + '"'));
     if (!missing.length) { console.log(`already      assets: ${page}`); continue; }
     if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }
     if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map((a) => a.file).join(', ')})`); failed++; continue; }

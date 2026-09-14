@@ -76,18 +76,6 @@
           display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none}
     .tags img{height:22px;width:auto;max-width:100%;object-fit:contain;object-position:left top}
 
-    /* Mature: artwork only. The badge, title and sources stay readable, and the
-       tile keeps its place in the grid -- this is visibility, not filtering.
-       The kit specifies blur(24px); 5px is deliberate here, see the note in
-       yomu-overrides.css. */
-    .tile.mature-hidden .tile-art img{filter:blur(5px);transform:scale(1.08)}
-    .tile.mature-hidden::after{background:linear-gradient(180deg,#0d111942 0,#0d111966 40%,
-                               #0c151b99 66%,#0c151bf5 100%)}
-    .tile.mature-hidden .reveal{display:grid}
-    .reveal{display:none;position:absolute;inset:0;z-index:3;place-items:center;
-            border:0;background:none;color:#ffd7e7;font:inherit;font-size:11px;
-            font-weight:700;letter-spacing:.04em;cursor:pointer}
-    .reveal span{background:var(--scrim);border-radius:6px;padding:4px 7px}
 
     .empty{color:var(--muted);font-size:14px;line-height:1.6;padding:32px 4px;text-align:center}
     .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:6px}
@@ -96,8 +84,7 @@
           backdrop-filter:blur(18px);border-top:1px solid var(--hairline);
           padding:10px 16px calc(10px + env(safe-area-inset-bottom));
           display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .adult{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;cursor:pointer}
-    .adult input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+    .footnote{color:var(--dim);font-size:12.5px}
     .foot a{color:var(--muted);font-size:13px;text-decoration:none;border:1px solid var(--line);
             border-radius:999px;padding:7px 13px}
     .hidden{display:none!important}
@@ -135,7 +122,7 @@
 </main>
 
 <div class="foot">
-  <label class="adult"><input type="checkbox" id="adult" /><span>Show 18+</span></label>
+  <span class="footnote">Search covers every enabled source.</span>
   <a href="/sources">Sources</a>
 </div>
 
@@ -143,15 +130,10 @@
 (async () => {
   'use strict';
   const COLLECTION_KEY = 'yomu.v1.collection';
-  const ADULT_KEY = 'yomu.v1.adult';
-  const BLUR_KEY = 'yomu.v1.adultBlur';
 
   try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'dark'; } catch {}
 
   const $ = (id) => document.getElementById(id);
-  const adultOn = () => { try { return localStorage.getItem(ADULT_KEY) === 'on'; } catch { return false; } };
-  // Matches Settings > Content > Blur 18+ covers. On unless turned off.
-  const blurOn = () => { try { return localStorage.getItem(BLUR_KEY) !== 'off'; } catch { return true; } };
 
   /* --- provider id -> the source id this device actually has ------------- */
 
@@ -195,26 +177,7 @@
     } catch { return new Set(['mangadex']); }
   }
 
-  const ADULT_TITLES_KEY = 'yomu.v1.adultTitles';
-
-  /**
-   * Remember that this title is adult before handing off to a compiled screen.
-   * The series page and reader have no way to ask -- they render whatever the
-   * app fetched -- so the fact travels with the navigation instead. Capped so a
-   * long browsing session cannot grow this without bound.
-   */
-  function rememberAdult(seriesId, sourceId) {
-    try {
-      const key = `${sourceId}:${seriesId}`;
-      const raw = JSON.parse(localStorage.getItem(ADULT_TITLES_KEY) || '[]');
-      const list = Array.isArray(raw) ? raw.filter((v) => typeof v === 'string' && v !== key) : [];
-      list.push(key);
-      localStorage.setItem(ADULT_TITLES_KEY, JSON.stringify(list.slice(-300)));
-    } catch {}
-  }
-
-  const open = (seriesId, sourceId, nsfw) => {
-    if (nsfw) rememberAdult(seriesId, sourceId);
+  const open = (seriesId, sourceId) => {
     location.href = `/series/${encodeURIComponent(seriesId)}?source=${encodeURIComponent(sourceId)}`;
   };
 
@@ -234,7 +197,6 @@
 
   function badgesFor(entry) {
     const out = [];
-    if (entry.nsfw) out.push({ src: '/tags/mature.svg', alt: '18+ mature' });
     if (/complete|finished/i.test(entry.status ?? '')) {
       out.push({ src: '/tags/completed.svg', alt: 'Completed' });
     } else if (entry.updatedAt && Date.now() - entry.updatedAt < NEW_CHAPTER_WINDOW_MS) {
@@ -313,23 +275,8 @@
 
       tile.append(art, tags, copy);
 
-      if (entry.nsfw && blurOn()) {
-        tile.classList.add('mature-hidden');
-        const reveal = document.createElement('button');
-        reveal.type = 'button';
-        reveal.className = 'reveal';
-        reveal.setAttribute('aria-label', `Show the cover for ${entry.title}`);
-        reveal.innerHTML = '<span>18+ tap to show</span>';
-        reveal.addEventListener('click', (e) => {
-          e.stopPropagation();               // reveal, do not open
-          tile.classList.remove('mature-hidden');
-          reveal.remove();
-        });
-        tile.append(reveal);
-      }
-
       if (readable) {
-        tile.addEventListener('click', () => open(best.seriesId, appSourceId(best.id), entry.nsfw));
+        tile.addEventListener('click', () => open(best.seriesId, appSourceId(best.id)));
         tile.title = `${entry.title} — read on ${best.name}`;
       } else {
         tile.disabled = true;
@@ -366,7 +313,9 @@
     history.replaceState(null, '', `/find.html?q=${encodeURIComponent(query)}`);
 
     try {
-      const url = `/api/catalog/search?q=${encodeURIComponent(query)}${adultOn() ? '&adult=1' : ''}`;
+      // Never adult. 18+ lives on its own page, behind its own gate; nothing
+      // adult is meant to surface while browsing normally.
+      const url = `/api/catalog/search?q=${encodeURIComponent(query)}`;
       const res = await fetch(url, { signal: controller.signal });
       const payload = await res.json();
       if (controller.signal.aborted || query !== lastQuery) return;
@@ -401,14 +350,8 @@
     if (history.length > 1) history.back(); else location.href = '/';
   });
 
-  $('adult').addEventListener('change', (e) => {
-    try { localStorage.setItem(ADULT_KEY, e.target.checked ? 'on' : 'off'); } catch {}
-    if (lastQuery) search(lastQuery);
-  });
-
   /* --- boot -------------------------------------------------------------- */
 
-  $('adult').checked = adultOn();
   await learnCapabilities();
   const initial = new URLSearchParams(location.search).get('q') ?? '';
   if (initial) { $('q').value = initial; search(initial); }
