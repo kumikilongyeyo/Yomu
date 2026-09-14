@@ -356,6 +356,13 @@ function categoryOf(record: Record<string, unknown>, d: Descriptor): ContentKind
   return CATEGORY_WORDS.find(([re]) => re.test(haystack))?.[1] ?? d.defaultCategory;
 }
 
+/** A descriptor's nsfw field survives as a string, a boolean, or not at all. */
+function isTruthy(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  const text = asString(value)?.trim().toLowerCase();
+  return !!text && text !== 'false' && text !== '0';
+}
+
 function toSummary(record: Record<string, unknown>, d: Descriptor): SeriesSummary | null {
   const id = asString(record.id);
   const title = asString(record.title);
@@ -369,7 +376,10 @@ function toSummary(record: Record<string, unknown>, d: Descriptor): SeriesSummar
     ...(asStringArray(record.genres) ? { genres: asStringArray(record.genres)!.slice(0, 25) } : {}),
     ...(category ? { category } : {}),
     ...(asString(record.status) ? { status: asString(record.status)!.toLowerCase() } : {}),
-    ...(d.nsfw ? { nsfw: true } : {}),
+    // Adult either because the whole source is, or because this record says
+    // so -- Comick and MangaDex rate per title, which is the difference between
+    // gating a useful source entirely and gating the handful of titles.
+    ...(d.nsfw || isTruthy(record.nsfw) ? { nsfw: true } : {}),
     ...(asString(record.cover) ? { cover: asString(record.cover)! } : {}),
     ...(asNumber(record.updatedAt) ? { updatedAt: asNumber(record.updatedAt)! } : {}),
     ...(asStringArray(record.altTitles) ? { altTitles: asStringArray(record.altTitles)!.slice(0, 12) } : {}),

@@ -1,6 +1,6 @@
 {
   "schema": "yomu.extension-index/1",
-  "updatedAt": "2026-09-14T11:48:26Z",
+  "updatedAt": "2026-09-14T12:32:17Z",
   "extensions": [
     {
       "id": "weebcentral",
@@ -127,7 +127,7 @@
     {
       "id": "comick",
       "name": "Comick",
-      "version": 1,
+      "version": 2,
       "language": "en",
       "content": [
         "manhwa",

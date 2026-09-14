@@ -98,6 +98,16 @@ async function proxyExtensionImage(env: Env, url: URL): Promise<Response> {
 const proxied = (origin: string, extId: string, s: SeriesSummary): SeriesSummary =>
   s.cover ? { ...s, cover: extImageUrl(origin, extId, s.cover) } : s;
 
+/**
+ * The same, for a native provider: MangaDex covers are absolute uploads.mangadex.org
+ * URLs, and a page that loads them directly gets nothing, so they go through the
+ * app's own /api/img relay like every other image Yomu shows.
+ */
+const relayed = (origin: string, s: SeriesSummary): SeriesSummary =>
+  s.cover && /^https:///i.test(s.cover)
+    ? { ...s, cover: `${origin}/api/img?u=${encodeURIComponent(s.cover)}` }
+    : s;
+
 /* --- provider assembly ------------------------------------------------- */
 
 /** Everything Yomu can read from right now, ranked. */
@@ -354,7 +364,11 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
         batches.flat().map(({ provider, value }) => ({
           provider,
           series: value.series.map((s) =>
-            provider.kind === 'extension' ? proxied(origin, provider.id.replace(/^ext:/, ''), s) : s,
+            provider.kind === 'extension'
+              ? proxied(origin, provider.id.replace(/^ext:/, ''), s)
+              : provider.kind === 'native'
+                ? relayed(origin, s)
+                : s,
           ),
         })),
       );
@@ -416,7 +430,11 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
       return json({ error: 'No provider could load that title.', attempts: result.attempts }, 502);
     }
     const extId = providerId.startsWith('ext:') ? providerId.slice(4) : null;
-    const summary = extId ? proxied(origin, extId, result.value) : result.value;
+    const summary = extId
+      ? proxied(origin, extId, result.value)
+      : result.provider?.kind === 'native'
+        ? relayed(origin, result.value)
+        : result.value;
     return json({ ...summary, provider: result.provider?.id, attempts: result.attempts }, 200, 'private, max-age=120');
   }
 

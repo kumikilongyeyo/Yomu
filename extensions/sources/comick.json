@@ -1,7 +1,7 @@
 {
   "id": "comick",
   "name": "Comick",
-  "version": 1,
+  "version": 2,
   "base": "https://api.comick.dev",
   "hosts": [
     "api.comick.dev",
@@ -76,6 +76,17 @@
                 "date": "iso"
               }
             ]
+          },
+          "nsfw": {
+            "path": "content_rating",
+            "transform": [
+              {
+                "lower": true
+              },
+              {
+                "regex": "^(erotica|pornographic)$"
+              }
+            ]
           }
         }
       }
@@ -143,6 +154,17 @@
                 "date": "iso"
               }
             ]
+          },
+          "nsfw": {
+            "path": "content_rating",
+            "transform": [
+              {
+                "lower": true
+              },
+              {
+                "regex": "^(erotica|pornographic)$"
+              }
+            ]
           }
         }
       }
@@ -208,6 +230,17 @@
             "transform": [
               {
                 "date": "iso"
+              }
+            ]
+          },
+          "nsfw": {
+            "path": "content_rating",
+            "transform": [
+              {
+                "lower": true
+              },
+              {
+                "regex": "^(erotica|pornographic)$"
               }
             ]
           }
