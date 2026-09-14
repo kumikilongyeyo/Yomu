@@ -489,6 +489,7 @@
           if (now.has(name)) now.delete(name); else now.add(name);
           rememberOpen(now);
           foldSettingsGroups();
+    mountBridge();
         });
       }
       // Written only when it would actually change. Setting textContent
@@ -505,6 +506,284 @@
     }
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * Mihon bridge, on the Sources screen
+   *
+   * The bridge lived on a page of its own, reached by a button that did not
+   * look like one. Sources is where you go to think about sources, so the
+   * picker belongs there: scroll down, open the section, tick what you want.
+   * The standalone page still exists and still works -- this is the same job
+   * in the place you were already looking.
+   *
+   * Folded until asked for, and nothing is fetched until it is opened: the
+   * bridge talks to a home server over a tunnel, and that is not a cost to pay
+   * for everyone who opens Sources.
+   * ------------------------------------------------------------------ */
+
+  const BRIDGE_ID = 'yomu-bridge';
+  // Same switch Settings and the 18+ page read; yomu-gate.js has its own copy,
+  // and these two scripts deliberately share no scope.
+  const adultAllowed = () => {
+    try { return localStorage.getItem('yomu.v1.adult') === 'on'; } catch { return false; }
+  };
+  const MIHON_PREFIX = 'mihon-';
+  let bridgeLoaded = false;
+  let bridgeOpen = false;
+  let bridgeState = { families: [], chosen: new Map() };
+
+  const familyOf = (s) =>
+    String(s.displayName || s.name || `Source ${s.id}`).replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const flatten = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const isAdultSource = (s) => /nsfw|adult|explicit|porn/i.test(String(s.contentWarning || ''));
+
+  function readCollection() {
+    try {
+      const v = JSON.parse(localStorage.getItem(COLLECTION_KEY) || 'null');
+      if (v && typeof v === 'object') return v;
+    } catch {}
+    return { revision: 0, sources: [], library: [], progress: {} };
+  }
+
+  async function loadBridge(body) {
+    body.textContent = 'Asking your Suwayomi server…';
+    try {
+      const status = await (await fetch('/api/suwayomi/status')).json();
+      if (!status.configured) { body.textContent = 'No Suwayomi server is configured for this Yomu.'; return; }
+      if (!status.reachable) { body.textContent = `Configured, but not answering: ${status.error ?? 'unreachable'}`; return; }
+
+      const [list, ext] = await Promise.all([
+        (await fetch('/api/suwayomi/sources')).json(),
+        (await fetch('/api/ext/sources')).json().catch(() => ({ extensions: [] })),
+      ]);
+      const yomu = ext.extensions || [];
+
+      const byFamily = new Map();
+      for (const s of list.sources || []) {
+        if (String(s.id) === '0') continue;
+        const family = familyOf(s);
+        let f = byFamily.get(family);
+        if (!f) f = (byFamily.set(family, { family, variants: [], adult: false }), byFamily.get(family));
+        f.variants.push({ id: String(s.id), lang: String(s.lang || '??') });
+        f.adult = f.adult || isAdultSource(s);
+      }
+      for (const f of byFamily.values()) {
+        const key = flatten(f.family);
+        const twin = yomu.find((e) => {
+          const h = flatten(e.name || '');
+          return h && (key.startsWith(h) || h.startsWith(key));
+        });
+        f.inYomu = !!twin;
+        // The one worth leading with: Yomu lists this source but cannot open
+        // its chapters, and the bridge version can.
+        f.addsReading = !!twin && !twin.capabilities?.pages;
+        f.variants.sort((a, b) => (a.lang === 'en' ? -1 : b.lang === 'en' ? 1 : a.lang.localeCompare(b.lang)));
+      }
+      const rank = (f) => (f.addsReading ? 0 : f.inYomu ? 2 : 1);
+      bridgeState.families = [...byFamily.values()]
+        .filter((f) => !f.adult || adultAllowed())
+        .sort((a, b) => rank(a) - rank(b) || a.family.localeCompare(b.family));
+
+      // Anything already installed stays ticked, so opening this is not
+      // destructive; otherwise start from what the bridge actually adds.
+      const installed = new Set(
+        (readCollection().sources || []).map((s) => String(s.id)).filter((id) => id.startsWith(MIHON_PREFIX)),
+      );
+      bridgeState.chosen = new Map();
+      for (const f of bridgeState.families) {
+        const already = f.variants.find((v) => installed.has(MIHON_PREFIX + v.id));
+        if (already) { bridgeState.chosen.set(f.family, already.id); continue; }
+        if (installed.size) continue;
+        if (f.inYomu && !f.addsReading) continue;
+        const en = f.variants.find((v) => v.lang === 'en');
+        if (en) bridgeState.chosen.set(f.family, en.id);
+      }
+
+      bridgeLoaded = true;
+      drawBridge(body, status);
+    } catch (error) {
+      body.textContent = `Could not reach the bridge: ${error?.message ?? error}`;
+    }
+  }
+
+  function drawBridge(body, status) {
+    body.textContent = '';
+
+    const note = document.createElement('p');
+    note.className = 'fine-note';
+    note.style.margin = '0 0 6px';
+    note.textContent = `${status.sources} sources on ${status.server}. Each one you add becomes its own fallback in Yomu.`;
+    body.append(note);
+
+    for (const f of bridgeState.families) {
+      const row = document.createElement('label');
+      row.className = 'setting-link';
+      row.style.cursor = 'pointer';
+
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = bridgeState.chosen.has(f.family);
+      box.style.cssText = 'width:19px;height:19px;accent-color:var(--accent);flex:none;margin:0';
+
+      const copy = document.createElement('div');
+      copy.className = 'row-copy';
+      const h3 = document.createElement('h3');
+      h3.textContent = f.family;
+      const small = document.createElement('small');
+      small.textContent = f.addsReading
+        ? 'Listed in Yomu but cannot open chapters — this one can'
+        : f.inYomu
+          ? 'Already a Yomu source'
+          : `${f.variants.length} language${f.variants.length === 1 ? '' : 's'}`;
+      copy.append(h3, small);
+
+      let select = null;
+      if (f.variants.length > 1) {
+        select = document.createElement('select');
+        select.style.cssText =
+          'background:var(--raised);color:var(--text);border:1px solid var(--line);' +
+          'border-radius:8px;padding:6px 8px;font:inherit;font-size:12.5px;flex:none';
+        for (const v of f.variants) {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = v.lang;
+          select.append(opt);
+        }
+        select.value = bridgeState.chosen.get(f.family) ?? f.variants[0].id;
+        select.addEventListener('click', (e) => e.preventDefault());
+        select.addEventListener('change', () => {
+          if (bridgeState.chosen.has(f.family)) bridgeState.chosen.set(f.family, select.value);
+        });
+      }
+
+      box.addEventListener('change', () => {
+        if (box.checked) bridgeState.chosen.set(f.family, select ? select.value : f.variants[0].id);
+        else bridgeState.chosen.delete(f.family);
+        updateBridgeButton();
+      });
+
+      row.append(box, copy);
+      if (f.addsReading) {
+        const tag = document.createElement('span');
+        tag.className = 'tile-card__status';
+        tag.style.cssText = 'background:var(--accent);color:var(--accentText);border:0;font-weight:700';
+        tag.textContent = 'ADDS READING';
+        row.append(tag);
+      }
+      if (select) row.append(select);
+      body.append(row);
+    }
+
+    const foot = document.createElement('div');
+    foot.className = 'action-row';
+    foot.style.cssText = 'display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px';
+
+    const save = document.createElement('button');
+    save.id = BRIDGE_ID + '-save';
+    save.className = 'g-button primary';
+    save.type = 'button';
+    save.addEventListener('click', () => saveBridge(save));
+    foot.append(save);
+
+    const said = document.createElement('span');
+    said.id = BRIDGE_ID + '-said';
+    said.className = 'fine-note';
+    foot.append(said);
+
+    body.append(foot);
+    updateBridgeButton();
+  }
+
+  function updateBridgeButton() {
+    const save = document.getElementById(BRIDGE_ID + '-save');
+    if (!save) return;
+    const n = bridgeState.chosen.size;
+    save.textContent = n ? `Add ${n} source${n === 1 ? '' : 's'}` : 'Remove all bridge sources';
+  }
+
+  function saveBridge(save) {
+    const collection = readCollection();
+    const keep = (collection.sources || []).filter((s) => !String(s.id).startsWith(MIHON_PREFIX));
+    const added = [];
+    for (const [family, id] of bridgeState.chosen) {
+      const lang = bridgeState.families.find((f) => f.family === family)
+        ?.variants.find((v) => v.id === id)?.lang;
+      added.push({
+        id: MIHON_PREFIX + id,
+        label: lang && lang !== 'en' ? `${family} (${lang})` : family,
+        category: 'Mihon / Suwayomi',
+        kind: 'api',
+        url: `${location.origin}/api/suwayomi/source/${encodeURIComponent(id)}/`,
+        enabled: true,
+      });
+    }
+    try {
+      localStorage.setItem(COLLECTION_KEY, JSON.stringify({
+        ...collection,
+        revision: (Number.isInteger(collection.revision) ? collection.revision : 0) + 1,
+        sources: [...keep, ...added],
+      }));
+    } catch (error) {
+      document.getElementById(BRIDGE_ID + '-said').textContent = `Could not save: ${error?.message ?? error}`;
+      return;
+    }
+    const said = document.getElementById(BRIDGE_ID + '-said');
+    said.textContent = added.length
+      ? `Saved ${added.length}. Reload to see them in the list above.`
+      : 'All bridge sources removed.';
+  }
+
+  function mountBridge() {
+    if (!location.pathname.startsWith('/sources')) return;
+
+    // Our own heading is a .group-label too, so it is excluded from the search.
+    const labels = [...document.querySelectorAll('.group-label')]
+      .filter((l) => l.id !== BRIDGE_ID + '-label');
+    const anchor = labels.find((l) => /add a source/i.test(l.textContent || ''));
+    // On the first pass React may not have mounted "Add a source" yet. Waiting
+    // for it beats guessing: an earlier version fell back to the last label it
+    // could see and pinned the section above the source list, where it stayed.
+    if (!anchor?.parentNode) return;
+
+    let label = document.getElementById(BRIDGE_ID + '-label');
+    let card = document.getElementById(BRIDGE_ID);
+    if (!label) {
+      label = document.createElement('div');
+      label.className = 'group-label';
+      label.id = BRIDGE_ID + '-label';
+      label.append(document.createTextNode('Mihon bridge'));
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'yomu-fold';
+      toggle.textContent = 'Show';
+      toggle.addEventListener('click', () => {
+        bridgeOpen = !bridgeOpen;
+        const body = document.getElementById(BRIDGE_ID);
+        if (body) {
+          body.hidden = !bridgeOpen;
+          if (bridgeOpen && !bridgeLoaded) loadBridge(body);
+        }
+        toggle.textContent = bridgeOpen ? 'Hide' : 'Show';
+        toggle.setAttribute('aria-expanded', String(bridgeOpen));
+      });
+      label.append(toggle);
+
+      card = document.createElement('section');
+      card.className = 'settings-group glass';
+      card.id = BRIDGE_ID;
+      card.hidden = true;
+      card.textContent = '';
+    }
+    // Re-asserted rather than rebuilt: React owns this list and re-renders it.
+    // Checking the card sits immediately before the anchor -- not merely that
+    // the pair are adjacent to each other -- is what lets a section placed
+    // early, against a label that had not mounted yet, correct itself later.
+    if (card.nextElementSibling !== anchor || label.nextElementSibling !== card) {
+      anchor.before(label, card);
+    }
+  }
+
   const mount = () => {
     if (!document.getElementById(ID)) document.body.append(build());
     tagCompleted();
@@ -518,7 +797,7 @@
 
   // The grid mounts as results arrive, so new tiles need tagging as they land.
   // Cheap: tagCompleted only looks at tiles it has not already marked.
-  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); foldSettingsGroups(); }).observe(document.documentElement, {
+  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); foldSettingsGroups(); mountBridge(); }).observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
