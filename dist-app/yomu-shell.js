@@ -394,10 +394,31 @@
     }
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * Tooltips for icon-only buttons
+   *
+   * Several controls are a bare glyph with an aria-label and no title, so a
+   * screen reader is told what they do and a sighted reader is not. The worst
+   * of them is the source on/off switch, which draws a checkmark when the
+   * source is on -- it reads as "verify this source", which is a different
+   * button entirely ("Check sources", at the top of the screen).
+   *
+   * Copying the label into title costs nothing and makes them hoverable. The
+   * labels are the app's own, so this stays correct as they change.
+   * ------------------------------------------------------------------ */
+  function explainIconButtons() {
+    const buttons = document.querySelectorAll(
+      '.source-tools button[aria-label]:not([title]), .tile-card__save[aria-label]:not([title])',
+    );
+    for (const button of buttons) button.title = button.getAttribute('aria-label');
+  }
+
   const mount = () => {
     if (!document.getElementById(ID)) document.body.append(build());
     tagCompleted();
     mountContinue();
+    explainIconButtons();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
@@ -405,7 +426,7 @@
 
   // The grid mounts as results arrive, so new tiles need tagging as they land.
   // Cheap: tagCompleted only looks at tiles it has not already marked.
-  new MutationObserver(() => { tagCompleted(); mountContinue(); }).observe(document.documentElement, {
+  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); }).observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
