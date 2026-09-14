@@ -45,6 +45,7 @@
     .tag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:5px;
          padding:2px 6px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
     .tag.have{color:var(--accent);border-color:var(--accentLine)}
+    .tag.gain{color:var(--accentText);background:var(--accent);border-color:var(--accent);font-weight:700}
     .tag.adult{color:var(--warn);border-color:var(--warnLine)}
 
     .bar{position:sticky;bottom:0;margin-top:16px;padding:12px 0 max(12px,env(safe-area-inset-bottom));
@@ -151,14 +152,14 @@ npx wrangler deploy</div>
   const isAdult = (s) => /nsfw|adult|explicit|porn/i.test(String(s.contentWarning || ''));
   const isMixed = (s) => /mixed/i.test(String(s.contentWarning || ''));
 
-  function toFamilies(sources, installedExtensionNames) {
+  function toFamilies(sources, yomuExtensions) {
     const byFamily = new Map();
     for (const s of sources) {
       if (String(s.id) === '0') continue; // "Local source" reads the server's own disk
       const family = familyOf(s);
       let f = byFamily.get(family);
       if (!f) {
-        f = { family, variants: [], adult: false, mixed: false, alreadyInYomu: false };
+        f = { family, variants: [], adult: false, mixed: false, alreadyInYomu: false, addsReading: false };
         byFamily.set(family, f);
       }
       f.variants.push({ id: String(s.id), lang: String(s.lang || '??') });
@@ -166,28 +167,38 @@ npx wrangler deploy</div>
       f.mixed = f.mixed || isMixed(s);
     }
 
-    const have = installedExtensionNames.map(normalise);
     for (const f of byFamily.values()) {
       const key = normalise(f.family);
-      f.alreadyInYomu = have.some((h) => h && (key.startsWith(h) || h.startsWith(key)));
+      const twin = yomuExtensions.find((e) => {
+        const h = normalise(e.name || '');
+        return h && (key.startsWith(h) || h.startsWith(key));
+      });
+      f.alreadyInYomu = !!twin;
+      // The case worth surfacing: Yomu has an adapter for this site, but that
+      // adapter cannot serve chapters. Comick is the big one -- widest catalogue
+      // of anything here, discovery-only in Yomu, and fully readable through the
+      // bridge. Left sorted to the bottom as "in Yomu" it looks redundant, when
+      // it is actually the single most useful thing on this page.
+      f.addsReading = !!twin && !twin.capabilities?.pages;
       f.variants.sort((a, b) => (a.lang === 'en' ? -1 : b.lang === 'en' ? 1 : a.lang.localeCompare(b.lang)));
     }
-    return [...byFamily.values()].sort((a, b) => {
-      // What the bridge adds that Yomu does not already have goes first.
-      if (a.alreadyInYomu !== b.alreadyInYomu) return a.alreadyInYomu ? 1 : -1;
-      return a.family.localeCompare(b.family);
-    });
+
+    const rank = (f) => (f.addsReading ? 0 : f.alreadyInYomu ? 2 : 1);
+    return [...byFamily.values()].sort((a, b) => rank(a) - rank(b) || a.family.localeCompare(b.family));
   }
 
   /* ---------- state ------------------------------------------------------ */
 
   const state = { families: [], chosen: new Map(), installed: new Set() };
 
-  /** Suggested set: English, not already covered by a native Yomu extension. */
+  /**
+   * Suggested set: English, and either new to Yomu or reading for something
+   * Yomu can currently only list.
+   */
   function suggest() {
     state.chosen.clear();
     for (const f of state.families) {
-      if (f.alreadyInYomu) continue;
+      if (f.alreadyInYomu && !f.addsReading) continue;
       if (f.adult && !adultAllowed()) continue;
       const en = f.variants.find((v) => v.lang === 'en');
       if (en) state.chosen.set(f.family, en.id);
@@ -211,9 +222,16 @@ npx wrangler deploy</div>
   function render() {
     const families = visibleFamilies();
     const fresh = families.filter((f) => !f.alreadyInYomu).length;
+    const gains = families.filter((f) => f.addsReading);
+
+    const lead = gains.length
+      ? `<b style="color:var(--accent)">${gains.map((f) => f.family).join(', ')} ` +
+        `${gains.length === 1 ? 'is' : 'are'} listed in Yomu but cannot open chapters.</b> ` +
+        `The bridge version can, so ${gains.length === 1 ? 'it is' : 'they are'} ticked first. `
+      : '';
 
     $('pickerHead').innerHTML =
-      `<p class="note" style="margin:0 0 10px">` +
+      `<p class="note" style="margin:0 0 10px">` + lead +
       `<b style="color:var(--text)">${fresh} source${fresh === 1 ? '' : 's'} Yomu does not already have.</b> ` +
       `Suggested ones are ticked. Pick a language per source; each one becomes its own ` +
       `fallback in Yomu.</p>`;
@@ -266,7 +284,8 @@ npx wrangler deploy</div>
       row.append(box, name);
       if (f.adult)         row.append(tag('18+', 'adult'));
       else if (f.mixed)    row.append(tag('mixed', ''));
-      if (f.alreadyInYomu) row.append(tag('in Yomu', 'have'));
+      if (f.addsReading)        row.append(tag('adds reading', 'gain'));
+      else if (f.alreadyInYomu) row.append(tag('in Yomu', 'have'));
       if (select)          row.append(select);
 
       // The whole row is a hit target; the controls handle their own clicks.
@@ -374,12 +393,13 @@ npx wrangler deploy</div>
     $('statusText').textContent = 'Connected';
     $('statusNote').textContent = `${status.sources} sources on ${status.server}.`;
 
-    // Knowing which extensions Yomu already has is what lets this page lead with
-    // what the bridge actually adds. It is not worth failing over.
-    let extensionNames = [];
+    // Knowing which extensions Yomu already has -- and what each can actually
+    // do -- is what lets this page lead with what the bridge adds. Not worth
+    // failing over: without it every bridge source simply looks new.
+    let yomuExtensions = [];
     try {
       const ext = await (await fetch('/api/ext/sources')).json();
-      extensionNames = (ext.extensions || []).map((e) => e.name);
+      yomuExtensions = ext.extensions || [];
     } catch {}
 
     let list;
@@ -390,7 +410,7 @@ npx wrangler deploy</div>
       return fail('Connected, but the source list failed', err.message || String(err), false);
     }
 
-    state.families  = toFamilies(list.sources || [], extensionNames);
+    state.families  = toFamilies(list.sources || [], yomuExtensions);
     state.installed = new Set(readCollection().sources
       .map((s) => String(s.id)).filter((id) => id.startsWith(PREFIX)));
 

@@ -414,11 +414,103 @@
     for (const button of buttons) button.title = button.getAttribute('aria-label');
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * Settings: fold the long optional groups away
+   *
+   * Settings runs to 22 rows across six groups, and two of them are things you
+   * set up once and never touch again -- five public-domain and self-hosted
+   * source entries under "Free to read", and four developer settings under
+   * "Advanced". They are most of the screen's length and almost none of its
+   * use, which is what makes it feel like the hardest part of the app.
+   *
+   * Folded, the screen opens at thirteen rows. Nothing is removed and the
+   * state is remembered, so anyone who wants them keeps them open.
+   *
+   * These belong in the Settings screen's own source; the group is React's, so
+   * the marker and the toggle are re-asserted whenever it re-renders.
+   * ------------------------------------------------------------------ */
+
+  const FOLDABLE = ['free to read', 'advanced'];
+  const FOLD_KEY = 'yomu.v1.settingsOpen';
+
+  const openGroups = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(FOLD_KEY) || '[]')); } catch { return new Set(); }
+  };
+  const rememberOpen = (set) => {
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify([...set])); } catch {}
+  };
+
+  /** The group a label heads, plus any explanatory note that trails it. */
+  function groupUnder(label) {
+    const parts = [];
+    let node = label.nextElementSibling;
+    while (node) {
+      const cls = typeof node.className === 'string' ? node.className : '';
+      if (cls.includes('group-label')) break;
+      parts.push(node);
+      node = node.nextElementSibling;
+    }
+    return parts;
+  }
+
+  function foldSettingsGroups() {
+    if (!location.pathname.startsWith('/settings')) return;
+    const open = openGroups();
+
+    for (const label of document.querySelectorAll('.group-label')) {
+      // Only the label's own text nodes. The toggle is appended into the label,
+      // so textContent would grow to include "Show 5" and the group would stop
+      // matching its own name on the next pass -- which is why it folded once
+      // and then refused to open again.
+      const name = [...label.childNodes]
+        .filter((n) => n.nodeType === Node.TEXT_NODE)
+        .map((n) => n.textContent)
+        .join('')
+        .trim()
+        .toLowerCase();
+      if (!FOLDABLE.includes(name)) continue;
+
+      const parts = groupUnder(label);
+      const group = parts.find((p) => (p.className || '').includes('settings-group'));
+      if (!group) continue;
+
+      const isOpen = open.has(name);
+      for (const part of parts) if (part.hidden === isOpen) part.hidden = !isOpen;
+
+      let toggle = label.querySelector('.yomu-fold');
+      if (!toggle) {
+        toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'yomu-fold';
+        label.append(toggle);
+        toggle.addEventListener('click', () => {
+          const now = openGroups();
+          if (now.has(name)) now.delete(name); else now.add(name);
+          rememberOpen(now);
+          foldSettingsGroups();
+        });
+      }
+      // Written only when it would actually change. Setting textContent
+      // replaces a text node, which is a childList mutation -- and this runs
+      // from a MutationObserver, so writing unconditionally means the observer
+      // retriggers itself forever and the page locks up.
+      const wanted = isOpen ? 'Hide' : `Show ${group.children.length}`;
+      if (toggle.textContent !== wanted) toggle.textContent = wanted;
+      const expanded = String(isOpen);
+      if (toggle.getAttribute('aria-expanded') !== expanded) {
+        toggle.setAttribute('aria-expanded', expanded);
+        toggle.setAttribute('aria-label', `${isOpen ? 'Hide' : 'Show'} ${name}`);
+      }
+    }
+  }
+
   const mount = () => {
     if (!document.getElementById(ID)) document.body.append(build());
     tagCompleted();
     mountContinue();
     explainIconButtons();
+    foldSettingsGroups();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
@@ -426,7 +518,7 @@
 
   // The grid mounts as results arrive, so new tiles need tagging as they land.
   // Cheap: tagCompleted only looks at tiles it has not already marked.
-  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); }).observe(document.documentElement, {
+  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); foldSettingsGroups(); }).observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
