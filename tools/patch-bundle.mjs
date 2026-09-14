@@ -166,6 +166,21 @@ if (!failed) {
     const pagePath = path.join(PAGES_DIR, page);
     let html = fs.readFileSync(pagePath, 'utf8');
 
+    // The status bar tint iOS paints behind a standalone web app. Expo wrote
+    // the old palette's #070708; the approved ground is #0c131b, and a
+    // mismatch shows as a seam above the content on a phone.
+    const OLD_THEME = '<meta name="theme-color" content="#070708"/>';
+    const NEW_THEME = '<meta name="theme-color" content="#0c131b"/>';
+    if (html.includes(OLD_THEME)) {
+      if (check) { console.log(`NOT APPLIED  theme-color: ${page}`); failed++; }
+      else {
+        html = html.replace(OLD_THEME, NEW_THEME);
+        fs.writeFileSync(pagePath, html);
+        console.log(`applied      theme-color: ${page}`);
+        changed++;
+      }
+    }
+
     const missing = ASSETS.filter((a) => !html.includes(a.file));
     if (!missing.length) { console.log(`already      assets: ${page}`); continue; }
     if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }

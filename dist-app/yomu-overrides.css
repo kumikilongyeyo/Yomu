@@ -16,6 +16,98 @@
  */
 
 /* ------------------------------------------------------------------ *
+ * Approved theme (YOMU_implementation_kit, mobile/tokens.json)
+ *
+ * The app already draws everything from custom properties, so the approved
+ * palette is a token swap rather than a restyle: one place to change, and it
+ * reaches every compiled screen -- Home, Library, series, reader -- without
+ * touching the bundle.
+ *
+ * Dark only. The kit specifies no light palette, and inventing one would be
+ * worse than leaving the app's own, so [data-mode=light] is untouched.
+ * :root:not([data-mode='light']) matches the app's default and its explicit
+ * dark choice without overriding the light one.
+ * ------------------------------------------------------------------ */
+:root:not([data-mode='light']) {
+  --bg: #0c131b;
+  --surface: #17232d;
+  --raised: #25333e;
+  --elevated: #30404b;
+  --text: #f4f6fa;
+  --muted: #a8b6c7;
+  --dim: #8fa0b4;
+  --faint: #7b8b9e;
+  --line: #b5c9df29;
+  --hairline: #b5c9df18;
+  --glass: #17232dcc;
+  --overlay: #14212bf0;
+  --scrim: #03080db3;
+
+  /* Amber is the kit's accent. It needs dark text on top, where the app's
+     previous periwinkle took a dark navy -- so accentText moves with it. */
+  --accent: #ffc45f;
+  --accentText: #18212a;
+  --accentSoft: #ffc45f1f;
+  --accentLine: #ffc45f66;
+
+  --warn: #ffce73;
+  --bad: #ff968c;
+  --hot: #ff7466;
+}
+
+/* The kit's ground: two broad, muted radial washes over the base colour. The
+   app paints its own on .g-app, so both are set to match. */
+:root:not([data-mode='light']) body,
+:root:not([data-mode='light']) .g-app {
+  background:
+    radial-gradient(ellipse at 8% 0, #2a3a4b80, transparent 55%),
+    radial-gradient(ellipse at 95% 80%, #20394955, transparent 50%),
+    var(--bg);
+}
+
+/* ------------------------------------------------------------------ *
+ * Approved wordmark
+ *
+ * The app draws "Yomu" as an inline SVG compiled into the bundle. Rather than
+ * patch that path, the glyph is hidden and the approved asset takes its box --
+ * same element, same layout, no bundle edit to re-derive after a rebuild.
+ * ------------------------------------------------------------------ */
+.yomu-logo {
+  background: url('/brand/yomu-wordmark-ivory.svg') left center / contain no-repeat;
+  min-width: 104px;
+}
+:root[data-mode='light'] .yomu-logo {
+  background-image: url('/brand/yomu-wordmark-ink.svg');
+}
+.yomu-logo > * {
+  visibility: hidden;
+}
+
+/* ------------------------------------------------------------------ *
+ * Mobile rules from the kit's implementation spec
+ * ------------------------------------------------------------------ */
+@media (max-width: 767px) {
+  /* The kit asks for safe-area inset and 44px minimum controls on the bottom
+     navigation. Yomu's dock already meets both -- it is a floating pill with
+     bottom: calc(18px + env(safe-area-inset-bottom)) and a 76px height, so its
+     buttons clear 44px on their own. Adding padding here would squash it.
+     Left as a note rather than a rule, so nobody "fixes" it back in. */
+
+  /* "No sideways page scrolling." The reader and the filter rows scroll
+     independently; the page itself should not. */
+  body {
+    overflow-x: hidden;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .dock {
+    background: #1c2935;
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Sources screen
  *
  * Each source occupied three stacked rows: name and status, then a
