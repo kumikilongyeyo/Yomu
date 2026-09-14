@@ -1,7 +1,7 @@
 {
   "id": "webtoons",
   "name": "Webtoons.com",
-  "version": 1,
+  "version": 2,
   "base": "https://www.webtoons.com",
   "hosts": [
     "www.webtoons.com",
@@ -184,5 +184,8 @@
         }
       }
     }
+  },
+  "seriesIdFromChapter": {
+    "queryParam": "title_no"
   }
 }

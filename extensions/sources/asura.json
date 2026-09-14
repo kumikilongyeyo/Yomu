@@ -1,7 +1,7 @@
 {
   "id": "asura",
   "name": "Asura Scans",
-  "version": 2,
+  "version": 3,
   "base": "https://api.asurascans.com",
   "hosts": [
     "api.asurascans.com",
@@ -360,5 +360,8 @@
         }
       }
     }
+  },
+  "seriesIdFromChapter": {
+    "regex": "^([^/]+)/"
   }
 }

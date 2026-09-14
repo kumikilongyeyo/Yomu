@@ -115,6 +115,17 @@ export interface Descriptor {
   timeoutMs?: number;
   /** Politeness limit, applied per isolate. */
   rateLimit?: { requests: number; perSeconds: number };
+  /**
+   * How to recover the series id from a chapter id.
+   *
+   * A chapter manifest has to name the series the chapter belongs to, but
+   * `getPages` is only ever handed a chapter id. Most sources already embed the
+   * series in that id -- as a leading path segment, or as a query parameter --
+   * so the answer is an extraction rule rather than another request.
+   * Declarative for the same reason as everything else here: a descriptor
+   * states a shape, it never supplies logic.
+   */
+  seriesIdFromChapter?: { regex?: string; group?: number; queryParam?: string };
   endpoints: {
     popular?: EndpointSpec;
     latest?: EndpointSpec;
@@ -494,6 +505,39 @@ export function compileExtension(d: Descriptor): YomuExtension {
       return pages;
     },
   };
+}
+
+/**
+ * The series a chapter belongs to, for the manifest's `sourceSeriesId`.
+ *
+ * The reader keys resume position off the series id it already holds, but the
+ * offline downloader files a saved chapter under the manifest's series id, so
+ * this wants to be the real one wherever the chapter id carries it. When a
+ * source gives a chapter an opaque id that says nothing about its series, the
+ * chapter id itself is the fallback: stable, non-empty and unique, which is all
+ * the manifest contract requires. Downloads from such a source then group per
+ * chapter rather than per series -- a visibly smaller loss than the chapter
+ * being unreadable, which is what omitting the field costs.
+ */
+export function seriesIdForChapter(d: Descriptor, chapterId: string): string {
+  const spec = d.seriesIdFromChapter;
+  if (spec?.queryParam) {
+    // A chapter id can be a whole path, query string included.
+    const q = chapterId.indexOf('?');
+    if (q >= 0) {
+      const value = new URLSearchParams(chapterId.slice(q + 1)).get(spec.queryParam);
+      if (value) return value;
+    }
+  }
+  if (spec?.regex) {
+    try {
+      const hit = new RegExp(spec.regex).exec(chapterId)?.[spec.group ?? 1];
+      if (hit) return hit;
+    } catch {
+      // A broken pattern must not make every chapter unreadable.
+    }
+  }
+  return chapterId;
 }
 
 /** Image hosts an adapter is allowed to serve pages/covers from. */

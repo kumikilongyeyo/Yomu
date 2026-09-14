@@ -150,6 +150,18 @@ export function validateDescriptor(raw: unknown, entry: RegistryEntry): { descri
       ...(typeof raw.timeoutMs === 'number' && raw.timeoutMs >= 1000 && raw.timeoutMs <= 20_000
         ? { timeoutMs: raw.timeoutMs }
         : {}),
+      ...(isPlainObject(raw.seriesIdFromChapter) &&
+      (typeof raw.seriesIdFromChapter.regex === 'string' || typeof raw.seriesIdFromChapter.queryParam === 'string')
+        ? {
+            seriesIdFromChapter: {
+              ...(typeof raw.seriesIdFromChapter.regex === 'string' ? { regex: raw.seriesIdFromChapter.regex } : {}),
+              ...(typeof raw.seriesIdFromChapter.group === 'number' ? { group: raw.seriesIdFromChapter.group } : {}),
+              ...(typeof raw.seriesIdFromChapter.queryParam === 'string'
+                ? { queryParam: raw.seriesIdFromChapter.queryParam }
+                : {}),
+            },
+          }
+        : {}),
       ...(isPlainObject(raw.rateLimit) &&
       typeof raw.rateLimit.requests === 'number' &&
       typeof raw.rateLimit.perSeconds === 'number' &&

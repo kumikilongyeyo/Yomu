@@ -1,6 +1,6 @@
 {
   "schema": "yomu.extension-index/1",
-  "updatedAt": "2026-09-14T00:00:00Z",
+  "updatedAt": "2026-09-14T11:48:26Z",
   "extensions": [
     {
       "id": "weebcentral",
@@ -31,7 +31,7 @@
     {
       "id": "flamecomics",
       "name": "Flame Comics",
-      "version": 2,
+      "version": 3,
       "language": "en",
       "content": [
         "manhwa",
@@ -55,7 +55,7 @@
     {
       "id": "webtoons",
       "name": "Webtoons.com",
-      "version": 1,
+      "version": 2,
       "language": "en",
       "content": [
         "webtoon"
@@ -79,7 +79,7 @@
     {
       "id": "asura",
       "name": "Asura Scans",
-      "version": 2,
+      "version": 3,
       "language": "en",
       "content": [
         "manhwa",

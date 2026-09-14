@@ -26,6 +26,18 @@
       "required": ["requests", "perSeconds"],
       "properties": { "requests": { "type": "integer", "minimum": 1 }, "perSeconds": { "type": "number", "minimum": 0.1 } }
     },
+    "seriesIdFromChapter": {
+      "description": "How to recover the series id from a chapter id, for the chapter manifest's sourceSeriesId. Omit when a chapter id says nothing about its series; the chapter id is then used as-is.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["regex"] }, { "required": ["queryParam"] }],
+      "properties": {
+        "queryParam": { "type": "string", "description": "Read the series id from this query parameter of the chapter id. Tried before regex." },
+        "regex": { "type": "string", "description": "Applied to the chapter id; the captured group is the series id." },
+        "group": { "type": "integer", "minimum": 0, "default": 1 }
+      }
+    },
     "headers": { "type": "object", "additionalProperties": { "type": "string" } },
     "endpoints": {
       "type": "object",

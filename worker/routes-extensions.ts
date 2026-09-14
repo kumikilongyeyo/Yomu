@@ -12,7 +12,7 @@
 import type { Env } from './index';
 import { loadRegistry } from './extensions/registry';
 import type { LoadedExtension, RegistrySnapshot } from './extensions/registry';
-import { descriptorAllowsImage } from './extensions/runtime';
+import { descriptorAllowsImage, seriesIdForChapter } from './extensions/runtime';
 import { allHealth, getHealth } from './extensions/health';
 import { mangadexProvider } from './providers/mangadex';
 import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from './providers/suwayomi';
@@ -255,6 +255,9 @@ export async function handleExtensions(request: Request, env: Env, url: URL): Pr
       return json({
         schema: 'yomu.chapter-manifest/1',
         chapterId,
+        // Required by the reader's manifest validator: a manifest without it is
+        // rejected outright and the chapter never opens.
+        sourceSeriesId: seriesIdForChapter(loaded.descriptor, chapterId),
         manifestVersion: `${extId}-${chapterId}-${pages.length}`,
         pageListVersion: pages.length,
         expiresAt: Date.now() + 15 * 60 * 1000,

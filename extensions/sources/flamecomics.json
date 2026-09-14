@@ -1,7 +1,7 @@
 {
   "id": "flamecomics",
   "name": "Flame Comics",
-  "version": 2,
+  "version": 3,
   "base": "https://flamecomics.xyz",
   "hosts": [
     "flamecomics.xyz",
@@ -269,7 +269,10 @@
             ]
           },
           "cover": {
-            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/thumbnail.webp"
+            "template": "https://cdn.flamecomics.xyz/uploads/images/series/{{id}}/{{coverFile}}"
+          },
+          "coverFile": {
+            "path": "props.pageProps.series.cover"
           }
         },
         "chapters": {
@@ -328,5 +331,8 @@
         }
       }
     }
+  },
+  "seriesIdFromChapter": {
+    "regex": "^([^/]+)/"
   }
 }
