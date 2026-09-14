@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0c131b" />
+  <title>Yomu · Add sources</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    /* Theme tokens come from the app stylesheet, so this page follows
+       light/dark with the rest of Yomu. */
+    body{margin:0;background:var(--bg);color:var(--text);
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+    main{max-width:680px;margin:auto;padding:calc(26px + env(safe-area-inset-top)) 18px 90px}
+    nav{display:flex;gap:10px;flex-wrap:wrap}
+    nav a{border:1px solid var(--line);background:var(--surface);color:var(--text);
+          border-radius:999px;padding:7px 12px;font-size:13px;text-decoration:none}
+    h1{font-size:26px;line-height:1.15;margin:22px 0 8px}
+    p{color:var(--muted);line-height:1.55;margin:0}
+    .panel{border:1px solid var(--line);border-radius:16px;padding:18px;
+           background:var(--surface);margin-top:20px}
+    label{display:block;font-weight:650;margin-bottom:9px;font-size:14px}
+    textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:140px;
+             background:var(--bg);color:var(--text);border:1px solid var(--line);
+             border-radius:12px;padding:13px;font:inherit;font-size:15px}
+    button{margin-top:14px;background:var(--accent);color:var(--accentText);border:0;
+           border-radius:999px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;
+           min-height:44px}
+    button:disabled{opacity:.5;cursor:wait}
+    textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+    small{color:var(--dim);font-size:12.5px;line-height:1.5;display:block;margin-top:8px}
+    ul{list-style:none;margin:14px 0 0;padding:0}
+    li{padding:9px 0;border-top:1px solid var(--hairline);font-size:13.5px;overflow-wrap:anywhere}
+    .ok{color:#9ee1b7}
+    .error{color:var(--bad)}
+    #status{margin-top:12px;font-size:13.5px;color:var(--muted)}
+  </style>
+  <script src="/source-import.js" defer></script>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script></head>
+<body>
+<main>
+  <nav><a href="/sources">← Sources</a><a href="/extensions.html">Extensions</a></nav>
+  <h1>Paste a source. Start reading.</h1>
+  <p>Add supported manga websites with one click. You can paste several links, one per line.</p>
+
+  <section class="panel">
+    <form id="add-form">
+      <label for="links">Source links</label>
+      <textarea id="links" required maxlength="12000" placeholder="https://example.com"
+                spellcheck="false" aria-describedby="hint"></textarea>
+      <small id="hint">Yomu matches the link against the adapters it already has and saves the
+        match on this browser. It cannot bring a new website into scope — that needs an adapter
+        first.</small>
+      <button id="add" type="submit">Add sources</button>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+    <ul id="results" aria-label="Import results"></ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'dark'; } catch {}
+
+  // Adult adapters are only matchable once 18+ is on, the same switch Settings
+  // and the search page read.
+  const adultAllowed = () => {
+    try { return localStorage.getItem('yomu.v1.adult') === 'on'; } catch { return false; }
+  };
+
+  document.getElementById('add-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = document.getElementById('add');
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+    const lines = [...new Set(
+      document.getElementById('links').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+    )];
+
+    results.replaceChildren();
+    if (!lines.length) { status.textContent = 'Paste at least one website link.'; return; }
+    if (lines.length > 50) { status.textContent = 'Add up to 50 links at a time.'; return; }
+
+    button.disabled = true;
+    status.textContent = 'Checking supported sources…';
+    try {
+      const response = await fetch('/api/ext/sources', { signal: AbortSignal.timeout(20000), cache: 'no-store' });
+      if (!response.ok) throw new Error('Yomu could not load its sources. Try again shortly.');
+      const registry = await response.json();
+      if (!Array.isArray(registry.extensions)) throw new Error('Source registry unavailable. Nothing was added.');
+
+      const options = { allowAdult: adultAllowed() };
+      let added = 0;
+      for (const line of lines) {
+        const item = document.createElement('li');
+        try {
+          const extension = YomuSourceImport.match(line, registry.extensions, options);
+          const changed = YomuSourceImport.add(localStorage, extension, location.origin);
+          if (changed) added++;
+          const caps = extension.capabilities || {};
+          const reading = caps.details && caps.chapters && caps.pages;
+          item.textContent = extension.name
+            + (changed ? ' — Added.' : ' — Already added.')
+            + (reading ? '' : ' This adapter is discovery only; it cannot serve chapters.');
+          item.className = 'ok';
+        } catch (error) {
+          item.textContent = line + ' — ' + (error.name === 'QuotaExceededError'
+            ? 'Browser storage is full. This source was not saved.'
+            : error.message);
+          item.className = 'error';
+        }
+        results.append(item);
+      }
+      status.textContent = `${added} source${added === 1 ? '' : 's'} added. Open Sources to browse. `
+        + 'Whether pages load still depends on the source being up.';
+    } catch (error) {
+      status.textContent = error.name === 'TimeoutError'
+        ? 'The registry took too long to respond. Try again.'
+        : error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

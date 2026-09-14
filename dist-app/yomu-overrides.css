@@ -276,13 +276,37 @@
   color: transparent !important;
   overflow: visible;
 }
-.freshness--new {
+/* Both of the app's freshness states are update states -- it emits
+   "New chapter" or "Updated" and nothing else -- so both take the New Chapter
+   tab. Hottest means trending, which is a different thing entirely, and the
+   kit is explicit that the two must not be conflated. */
+.freshness--new,
+.freshness--updated {
   aspect-ratio: 152 / 32;
   background-image: url('/tags/new-chapter.svg') !important;
 }
-.freshness--updated {
-  aspect-ratio: 114 / 32;
-  background-image: url('/tags/hottest.svg') !important;
+
+/* Completed is the one other tag with real data behind it: the tile already
+   carries an Ongoing / Completed / Hiatus status, which yomu-shell.js reads
+   into data-yomu-tag. Hottest, Newest and Most Popular have no such signal and
+   are left unused rather than invented. */
+.tile-card[data-yomu-tag='completed'] .tile-card__cover::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  height: 22px;
+  aspect-ratio: 132 / 32;
+  background: url('/tags/completed.svg') no-repeat left center / contain;
+  filter: none;
+  inset: auto auto auto 10px;
+  pointer-events: none;
+}
+/* When a title is both completed and freshly updated, the update tab keeps the
+   corner and the seal sits under it, as the kit's second-row rule asks. */
+.tile-card[data-yomu-tag='completed']:has(.freshness) .tile-card__cover::before {
+  top: 38px;
 }
 
 /* ------------------------------------------------------------------ *
@@ -352,6 +376,125 @@
   .masthead > a[aria-label="Yomu home"] { visibility: hidden; }
   .g-app { padding-left: 184px; }
   .g-main { padding-bottom: 40px; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Continue Reading
+ *
+ * "Three continuation cards on wide desktop, two on intermediate widths ...
+ * Continue cards scroll horizontally with snap [on mobile]." Built by
+ * yomu-shell.js from stored reading progress; this is only its dress.
+ * ------------------------------------------------------------------ */
+#yomu-continue {
+  margin: 4px 0 18px;
+}
+.yomu-continue__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+.yomu-continue__head h2 {
+  margin: 0;
+}
+.yomu-continue__all {
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.yomu-continue__all:hover {
+  color: var(--text);
+}
+
+.yomu-continue__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.yomu-continue__card {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(140deg, #30404b66, #14212bb3);
+}
+.yomu-continue__cover {
+  flex: none;
+  width: 54px;
+  border-radius: 6px;
+  background: var(--raised) center / cover no-repeat;
+}
+.yomu-continue__info {
+  flex: 1;
+  min-width: 0;
+}
+.yomu-continue__info strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.yomu-continue__info small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+#yomu-continue progress {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #ffffff18;
+}
+#yomu-continue progress::-webkit-progress-bar { background: #ffffff18; }
+#yomu-continue progress::-webkit-progress-value { background: #889dff; }
+#yomu-continue progress::-moz-progress-bar { background: #889dff; }
+
+.yomu-continue__go {
+  display: block;
+  margin-top: 7px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 11.5px;
+  text-align: center;
+  text-decoration: none;
+}
+.yomu-continue__go:hover {
+  border-color: var(--accentLine);
+}
+
+@media (max-width: 1100px) {
+  .yomu-continue__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .yomu-continue__card:nth-child(n + 3) { display: none; }
+}
+@media (max-width: 767px) {
+  /* "Continue cards scroll horizontally with snap." */
+  .yomu-continue__row {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .yomu-continue__row::-webkit-scrollbar { display: none; }
+  .yomu-continue__card {
+    flex: 0 0 min(100%, 320px);
+    scroll-snap-align: start;
+  }
+  .yomu-continue__card:nth-child(n + 3) { display: flex; }
+  .yomu-continue__go { min-height: 44px; line-height: 32px; }
 }
 
 /* ------------------------------------------------------------------ *
