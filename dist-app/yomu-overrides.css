@@ -154,21 +154,30 @@
 /* ------------------------------------------------------------------ *
  * 18+ veil
  *
- * Covers and pages from an adult source are blurred until the reader asks for
- * them. Light enough that colour and composition still read -- enough to know
- * what you are looking at and whether you want it -- without the detail.
- * The script that applies data-yomu-veil lives in yomu-gate.js.
+ * Covers and pages of an adult-rated title are blurred until tapped. Light
+ * enough that colour and composition still read -- enough to know what you are
+ * looking at and whether you want it -- without the detail.
+ *
+ * The blur is a plain filter on the media element, which works whether the
+ * art is an <img> (the reader) or a CSS background-image (the series page and
+ * the grids). backdrop-filter was the first attempt and is wrong here: it
+ * blurs what is painted *behind* an element, which on the series hero is the
+ * page, so the art went black instead of soft. The script that sets these
+ * attributes lives in yomu-gate.js.
  * ------------------------------------------------------------------ */
-[data-yomu-veil='on'] img {
-  filter: blur(5px);
-  transform: scale(1.08);
-}
 [data-yomu-veil='on'] {
-  overflow: hidden;
-  position: relative;
+  filter: blur(5px);
 }
-[data-yomu-veil='on']::after {
-  content: '18+';
+/* The badge goes on the parent, not the blurred element: a filter applies to an
+   element's own pseudo-elements too, so a badge on the blurred thing would be
+   just as unreadable as what it is covering. */
+[data-yomu-veil-badge] {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+[data-yomu-veil-badge]::after {
+  content: '18+ tap';
   position: absolute;
   right: 4px;
   bottom: 4px;
@@ -177,11 +186,16 @@
   font-weight: 700;
   letter-spacing: .04em;
   line-height: 1;
-  padding: 3px 4px;
+  padding: 3px 5px;
   border-radius: 4px;
   color: var(--warn);
   background: var(--scrim);
   pointer-events: none;
+}
+/* A reader page is tall; the badge belongs where the eye already is. */
+[data-page-index] [data-yomu-veil-badge]::after {
+  top: 8px;
+  bottom: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

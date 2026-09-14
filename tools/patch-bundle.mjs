@@ -147,21 +147,33 @@ for (const edit of EDITS) {
  * need a <link>, and the built HTML is where it has to go.
  */
 const PAGES_DIR = 'dist-app';
-const LINK = '<link rel="stylesheet" href="/yomu-overrides.css">';
 
-if (!fs.existsSync(path.join(PAGES_DIR, 'yomu-overrides.css'))) {
-  console.error(`
-Missing ${path.join(PAGES_DIR, 'yomu-overrides.css')} — nothing to link.`);
+// Each is matched by its own filename, so adding one later tops up pages that
+// already carry the other rather than being mistaken for done.
+const ASSETS = [
+  { file: 'yomu-overrides.css', tag: '<link rel="stylesheet" href="/yomu-overrides.css">' },
+  { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
+];
+
+for (const { file: assetFile } of ASSETS) {
+  if (fs.existsSync(path.join(PAGES_DIR, assetFile))) continue;
+  console.error(`\nMissing ${path.join(PAGES_DIR, assetFile)} — nothing to link.`);
   failed++;
-} else {
+}
+
+if (!failed) {
   for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html'))) {
-    const file = path.join(PAGES_DIR, page);
-    const html = fs.readFileSync(file, 'utf8');
-    if (html.includes('yomu-overrides.css')) { console.log(`already      link: ${page}`); continue; }
-    if (!html.includes('</head>')) { console.log(`skipped      link: ${page} (no <head>)`); continue; }
-    if (check) { console.log(`NOT APPLIED  link: ${page}`); failed++; continue; }
-    fs.writeFileSync(file, html.replace('</head>', `${LINK}</head>`));
-    console.log(`applied      link: ${page}`);
+    const pagePath = path.join(PAGES_DIR, page);
+    let html = fs.readFileSync(pagePath, 'utf8');
+
+    const missing = ASSETS.filter((a) => !html.includes(a.file));
+    if (!missing.length) { console.log(`already      assets: ${page}`); continue; }
+    if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }
+    if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map((a) => a.file).join(', ')})`); failed++; continue; }
+
+    html = html.replace('</head>', missing.map((a) => a.tag).join('') + '</head>');
+    fs.writeFileSync(pagePath, html);
+    console.log(`applied      assets: ${page} (${missing.map((a) => a.file).join(', ')})`);
     changed++;
   }
 }

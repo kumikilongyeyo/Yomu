@@ -47,7 +47,7 @@
     /* Light enough that colour and composition still read -- you can tell what
        you are looking at and whether you want it -- without the detail. */
     .cover.veiled img{filter:blur(5px);transform:scale(1.08)}
-    .cover.veiled::after{content:"18+";position:absolute;right:3px;bottom:3px;
+    .cover.veiled::after{content:"18+ tap";position:absolute;right:3px;bottom:3px;
                          font-size:9px;font-weight:700;letter-spacing:.04em;line-height:1;
                          padding:3px 4px;border-radius:4px;
                          color:var(--warn);background:var(--scrim)}
@@ -75,7 +75,7 @@
             border-radius:999px;padding:7px 13px}
     .hidden{display:none!important}
   </style>
-<link rel="stylesheet" href="/yomu-overrides.css"></head>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script></head>
 <body>
 <main class="wrap" id="wrap">
   <div class="bar">
@@ -103,15 +103,18 @@
 </div>
 
 <script>
-(() => {
+(async () => {
   'use strict';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const ADULT_KEY = 'yomu.v1.adult';
+  const BLUR_KEY = 'yomu.v1.adultBlur';
 
   try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'dark'; } catch {}
 
   const $ = (id) => document.getElementById(id);
   const adultOn = () => { try { return localStorage.getItem(ADULT_KEY) === 'on'; } catch { return false; } };
+  // Matches Settings > Content > Blur 18+ covers. On unless turned off.
+  const blurOn = () => { try { return localStorage.getItem(BLUR_KEY) !== 'off'; } catch { return true; } };
 
   /* --- provider id -> the source id this device actually has ------------- */
 
@@ -121,6 +124,28 @@
     providerId.startsWith('ext:')      ? 'yomuext-' + providerId.slice(4)
     : providerId.startsWith('suwayomi:') ? 'mihon-'  + providerId.slice(9)
     : providerId;
+
+  /**
+   * Extensions that cannot serve pages, by id.
+   *
+   * Comick is discovery-only by design: it has the best metadata and the widest
+   * catalog, which is exactly why it turns up as a title's first provider, but
+   * asking it for a chapter is a 502. A source that cannot be read must never be
+   * what a row opens.
+   */
+  const readOnlyMeta = new Set();
+  async function learnCapabilities() {
+    try {
+      const res = await fetch('/api/ext/sources');
+      const body = await res.json();
+      for (const e of body.extensions ?? []) {
+        if (!e.capabilities?.pages) readOnlyMeta.add('yomuext-' + e.id);
+      }
+    } catch {
+      // Not knowing is survivable: ranking falls back to the catalog's order.
+    }
+  }
+  const canRead = (appId) => !readOnlyMeta.has(appId);
 
   function enabledSourceIds() {
     try {
@@ -133,7 +158,26 @@
     } catch { return new Set(['mangadex']); }
   }
 
-  const open = (seriesId, sourceId) => {
+  const ADULT_TITLES_KEY = 'yomu.v1.adultTitles';
+
+  /**
+   * Remember that this title is adult before handing off to a compiled screen.
+   * The series page and reader have no way to ask -- they render whatever the
+   * app fetched -- so the fact travels with the navigation instead. Capped so a
+   * long browsing session cannot grow this without bound.
+   */
+  function rememberAdult(seriesId, sourceId) {
+    try {
+      const key = `${sourceId}:${seriesId}`;
+      const raw = JSON.parse(localStorage.getItem(ADULT_TITLES_KEY) || '[]');
+      const list = Array.isArray(raw) ? raw.filter((v) => typeof v === 'string' && v !== key) : [];
+      list.push(key);
+      localStorage.setItem(ADULT_TITLES_KEY, JSON.stringify(list.slice(-300)));
+    } catch {}
+  }
+
+  const open = (seriesId, sourceId, nsfw) => {
+    if (nsfw) rememberAdult(seriesId, sourceId);
     location.href = `/series/${encodeURIComponent(seriesId)}?source=${encodeURIComponent(sourceId)}`;
   };
 
@@ -167,20 +211,20 @@
       row.className = 'hit';
       row.type = 'button';
 
-      // Prefer a source this device has switched on; the catalog already put
-      // the best-ranked provider first among them.
-      const ranked = [...entry.providers].sort((a, b) => {
-        const ha = have.has(appSourceId(a.id)) ? 0 : 1;
-        const hb = have.has(appSourceId(b.id)) ? 0 : 1;
-        return ha - hb;
-      });
+      // Readable first, then enabled on this device; the catalog already put
+      // the best-ranked provider first within each group.
+      const rank = (p) => {
+        const id = appSourceId(p.id);
+        return (canRead(id) ? 0 : 2) + (have.has(id) ? 0 : 1);
+      };
+      const ranked = [...entry.providers].sort((a, b) => rank(a) - rank(b));
       const best = ranked[0];
 
       const cover = document.createElement('div');
       // With 18+ off the catalog filtered these out entirely, so anything
       // adult reaching here arrived because the reader asked for it -- and is
-      // still blurred until they say so per cover.
-      cover.className = 'cover' + (entry.nsfw ? ' veiled' : '');
+      // still blurred until they say so, per cover or once in Settings.
+      cover.className = 'cover' + (entry.nsfw && blurOn() ? ' veiled' : '');
       if (entry.cover) {
         const img = document.createElement('img');
         img.src = entry.cover;
@@ -205,12 +249,20 @@
       const srcs = document.createElement('div');
       srcs.className = 'srcs';
       for (const p of ranked.slice(0, MAX_CHIPS)) {
+        const id = appSourceId(p.id);
         const chip = document.createElement('button');
         chip.type = 'button';
-        chip.className = 'src' + (have.has(appSourceId(p.id)) ? '' : ' off');
+        chip.className = 'src' + (have.has(id) && canRead(id) ? '' : ' off');
         chip.textContent = p.name;
-        chip.title = have.has(appSourceId(p.id)) ? `Read on ${p.name}` : `${p.name} — not enabled on this device`;
-        chip.addEventListener('click', (e) => { e.stopPropagation(); open(p.seriesId, appSourceId(p.id)); });
+        chip.title = !canRead(id)
+          ? `${p.name} — listed here for discovery; it cannot serve chapters`
+          : have.has(id)
+            ? `Read on ${p.name}`
+            : `${p.name} — not enabled on this device`;
+        chip.disabled = !canRead(id);
+        if (canRead(id)) {
+          chip.addEventListener('click', (e) => { e.stopPropagation(); open(p.seriesId, id, entry.nsfw); });
+        }
         srcs.append(chip);
       }
       if (ranked.length > MAX_CHIPS) {
@@ -222,7 +274,13 @@
 
       body.append(title, srcs);
       row.append(cover, body);
-      row.addEventListener('click', () => open(best.seriesId, appSourceId(best.id)));
+      if (canRead(appSourceId(best.id))) {
+        row.addEventListener('click', () => open(best.seriesId, appSourceId(best.id), entry.nsfw));
+      } else {
+        row.disabled = true;
+        row.title = 'No enabled source can serve this title yet';
+        row.style.opacity = '.55';
+      }
       results.append(row);
     }
   }
@@ -296,6 +354,7 @@
   /* --- boot -------------------------------------------------------------- */
 
   $('adult').checked = adultOn();
+  await learnCapabilities();
   const initial = new URLSearchParams(location.search).get('q') ?? '';
   if (initial) { $('q').value = initial; search(initial); }
   else if (matchMedia('(min-width: 768px)').matches) $('q').focus();
