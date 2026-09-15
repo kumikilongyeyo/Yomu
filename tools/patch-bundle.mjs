@@ -362,6 +362,105 @@ const EDITS = [
       'if($i>0&&!g.has(e.slice(0,$i)))try{await this.getSeries(e.slice(0,$i))}catch{}' +
       'for(const t of g.values()){',
   },
+
+  /* --- the kit's icons — assets/icons/svg -------------------------------
+   *
+   * The app draws its own 29 icons as inline paths in the bundle. The kit
+   * ships 41, on the same 24px grid, and its wrapper is attribute-for-
+   * attribute what the app already renders with: viewBox 0 0 24 24, fill
+   * none, stroke currentColor, width 1.7, round caps and joins. So a swap is
+   * the shapes and nothing else -- no sizing, no colour, no re-drawing.
+   *
+   * Sixteen of them, and only where the meaning is the same and the icon
+   * sits in the same place. The rest of the kit's set is not here for two
+   * reasons: about nine are for reader features the app does not have (fit
+   * modes, reading direction, tap zones, papers, trim borders), and the
+   * others would need a decision about where they go rather than what they
+   * replace.
+   *
+   * spark is deliberately untouched: the Icon component falls back to it
+   * for an unknown name, so changing it changes what every miss renders as.
+   */
+  {
+    name: 'icon: home takes the kit home',
+    from: "home:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"m3 10 9-7 9 7v10H3z\"}),(0,n.jsx)(\"path\",{d:\"M9 20v-7h6v7\"})]})",
+    to: "home:(0,n.jsx)(\"path\",{d:\"M3 10.6 12 3.5l9 7.1V20a1 1 0 0 1-1 1h-5v-6.2H9V21H4a1 1 0 0 1-1-1z\"})",
+  },
+  {
+    name: 'icon: search takes the kit search',
+    from: "search:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"circle\",{cx:\"10.5\",cy:\"10.5\",r:\"6.5\"}),(0,n.jsx)(\"path\",{d:\"m16 16 5 5\"})]})",
+    to: "search:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"circle\",{cx:\"11\",cy:\"11\",r:\"6.5\"}),(0,n.jsx)(\"path\",{d:\"m16 16 4.5 4.5\"})]})",
+  },
+  {
+    name: 'icon: library takes the kit books',
+    from: "library:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"rect\",{x:\"3\",y:\"4\",width:\"5\",height:\"16\",rx:\"1\"}),(0,n.jsx)(\"path\",{d:\"M11 4v16m4-15 5-1 3 15-5 1z\"})]})",
+    to: "library:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"rect\",{x:\"3.5\",y:\"4\",width:\"4.4\",height:\"16\",rx:\"1\"}),(0,n.jsx)(\"rect\",{x:\"9.8\",y:\"4\",width:\"4.4\",height:\"16\",rx:\"1\"}),(0,n.jsx)(\"path\",{d:\"m16.6 5.6 3.2 13.2\"})]})",
+  },
+  {
+    name: 'icon: settings takes the kit gear',
+    from: "settings:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M4 7h16M4 17h16\"}),(0,n.jsx)(\"circle\",{cx:\"8\",cy:\"7\",r:\"3\"}),(0,n.jsx)(\"circle\",{cx:\"16\",cy:\"17\",r:\"3\"})]})",
+    to: "settings:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M4 7.5h7M16 7.5h4M4 16.5h4M13 16.5h7\"}),(0,n.jsx)(\"circle\",{cx:\"13.5\",cy:\"7.5\",r:\"2.3\"}),(0,n.jsx)(\"circle\",{cx:\"10.5\",cy:\"16.5\",r:\"2.3\"})]})",
+  },
+  {
+    name: 'icon: list takes the kit list',
+    from: "list:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M8 6h12M8 12h12M8 18h12\"}),(0,n.jsx)(\"path\",{d:\"M4 6h.01M4 12h.01M4 18h.01\"})]})",
+    to: "list:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M9 6.5h11M9 12h11M9 17.5h11\"}),(0,n.jsx)(\"circle\",{cx:\"5\",cy:\"6.5\",r:\"1.1\",fill:\"currentColor\"}),(0,n.jsx)(\"circle\",{cx:\"5\",cy:\"12\",r:\"1.1\",fill:\"currentColor\"}),(0,n.jsx)(\"circle\",{cx:\"5\",cy:\"17.5\",r:\"1.1\",fill:\"currentColor\"})]})",
+  },
+  {
+    name: 'icon: play takes the kit play',
+    from: "play:(0,n.jsx)(\"path\",{d:\"m8 4 12 8-12 8z\"})",
+    to: "play:(0,n.jsx)(\"path\",{d:\"M8 5.5 18 12 8 18.5z\"})",
+  },
+  {
+    name: 'icon: check takes the kit check',
+    from: "check:(0,n.jsx)(\"path\",{d:\"m5 12 4 4L19 6\"})",
+    to: "check:(0,n.jsx)(\"path\",{d:\"m5 12.5 4.5 4.5L19 7.5\"})",
+  },
+  {
+    name: 'icon: bookmark takes the kit bookmark',
+    from: "bookmark:(0,n.jsx)(\"path\",{d:\"M6 4h12v17l-6-4.5L6 21z\"})",
+    to: "bookmark:(0,n.jsx)(\"path\",{d:\"M7 4.5h10a.5.5 0 0 1 .5.5v14.4L12 16l-5.5 3.4V5a.5.5 0 0 1 .5-.5z\"})",
+  },
+  {
+    name: 'icon: download takes the kit dl',
+    from: "download:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5\"}),(0,n.jsx)(\"path\",{d:\"M4 19h16\"})]})",
+    to: "download:(0,n.jsx)(\"path\",{d:\"M12 4v10m0 0 3.6-3.6M12 14l-3.6-3.6M4.5 16.5v2a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2\"})",
+  },
+  {
+    name: 'icon: moon takes the kit moon',
+    from: "moon:(0,n.jsx)(\"path\",{d:\"M20 14A9 9 0 0 1 10 3a9 9 0 1 0 10 11z\"})",
+    to: "moon:(0,n.jsx)(\"path\",{d:\"M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z\"})",
+  },
+  {
+    name: 'icon: sun takes the kit sunlow',
+    from: "sun:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"circle\",{cx:\"12\",cy:\"12\",r:\"4\"}),(0,n.jsx)(\"path\",{d:\"M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2\"})]})",
+    to: "sun:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"circle\",{cx:\"12\",cy:\"12\",r:\"3.4\"}),(0,n.jsx)(\"path\",{d:\"M12 4.5v1.6M12 17.9v1.6M4.5 12h1.6M17.9 12h1.6\"})]})",
+  },
+  {
+    name: 'icon: sliders takes the kit tune',
+    from: "sliders:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M4 8h10m4 0h2M4 16h4m4 0h8\"}),(0,n.jsx)(\"circle\",{cx:\"16\",cy:\"8\",r:\"2.2\"}),(0,n.jsx)(\"circle\",{cx:\"10\",cy:\"16\",r:\"2.2\"})]})",
+    to: "sliders:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"path\",{d:\"M6 20V13M6 9.5V4M12 20v-8M12 8.5V4M18 20v-4M18 12.5V4\"}),(0,n.jsx)(\"circle\",{cx:\"6\",cy:\"11.2\",r:\"1.9\"}),(0,n.jsx)(\"circle\",{cx:\"12\",cy:\"10.2\",r:\"1.9\"}),(0,n.jsx)(\"circle\",{cx:\"18\",cy:\"14.2\",r:\"1.9\"})]})",
+  },
+  {
+    name: 'icon: scrollMode takes the kit vscroll',
+    from: "scrollMode:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"rect\",{x:\"6\",y:\"2\",width:\"12\",height:\"7\",rx:\"1.6\"}),(0,n.jsx)(\"rect\",{x:\"6\",y:\"11\",width:\"12\",height:\"7\",rx:\"1.6\"}),(0,n.jsx)(\"path\",{d:\"M12 19.5v2.2m0 0-1.6-1.6M12 21.7l1.6-1.6\"})]})",
+    to: "scrollMode:(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(\"rect\",{x:\"6.5\",y:\"3.5\",width:\"11\",height:\"17\",rx:\"2\"}),(0,n.jsx)(\"path\",{d:\"M12 8.5v7m0 0-2.2-2.2M12 15.5l2.2-2.2\"})]})",
+  },
+  {
+    name: 'icon: chevronLeft takes the kit left',
+    from: "chevronLeft:(0,n.jsx)(\"path\",{d:\"m15 5-7 7 7 7\"})",
+    to: "chevronLeft:(0,n.jsx)(\"path\",{d:\"M14 18 8 12l6-6\"})",
+  },
+  {
+    name: 'icon: chevronRight takes the kit right',
+    from: "chevronRight:(0,n.jsx)(\"path\",{d:\"m9 5 7 7-7 7\"})",
+    to: "chevronRight:(0,n.jsx)(\"path\",{d:\"m10 6 6 6-6 6\"})",
+  },
+  {
+    name: 'icon: close takes the kit x',
+    from: "close:(0,n.jsx)(\"path\",{d:\"M6 6l12 12M18 6 6 18\"})",
+    to: "close:(0,n.jsx)(\"path\",{d:\"M6 6 18 18M18 6 6 18\"})",
+  },
 ];
 
 
