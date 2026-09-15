@@ -53,7 +53,7 @@ export default {
         request,
         env,
         url,
-        (nextRequest) => handleFabric(nextRequest, env, url),
+        handleFabric(request.clone(), env, url),
       );
     }
 

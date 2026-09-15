@@ -330,24 +330,22 @@ export async function handleFederatedResolve(
   request: Request,
   env: Env,
   url: URL,
-  fallback: (request: Request) => Promise<Response>,
+  fallbackResponsePromise: Promise<Response>,
 ): Promise<Response> {
-  if (request.method !== 'POST') return fallback(request);
+  if (request.method !== 'POST') return fallbackResponsePromise;
 
-  const fallbackRequest = request.clone();
   const body: any = await request.json().catch(() => ({}));
   let target: URL;
   try {
     target = normalizeInput(String(body?.url ?? ''));
   } catch {
-    return fallback(fallbackRequest);
+    return fallbackResponsePromise;
   }
 
   const federationPromise = findFederatedSources(target);
-  const fallbackPromise = fallback(fallbackRequest);
   const [{ matches, storesChecked, storesHealthy }, fallbackResponse] = await Promise.all([
     federationPromise,
-    fallbackPromise,
+    fallbackResponsePromise,
   ]);
 
   const fallbackPayload: any = await fallbackResponse.clone().json().catch(() => null);
