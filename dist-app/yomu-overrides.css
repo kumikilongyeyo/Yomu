@@ -1620,3 +1620,31 @@
 /* Immersive is for the art. A conversation is not the art, so the thread
    keeps its own ground even when everything else has gone black. */
 .yomu-immersive .yomu-thread { background: #0c131b; }
+
+/* Which chapters the circle is talking about. Only ever chapters you have
+   reached -- a marker on one you have not is itself a spoiler, because it
+   says something happened there. */
+.yomu-circle-badge {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--m-fill, #ffffff0d);
+  color: var(--faint);
+  font: 700 10.5px/1.5 var(--uiFont);
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.yomu-circle-badge.is-new { background: var(--accent); color: var(--accentText); }
+
+.chapter-line { position: relative; }
+.yomu-chapter-talk {
+  flex: none;
+  align-self: center;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--m-fill, #ffffff0d);
+  color: var(--faint);
+  font: 700 9.5px/1.6 var(--uiFont);
+  white-space: nowrap;
+}

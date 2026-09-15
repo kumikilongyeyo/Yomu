@@ -313,6 +313,12 @@
         isOwner = !!thread.circle.youAreOwner;
         members = thread.circle.members || members;
       }
+      // Opening a chapter's conversation is having seen it, which is what the
+      // series page's "3 new" counts against. Marked on the newest comment
+      // rather than on the clock, so a comment posted while this was open is
+      // still new next time.
+      const newest = (thread.comments || []).reduce((high, c) => Math.max(high, c.at), 0);
+      if (newest) markSeen(context.sourceId + ':' + context.seriesId, newest);
     } catch (error) {
       thread = { error: error.message };
       if (/not a member|No circle/i.test(error.message)) {
@@ -539,9 +545,113 @@
     if (!document.getElementById(THREAD_ID)) paintThread();
   }
 
+  /* ------------------------------------------------------------------ *
+   * The series page: which chapters have a conversation
+   *
+   * The reader answers "what did they say about this chapter", which you only
+   * get to by opening it. This answers the question you actually have while
+   * looking at a list of forty chapters: which of these is anyone talking
+   * about, and is any of it new.
+   *
+   * Only ever chapters you have reached. The same gated response feeds this,
+   * so a chapter you are not far enough along for contributes nothing here --
+   * not a count, not a dot. A marker on chapter 43 is itself a spoiler: it
+   * says something happened there.
+   * ------------------------------------------------------------------ */
+
+  const SEEN_KEY = 'yomu.v1.circleSeen';
+  const BADGE_ID = 'yomu-circle-badge';
+
+  let seriesFor = '';
+  let seriesThread = null;
+
+  function seriesPageContext() {
+    if (!location.pathname.startsWith('/series/')) return null;
+    const raw = location.pathname.slice('/series/'.length);
+    if (!raw) return null;
+    let seriesId = raw;
+    try { seriesId = decodeURIComponent(raw); } catch {}
+    const sourceId = new URLSearchParams(location.search).get('source') || '';
+    return sourceId ? { sourceId, seriesId } : null;
+  }
+
+  const seenAt = (key) => Number(readJSON(SEEN_KEY, {})[key]) || 0;
+  function markSeen(key, at) {
+    const all = readJSON(SEEN_KEY, {}) || {};
+    if ((Number(all[key]) || 0) >= at) return;
+    all[key] = at;
+    writeJSON(SEEN_KEY, all);
+  }
+
+  function paintSeries(context) {
+    const line = document.querySelector('.section-line');
+    if (!line) return;
+    const key = context.sourceId + ':' + context.seriesId;
+    const comments = seriesThread?.comments || [];
+
+    let badge = document.getElementById(BADGE_ID);
+    if (!comments.length) { badge?.remove(); }
+    else {
+      const since = seenAt(key);
+      const fresh = comments.filter((c) => c.at > since).length;
+      const text = fresh
+        ? `Your circle · ${fresh} new`
+        : `Your circle · ${comments.length} comment${comments.length === 1 ? '' : 's'}`;
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = BADGE_ID;
+        badge.className = 'yomu-circle-badge';
+        line.append(badge);
+      }
+      badge.classList.toggle('is-new', !!fresh);
+      if (badge.textContent !== text) badge.textContent = text;
+      if (badge.parentElement !== line) line.append(badge);
+    }
+
+    // Per-row markers. Counted per chapter number, which is why the rows now
+    // carry it rather than having their label parsed back apart.
+    const byChapter = new Map();
+    for (const comment of comments) {
+      byChapter.set(comment.chapter, (byChapter.get(comment.chapter) || 0) + 1);
+    }
+    for (const row of document.querySelectorAll('.chapter-line[data-chn]')) {
+      const count = byChapter.get(Number(row.getAttribute('data-chn')));
+      let dot = row.querySelector('.yomu-chapter-talk');
+      if (!count) { dot?.remove(); continue; }
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'yomu-chapter-talk';
+        row.append(dot);
+      }
+      const label = '● ' + count;
+      if (dot.textContent !== label) dot.textContent = label;
+      dot.title = count + (count === 1 ? ' comment' : ' comments') + ' from your circle';
+    }
+  }
+
+  async function tickSeries() {
+    const context = seriesPageContext();
+    if (!context) { seriesFor = ''; seriesThread = null; return; }
+    if (!joined()) return;
+
+    const key = context.sourceId + ':' + context.seriesId;
+    if (key !== seriesFor) {
+      seriesFor = key;
+      seriesThread = null;
+      try {
+        // No chapter: asking what is already visible, without claiming to have
+        // reached anything. recordProgress ignores a missing or zero chapter,
+        // so opening a series page can never move your own high-water mark.
+        seriesThread = await api('read', { sourceId: context.sourceId, seriesId: context.seriesId });
+        if (seriesThread.circle) isOwner = !!seriesThread.circle.youAreOwner;
+      } catch { seriesThread = { comments: [] }; }
+    }
+    paintSeries(context);
+  }
+
   /* --- boot -------------------------------------------------------------- */
 
-  const pass = () => { mountGroup(); tickReader(); };
+  const pass = () => { mountGroup(); tickReader(); tickSeries(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pass);
   else pass();
 

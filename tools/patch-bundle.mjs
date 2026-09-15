@@ -110,6 +110,18 @@ const EDITS = [
     to:   'return(0,t.jsxs)("div",{className:"tile-card","data-series":n.id,children:[',
   },
 
+  {
+    name: 'series: chapter rows carry their chapter number',
+    why:
+      'Same one-attribute edit as the reader\'s chapter sheet and the cover ' +
+      'tiles. The circle keys its comments by chapter number, and the series ' +
+      'list prints that number only inside a string ("Chapter 41") that would ' +
+      'have to be parsed back out -- and parsed wrongly the moment a source ' +
+      'names a chapter something else.',
+    from: 'return(0,x.jsxs)("div",{className:"chapter-line"+(t?\' is-read\':\'\'),children:[',
+    to:   'return(0,x.jsxs)("div",{className:"chapter-line"+(t?\' is-read\':\'\'),"data-chn":e.number,children:[',
+  },
+
   /* --- home — app/index.web.tsx --------------------------------------- */
   {
     name: 'home: the app\'s own Continue card yields to the shell\'s row',
