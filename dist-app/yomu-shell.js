@@ -3013,8 +3013,163 @@
     }
   }
 
+  /* ------------------------------------------------------------------ *
+   * The scrub bubble
+   *
+   * The kit takes the page counter off the reader entirely -- "the page is the
+   * interface" -- and shows the number in a bubble above the ruler, only while
+   * a finger is on it. The stylesheet hides the counter; this is the bubble.
+   *
+   * Delegated from the document, so it survives every rebuild of the bar and
+   * needs no re-assertion in the mutation pass. The bubble itself is built on
+   * the first drag and then reused.
+   * ------------------------------------------------------------------ */
+
+  const SCRUB_CLASS = 'yomu-scrub';
+
+  function scrubFor(input) {
+    const rail = input.closest('.rd-rail');
+    if (!rail) return null;
+    let bubble = rail.querySelector('.' + SCRUB_CLASS);
+    if (!bubble) {
+      bubble = document.createElement('span');
+      bubble.className = SCRUB_CLASS;
+      bubble.setAttribute('aria-hidden', 'true');   // the input is already named
+      rail.append(bubble);
+    }
+    return bubble;
+  }
+
+  function paintScrub(input) {
+    const bubble = scrubFor(input);
+    if (!bubble) return;
+    const max = Number(input.max) || 0;
+    const value = Number(input.value) || 0;
+    bubble.textContent = (value + 1) + ' / ' + (max + 1);
+    // The thumb is 26px, so the travel is the track minus one thumb width.
+    const width = input.getBoundingClientRect().width;
+    const ratio = max > 0 ? value / max : 0;
+    bubble.style.left = Math.round(13 + ratio * Math.max(0, width - 26)) + 'px';
+  }
+
+  const isRail = (target) =>
+    target instanceof Element && target.matches('.rd-rail input[type="range"]');
+
+  document.addEventListener('pointerdown', (event) => {
+    if (!isRail(event.target)) return;
+    paintScrub(event.target);
+    scrubFor(event.target)?.classList.add('is-on');
+  }, true);
+
+  document.addEventListener('input', (event) => {
+    if (!isRail(event.target)) return;
+    paintScrub(event.target);
+    scrubFor(event.target)?.classList.add('is-on');
+  }, true);
+
+  for (const done of ['pointerup', 'pointercancel', 'blur']) {
+    document.addEventListener(done, (event) => {
+      if (!isRail(event.target)) return;
+      scrubFor(event.target)?.classList.remove('is-on');
+    }, true);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The greeting
+   *
+   * The kit opens home with the time of day and your name, not the wordmark --
+   * the logo is the rail's job on desktop and the app's job everywhere else.
+   * Home only: on every other screen the masthead keeps the lockup, because
+   * that is the only brand on a phone.
+   *
+   * Reuses the picture from Your Yomu, so the face you chose there is the face
+   * that greets you.
+   * ------------------------------------------------------------------ */
+
+  const GREET_ID = 'yomu-greet';
+  const AVATAR_KEY = 'yomu.v1.avatar';
+
+  function greeting() {
+    const hour = new Date().getHours();
+    if (hour < 5) return 'Still up';
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  function readerName() {
+    // The same record Your Yomu writes the name into; the shell has no
+    // constant for it because nothing else here reads it.
+    const circle = readJSON('yomu.v1.circle', null);
+    const name = circle && typeof circle.name === 'string' ? circle.name.trim() : '';
+    return name || 'Reader';
+  }
+
+  function avatarImage() {
+    const saved = readJSON(AVATAR_KEY, null);
+    if (!saved) return '';
+    if (saved.kind === 'preset' && saved.id) return '/brand/avatars/' + saved.id + '.webp';
+    if (saved.kind === 'photo' && saved.src) return saved.src;
+    return '';
+  }
+
+  function mountGreeting() {
+    const masthead = document.querySelector('.masthead');
+    const existing = document.getElementById(GREET_ID);
+
+    if (!masthead || !onHome()) {
+      if (existing) { existing.remove(); document.documentElement.removeAttribute('data-yomu-greet'); }
+      return;
+    }
+
+    const name = readerName();
+    const art = avatarImage();
+
+    if (existing) {
+      // Cheap to keep current: the name and the picture can both change on
+      // Your Yomu and come back here without a reload.
+      const strong = existing.querySelector('.yomu-greet__name');
+      if (strong && strong.textContent !== name) strong.textContent = name;
+      const face = existing.querySelector('.yomu-greet__face');
+      if (face) {
+        const want = art ? 'url("' + art + '")' : '';
+        if (face.style.backgroundImage !== want) face.style.backgroundImage = want;
+        face.textContent = art ? '' : [...name][0].toUpperCase();
+        face.classList.toggle('has-image', !!art);
+      }
+      return;
+    }
+
+    const block = document.createElement('a');
+    block.id = GREET_ID;
+    block.className = 'yomu-greet';
+    block.href = '/you';
+    block.setAttribute('aria-label', 'Your Yomu');
+
+    const copy = document.createElement('span');
+    copy.className = 'yomu-greet__copy';
+    const eyebrow = document.createElement('small');
+    eyebrow.textContent = greeting();
+    const strong = document.createElement('strong');
+    strong.className = 'yomu-greet__name';
+    strong.textContent = name;
+    copy.append(eyebrow, strong);
+
+    const face = document.createElement('span');
+    face.className = 'yomu-greet__face';
+    if (art) { face.style.backgroundImage = 'url("' + art + '")'; face.classList.add('has-image'); }
+    else face.textContent = [...name][0].toUpperCase();
+
+    block.append(copy, face);
+    masthead.prepend(block);
+    // The stylesheet hides the lockup off this flag rather than guessing at
+    // which masthead it is looking at.
+    document.documentElement.setAttribute('data-yomu-greet', 'on');
+  }
+
   const pass = () => {
     brandLockup();
+    mountGreeting();
     gateFabric();
     tagCompleted();
     badgeProgress();
