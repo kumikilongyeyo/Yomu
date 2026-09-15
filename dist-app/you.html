@@ -26,13 +26,71 @@
     h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.015em; }
 
     .who { display: flex; align-items: center; gap: 15px; margin: 18px 0 4px; }
+    /* The avatar is a button now -- tapping it is how you change your
+       picture, and the pencil is there so that reads as an offer rather than
+       something you have to guess at. */
     .avatar {
+      position: relative;
       width: 62px; height: 62px; border-radius: 50%; flex: none;
       display: grid; place-items: center;
+      padding: 0; border: 0; cursor: pointer;
       background: linear-gradient(145deg, var(--accent, #ffc45f), color-mix(in srgb, var(--accent, #ffc45f) 62%, #000));
+      background-size: cover; background-position: center;
       color: var(--accentText, #18212a);
-      font-size: 25px; font-weight: 900;
+      font: 900 25px/1 var(--uiFont);
+      transition: transform .12s ease-out;
     }
+    .avatar:active { transform: scale(.95); }
+    .avatar.has-image { color: transparent; }
+    .avatar__pencil {
+      position: absolute; right: -2px; bottom: -2px;
+      width: 23px; height: 23px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: var(--raised); color: var(--text);
+      border: 2px solid var(--bg);
+      font-size: 11px; line-height: 1;
+    }
+
+    /* picker */
+    .pickr[hidden] { display: none; }
+    .pickr {
+      position: fixed; inset: 0; z-index: 40;
+      display: grid; place-items: end center;
+    }
+    .pickr__scrim { position: absolute; inset: 0; border: 0; padding: 0; background: var(--scrim); }
+    .pickr__sheet {
+      position: relative; width: min(520px, 100%);
+      max-height: 86vh; overflow: auto;
+      padding: 18px 18px calc(20px + env(safe-area-inset-bottom));
+      border-radius: 22px 22px 0 0;
+      background: var(--overlay); border: 1px solid var(--line); border-bottom: 0;
+    }
+    .pickr__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+    .pickr__head h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+    .pickr__head button {
+      margin-left: auto; border: 0; background: none; cursor: pointer;
+      color: var(--dim); font: 600 13px/1 var(--uiFont); padding: 4px;
+    }
+    .faces { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+    .faces button {
+      aspect-ratio: 1; border-radius: 50%; padding: 0; cursor: pointer;
+      border: 2px solid transparent; background: var(--raised) center / cover no-repeat;
+      transition: transform .14s ease-out, border-color .14s ease-out;
+    }
+    .faces button:active { transform: scale(.93); }
+    .faces button[aria-pressed="true"] { border-color: var(--accent); }
+    .pickr__acts { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+    .pickr__acts button, .pickr__acts label {
+      flex: 1 1 auto; min-height: 44px;
+      display: grid; place-items: center; cursor: pointer;
+      padding: 0 16px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--surface); color: var(--text);
+      font: 700 14px/1 var(--uiFont);
+    }
+    .pickr__acts .is-primary { background: var(--accent); color: var(--accentText); border-color: transparent; }
+    .pickr__acts input[type="file"] { display: none; }
+    .pickr__note { margin: 13px 2px 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
+    .pickr__note.is-bad { color: var(--bad); }
     .who input {
       width: 100%; padding: 8px 10px; margin: 0 0 2px;
       border: 1px solid transparent; border-radius: 10px;
@@ -87,11 +145,29 @@
   </div>
 
   <div class="who">
-    <div class="avatar" id="avatar">Y</div>
+    <button class="avatar" id="avatar" type="button" aria-label="Change your picture" aria-haspopup="dialog">Y<span class="avatar__pencil" aria-hidden="true">&#9998;</span></button>
     <div style="min-width:0;flex:1">
       <input id="name" maxlength="32" placeholder="Your name" aria-label="Your name" />
       <small id="since"></small>
     </div>
+  </div>
+
+  <div class="pickr" id="pickr" hidden>
+    <button class="pickr__scrim" id="pickr-scrim" type="button" aria-label="Close"></button>
+    <section class="pickr__sheet" role="dialog" aria-modal="true" aria-labelledby="pickr-title">
+      <div class="pickr__head">
+        <h2 id="pickr-title">Your picture</h2>
+        <button type="button" id="pickr-close">Done</button>
+      </div>
+      <div class="faces" id="faces"></div>
+      <div class="pickr__acts">
+        <label class="is-primary" for="avatar-file">Use my own photo
+          <input type="file" id="avatar-file" accept="image/*" />
+        </label>
+        <button type="button" id="avatar-clear">Back to my initial</button>
+      </div>
+      <p class="pickr__note" id="pickr-note">Your photo stays on this device. It is saved in this browser and never uploaded to Yomu or shared with your circle.</p>
+    </section>
   </div>
 
   <div class="stats">
@@ -153,12 +229,146 @@
   const circle = readJSON(CIRCLE_KEY, {}) || {};
   const nameField = document.getElementById('name');
   nameField.value = circle.name || '';
+  /* --- the picture ---------------------------------------------------- *
+   *
+   * Three states: one of the five presets, a photo of your own, or neither,
+   * which falls back to the first letter of your name the way it always did.
+   * A photo is downscaled to 256 square and stored as a data URL in this
+   * browser -- it is never uploaded, and the sheet says so, because "add a
+   * photo" in an app with a sync feature is a fair thing to be wary of.
+   * ------------------------------------------------------------------ */
+
+  const AVATAR_KEY = 'yomu.v1.avatar';
+  const FACE_SIZE = 256;                 // 62px circle at 4x, and small to store
+  const PRESETS = [
+    { id: '01_sleep_deprived_reader',    label: 'Sleep-deprived' },
+    { id: '02_sexy_romance_reader',      label: 'Romance' },
+    { id: '03_chill_dinosaur_reader',    label: 'Dinosaur' },
+    { id: '04_undead_knight_reader',     label: 'Undead knight' },
+    { id: '05_shocked_cliffhanger_reader', label: 'Cliffhanger' },
+  ];
+  const presetSrc = (id) => '/brand/avatars/' + id + '.webp';
+
+  const avatarEl = document.getElementById('avatar');
+  const pencil = avatarEl.querySelector('.avatar__pencil');
+  const noteEl = document.getElementById('pickr-note');
+  const NOTE_DEFAULT = noteEl.textContent;
+
+  let avatar = readJSON(AVATAR_KEY, null);
+
+  const avatarSrc = () => {
+    if (!avatar) return '';
+    if (avatar.kind === 'preset') return presetSrc(avatar.id);
+    if (avatar.kind === 'photo') return avatar.src;
+    return '';
+  };
+
   const paintAvatar = () => {
     const text = (nameField.value || 'You').trim();
-    document.getElementById('avatar').textContent = [...text][0].toUpperCase();
+    // The pencil is a child, so only the letter node is rewritten.
+    avatarEl.firstChild.nodeValue = [...text][0].toUpperCase();
+    const src = avatarSrc();
+    avatarEl.classList.toggle('has-image', !!src);
+    avatarEl.style.backgroundImage = src ? 'url("' + src + '")' : '';
+    if (pencil) pencil.hidden = false;
   };
   paintAvatar();
   nameField.addEventListener('input', paintAvatar);
+
+  const setAvatar = (next) => {
+    avatar = next;
+    try {
+      if (next) localStorage.setItem(AVATAR_KEY, JSON.stringify(next));
+      else localStorage.removeItem(AVATAR_KEY);
+    } catch {
+      // Quota is the only realistic failure, and only for a photo.
+      noteEl.textContent = 'There was not enough room in this browser to save that photo. Try a smaller one, or pick a face above.';
+      noteEl.classList.add('is-bad');
+      return false;
+    }
+    noteEl.textContent = NOTE_DEFAULT;
+    noteEl.classList.remove('is-bad');
+    paintAvatar();
+    drawFaces();
+    return true;
+  };
+
+  /* --- the sheet --- */
+
+  const pickr = document.getElementById('pickr');
+  const facesBox = document.getElementById('faces');
+
+  function drawFaces() {
+    facesBox.textContent = '';
+    PRESETS.forEach((preset) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.style.backgroundImage = 'url("' + presetSrc(preset.id) + '")';
+      button.setAttribute('aria-label', preset.label);
+      button.setAttribute('aria-pressed', String(!!avatar && avatar.kind === 'preset' && avatar.id === preset.id));
+      button.addEventListener('click', () => {
+        const same = avatar && avatar.kind === 'preset' && avatar.id === preset.id;
+        setAvatar(same ? null : { kind: 'preset', id: preset.id });
+      });
+      facesBox.append(button);
+    });
+  }
+
+  const openPickr = () => { drawFaces(); pickr.hidden = false; document.getElementById('pickr-close').focus(); };
+  const closePickr = () => { pickr.hidden = true; avatarEl.focus(); };
+
+  avatarEl.addEventListener('click', openPickr);
+  document.getElementById('pickr-close').addEventListener('click', closePickr);
+  document.getElementById('pickr-scrim').addEventListener('click', closePickr);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !pickr.hidden) closePickr();
+  });
+  document.getElementById('avatar-clear').addEventListener('click', () => setAvatar(null));
+
+  /* --- a photo of your own --- */
+
+  document.getElementById('avatar-file').addEventListener('change', (event) => {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';                     // so the same file can be re-picked
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      noteEl.textContent = 'That file is not an image. Pick a photo -- JPEG, PNG, HEIC or WebP.';
+      noteEl.classList.add('is-bad');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      noteEl.textContent = 'That photo could not be read. Try another one.';
+      noteEl.classList.add('is-bad');
+    };
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reader.onerror;
+      image.onload = () => {
+        // Centre-crop to a square, then draw at 256 so the stored copy is
+        // small however large the original was.
+        const side = Math.min(image.width, image.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = FACE_SIZE;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(
+          image,
+          (image.width - side) / 2, (image.height - side) / 2, side, side,
+          0, 0, FACE_SIZE, FACE_SIZE,
+        );
+        // Step the quality down rather than refusing a large photo outright.
+        let src = '';
+        for (const quality of [0.82, 0.7, 0.55, 0.4]) {
+          src = canvas.toDataURL('image/jpeg', quality);
+          if (src.length < 300000) break;
+        }
+        setAvatar({ kind: 'photo', src });
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
   nameField.addEventListener('change', () => {
     // Shared with the circle rather than stored twice. Comments already
     // posted keep the name they were posted under -- that is the server's
