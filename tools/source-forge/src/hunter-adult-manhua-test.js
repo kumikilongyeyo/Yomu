@@ -55,3 +55,5 @@ await fs.writeFile(
   'hunter-adult-manhua-output/summary.md',
   `# Adult/manhua Hunter test\n\n${pass.length}/2 PASS\n\n${results.map(r => `- ${r.status} — ${r.name}: ${r.score}/100 — ${(r.reasons || []).join('; ')}`).join('\n')}\n`
 );
+
+process.exit(0);
