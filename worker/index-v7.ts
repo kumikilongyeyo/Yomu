@@ -1,15 +1,17 @@
 import v5 from './index-v5';
 import type { Env } from './index';
 import { handleFabric } from './source-fabric-v7';
-import { handleFederatedResolve } from './store-federation';
+import { resolveWithBeastIntelligence } from './beast-intelligence';
 
 /**
  * Yomu production entrypoint v7.2.
  *
  * Keep the proven v5 wrapper as the compatibility floor, but route the public
- * Source Fabric API through the Beast Adaptive v7.2 surface. This avoids a risky
- * rewrite while making the deployed entrypoint, API status, and Sources UI all
- * report the generation that is actually running.
+ * Source Fabric API through the Beast Adaptive v7.2 surface. On the v7.3
+ * intelligence branch, resolve requests pass through a planning layer first:
+ * family fingerprinting, warm strategy memory, and executable Aidoku federation.
+ * The proven v7.2 Worker engine remains the fallback and public compatibility
+ * surface until the intelligence branch wins its regression gauntlet.
  */
 async function injectV7Ui(response: Response): Promise<Response> {
   if (!response.ok) return response;
@@ -36,10 +38,19 @@ async function normalizeFederationResponse(response: Response): Promise<Response
   if (!payload || typeof payload !== 'object') return response;
 
   if (payload.route === 'store-federation' && payload.federation?.runtimeBrokerConfigured) {
-    payload.message = payload.federation?.best?.name
-      ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.`
-      : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.';
-    payload.runtimeBroker = 'connected-source-not-ready';
+    if (payload.federation?.runtimeBrokerConnected === false) {
+      payload.runtimeBroker = 'configured-unreachable';
+    } else {
+      payload.runtimeBroker = 'connected-source-not-ready';
+    }
+    // The intelligence layer includes the concrete runtime failure/attempts.
+    // Keep that useful diagnosis instead of replacing it with the old generic
+    // "runner not connected" message.
+    if (!payload.message) {
+      payload.message = payload.federation?.best?.name
+        ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet.`
+        : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet.';
+    }
   } else if (payload.route === 'store-federation') {
     payload.runtimeBroker = 'not-configured';
   }
@@ -73,17 +84,7 @@ export default {
     if (url.pathname === '/api/fabric/resolve') {
       if (request.method !== 'POST') return handleFabric(request, env, url);
       const bodyText = await request.text();
-      const fabricRequest = new Request(url.toString(), {
-        method: 'POST',
-        headers: request.headers,
-        body: bodyText,
-      });
-      return normalizeFederationResponse(await handleFederatedResolve(
-        bodyText,
-        env,
-        url,
-        handleFabric(fabricRequest, env, url),
-      ));
+      return normalizeFederationResponse(await resolveWithBeastIntelligence(request, env, url, bodyText));
     }
 
     if (url.pathname.startsWith('/api/fabric/')) {
