@@ -490,6 +490,7 @@
           rememberOpen(now);
           foldSettingsGroups();
     mountBridge();
+    mountFullscreen();
         });
       }
       // Written only when it would actually change. Setting textContent
@@ -784,6 +785,129 @@
     }
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * Reader fullscreen
+   *
+   * The reader's own bars already fade to nothing, but the browser's chrome
+   * stays -- so "hidden UI" still left an address bar and a home indicator
+   * around the page. The Fullscreen API removes those where it exists.
+   *
+   * Where it does not exist is the case worth handling honestly: iOS Safari on
+   * iPhone has never supported requestFullscreen (iPad does). There is no
+   * workaround, so the button is replaced by a one-time note saying the thing
+   * that actually works -- Add to Home Screen, which runs Yomu standalone with
+   * no browser chrome at all.
+   *
+   * Entering fullscreen needs a user gesture, so the preference cannot be
+   * applied on navigation. Instead the next deliberate tap inside the reader
+   * restores it, which makes moving between chapters feel continuous.
+   * ------------------------------------------------------------------ */
+
+  const FS_KEY = 'yomu.v1.fullscreen';
+  const FS_HINT_KEY = 'yomu.v1.fullscreenHint';
+  const FS_ID = 'yomu-fullscreen';
+
+  const fsWanted = () => { try { return localStorage.getItem(FS_KEY) === 'on'; } catch { return false; } };
+  const setFsWanted = (on) => { try { localStorage.setItem(FS_KEY, on ? 'on' : 'off'); } catch {} };
+
+  const fsElement = () => document.fullscreenElement ?? document.webkitFullscreenElement ?? null;
+  const fsSupported = () => {
+    const el = document.querySelector('.rd');
+    return !!(el && (el.requestFullscreen || el.webkitRequestFullscreen));
+  };
+  /** Already running without browser chrome: installed to the Home Screen. */
+  const isStandalone = () =>
+    window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+
+  async function enterFullscreen() {
+    const el = document.querySelector('.rd');
+    if (!el) return;
+    try {
+      await (el.requestFullscreen?.({ navigationUI: 'hide' }) ?? el.webkitRequestFullscreen?.());
+    } catch {
+      // Denied or unsupported. The preference stays, the note explains.
+    }
+  }
+  function exitFullscreen() {
+    try { (document.exitFullscreen ?? document.webkitExitFullscreen)?.call(document); } catch {}
+  }
+
+  const FS_ICON_ON =
+    'M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3';
+  const FS_ICON_OFF =
+    'M3 8h3a2 2 0 0 0 2-2V3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M21 16h-3a2 2 0 0 0-2 2v3';
+
+  function showHomeScreenHint() {
+    try { if (localStorage.getItem(FS_HINT_KEY) === 'seen') return; } catch {}
+    if (document.getElementById(FS_ID + '-hint')) return;
+    const note = document.createElement('p');
+    note.id = FS_ID + '-hint';
+    note.className = 'yomu-fs__hint';
+    note.textContent =
+      'Safari cannot go fullscreen on iPhone. Share → Add to Home Screen, and Yomu opens with no browser bars at all.';
+    document.body.append(note);
+    const dismiss = () => {
+      try { localStorage.setItem(FS_HINT_KEY, 'seen'); } catch {}
+      note.remove();
+    };
+    note.addEventListener('click', dismiss);
+    setTimeout(dismiss, 9000);
+  }
+
+  function mountFullscreen() {
+    if (!location.pathname.startsWith('/read/')) return;
+    // Nothing to hide when the app is already running standalone.
+    if (isStandalone()) return;
+
+    const foot = document.querySelector('.rd-foot');
+    if (!foot) return;
+
+    let button = document.getElementById(FS_ID);
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.id = FS_ID;
+      button.className = 'yomu-fs';
+      button.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path/></svg>';
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (!fsSupported()) { setFsWanted(true); showHomeScreenHint(); return; }
+        if (fsElement()) { setFsWanted(false); exitFullscreen(); }
+        else { setFsWanted(true); enterFullscreen(); }
+      });
+    }
+
+    const on = !!fsElement();
+    const path = button.querySelector('path');
+    const want = on ? FS_ICON_OFF : FS_ICON_ON;
+    if (path.getAttribute('d') !== want) path.setAttribute('d', want);
+    const label = on ? 'Leave fullscreen' : 'Read fullscreen';
+    if (button.getAttribute('aria-label') !== label) {
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+
+    // Re-asserted rather than rebuilt: React owns the footer.
+    if (button.parentElement !== foot) foot.append(button);
+  }
+
+  // The preference cannot be applied without a gesture, so the first deliberate
+  // tap in the reader restores it. Once only, and never fighting a manual exit.
+  let fsRestoreArmed = true;
+  document.addEventListener('pointerdown', () => {
+    if (!fsRestoreArmed || !location.pathname.startsWith('/read/')) return;
+    if (!fsWanted() || fsElement() || isStandalone() || !fsSupported()) return;
+    fsRestoreArmed = false;
+    enterFullscreen();
+  }, true);
+
+  for (const type of ['fullscreenchange', 'webkitfullscreenchange']) {
+    document.addEventListener(type, () => mountFullscreen());
+  }
+
   const mount = () => {
     if (!document.getElementById(ID)) document.body.append(build());
     tagCompleted();
@@ -797,7 +921,7 @@
 
   // The grid mounts as results arrive, so new tiles need tagging as they land.
   // Cheap: tagCompleted only looks at tiles it has not already marked.
-  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); foldSettingsGroups(); mountBridge(); }).observe(document.documentElement, {
+  new MutationObserver(() => { tagCompleted(); mountContinue(); explainIconButtons(); foldSettingsGroups(); mountBridge(); mountFullscreen(); }).observe(document.documentElement, {
     childList: true,
     subtree: true,
   });

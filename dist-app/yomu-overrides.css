@@ -866,6 +866,75 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Reader: nothing on screen but the page
+ * ------------------------------------------------------------------ */
+
+/* While a page is still loading the reader draws a bordered box with "Page 12"
+   in it. In a long strip most pages are in that state at any moment, so
+   scrolling meant a procession of page numbers over the artwork. The box has
+   no class -- it is inline-styled -- but it is the only <div> child of the
+   page wrapper, the image being an <img>.
+   The failed state is left alone: it carries a Retry button, and silently
+   showing nothing where a page failed would be worse than a label. */
+[data-page-index] > div > div:not(:has(button)) {
+  border: 0 !important;
+  color: transparent !important;
+}
+
+/* The other page number, and the one actually seen on a phone: every reader
+   image carries alt="Page N", and a browser paints alt text inside the image
+   box for as long as the image is loading or broken. On a slow connection that
+   is a number sitting on the artwork. Hiding the text rather than stripping the
+   attribute keeps the accessible name intact for a screen reader. */
+[data-page-index] img {
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+/* True fullscreen. The app's own bars already fade to nothing; this is for the
+   browser's. Set while the Fullscreen API is engaged. */
+.rd:fullscreen,
+.rd:-webkit-full-screen {
+  width: 100vw;
+  height: 100dvh;
+  background: #07080b;
+}
+
+/* The control itself, injected into the footer by yomu-shell.js so it fades
+   with the rest of the chrome. */
+.yomu-fs {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 13px;
+  background: none;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+.yomu-fs:hover { background: var(--m-fill-hi, #ffffff14); }
+.yomu-fs svg { width: 20px; height: 20px; }
+.yomu-fs__hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--overlay, #14212bf0);
+  backdrop-filter: blur(18px);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ *
  * 18+ veil
  *
  * Covers and pages of an adult-rated title are blurred until tapped. Light
