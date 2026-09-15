@@ -35,14 +35,31 @@ jobs:
         run: npm ci
       - name: Typecheck Worker
         run: npm run typecheck
+      # Both are checked, and the account id is verified against the API rather
+      # than merely being non-empty. wrangler needs it whenever a token can see
+      # more than one account, and without it the deploy fails with a message
+      # that does not name the cause -- which is how this workflow failed twice
+      # in a row while reporting that the credentials were fine.
       - name: Check Cloudflare credentials
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo '::error::Missing repository secret CLOUDFLARE_API_TOKEN.'
             exit 1
           fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo '::error::Missing repository secret CLOUDFLARE_ACCOUNT_ID. wrangler cannot pick an account on its own when the token can see more than one.'
+            exit 1
+          fi
+          status=$(curl -s -o /tmp/cf-verify.json -w '%{http_code}'             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID")
+          if [ "$status" != "200" ]; then
+            echo "::error::The API token cannot read account $CLOUDFLARE_ACCOUNT_ID (HTTP $status). Check the account id, and that the token has Workers Scripts: Edit and Workers KV Storage: Edit -- this Worker binds a KV namespace, and a token without KV permission fails at deploy, not here."
+            cat /tmp/cf-verify.json
+            exit 1
+          fi
+          echo "Token can read the account. Deploying."
       - name: Deploy production Worker and static assets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
