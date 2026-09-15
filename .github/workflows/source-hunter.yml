@@ -6,6 +6,12 @@ on:
     # visible chapter activity is within the configured five-day window.
     - cron: '37 1 * * *'
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/source-forge/src/hunter.js'
+      - '.github/workflows/source-hunter.yml'
   pull_request:
     paths:
       - 'tools/source-forge/**'
