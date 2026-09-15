@@ -116,8 +116,35 @@ export async function fromAll<T>(
 const NOISE =
   /\b(the|a|an|of|and|manga|manhwa|manhua|webtoon|comic|official|colou?red?|color|season|part|vol(ume)?|novel|remake|fan\s?colou?red)\b/g;
 
+/**
+ * Small memo in front of the two hot string functions.
+ *
+ * A search merge compares the same few hundred names against each other
+ * thousands of times, and both `normalizeTitle` (NFKD plus five regexes) and
+ * the bigram map behind `similarity` are pure. Caching them turns the merge
+ * from something that trips the Worker's CPU limit into something that does
+ * not. Capped and dropped wholesale rather than evicted one at a time: this
+ * is a request-lifetime cache living in an isolate that outlives requests,
+ * and a clear is cheaper than tracking recency for it.
+ */
+const MEMO_CAP = 4096;
+function memo<V>(cache: Map<string, V>, key: string, make: () => V): V {
+  const hit = cache.get(key);
+  if (hit !== undefined) return hit;
+  if (cache.size >= MEMO_CAP) cache.clear();
+  const made = make();
+  cache.set(key, made);
+  return made;
+}
+
+const normalized = new Map<string, string>();
+
 /** Reduce a title to a comparison key: no punctuation, no format words, no case. */
 export function normalizeTitle(title: string): string {
+  return memo(normalized, title, () => normalizeTitleUncached(title));
+}
+
+function normalizeTitleUncached(title: string): string {
   return title
     .toLowerCase()
     .normalize('NFKD')
@@ -129,19 +156,38 @@ export function normalizeTitle(title: string): string {
     .trim();
 }
 
-/** Dice coefficient over bigrams: cheap, and forgiving of word-order noise. */
-export function similarity(a: string, b: string): number {
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  if (a.length < 2 || b.length < 2) return a === b ? 1 : 0;
-  const bigrams = (s: string) => {
+const bigramCache = new Map<string, Map<string, number>>();
+
+function bigrams(s: string): Map<string, number> {
+  return memo(bigramCache, s, () => {
     const out = new Map<string, number>();
     for (let i = 0; i < s.length - 1; i++) {
       const g = s.slice(i, i + 2);
       out.set(g, (out.get(g) ?? 0) + 1);
     }
     return out;
-  };
+  });
+}
+
+/**
+ * The most Dice can possibly return for two strings of these lengths.
+ *
+ * Dice is 2*shared/(|A|+|B|) and shared cannot exceed the smaller bigram
+ * count, so two names of very different lengths can be ruled out on their
+ * lengths alone. Exact, not a heuristic -- it only skips pairs that could
+ * never have reached the threshold anyway.
+ */
+function ceilingFor(la: number, lb: number): number {
+  const a = la - 1;
+  const b = lb - 1;
+  return (2 * Math.min(a, b)) / (a + b);
+}
+
+/** Dice coefficient over bigrams: cheap, and forgiving of word-order noise. */
+export function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.length < 2 || b.length < 2) return a === b ? 1 : 0;
   const A = bigrams(a);
   const B = bigrams(b);
   let shared = 0;
@@ -185,6 +231,20 @@ export function dedupe(
   const byHardKey = new Map<string, CatalogEntry>();
   const byExactTitle = new Map<string, CatalogEntry[]>();
 
+  /* Every name an entry answers to, normalised, kept beside the entry rather
+     than rebuilt inside the scan below. The scan runs once per incoming
+     record against every entry so far, so re-normalising a candidate's title
+     and its sixteen alternates each time is most of the merge's cost. Held
+     out here rather than on CatalogEntry: it is working state, and the entry
+     is what gets serialised into the response. */
+  const namesOf = new Map<CatalogEntry, string[]>();
+  const refreshNames = (entry: CatalogEntry) => {
+    namesOf.set(
+      entry,
+      [entry.title, ...(entry.altTitles ?? [])].map(normalizeTitle).filter(Boolean),
+    );
+  };
+
   const attach = (entry: CatalogEntry, provider: Provider, s: SeriesSummary) => {
     // One entry per provider. A provider that lists several editions of the
     // same title contributes its best (first) one; otherwise a canonical title
@@ -205,7 +265,10 @@ export function dedupe(
     entry.anilistId ??= s.anilistId;
     entry.mangadexId ??= s.mangadexId;
     if (s.genres?.length) entry.genres = [...new Set([...(entry.genres ?? []), ...s.genres])].slice(0, 30);
-    if (s.altTitles?.length) entry.altTitles = [...new Set([...(entry.altTitles ?? []), ...s.altTitles])].slice(0, 16);
+    if (s.altTitles?.length) {
+      entry.altTitles = [...new Set([...(entry.altTitles ?? []), ...s.altTitles])].slice(0, 16);
+      refreshNames(entry);
+    }
     if ((s.updatedAt ?? 0) > (entry.updatedAt ?? 0)) entry.updatedAt = s.updatedAt;
     for (const key of hardKeys(entry)) byHardKey.set(key, entry);
   };
@@ -266,10 +329,27 @@ export function dedupe(
       // where the scanlation sites credit someone else must not split it off.
       let fuzzy: CatalogEntry | undefined;
       const mine = [s.title, ...(s.altTitles ?? [])].map(normalizeTitle).filter(Boolean);
+      const mineSet = new Set(mine);
+      /* Longest first, so the cheap length ceiling below rules a candidate out
+         on its first comparison rather than its last. */
+      const mineByLength = [...mine].sort((a, b) => b.length - a.length);
+
       for (const candidate of entries) {
-        const names = [candidate.title, ...(candidate.altTitles ?? [])].map(normalizeTitle).filter(Boolean);
-        const exactName = names.some((n) => mine.includes(n));
-        if (!exactName && !names.some((n) => mine.some((m) => similarity(n, m) >= SIMILARITY_THRESHOLD))) continue;
+        const names = namesOf.get(candidate) ?? [];
+        const exactName = names.some((n) => mineSet.has(n));
+        if (!exactName) {
+          let near = false;
+          for (const n of names) {
+            for (const m of mineByLength) {
+              // Skip the pairs Dice could not reach the threshold for whatever
+              // their contents are. Same answer, a fraction of the work.
+              if (ceilingFor(n.length, m.length) < SIMILARITY_THRESHOLD) continue;
+              if (similarity(n, m) >= SIMILARITY_THRESHOLD) { near = true; break; }
+            }
+            if (near) break;
+          }
+          if (!near) continue;
+        }
         if (!compatible(candidate, s, exactName)) continue;
         fuzzy = candidate;
         break;
@@ -281,6 +361,7 @@ export function dedupe(
 
       const entry: CatalogEntry = { ...s, providers: [] };
       entries.push(entry);
+      refreshNames(entry);
       const bucket = byExactTitle.get(key) ?? [];
       bucket.push(entry);
       byExactTitle.set(key, bucket);

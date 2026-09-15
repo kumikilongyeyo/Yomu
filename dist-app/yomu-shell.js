@@ -1891,6 +1891,60 @@
   }
 
   /**
+   * Source Fabric, on every /sources -- not only the ones that arrive as a
+   * document load.
+   *
+   * The three source-fabric-*.js files are injected by the Worker into
+   * /sources responses, and each returns immediately unless
+   * location.pathname says /sources at the moment it runs. Yomu is a single
+   * page, so that moment is whichever screen was opened first. One cause,
+   * two symptoms: tap through to Sources from inside the app and the command
+   * card is not there at all, and hard-load /sources then tap Home and it
+   * rides along onto the landing page.
+   *
+   * Handled here because those files are not mine to edit. Load them on
+   * demand when the route becomes /sources -- the same three tags the Worker
+   * writes, in the same order -- and hide the panel by class while the route
+   * is anything else. The hide is a rule in yomu-overrides.css keyed off
+   * <html> rather than a write to the panel: source-fabric-layout.js
+   * re-places that node on every document mutation, and two scripts editing
+   * one node is how you get a loop.
+   */
+  const FABRIC_ID = 'yomu-source-fabric-command';
+  const FABRIC_SCRIPTS = [
+    '/source-fabric-panel.js',
+    '/source-fabric-layout.js',
+    '/source-fabric-diagnostics.js',
+  ];
+  let fabricAsked = false;
+
+  const gateFabric = () => {
+    const onSources = location.pathname.startsWith('/sources');
+    const root = document.documentElement;
+    // Checked before writing: this runs on every mutation, and setting a
+    // class the element already has would be a mutation of its own.
+    if (root.classList.contains('yomu-fabric-away') === onSources) {
+      root.classList.toggle('yomu-fabric-away', !onSources);
+    }
+
+    if (!onSources || fabricAsked) return;
+    if (document.getElementById(FABRIC_ID)) return;
+    // Nothing to do when this load came in through /sources: the Worker has
+    // already put the tags in the document.
+    if (FABRIC_SCRIPTS.some((src) => document.querySelector('script[src="' + src + '"]'))) return;
+
+    fabricAsked = true;
+    for (const src of FABRIC_SCRIPTS) {
+      const tag = document.createElement('script');
+      tag.src = src;
+      // Not `defer`, which does nothing for a script inserted this late.
+      // async=false is what keeps inserted scripts running in order.
+      tag.async = false;
+      document.body.append(tag);
+    }
+  };
+
+  /**
    * One pass over everything this file maintains.
    *
    * All of it is idempotent and all of it is cheap -- each step either matches
@@ -1899,6 +1953,7 @@
    * later mutation, with no per-screen bookkeeping to get out of step.
    */
   const pass = () => {
+    gateFabric();
     tagCompleted();
     badgeProgress();
     trackSeriesPage();

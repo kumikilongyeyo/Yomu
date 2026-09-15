@@ -1981,3 +1981,12 @@
    the card above the list knew you were on 41. The accurate one speaks; this
    one comes back as soon as there is no position to resume. */
 :root[data-yomu-resume] .series-actions .m-btn.primary { display: none; }
+
+/* Source Fabric belongs to /sources, and only to /sources.
+ *
+ * Its command card is built into the app's masthead, which outlives the
+ * route, so without this it follows you onto the landing page the moment you
+ * tap Home. yomu-shell.js owns the class; nothing here or there writes to the
+ * panel itself, because source-fabric-layout.js re-places that node on every
+ * document mutation. */
+html.yomu-fabric-away #yomu-source-fabric-command { display: none !important; }
