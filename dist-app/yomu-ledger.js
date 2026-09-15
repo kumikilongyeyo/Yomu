@@ -147,6 +147,12 @@
       data.rows = data.rows.filter((row) => row.releases.length);
       data.gaps = (data.gaps || []).filter((g) => g.availableFrom.some((p) => keep.has(p)));
 
+      // Recomputed after that filter, not taken from the response. The Worker
+      // sets partial across everything it tried, which includes sources this
+      // device has not enabled -- so a circle of four healthy sources reported
+      // "4 of 4 answered", which reads as a warning about nothing.
+      data.partial = data.sources.some((s) => !s.ok);
+
       ledger = data;
       labels = labelsFor(data.sources);
 
