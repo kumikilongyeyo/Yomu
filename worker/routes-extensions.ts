@@ -16,7 +16,7 @@ import { descriptorAllowsImage, seriesIdForChapter } from './extensions/runtime'
 import { allHealth, getHealth } from './extensions/health';
 import { createMangadexProvider, mangadexProvider } from './providers/mangadex';
 import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from './providers/suwayomi';
-import { DEFAULT_RANK, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
+import { DEFAULT_RANK, chapterLedger, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
 import type { SeriesSummary } from './extensions/types';
 
@@ -429,6 +429,73 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
   }
 
   // A title resolved through the priority chain, so one dead source is invisible.
+  /* --- the ledger: every source's chapters for one title ----------------
+   *
+   * A sibling of /series, not a replacement. That route answers "give me this
+   * title from whoever can", which is right for opening it; this one answers
+   * "who has which chapters", which is the only way to show that the chapter
+   * your source is missing exists on two others.
+   *
+   *   ?link=providerId:seriesId   repeatable, and the fast path. Identity is
+   *                               already settled, so nothing is matched.
+   *   ?title=...                  the discovery path, used the first time a
+   *                               title is opened. Matched with dedupe(), and
+   *                               the providers it found come back in
+   *                               `sources` so the client can remember them
+   *                               and take the fast path next time.
+   */
+  if (url.pathname === '/api/catalog/chapters') {
+    const links = url.searchParams.getAll('link').filter(Boolean);
+    const title = url.searchParams.get('title')?.trim() ?? '';
+    if (!links.length && !title) {
+      return json({ error: 'Give a title or at least one link.' }, 400);
+    }
+    const adult = url.searchParams.get('adult') === '1';
+    const prefer = url.searchParams.get('prefer') ?? undefined;
+
+    // Suwayomi joins here, unlike the browse listings. The reason they exclude
+    // it -- fanning out to a home server for a grid is slow for little gain --
+    // does not apply to one title somebody is looking at, and the bridge is
+    // exactly where a rare source lives. It is still ranked last, still capped
+    // by the per-provider timeout, and orderProviders demotes it further when
+    // it has been failing.
+    const providers = await buildProviders(env, origin, true, adult);
+    const seriesIdByProvider = new Map<string, string>();
+
+    if (links.length) {
+      for (const link of links) {
+        // Last colon, not the first: a seriesId can contain one, a providerId
+        // ("ext:flamecomics") always does.
+        const cut = link.lastIndexOf(':');
+        if (cut <= 0) return json({ error: `Malformed link "${link}".` }, 400);
+        const providerId = link.slice(0, cut);
+        const seriesId = link.slice(cut + 1);
+        if (!providers.some((p) => p.id === providerId)) {
+          return json({ error: `Unknown provider "${providerId}".` }, 404);
+        }
+        seriesIdByProvider.set(providerId, seriesId);
+      }
+    } else {
+      const batches = await fromAll(providers, (p) => p.extension.search(title, 1));
+      const merged = dedupe(batches.map(({ provider, value }) => ({ provider, series: value.series })));
+      const best = rankByRelevance(merged, title)[0];
+      if (!best) return json({ error: 'No source lists that title.' }, 404);
+      for (const found of best.providers) seriesIdByProvider.set(found.id, found.seriesId);
+    }
+
+    const ledger = await chapterLedger(providers, (p) => seriesIdByProvider.get(p.id), prefer);
+
+    if (ledger.sources.length && ledger.sources.every((s) => !s.ok)) {
+      // Every provider failed. Which ones and why is the whole content of this
+      // response -- "something went wrong" is not actionable.
+      return json({ ...ledger, error: "No source could load this title's chapters." }, 502);
+    }
+
+    // A partial answer goes stale in a useful way: the source that was down is
+    // the thing most likely to change, so it is re-asked four times sooner.
+    return json(ledger, 200, ledger.partial ? 'private, max-age=30' : 'private, max-age=120');
+  }
+
   const seriesMatch = url.pathname.match(/^\/api\/catalog\/series\/([^/]+)\/(.+)$/);
   if (seriesMatch) {
     const providerId = decodeURIComponent(seriesMatch[1]);

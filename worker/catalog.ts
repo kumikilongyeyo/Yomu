@@ -360,3 +360,293 @@ export async function pagesWithFallback(
 }
 
 export const providerHealth = getHealth;
+
+/* ------------------------------------------------------------------ *
+ * The chapter ledger
+ *
+ * One row per chapter NUMBER, carrying every source that has it -- the
+ * opposite question to chaptersWithFallback, which answers "who can give me
+ * this chapter" and stops at the first yes. That is right for opening a
+ * chapter and useless for showing a reader that the one their source is
+ * missing exists on two others.
+ *
+ * chaptersWithFallback is deliberately untouched. It is on the path every
+ * existing screen takes, and turning it into a merge would slow all of them
+ * and change fallback semantics for the reader.
+ *
+ * The merge is the part that decides whether any of this works, so the rules
+ * are conservative and every one of them is a decision not to guess:
+ *
+ *   exact number match merges        57 and 57 are one chapter
+ *   decimals are their own chapters  57 and 57.5 never merge; a .5 is a side
+ *                                    story and readers treat it as one
+ *   no tolerance window              a source off by one against another is a
+ *                                    labelling disagreement this cannot
+ *                                    resolve, and guessing produces a row
+ *                                    whose chips open two different chapters
+ *   unnumbered keeps its own row     prologues and specials, sorted together
+ *
+ * Determinism matters more than it looks: two devices fetching the same
+ * ledger must render identical rows, or sync will look broken later. So no
+ * clock in the ordering, no random tie-break, and no reliance on Map
+ * iteration order for anything that reaches the output.
+ * ------------------------------------------------------------------ */
+
+export interface LedgerRelease {
+  providerId: string;
+  providerName: string;
+  kind: ProviderKind;
+  seriesId: string;
+  chapterId: string;
+  name: string;
+  pageCount?: number;
+  publishedAt?: number;
+  scanlator?: string;
+}
+
+export interface LedgerRow {
+  number: number;
+  /** Derived from the number, never reformatted away: 57.1 stays "57.1". */
+  label: string;
+  name: string;
+  publishedAt?: number;
+  releases: LedgerRelease[];
+}
+
+export interface LedgerGap {
+  fromNumber: number;
+  toNumber: number;
+  missingFrom: string;
+  availableFrom: string[];
+}
+
+export interface LedgerSource {
+  providerId: string;
+  providerName: string;
+  kind: ProviderKind;
+  seriesId: string;
+  chapterCount: number;
+  ok: boolean;
+  error?: string;
+}
+
+export interface Ledger {
+  rows: LedgerRow[];
+  gaps: LedgerGap[];
+  sources: LedgerSource[];
+  partial: boolean;
+  truncated?: boolean;
+  generatedAt: number;
+}
+
+/** Kills float noise: 57.30000000000001 and 57.3 are the same chapter. */
+export const mergeKey = (n: number): number => Math.round(n * 1000) / 1000;
+
+const UNNUMBERED = Number.NEGATIVE_INFINITY;
+
+/** A leading "Ch. 57 - " and friends. The row prints the number in its own
+ *  column, so repeating it in the name is noise. */
+const DESIGNATOR = /^\s*(ch(apter)?\.?\s*)?\d+(\.\d+)?\s*[-–—:]?\s*/i;
+
+function meaningfulName(raw: string | undefined, label: string): string {
+  const stripped = String(raw ?? '').replace(DESIGNATOR, '').trim();
+  if (!stripped) return '';
+  // "57" as a name is the number again, which the row already shows.
+  if (stripped === label) return '';
+  return stripped;
+}
+
+export const LEDGER_ROW_CAP = 2000;
+export const LEDGER_PROVIDER_CAP = 8;
+export const LEDGER_TIMEOUT_MS = 6000;
+
+/**
+ * Chapters from every provider at once.
+ *
+ * Not built on fromAll(), which keeps only the fulfilled results -- the
+ * failures are exactly what a partial ledger has to report, by name, so the
+ * reader can be told which source is missing rather than that "something"
+ * went wrong.
+ */
+export async function chapterLedger(
+  providers: Provider[],
+  seriesIdFor: (p: Provider) => string | undefined,
+  preferredId?: string,
+): Promise<Ledger> {
+  const usable = orderProviders(providers.filter((p) => seriesIdFor(p))).slice(0, LEDGER_PROVIDER_CAP);
+
+  const settled = await Promise.all(usable.map(async (provider) => {
+    const seriesId = seriesIdFor(provider)!;
+    // A bare Promise.race would leave the losing fetch running against a
+    // home server that is already too slow; an abort actually stops it.
+    const stop = new AbortController();
+    const timer = setTimeout(() => stop.abort(), LEDGER_TIMEOUT_MS);
+    try {
+      const chapters = await tracked(provider.id, () =>
+        Promise.race([
+          provider.extension.getChapters(seriesId),
+          new Promise<never>((_, reject) => {
+            stop.signal.addEventListener('abort', () =>
+              reject(new Error(`Timed out after ${LEDGER_TIMEOUT_MS}ms`)), { once: true });
+          }),
+        ]));
+      return { provider, seriesId, chapters: Array.isArray(chapters) ? chapters : [], error: undefined };
+    } catch (error: any) {
+      return { provider, seriesId, chapters: [] as Chapter[], error: String(error?.message ?? 'unavailable') };
+    } finally {
+      clearTimeout(timer);
+    }
+  }));
+
+  const sources: LedgerSource[] = settled.map(({ provider, seriesId, chapters, error }) => ({
+    providerId: provider.id,
+    providerName: provider.name,
+    kind: provider.kind,
+    seriesId,
+    chapterCount: chapters.length,
+    ok: !error,
+    ...(error ? { error } : {}),
+  }));
+
+  const preferred = preferredId && settled.some((s) => s.provider.id === preferredId)
+    ? preferredId
+    : usable[0]?.id;
+
+  /* --- group by number ------------------------------------------------- */
+
+  const byNumber = new Map<number, LedgerRelease[]>();
+  const unnumbered: LedgerRelease[] = [];
+
+  for (const { provider, seriesId, chapters } of settled) {
+    for (const chapter of chapters) {
+      if (!chapter || typeof chapter.id !== 'string') continue;
+      const release: LedgerRelease = {
+        providerId: provider.id,
+        providerName: provider.name,
+        kind: provider.kind,
+        seriesId,
+        chapterId: chapter.id,
+        name: String(chapter.name ?? ''),
+        ...(typeof chapter.pageCount === 'number' ? { pageCount: chapter.pageCount } : {}),
+        ...(typeof chapter.publishedAt === 'number' ? { publishedAt: chapter.publishedAt } : {}),
+        ...(chapter.scanlator ? { scanlator: chapter.scanlator } : {}),
+      };
+      const raw = Number(chapter.number);
+      if (!Number.isFinite(raw) || raw <= 0) { unnumbered.push(release); continue; }
+      const key = mergeKey(raw);
+      const bucket = byNumber.get(key);
+      if (bucket) bucket.push(release); else byNumber.set(key, [release]);
+    }
+  }
+
+  /* --- order releases within a row -------------------------------------- */
+
+  const rankOf = (release: LedgerRelease) => {
+    if (release.providerId === preferred) return -1;
+    return DEFAULT_RANK[release.kind] ?? 999;
+  };
+  const orderReleases = (releases: LedgerRelease[]) =>
+    [...releases].sort((a, b) => {
+      const downA = isLikelyDown(a.providerId) ? 1 : 0;
+      const downB = isLikelyDown(b.providerId) ? 1 : 0;
+      if (downA !== downB) return downA - downB;
+      const rankA = rankOf(a), rankB = rankOf(b);
+      if (rankA !== rankB) return rankA - rankB;
+      if (a.providerName !== b.providerName) return a.providerName.localeCompare(b.providerName);
+      // Last resort, and it has to be total: two releases from one provider on
+      // one chapter must still order the same way on every device.
+      return a.chapterId.localeCompare(b.chapterId);
+    });
+
+  const buildRow = (number: number, releases: LedgerRelease[]): LedgerRow => {
+    const ordered = orderReleases(releases);
+    const label = number === UNNUMBERED ? '' : String(number);
+    let name = '';
+    for (const release of ordered) {
+      name = meaningfulName(release.name, label);
+      if (name) break;
+    }
+    const dates = ordered.map((r) => r.publishedAt).filter((d): d is number => typeof d === 'number');
+    return {
+      number,
+      label,
+      name,
+      ...(dates.length ? { publishedAt: Math.min(...dates) } : {}),
+      releases: ordered,
+    };
+  };
+
+  // Sorted from the numbers themselves, never from Map insertion order.
+  const numbers = [...byNumber.keys()].sort((a, b) => b - a);
+  const rows: LedgerRow[] = numbers.map((n) => buildRow(n, byNumber.get(n)!));
+
+  // Unnumbered chapters keep their own rows, grouped, and sort to the bottom
+  // of a newest-first list. Their label comes from the name, since there is no
+  // number to print.
+  for (const release of orderReleases(unnumbered)) {
+    rows.push({
+      number: UNNUMBERED,
+      label: '',
+      name: meaningfulName(release.name, '') || 'Extra',
+      ...(typeof release.publishedAt === 'number' ? { publishedAt: release.publishedAt } : {}),
+      releases: [release],
+    });
+  }
+
+  const truncated = rows.length > LEDGER_ROW_CAP;
+  const kept = truncated ? rows.slice(0, LEDGER_ROW_CAP) : rows;
+
+  return {
+    rows: kept,
+    gaps: preferred ? findGaps(kept, preferred) : [],
+    sources,
+    partial: sources.some((s) => !s.ok),
+    ...(truncated ? { truncated: true } : {}),
+    generatedAt: Date.now(),
+  };
+}
+
+/**
+ * Runs of chapters the preferred source does not have.
+ *
+ * Relative to the preferred source and nothing else. Against "all sources" it
+ * would mark half the list, which is noise rather than information.
+ *
+ * A gap at the end -- the preferred source stopped at 58 and others carry on
+ * -- is a gap like any other, and it is the most useful one there is, so it is
+ * deliberately not special-cased away. Numbers nobody has are not gaps: the
+ * ledger cannot know chapter 40 exists if no source lists it, and scanlation
+ * numbering legitimately skips.
+ */
+export function findGaps(rows: LedgerRow[], preferred: string): LedgerGap[] {
+  const numbered = rows
+    .filter((row) => Number.isFinite(row.number))
+    .sort((a, b) => a.number - b.number);
+
+  const gaps: LedgerGap[] = [];
+  let run: LedgerRow[] = [];
+
+  const flush = () => {
+    if (!run.length) return;
+    const providers: string[] = [];
+    for (const row of run) {
+      for (const release of row.releases) {
+        if (!providers.includes(release.providerId)) providers.push(release.providerId);
+      }
+    }
+    gaps.push({
+      fromNumber: run[0].number,
+      toNumber: run[run.length - 1].number,
+      missingFrom: preferred,
+      availableFrom: providers,
+    });
+    run = [];
+  };
+
+  for (const row of numbered) {
+    if (row.releases.some((r) => r.providerId === preferred)) flush();
+    else run.push(row);
+  }
+  flush();
+  return gaps;
+}
