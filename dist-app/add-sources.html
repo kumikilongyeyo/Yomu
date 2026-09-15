@@ -7,34 +7,16 @@
   <title>Yomu · Add sources</title>
   <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
   <style>
-    /* Theme tokens come from the app stylesheet, so this page follows
-       light/dark with the rest of Yomu. */
-    body{margin:0;background:var(--bg);color:var(--text);
-         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
     main{max-width:680px;margin:auto;padding:calc(26px + env(safe-area-inset-top)) 18px 90px}
-    nav{display:flex;gap:10px;flex-wrap:wrap}
-    nav a{border:1px solid var(--line);background:var(--surface);color:var(--text);
-          border-radius:999px;padding:7px 12px;font-size:13px;text-decoration:none}
-    h1{font-size:26px;line-height:1.15;margin:22px 0 8px}
-    p{color:var(--muted);line-height:1.55;margin:0}
-    .panel{border:1px solid var(--line);border-radius:16px;padding:18px;
-           background:var(--surface);margin-top:20px}
-    label{display:block;font-weight:650;margin-bottom:9px;font-size:14px}
-    textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:140px;
-             background:var(--bg);color:var(--text);border:1px solid var(--line);
-             border-radius:12px;padding:13px;font:inherit;font-size:15px}
-    button{margin-top:14px;background:var(--accent);color:var(--accentText);border:0;
-           border-radius:999px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;
-           min-height:44px}
-    button:disabled{opacity:.5;cursor:wait}
-    textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-    small{color:var(--dim);font-size:12.5px;line-height:1.5;display:block;margin-top:8px}
-    ul{list-style:none;margin:14px 0 0;padding:0}
-    li{padding:9px 0;border-top:1px solid var(--hairline);font-size:13.5px;overflow-wrap:anywhere}
-    .ok{color:#9ee1b7}
-    .error{color:var(--bad)}
-    .forge-link{display:inline-block;margin-left:8px;color:var(--accent);font-weight:700}
-    #status{margin-top:12px;font-size:13.5px;color:var(--muted)}
+    nav{display:flex;gap:10px;flex-wrap:wrap}nav a{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:7px 12px;font-size:13px;text-decoration:none}
+    h1{font-size:26px;line-height:1.15;margin:22px 0 8px}h2{font-size:18px;margin:0 0 7px}p{color:var(--muted);line-height:1.55;margin:0}
+    .panel{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--surface);margin-top:20px}
+    label{display:block;font-weight:650;margin-bottom:9px;font-size:14px}textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:140px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-size:15px}
+    button,.button-link{margin-top:14px;background:var(--accent);color:var(--accentText);border:0;border-radius:999px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;min-height:44px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    button.secondary,.button-link.secondary{background:var(--surface2,var(--surface));color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:wait}textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+    small{color:var(--dim);font-size:12.5px;line-height:1.5;display:block;margin-top:8px}ul{list-style:none;margin:14px 0 0;padding:0}li{padding:9px 0;border-top:1px solid var(--hairline);font-size:13.5px;overflow-wrap:anywhere}.ok{color:#9ee1b7}.error{color:var(--bad)}.forge-link{display:inline-block;margin-left:8px;color:var(--accent);font-weight:700;cursor:pointer;background:none;border:0;padding:0;min-height:0;margin-top:0}#status{margin-top:12px;font-size:13.5px;color:var(--muted)}
+    .hidden{display:none!important}.forge-actions{display:flex;gap:8px;flex-wrap:wrap}.forge-status{margin-top:12px;font-size:13px;color:var(--muted);overflow-wrap:anywhere}.forge-score{font-size:30px;font-weight:800;color:var(--text)}.forge-tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:12px;margin-left:6px}.spinner{display:inline-block;width:13px;height:13px;border:2px solid color-mix(in srgb,var(--text) 20%,transparent);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}
   </style>
   <script src="/source-import.js" defer></script>
 <link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script></head>
@@ -42,20 +24,36 @@
 <main>
   <nav><a href="/sources">← Sources</a><a href="/extensions.html">Extensions</a></nav>
   <h1>Paste a source. Start reading.</h1>
-  <p>Paste a website. If Yomu already has the adapter it is added immediately; if not, Yomu can hand the link to the local Source Forge to build and validate one.</p>
+  <p>Paste a website. Known sources are added immediately. Unknown sites can now be forged from this page while the local Source Forge agent does the browser work.</p>
 
   <section class="panel">
     <form id="add-form">
       <label for="links">Source links</label>
-      <textarea id="links" required maxlength="12000" placeholder="https://example.com"
-                spellcheck="false" aria-describedby="hint"></textarea>
-      <small id="hint">Known sources are added immediately. Unknown sites get a <b>Forge this website</b>
-        action. Source Forge runs locally because Cloudflare Workers cannot run the browser engine needed
-        to inspect arbitrary reader sites.</small>
+      <textarea id="links" required maxlength="12000" placeholder="https://example.com" spellcheck="false" aria-describedby="hint"></textarea>
+      <small id="hint">Yomu itself stays declarative. The local Forge agent at <b>127.0.0.1:8790</b> handles Chromium, gauntlet testing, and native extension generation.</small>
       <button id="add" type="submit">Add sources</button>
     </form>
     <p id="status" role="status" aria-live="polite"></p>
     <ul id="results" aria-label="Import results"></ul>
+  </section>
+
+  <section id="forge-panel" class="panel hidden" aria-live="polite">
+    <h2>Source Forge</h2>
+    <p id="forge-target"></p>
+    <div id="forge-status" class="forge-status">Checking local Forge agent…</div>
+    <div id="forge-result" class="hidden" style="margin-top:12px">
+      <span id="forge-score" class="forge-score">0/100</span><span id="forge-grade" class="forge-tag"></span>
+      <div id="forge-detail" class="forge-status"></div>
+    </div>
+    <div class="forge-actions">
+      <button id="forge-run" type="button">Forge + Gauntlet</button>
+      <button id="forge-assist" type="button" class="secondary hidden">Open assisted browser</button>
+      <button id="forge-retry" type="button" class="secondary hidden">Verify & retry</button>
+      <button id="forge-install" type="button" class="secondary hidden">Install into project</button>
+      <button id="forge-publish" type="button" class="secondary hidden">Publish + refresh</button>
+      <a id="forge-open" class="button-link secondary" target="_blank" rel="noreferrer">Open full Forge</a>
+    </div>
+    <small>Assisted access does not defeat site protection. It opens a normal visible browser so you can complete a challenge or login you are authorized to complete once; Forge then reuses that local browser profile automatically.</small>
   </section>
 </main>
 
@@ -64,20 +62,132 @@
   'use strict';
   try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'dark'; } catch {}
 
-  // Adult adapters are only matchable once 18+ is on, the same switch Settings
-  // and the search page read.
+  const FORGE = 'http://127.0.0.1:8790';
+  let forgeTarget = '';
+  let forged = null;
+  let forgeConfig = null;
+  const $ = (id) => document.getElementById(id);
+
   const adultAllowed = () => {
     try { return localStorage.getItem('yomu.v1.adult') === 'on'; } catch { return false; }
   };
 
-  document.getElementById('add-form').addEventListener('submit', async (event) => {
+  async function forgeFetch(path, options = {}) {
+    const init = { ...options, mode:'cors' };
+    let request;
+    try { request = new Request(FORGE + path, { ...init, targetAddressSpace:'loopback' }); }
+    catch { request = new Request(FORGE + path, init); }
+    const response = await fetch(request);
+    const body = await response.json().catch(() => ({ error:`HTTP ${response.status}` }));
+    if (!response.ok) {
+      const error = new Error(body.error || `HTTP ${response.status}`);
+      error.code = body.code;
+      error.status = body.status;
+      throw error;
+    }
+    return body;
+  }
+
+  const needsAssist = (error) => error?.code === 'ACCESS_BLOCKED' || error?.code === 'ACCESS_CHALLENGE' || /HTTP\s+(401|403)|challenge/i.test(error?.message || '');
+
+  async function openForgePanel(url) {
+    forgeTarget = url;
+    forged = null;
+    $('forge-panel').classList.remove('hidden');
+    $('forge-target').textContent = url;
+    $('forge-result').classList.add('hidden');
+    $('forge-assist').classList.add('hidden');
+    $('forge-retry').classList.add('hidden');
+    $('forge-install').classList.add('hidden');
+    $('forge-publish').classList.add('hidden');
+    $('forge-open').href = FORGE + '/?url=' + encodeURIComponent(url) + '&return=' + encodeURIComponent(location.href);
+    $('forge-status').innerHTML = '<span class="spinner"></span>Connecting to local Forge agent…';
+    try {
+      const health = await forgeFetch('/api/health');
+      forgeConfig = await forgeFetch('/api/config').catch(() => null);
+      $('forge-status').textContent = health.ok ? 'Forge agent connected. Ready.' : 'Forge agent responded but is not ready.';
+      $('forge-run').disabled = !health.ok;
+    } catch (error) {
+      $('forge-status').innerHTML = 'Local Forge agent is not reachable. Start <b>npm.cmd run source:forge</b>, then retry — or use “Open full Forge”.';
+      $('forge-run').disabled = true;
+    }
+    $('forge-panel').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  async function runForge() {
+    if (!forgeTarget) return;
+    $('forge-run').disabled = true;
+    $('forge-status').innerHTML = '<span class="spinner"></span>Discovering catalogs, chapters and reader pages…';
+    try {
+      forged = await forgeFetch('/api/source/prepare', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body:JSON.stringify({url:forgeTarget,accessMode:'auto'})
+      });
+      const validation = forged.yomu.validation;
+      $('forge-result').classList.remove('hidden');
+      $('forge-score').textContent = `${validation.combinedScore}/100`;
+      $('forge-grade').textContent = validation.combinedGrade;
+      $('forge-detail').textContent = `${forged.series?.title || forged.profile?.name || 'Source'} · ${forged.chapters?.length || 0} chapters sampled · catalog ${forged.catalog ? 'found' : 'missing'}`;
+      $('forge-status').textContent = 'Gauntlet complete.';
+      $('forge-assist').classList.add('hidden');
+      $('forge-retry').classList.add('hidden');
+      $('forge-install').classList.toggle('hidden', validation.combinedScore < 75);
+      $('forge-publish').classList.toggle('hidden', validation.combinedScore < 75 || !forgeConfig?.github?.configured);
+    } catch (error) {
+      $('forge-status').textContent = error.message;
+      if (needsAssist(error)) {
+        $('forge-assist').classList.remove('hidden');
+        $('forge-retry').classList.remove('hidden');
+      }
+    } finally { $('forge-run').disabled = false; }
+  }
+
+  $('forge-run').addEventListener('click', runForge);
+  $('forge-assist').addEventListener('click', async () => {
+    $('forge-status').innerHTML = '<span class="spinner"></span>Opening visible Chromium…';
+    try {
+      const result = await forgeFetch('/api/access/assist', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:forgeTarget})});
+      $('forge-status').textContent = result.message || 'Browser opened. Complete the site check, then press Verify & retry.';
+    } catch (error) { $('forge-status').textContent = error.message; }
+  });
+  $('forge-retry').addEventListener('click', async () => {
+    $('forge-status').innerHTML = '<span class="spinner"></span>Verifying saved browser session…';
+    try {
+      await forgeFetch('/api/access/verify', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:forgeTarget})});
+      $('forge-status').textContent = 'Session works. Retrying Forge…';
+      await runForge();
+    } catch (error) { $('forge-status').textContent = error.message; }
+  });
+  $('forge-install').addEventListener('click', async () => {
+    if (!forged) return;
+    const score = forged.yomu.validation.combinedScore;
+    const force = score < 88 && confirm(`Score is ${score}/100, below STRONG. Install anyway?`);
+    if (score < 88 && !force) return;
+    $('forge-status').innerHTML = '<span class="spinner"></span>Installing native extension into the local Yomu project…';
+    try {
+      const result = await forgeFetch('/api/yomu/install', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({yomu:forged.yomu,force})});
+      $('forge-status').textContent = `Installed ${result.install.id} v${result.install.version}. Deploy/publish Yomu to make it live.`;
+    } catch (error) { $('forge-status').textContent = error.message; }
+  });
+  $('forge-publish').addEventListener('click', async () => {
+    if (!forged) return;
+    const score = forged.yomu.validation.combinedScore;
+    const force = score < 88 && confirm(`Score is ${score}/100, below STRONG. Publish anyway?`);
+    if (score < 88 && !force) return;
+    $('forge-status').innerHTML = '<span class="spinner"></span>Publishing extension and refreshing Yomu…';
+    try {
+      const result = await forgeFetch('/api/yomu/publish', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({yomu:forged.yomu,force,yomuUrl:location.origin})});
+      $('forge-status').textContent = result.refresh?.ok ? 'Published and Yomu registry refreshed.' : 'Published. Registry refresh was not confirmed yet.';
+      if (result.sourceUrl) location.href = result.sourceUrl;
+    } catch (error) { $('forge-status').textContent = error.message; }
+  });
+
+  $('add-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const button = document.getElementById('add');
-    const status = document.getElementById('status');
-    const results = document.getElementById('results');
-    const lines = [...new Set(
-      document.getElementById('links').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
-    )];
+    const button = $('add');
+    const status = $('status');
+    const results = $('results');
+    const lines = [...new Set($('links').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean))];
 
     results.replaceChildren();
     if (!lines.length) { status.textContent = 'Paste at least one website link.'; return; }
@@ -101,47 +211,34 @@
           if (changed) added++;
           const caps = extension.capabilities || {};
           const reading = caps.details && caps.chapters && caps.pages;
-          item.textContent = extension.name
-            + (changed ? ' — Added.' : ' — Already added.')
-            + (reading ? '' : ' This adapter is discovery only; it cannot serve chapters.');
+          item.textContent = extension.name + (changed ? ' — Added.' : ' — Already added.') + (reading ? '' : ' This adapter is discovery only; it cannot serve chapters.');
           item.className = 'ok';
         } catch (error) {
-          const message = error.name === 'QuotaExceededError'
-            ? 'Browser storage is full. This source was not saved.'
-            : error.message;
+          const message = error.name === 'QuotaExceededError' ? 'Browser storage is full. This source was not saved.' : error.message;
           item.textContent = line + ' — ' + message;
           item.className = 'error';
           if (/No supported adapter found/i.test(message)) {
-            const forge = document.createElement('a');
+            const forge = document.createElement('button');
+            forge.type = 'button';
             forge.className = 'forge-link';
-            forge.textContent = 'Forge this website →';
-            forge.href = 'http://localhost:8790/?url=' + encodeURIComponent(line)
-              + '&return=' + encodeURIComponent(location.origin + '/add-sources.html');
+            forge.textContent = 'Forge here →';
+            forge.addEventListener('click', () => openForgePanel(line));
             item.append(forge);
           }
         }
         results.append(item);
       }
-      status.textContent = `${added} source${added === 1 ? '' : 's'} added. Open Sources to browse. `
-        + 'Whether pages load still depends on the source being up.';
+      status.textContent = `${added} source${added === 1 ? '' : 's'} added. Open Sources to browse. Whether pages load still depends on the source being up.`;
     } catch (error) {
-      status.textContent = error.name === 'TimeoutError'
-        ? 'The registry took too long to respond. Try again.'
-        : error.message;
-    } finally {
-      button.disabled = false;
-    }
+      status.textContent = error.name === 'TimeoutError' ? 'The registry took too long to respond. Try again.' : error.message;
+    } finally { button.disabled = false; }
   });
 
-  // Source Forge redirects back here after publishing. Pre-fill the original
-  // website and optionally submit it once the refreshed extension registry is
-  // visible, so the final hop really is one click.
   const query = new URLSearchParams(location.search);
   const incoming = query.get('url');
-  if (incoming) document.getElementById('links').value = incoming;
-  if (incoming && query.get('auto') === '1') {
-    setTimeout(() => document.getElementById('add-form').requestSubmit(), 120);
-  }
+  if (incoming) $('links').value = incoming;
+  if (incoming && query.get('forge') === '1') openForgePanel(incoming);
+  if (incoming && query.get('auto') === '1') setTimeout(() => $('add-form').requestSubmit(), 120);
 })();
 </script>
 </body>

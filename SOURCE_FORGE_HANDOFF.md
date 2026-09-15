@@ -111,3 +111,15 @@ page images
 No login/paywall/CAPTCHA/DRM/anti-bot bypass is implemented. If a source blocks normal access, Forge reports it instead of trying to circumvent it.
 
 Sites requiring request signing, encrypted private APIs, canvas-only pages, or unusual client-only logic can still require a native provider or Suwayomi extension.
+
+## v3.1 assisted sessions + integrated Yomu UI
+
+- HTTP 401/403 and browser challenge pages are classified separately from extraction failures.
+- **Open assisted browser** launches a visible persistent Chromium profile per host.
+- User-completed authorized sessions are reused automatically on future Forge runs.
+- Saved profiles live under `tools/source-forge/.sessions/` and are gitignored.
+- Catalog discovery now probes URL ancestors, common browse paths, navigation links, and a bounded one-hop catalog crawl.
+- `/add-sources.html` now contains a compact Forge panel, so unknown sites can be forged/tested/installed without leaving the Yomu UI.
+- The local Forge CORS bridge is restricted to the configured Yomu origins and loopback development origins, and responds to browser local-network preflights.
+
+This does **not** automate CAPTCHAs or defeat Cloudflare/anti-bot controls. It reuses browser state after the user legitimately completes a site's normal access flow.

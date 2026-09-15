@@ -3,10 +3,14 @@ import { loadPage, normalizeUrl, unique } from './runtime.js';
 import { detectChapterStrategies, detectSeriesStrategies, inferSourceIdentity } from './heuristics.js';
 
 const SERIES_WORD = /(manga|manhwa|manhua|webtoon|comic|series|title|book|novel|read)/i;
-const CATALOG_WORD = /(manga|manhwa|manhua|webtoon|comic|library|browse|series|titles|catalog|directory|latest|popular)/i;
+const CATALOG_WORD = /(manga|manhwa|manhua|webtoon|comic|library|browse|series|titles|catalog|directory|latest|popular|ranking|filter)/i;
 const CHAPTER_WORD = /(chapter|chap[-_/ ]?\d|episode|ep[-_/ ]?\d|\/ch[-_/])/i;
 const BAD_WORD = /(login|sign[-_ ]?in|register|account|privacy|terms|contact|discord|facebook|twitter|instagram|javascript:|mailto:|logout|admin|wp-admin|feed|rss)/i;
 const ASSET_EXT = /\.(?:jpg|jpeg|png|gif|webp|avif|svg|css|js|json|xml|pdf|zip|rar|7z|mp4|mp3)(?:$|[?#])/i;
+const COMMON_CATALOG_PATHS = [
+  '/manga/','/manhwa/','/manhua/','/webtoon/','/comics/','/comic/','/series/','/titles/',
+  '/browse/','/directory/','/library/','/latest/','/popular/','/manga-list/','/manga-ranking/','/advanced-filter/'
+];
 
 const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
 
@@ -19,10 +23,26 @@ function sameSite(a, b) {
 
 function ancestorHasImage($, el) {
   let p = $(el);
-  for (let i=0; i<3 && p.length; i++, p=p.parent()) {
-    if (p.find('img').length) return true;
-  }
+  for (let i=0; i<3 && p.length; i++, p=p.parent()) if (p.find('img').length) return true;
   return false;
+}
+
+export function inferCatalogCandidates(inputUrl, rootUrl) {
+  const out = [];
+  try {
+    const u = new URL(inputUrl);
+    const root = new URL(rootUrl || `${u.protocol}//${u.host}`);
+    const segments = u.pathname.split('/').filter(Boolean);
+    // Parent URL ancestors are high-value hints. A title like /manga/foo/ almost
+    // always implies /manga/ is worth probing as a listing before the homepage.
+    for (let n=segments.length-1; n>=1; n--) {
+      const p = '/' + segments.slice(0,n).join('/') + '/';
+      if (CATALOG_WORD.test(p) || n===1) out.push(new URL(p,root).toString());
+    }
+    for (const p of COMMON_CATALOG_PATHS) out.push(new URL(p,root).toString());
+    out.push(root.toString());
+  } catch {}
+  return unique(out);
 }
 
 export function rankSeriesLinks(html, baseUrl) {
@@ -48,7 +68,7 @@ export function rankSeriesLinks(html, baseUrl) {
     const row = { url, text:text.slice(0,140), score };
     if (!old || row.score > old.score) rows.set(url, row);
   });
-  return [...rows.values()].sort((a,b)=>b.score-a.score).slice(0,120);
+  return [...rows.values()].sort((a,b)=>b.score-a.score).slice(0,160);
 }
 
 export function rankCatalogLinks(html, baseUrl) {
@@ -61,16 +81,16 @@ export function rankCatalogLinks(html, baseUrl) {
     let score = 0;
     if (CATALOG_WORD.test(text)) score += 25;
     if (CATALOG_WORD.test(new URL(url).pathname)) score += 25;
-    if (/browse|directory|library|manga|manhwa|manhua|webtoon|series|titles/i.test(`${url} ${text}`)) score += 20;
+    if (/browse|directory|library|manga|manhwa|manhua|webtoon|series|titles|ranking|filter/i.test(`${url} ${text}`)) score += 20;
     if (score) out.push({url,text:text.slice(0,120),score});
   });
   const seen = new Set();
-  return out.sort((a,b)=>b.score-a.score).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,12);
+  return out.sort((a,b)=>b.score-a.score).filter(x=>!seen.has(x.url)&&seen.add(x.url)).slice(0,30);
 }
 
-async function probeSeries(url, timeout) {
+async function probeSeries(url, timeout, accessMode='auto') {
   try {
-    const page = await loadPage(url,{scroll:false,timeout});
+    const page = await loadPage(url,{scroll:false,timeout,mode:accessMode});
     const chapters = detectChapterStrategies(page.html,page.finalUrl);
     const series = detectSeriesStrategies(page.html,page.finalUrl);
     const top = chapters[0];
@@ -81,18 +101,22 @@ async function probeSeries(url, timeout) {
     if (top?.chapterish >= .5) score += 12;
     return {url:page.finalUrl,score:Math.round(score),chapterCount:top?.count||0,title:series.title?.[0]?.sample||null,ok:!!top?.count};
   } catch(error) {
+    if (error?.code === 'ACCESS_BLOCKED' || error?.code === 'ACCESS_CHALLENGE') throw error;
     return {url,score:0,chapterCount:0,title:null,ok:false,error:error?.message||String(error)};
   }
 }
 
 export async function discoverSeriesEntry(inputUrl, options={}) {
   const timeout = options.timeout || 14000;
-  const maxProbes = Math.max(4, Math.min(options.maxProbes || 12, 24));
+  const maxProbes = Math.max(4, Math.min(options.maxProbes || 18, 30));
+  const accessMode = options.accessMode || 'auto';
   const identity = inferSourceIdentity(inputUrl);
-  const start = await loadPage(inputUrl,{scroll:false,timeout});
+  const start = await loadPage(inputUrl,{scroll:false,timeout,mode:accessMode});
   const directChapters = detectChapterStrategies(start.html,start.finalUrl);
   const directSeries = detectSeriesStrategies(start.html,start.finalUrl);
-  const catalogUrls = rankCatalogLinks(start.html,start.finalUrl).map(x=>x.url);
+  const linkedCatalogs = rankCatalogLinks(start.html,start.finalUrl).map(x=>x.url);
+  const inferredCatalogs = inferCatalogCandidates(start.finalUrl, identity.baseUrl);
+  const catalogUrls = unique([...inferredCatalogs,...linkedCatalogs]).slice(0,24);
 
   if ((directChapters[0]?.count || 0) >= 1 && directSeries.title?.length) {
     return {
@@ -100,33 +124,36 @@ export async function discoverSeriesEntry(inputUrl, options={}) {
       inputKind:'series',
       rootUrl:identity.baseUrl,
       seriesUrl:start.finalUrl,
-      catalogUrls:unique([identity.baseUrl,...catalogUrls]).slice(0,8),
+      catalogUrls,
       tested:[{url:start.finalUrl,ok:true,chapterCount:directChapters[0].count,score:100,title:directSeries.title[0]?.sample||null}],
-      confidence:100
+      confidence:100,
+      accessMode:start.accessMode
     };
   }
 
-  let candidates = rankSeriesLinks(start.html,start.finalUrl).slice(0,maxProbes);
+  const candidates = rankSeriesLinks(start.html,start.finalUrl).slice(0,maxProbes);
   const tested = [];
   for (const candidate of candidates) {
-    const p = await probeSeries(candidate.url, timeout);
+    const p = await probeSeries(candidate.url, timeout, accessMode);
     tested.push(p);
     if (p.ok && p.score >= 72) break;
   }
 
-  if (!tested.some(x=>x.ok) && catalogUrls.length) {
-    for (const catalogUrl of catalogUrls.slice(0,3)) {
+  if (!tested.some(x=>x.ok)) {
+    for (const catalogUrl of catalogUrls.slice(0,8)) {
       if (tested.length >= maxProbes) break;
       try {
-        const catalog = await loadPage(catalogUrl,{scroll:false,timeout});
+        const catalog = await loadPage(catalogUrl,{scroll:false,timeout,mode:accessMode});
         const more = rankSeriesLinks(catalog.html,catalog.finalUrl).slice(0,Math.max(2,maxProbes-tested.length));
         for (const candidate of more) {
           if (tested.length >= maxProbes) break;
           if (tested.some(x=>x.url===candidate.url)) continue;
-          tested.push(await probeSeries(candidate.url,timeout));
+          tested.push(await probeSeries(candidate.url,timeout,accessMode));
           if (tested.at(-1)?.ok && tested.at(-1)?.score >= 72) break;
         }
-      } catch {}
+      } catch(error) {
+        if (error?.code === 'ACCESS_BLOCKED' || error?.code === 'ACCESS_CHALLENGE') throw error;
+      }
       if (tested.some(x=>x.ok && x.score>=72)) break;
     }
   }
@@ -143,8 +170,9 @@ export async function discoverSeriesEntry(inputUrl, options={}) {
     inputKind:'site',
     rootUrl:identity.baseUrl,
     seriesUrl:winner.url,
-    catalogUrls:unique([identity.baseUrl,...catalogUrls]).slice(0,8),
+    catalogUrls,
     tested:tested.slice(0,maxProbes),
-    confidence:Math.min(99,winner.score)
+    confidence:Math.min(99,winner.score),
+    accessMode:start.accessMode
   };
 }
