@@ -23,13 +23,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             pkg-config libssl-dev libfontconfig1-dev libfreetype6-dev ca-certificates
       - name: Build real Aidoku WASM runtime
-        run: cargo build --release --manifest-path runtime/aidoku/Cargo.toml
+        run: cargo build --manifest-path runtime/aidoku/Cargo.toml
       - name: Start runtime
         env:
           PORT: 8091
           RUST_LOG: info
         run: |
-          ./runtime/aidoku/target/release/yomu-aidoku-runtime > /tmp/aidoku-runtime.log 2>&1 &
+          ./runtime/aidoku/target/debug/yomu-aidoku-runtime > /tmp/aidoku-runtime.log 2>&1 &
           echo $! > /tmp/aidoku-runtime.pid
           for i in {1..40}; do
             if curl --fail --silent http://127.0.0.1:8091/healthz > /tmp/health.json; then
