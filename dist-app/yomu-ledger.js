@@ -387,8 +387,13 @@
       : `${total} sources merged`;
 
     const detail = document.createElement('small');
+    // The source's own words, not a blanket "unreachable" -- a timeout, a
+    // dead host and a source that does not serve chapters are three different
+    // facts, and only one of them means try again later.
     detail.textContent = ledger.sources
-      .map((s) => s.ok ? `${s.providerName} ${s.chapterCount}` : `${s.providerName} — unreachable`)
+      .map((s) => s.ok
+        ? `${s.providerName} ${s.chapterCount}`
+        : `${s.providerName} — ${(s.error || 'did not answer').replace(/\.$/, '').toLowerCase()}`)
       .join(' · ');
 
     const copy = document.createElement('div');

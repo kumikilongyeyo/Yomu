@@ -490,15 +490,31 @@ export async function chapterLedger(
               reject(new Error(`Timed out after ${LEDGER_TIMEOUT_MS}ms`)), { once: true });
           }),
         ]));
-      return { provider, seriesId, chapters: Array.isArray(chapters) ? chapters : [], error: undefined };
+      return { provider, seriesId, chapters: Array.isArray(chapters) ? chapters : [], error: undefined, cannot: false };
     } catch (error: any) {
-      return { provider, seriesId, chapters: [] as Chapter[], error: String(error?.message ?? 'unavailable') };
+      // A descriptor that declares no chapters endpoint is not a source that
+      // failed -- it is not a chapter source at all. Comick is the live
+      // example: it lists titles and searches, and has never claimed to serve
+      // chapters. Reporting it as an error made a working discovery source
+      // look broken and turned "3 sources" into "3 of 4 answered".
+      const cannot = error?.kind === 'capability';
+      return {
+        provider,
+        seriesId,
+        chapters: [] as Chapter[],
+        error: String(error?.message ?? 'unavailable'),
+        cannot,
+      };
     } finally {
       clearTimeout(timer);
     }
   }));
 
-  const sources: LedgerSource[] = settled.map(({ provider, seriesId, chapters, error }) => ({
+  // Dropped entirely rather than listed as failures: a source that cannot
+  // answer this question does not belong in the answer.
+  const answerable = settled.filter((s) => !s.cannot);
+
+  const sources: LedgerSource[] = answerable.map(({ provider, seriesId, chapters, error }) => ({
     providerId: provider.id,
     providerName: provider.name,
     kind: provider.kind,
@@ -508,16 +524,16 @@ export async function chapterLedger(
     ...(error ? { error } : {}),
   }));
 
-  const preferred = preferredId && settled.some((s) => s.provider.id === preferredId)
+  const preferred = preferredId && answerable.some((s) => s.provider.id === preferredId)
     ? preferredId
-    : usable[0]?.id;
+    : answerable[0]?.provider.id;
 
   /* --- group by number ------------------------------------------------- */
 
   const byNumber = new Map<number, LedgerRelease[]>();
   const unnumbered: LedgerRelease[] = [];
 
-  for (const { provider, seriesId, chapters } of settled) {
+  for (const { provider, seriesId, chapters } of answerable) {
     for (const chapter of chapters) {
       if (!chapter || typeof chapter.id !== 'string') continue;
       const release: LedgerRelease = {
