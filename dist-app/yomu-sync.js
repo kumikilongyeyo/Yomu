@@ -236,8 +236,24 @@
       // Only fields the app's own rows carry, and only when present, so a
       // sparse row from an older client does not write undefined into storage.
       const row = { id: source.id, enabled: true };
-      for (const field of ['label', 'category', 'kind', 'url']) {
+      for (const field of ['label', 'category', 'kind']) {
         if (source[field]) row[field] = source[field];
+      }
+      // The url is resolved rather than copied, and a row whose url will not
+      // resolve is dropped entirely.
+      //
+      // The Sources screen calls new URL() on this, which throws on anything
+      // that is not absolute, and a throw during render takes the whole screen
+      // down. Without this check one bad row on one device would travel to
+      // every paired device and break Sources on all of them -- the failure
+      // sync is uniquely able to cause, and the one it must not.
+      //
+      // Resolving also repairs the ordinary case: the app writes these as
+      // location.origin + '/api/ext/source/...', so a row that arrives as a
+      // bare path is simply re-anchored to this origin.
+      if (source.url) {
+        try { row.url = new URL(source.url, location.origin).href; }
+        catch { continue; }
       }
       sources.push(row);
       structural = true;
