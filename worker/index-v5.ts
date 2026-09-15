@@ -34,11 +34,76 @@ async function withSourcesCommandCenter(request: Request, env: Env, url: URL): P
   return new Response(html, { status: response.status, headers });
 }
 
+async function proxyRuntime(request: Request, env: Env, url: URL): Promise<Response> {
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    return new Response(JSON.stringify({ error: 'Runtime source routes use GET.' }), {
+      status: 405,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
+
+  const row = env as Env & { SOURCE_RUNTIME_URL?: string; SOURCE_RUNTIME_TOKEN?: string };
+  const raw = String(row.SOURCE_RUNTIME_URL ?? '').trim();
+  if (!raw) {
+    return new Response(JSON.stringify({ error: 'Remote source runtime is not configured.' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
+
+  let runtimeBase: URL;
+  try {
+    runtimeBase = new URL(raw.endsWith('/') ? raw : `${raw}/`);
+  } catch {
+    return new Response(JSON.stringify({ error: 'Remote source runtime URL is invalid.' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
+
+  const prefix = '/api/fabric/runtime/';
+  const suffix = url.pathname.slice(prefix.length);
+  if (!suffix || suffix.includes('..')) {
+    return new Response(JSON.stringify({ error: 'Invalid runtime path.' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
+
+  const target = new URL(`v1/${suffix}`, runtimeBase);
+  target.search = url.search;
+  const headers = new Headers();
+  headers.set('accept', request.headers.get('accept') || 'application/json');
+  headers.set('user-agent', 'Yomu-Source-Fabric/7.3');
+  const token = String(row.SOURCE_RUNTIME_TOKEN ?? '').trim();
+  if (token) headers.set('authorization', `Bearer ${token}`);
+
+  try {
+    const response = await fetch(target.toString(), {
+      method: request.method,
+      headers,
+      signal: AbortSignal.timeout(30_000),
+    });
+    const outHeaders = new Headers(response.headers);
+    outHeaders.delete('set-cookie');
+    outHeaders.delete('content-length');
+    outHeaders.delete('content-encoding');
+    outHeaders.set('cache-control', 'no-store');
+    return new Response(response.body, { status: response.status, headers: outHeaders });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: `Remote runtime fetch failed: ${error?.message ?? String(error)}` }), {
+      status: 502,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/fabric/source/kagane/')) return handleKaganeV53(request, url);
+    if (url.pathname.startsWith('/api/fabric/runtime/')) return proxyRuntime(request, env, url);
 
     if (url.pathname === '/api/fabric/resolve') {
       if (request.method !== 'POST') return handleFabric(request, env, url);
