@@ -11,6 +11,7 @@ on:
       - 'dist-app/add-sources.html'
       - 'dist-app/source-import.js'
       - 'dist-app/source-fabric-panel.js'
+      - 'dist-app/source-fabric-bulk.js'
       - 'dist-app/source-fabric-layout.js'
       - 'dist-app/source-fabric-diagnostics.js'
       - 'dist-app/source-fabric-discover.js'
@@ -40,6 +41,7 @@ jobs:
         run: |
           node --check dist-app/source-import.js
           node --check dist-app/source-fabric-panel.js
+          node --check dist-app/source-fabric-bulk.js
           node --check dist-app/source-fabric-layout.js
           node --check dist-app/source-fabric-diagnostics.js
           node --check dist-app/source-fabric-discover.js
