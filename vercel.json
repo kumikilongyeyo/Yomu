@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "aidoku-runtime": {
+      "runtime": "container",
+      "root": "runtime/aidoku/",
+      "entrypoint": "Dockerfile.vercel"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": { "service": "aidoku-runtime" }
+    }
+  ]
+}
