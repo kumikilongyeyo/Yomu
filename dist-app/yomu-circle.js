@@ -180,11 +180,11 @@
     }
 
     group.append(row(
-      isOwner ? 'Leave' : 'Leave this circle',
+      isOwner ? 'Close this circle' : 'Leave this circle',
       isOwner
-        ? 'You started this one, so it stays. Remove the others instead.'
+        ? 'Ends it for everyone, and deletes every comment in it.'
         : 'Your comments stay, with your name on them.',
-      isOwner ? null : leaveCircle,
+      isOwner ? closeCircle : leaveCircle,
     ));
   }
 
@@ -200,6 +200,17 @@
     try {
       const circle = await api('remove', { target: member.id });
       members = circle.members || [];
+      renderGroup();
+    } catch (error) { note(error.message); }
+  }
+
+  async function closeCircle() {
+    if (!confirm('Close this circle? Every comment in it is deleted, for everyone. This cannot be undone.')) return;
+    try {
+      await api('destroy', {});
+      try { localStorage.removeItem(STATE_KEY); } catch {}
+      members = [];
+      isOwner = false;
       renderGroup();
     } catch (error) { note(error.message); }
   }

@@ -295,10 +295,34 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
     return json(publicCircle(next, code, memberId));
   }
 
-  /* Leave. The owner leaving would orphan the circle, so it is refused. */
+  /* Close the circle. Owner only, and it takes the conversations with it.
+   *
+   * The counterpart to "the owner cannot leave": without this the only way out
+   * for whoever started it is to abandon a circle that keeps existing, and the
+   * comments in it keep existing too. Somebody has to be able to end it.
+   *
+   * Every series thread goes as well as the membership. KV has no prefix
+   * delete, so they are listed and removed -- a circle has a handful of these,
+   * and the alternative is orphaned rows nobody can reach or clear. */
+  if (route === 'destroy') {
+    if (doc.ownerId !== memberId) return bad('Only the circle owner can close it.', 403);
+
+    let cursor: string | undefined;
+    do {
+      const page: any = await env.SYNC.list({ prefix: `circle:${code}:s:`, cursor });
+      for (const entry of page.keys) await env.SYNC.delete(entry.name);
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+
+    await env.SYNC.delete(circleKey(code));
+    return json({ ok: true });
+  }
+
+  /* Leave. The owner leaving would orphan the circle, so it is refused --
+   * closing it is what they do instead. */
   if (route === 'leave') {
     if (doc.ownerId === memberId) {
-      return bad('You started this circle. Remove the others, or just stop using it.', 400);
+      return bad('You started this circle. Close it, or remove the others.', 400);
     }
     const members = { ...doc.members };
     delete members[memberId];
