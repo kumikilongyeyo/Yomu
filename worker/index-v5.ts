@@ -4,12 +4,27 @@ import { fabricSourceCards, handleFabric } from './source-fabric';
 /**
  * Source Fabric wrapper.
  *
- * Keeping v5 as a thin wrapper lets the existing Yomu Worker remain battle-
- * tested while new remote source machinery is added independently. Every old
- * route is delegated unchanged except /api/ext/sources, where remote Fabric
- * sources are exposed alongside normal Yomu extensions so the existing client
- * source model can install either one.
+ * v5 keeps the existing Worker intact and layers remote source execution on top.
+ * The Sources screen also receives a tiny portal script at response time, which
+ * lets the main UX evolve without rebuilding the exported Expo bundle.
  */
+async function withSourcesCommandCenter(request: Request, env: Env, url: URL): Promise<Response> {
+  const response = await legacy.fetch(request, env);
+  if (!response.ok || request.method !== 'GET') return response;
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('text/html')) return response;
+
+  const html = await response.text();
+  if (html.includes('/source-fabric-panel.js')) return new Response(html, response);
+  const tag = '<script src="/source-fabric-panel.js" defer></script>';
+  const body = html.includes('</body>') ? html.replace('</body>', `${tag}</body>`) : html + tag;
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('cache-control', 'no-store');
+  return new Response(body, { status: response.status, headers });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -36,6 +51,10 @@ export default {
           'cache-control': 'no-store',
         },
       });
+    }
+
+    if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') {
+      return withSourcesCommandCenter(request, env, url);
     }
 
     return legacy.fetch(request, env);
