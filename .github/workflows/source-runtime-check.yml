@@ -1,0 +1,29 @@
+name: Source Runtime Check
+
+on:
+  push:
+    branches:
+      - source-fabric-v7-runtime
+    paths:
+      - 'runtime/aidoku/**'
+      - '.github/workflows/source-runtime-check.yml'
+  pull_request:
+    paths:
+      - 'runtime/aidoku/**'
+      - '.github/workflows/source-runtime-check.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: runtime/aidoku
+      - name: System dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev libfontconfig1-dev libfreetype6-dev
+      - name: Cargo check
+        run: cargo check --manifest-path runtime/aidoku/Cargo.toml
+      - name: Docker build
+        run: docker build runtime/aidoku
