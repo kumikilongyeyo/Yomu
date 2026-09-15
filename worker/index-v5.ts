@@ -14,15 +14,24 @@ async function withSourcesCommandCenter(request: Request, env: Env, url: URL): P
   const type = response.headers.get('content-type') ?? '';
   if (!type.includes('text/html')) return response;
 
-  const html = await response.text();
-  if (html.includes('/source-fabric-panel.js')) return new Response(html, response);
-  const tag = '<script src="/source-fabric-panel.js" defer></script>';
-  const body = html.includes('</body>') ? html.replace('</body>', `${tag}</body>`) : html + tag;
+  let html = await response.text();
+  const tags: string[] = [];
+  if (!html.includes('/source-fabric-panel.js')) {
+    tags.push('<script src="/source-fabric-panel.js" defer></script>');
+  }
+  if (!html.includes('/source-fabric-layout.js')) {
+    tags.push('<script src="/source-fabric-layout.js" defer></script>');
+  }
+  if (tags.length) {
+    const injected = tags.join('');
+    html = html.includes('</body>') ? html.replace('</body>', `${injected}</body>`) : html + injected;
+  }
+
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
-  headers.set('cache-control', 'no-store');
-  return new Response(body, { status: response.status, headers });
+  headers.set('cache-control', 'no-store, max-age=0');
+  return new Response(html, { status: response.status, headers });
 }
 
 export default {
