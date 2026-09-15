@@ -19,6 +19,7 @@ import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from '
 import { DEFAULT_RANK, chapterLedger, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
 import type { SeriesSummary } from './extensions/types';
+import { relatedFor } from './related';
 
 const json = (body: unknown, status = 200, cache = 'no-store') =>
   new Response(JSON.stringify(body), {
@@ -323,6 +324,27 @@ function otherSpelling(entry: { title: string; altTitles?: string[] }, query: st
 export async function handleCatalog(request: Request, env: Env, url: URL): Promise<Response> {
   if (request.method !== 'GET') return json({ error: 'Only GET is supported.' }, 405);
   const origin = url.origin;
+
+  /**
+   * What else this author made, and what this title is actually like.
+   *
+   * Cached for an hour at the edge: an author's bibliography is not news, and
+   * this is called once per series page view.
+   */
+  if (url.pathname === '/api/catalog/related') {
+    const id = url.searchParams.get('id') ?? '';
+    const source = url.searchParams.get('source') ?? '';
+    const title = url.searchParams.get('title') ?? '';
+    if (!id && !title) return json({ error: 'Need a series id or a title.' }, 400);
+    const answer = await relatedFor({
+      id,
+      source,
+      title,
+      adult: url.searchParams.get('adult') === '1',
+      origin,
+    });
+    return json(answer, 200, 'public, max-age=3600');
+  }
 
   if (url.pathname === '/api/catalog/status') {
     const snapshot = await registry(env);

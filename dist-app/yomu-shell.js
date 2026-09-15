@@ -853,7 +853,10 @@
       seriesSettling = {
         route,
         at: Date.now(),
-        timer: setTimeout(() => { seriesSettling.timer = null; trackSeriesPage(); }, SETTLE_MS + 60),
+        // pass(), not trackSeriesPage(): everything else that waits on this
+        // settle needs the tick too, and a page that has finished rendering
+        // stops mutating -- so this timer is the only tick that arrives.
+        timer: setTimeout(() => { seriesSettling.timer = null; pass(); }, SETTLE_MS + 60),
       };
       return;
     }
@@ -1944,6 +1947,176 @@
     }
   };
 
+  /* ------------------------------------------------------------------ *
+   * More from this author, and what this title is actually like
+   *
+   * The series screen already ended with a Related row. On Vagabond it
+   * offered Solo Leveling and Mushoku Tensei -- a match on Action and
+   * Adventure, tags half the catalogue carries, ranked by popularity. It also
+   * sat below 112 chapters, eleven thousand pixels down, where nobody was
+   * ever going to see it.
+   *
+   * This answers the two questions a reader on a series page is actually
+   * asking -- what else did this person make, and what is this one like --
+   * from /api/catalog/related. It sits directly under the chapter list,
+   * where the app's own Related row used to be and where it stands down in
+   * favour of this one. Chapters come first: they are what the page is for.
+   * ------------------------------------------------------------------ */
+
+  const KIN_ID = 'yomu-kin';
+
+  /** MangaDex's word for the relationship, in the reader's words. */
+  const RELATION = {
+    sequel: 'Sequel',
+    prequel: 'Prequel',
+    side_story: 'Side story',
+    main_story: 'Main story',
+    spin_off: 'Spin-off',
+    adapted_from: 'Adapted from',
+    based_on: 'Based on',
+    colored: 'Colour edition',
+    alternate_story: 'Alternate story',
+    alternate_version: 'Alternate version',
+    preserialization: 'Pre-serialisation',
+    serialization: 'Serialisation',
+    same_franchise: 'Same franchise',
+    shared_universe: 'Shared universe',
+    doujinshi: 'Doujinshi',
+  };
+
+  /** One answer per title, for the length of the session. */
+  const kinCache = new Map();
+
+  function kinFetch(key, context, title) {
+    if (kinCache.has(key)) return kinCache.get(key);
+    const query = new URLSearchParams({
+      id: context.seriesId,
+      source: context.sourceId,
+      title,
+    });
+    const pending = fetch('/api/catalog/related?' + query)
+      .then((response) => (response.ok ? response.json() : null))
+      .catch(() => null);
+    kinCache.set(key, pending);
+    return pending;
+  }
+
+  function kinTile(entry) {
+    const tile = document.createElement('a');
+    tile.className = 'yomu-kin-tile';
+    tile.href = '/series/' + encodeURIComponent(entry.id) + '?source=mangadex';
+
+    const art = document.createElement('i');
+    art.setAttribute('aria-hidden', 'true');
+    if (entry.cover) art.style.backgroundImage = 'url("' + entry.cover + '")';
+    tile.append(art);
+
+    const name = document.createElement('strong');
+    name.textContent = entry.title;
+    tile.append(name);
+
+    if (entry.relation && RELATION[entry.relation]) {
+      const badge = document.createElement('em');
+      badge.textContent = RELATION[entry.relation];
+      tile.append(badge);
+    } else {
+      const facts = [entry.year, entry.status].filter(Boolean).join(' · ');
+      if (facts) {
+        const sub = document.createElement('small');
+        sub.textContent = facts;
+        tile.append(sub);
+      }
+    }
+    return tile;
+  }
+
+  function kinRow(heading, note, entries) {
+    const row = document.createElement('div');
+    row.className = 'yomu-kin-row';
+
+    const head = document.createElement('div');
+    head.className = 'yomu-kin-head';
+    const h2 = document.createElement('h2');
+    h2.textContent = heading;
+    head.append(h2);
+    if (note) {
+      const small = document.createElement('small');
+      small.textContent = note;
+      head.append(small);
+    }
+
+    const rail = document.createElement('div');
+    rail.className = 'yomu-kin-rail';
+    for (const entry of entries) rail.append(kinTile(entry));
+
+    row.append(head, rail);
+    return row;
+  }
+
+  function mountKin() {
+    const context = seriesPageContext();
+    const existing = document.getElementById(KIN_ID);
+    if (!context) {
+      // React drops it with the screen, but a route that renders without
+      // repainting this branch would leave it behind.
+      existing?.remove();
+      document.documentElement.removeAttribute('data-yomu-kin');
+      return;
+    }
+
+    // The same settle the cover tracking waits for, and for the same reason:
+    // for a tick after a tap the URL is the new title while the DOM is still
+    // the old one, and a request keyed off the wrong pair caches the wrong
+    // author against the right page.
+    const key = titleKey(context.sourceId, context.seriesId);
+    if (seriesSettling.route !== key || Date.now() - seriesSettling.at < SETTLE_MS) return;
+
+    const list = document.querySelector('.chapter-list');
+    if (!list) return;
+    const title = document.querySelector('.series-hero-copy h1')?.textContent?.trim() || '';
+    if (!title) return;
+
+    if (existing && existing.dataset.key === key) return;
+
+    const section = document.createElement('section');
+    section.id = KIN_ID;
+    section.className = 'yomu-kin';
+    section.dataset.key = key;
+    // Holds its height while the answer is in flight, so the page does not
+    // jump when the rows land under a reader already sitting at the bottom.
+    section.dataset.pending = '1';
+    if (existing) existing.replaceWith(section);
+    else list.after(section);
+
+    kinFetch(key, context, title).then((answer) => {
+      // Gone, or the reader moved on while this was in the air.
+      if (!section.isConnected || section.dataset.key !== key) return;
+      section.removeAttribute('data-pending');
+      if (!answer || !answer.matched) { section.remove(); return; }
+
+      const rows = [];
+      for (const credit of [answer.author, answer.artist]) {
+        if (credit && credit.series && credit.series.length) {
+          rows.push(kinRow('More from ' + credit.name, '', credit.series));
+        }
+      }
+      if (answer.related && answer.related.length) {
+        rows.push(kinRow('Related', 'Same work', answer.related));
+      }
+      if (answer.similar && answer.similar.length) {
+        const because = (answer.similarBecause || []).join(' · ');
+        rows.push(kinRow('You might like', because, answer.similar));
+      }
+
+      if (!rows.length) { section.remove(); return; }
+      section.append(...rows);
+      // Only now does the app's own Related row stand down: something better
+      // sourced is on the page in its place.
+      document.documentElement.toggleAttribute(
+        'data-yomu-kin', !!(answer.similar && answer.similar.length));
+    });
+  }
+
   /**
    * One pass over everything this file maintains.
    *
@@ -1958,6 +2131,7 @@
     badgeProgress();
     trackSeriesPage();
     mountSeriesResume();
+    mountKin();
     trackReader();
     mountContinue();
     explainIconButtons();
