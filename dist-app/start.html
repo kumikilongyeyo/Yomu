@@ -79,6 +79,10 @@
     .pane[hidden] { display: none; }
 
     /* welcome */
+    /* The wordmark takes the heading's size rather than the lockup's 21px,
+       and the cascade comes from yomu-skin.css. */
+    .yword.ob-word { font-size: inherit; letter-spacing: -.02em; vertical-align: baseline; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .ob-hero { display: grid; place-items: center; padding: 30px 0 6px; }
     .ob-mark { width: 96px; height: auto; color: var(--accent); }
 
@@ -290,7 +294,7 @@
          you ever see of Yomu is the thing it shows you whenever it is
          thinking. Sprite and cadence come from yomu-skin.css. -->
     <div class="ob-hero"><span class="yomu-loader" style="--s:96px" role="img" aria-label="Yomu"></span></div>
-    <h1>Welcome to Yomu</h1>
+    <h1>Welcome to <span class="yword ob-word" aria-hidden="true"><span style="--i:0">Y</span><span style="--i:1">o</span><span style="--i:2">m</span><span style="--i:3">u</span></span><span class="sr">Yomu</span></h1>
     <p class="blurb">A reading room for everything your sources carry. Four short steps and one that matters.</p>
     <div class="acts">
       <button class="btn" type="button" data-go="1">Get started</button>
