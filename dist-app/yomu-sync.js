@@ -185,7 +185,13 @@
         addedAt: stamps[titleKey(entry.sourceId, entry.id)],
       })),
       removed: noticeRemovals(library),
-      sources: sourcesOf(c).filter((s) => s && s.enabled).map((s) => s.id),
+      // The whole row, not just the id. A fresh install's source list holds
+      // only the built-ins, so an id is something it can recognise but not
+      // something it can create -- and the install where you have none of them
+      // yet is exactly the one sync is for.
+      sources: sourcesOf(c)
+        .filter((s) => s && s.enabled && s.id)
+        .map((s) => ({ id: s.id, label: s.label, category: s.category, kind: s.kind, url: s.url })),
       progress: progressPatch(),
     };
   }
@@ -213,12 +219,29 @@
       structural = true;
     }
 
-    const enabled = new Set(doc.sources || []);
+    // Two jobs: switch on the ones this device already lists, and create the
+    // ones it has never heard of. The second is the one that matters on a new
+    // install, where the list is just the built-ins.
+    const incoming = (doc.sources || []).filter((s) => s && s.id);
+    const known = new Set(sourcesOf(c).map((s) => s.id));
+    const wantedSources = new Set(incoming.map((s) => s.id));
+
     const sources = sourcesOf(c).map((source) => {
-      if (!enabled.has(source.id) || source.enabled) return source;
+      if (!wantedSources.has(source.id) || source.enabled) return source;
       structural = true;
       return { ...source, enabled: true };
     });
+    for (const source of incoming) {
+      if (known.has(source.id)) continue;
+      // Only fields the app's own rows carry, and only when present, so a
+      // sparse row from an older client does not write undefined into storage.
+      const row = { id: source.id, enabled: true };
+      for (const field of ['label', 'category', 'kind', 'url']) {
+        if (source[field]) row[field] = source[field];
+      }
+      sources.push(row);
+      structural = true;
+    }
 
     if (structural) {
       writeJSON(COLLECTION_KEY, {

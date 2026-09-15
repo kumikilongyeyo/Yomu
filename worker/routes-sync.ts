@@ -105,7 +105,7 @@ const publicDoc = (doc: SyncDoc, code: string) => ({
   updatedAt: doc.updatedAt,
   library: Object.values(doc.library),
   progress: Object.values(doc.progress),
-  sources: Object.keys(doc.sources),
+  sources: Object.values(doc.sources).map(({ at, ...row }) => row),
   removed: Object.keys(doc.removed),
   ...(doc.searchHistory ? { searchHistory: doc.searchHistory } : {}),
   devices: Object.entries(doc.devices)

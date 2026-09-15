@@ -69,6 +69,30 @@ export interface DeviceEntry {
   lastSeen: number;
 }
 
+/**
+ * Enough to rebuild a source row on a device that has never seen it.
+ *
+ * An id alone is not enough, which is the trap: a fresh install's source list
+ * contains only the built-ins, so "mangadex is enabled" can be acted on but
+ * "flamecomics is enabled" names a row that does not exist and is silently
+ * dropped. The whole point of syncing sources is the install where you have
+ * none of them yet.
+ *
+ * `url` rides along because every source that reaches here has a public one --
+ * an API origin, or a same-origin /api/ path. The two places a private address
+ * could hide are both outside this: the Mihon tunnel is a Worker secret and
+ * never in the client's list at all, and the user-configured generic source
+ * lives in yomu.v1.source-config, which is deliberately not synced.
+ */
+export interface SourceEntry {
+  id: string;
+  label?: string;
+  category?: string;
+  kind?: string;
+  url?: string;
+  at: number;
+}
+
 export interface SyncDoc {
   schema: typeof SCHEMA;
   revision: number;
@@ -78,8 +102,8 @@ export interface SyncDoc {
   /** titleKey -> when it was removed. The whole reason a delete sticks. */
   removed: Record<string, number>;
   progress: Record<string, ProgressEntry>;
-  /** sourceId -> when it was first enabled anywhere. */
-  sources: Record<string, number>;
+  /** sourceId -> the row needed to recreate it, plus when it was first seen. */
+  sources: Record<string, SourceEntry>;
   devices: Record<string, DeviceEntry>;
   /** Opt-in, and off unless a device says otherwise. */
   searchHistory?: string[];
@@ -91,7 +115,7 @@ export interface SyncPatch {
   library?: LibraryEntry[];
   removed?: string[];
   progress?: ProgressEntry[];
-  sources?: string[];
+  sources?: SourceEntry[];
   searchHistory?: string[];
 }
 
@@ -291,12 +315,30 @@ export function mergeRemovals(
  * which does not sync at all.
  */
 export function mergeSources(
-  base: Record<string, number>,
-  incoming: string[] | undefined,
+  base: Record<string, SourceEntry>,
+  incoming: SourceEntry[] | undefined,
   now: number,
-): Record<string, number> {
-  const out = { ...base };
-  for (const id of incoming ?? []) if (typeof id === 'string' && id && !(id in out)) out[id] = now;
+): Record<string, SourceEntry> {
+  const out: Record<string, SourceEntry> = {};
+
+  // Tolerate the first shape this shipped with, which stored only the time a
+  // source was first enabled. Those rows carry no descriptor, so they are kept
+  // as bare ids and filled in by the next device that pushes a real one.
+  for (const [id, value] of Object.entries(base ?? {})) {
+    out[id] = typeof value === 'number' ? { id, at: value } : value;
+  }
+
+  for (const entry of incoming ?? []) {
+    if (!entry || typeof entry.id !== 'string' || !entry.id) continue;
+    const existing = out[entry.id];
+    out[entry.id] = {
+      ...existing,
+      ...entry,
+      // First-seen, so a source does not keep resetting its own age, and a
+      // later push cannot blank a label an earlier one supplied.
+      at: existing?.at ?? now,
+    };
+  }
   return out;
 }
 
