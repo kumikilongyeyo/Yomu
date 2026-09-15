@@ -13,6 +13,7 @@ on:
       - 'dist-app/source-fabric-panel.js'
       - 'dist-app/source-fabric-layout.js'
       - 'dist-app/source-fabric-diagnostics.js'
+      - 'dist-app/source-fabric-discover.js'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -40,5 +41,6 @@ jobs:
           node --check dist-app/source-fabric-panel.js
           node --check dist-app/source-fabric-layout.js
           node --check dist-app/source-fabric-diagnostics.js
+          node --check dist-app/source-fabric-discover.js
       - name: Bundle Worker
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
