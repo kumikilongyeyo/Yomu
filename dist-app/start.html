@@ -10,7 +10,25 @@
     /* The app's tokens carry most of this; these are the shapes the setup
        flow needs and no screen else does. The easing is the one macOS uses
        for everything that is not a gesture. */
-    :root { --ease: cubic-bezier(.32, .72, 0, 1); }
+    :root {
+      --ease: cubic-bezier(.32, .72, 0, 1);          /* iOS drawer curve */
+      --out:  cubic-bezier(.23, 1, .32, 1);          /* strong ease-out for entrances */
+    }
+
+    /* Entrances. Never scale(0) -- nothing in the world appears from nothing. */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+    @keyframes slideFromRight { from { opacity: 0; transform: translateX(22px); } }
+    @keyframes slideFromLeft  { from { opacity: 0; transform: translateX(-22px); } }
+    @keyframes pop { from { opacity: 0; transform: scale(.7); } 70% { transform: scale(1.06); } }
+
+    .pane { animation: slideFromRight .34s var(--out) both; }
+    .pane.back { animation-name: slideFromLeft; }
+
+    /* Staggered, because everything arriving at once reads as a screenshot
+       rather than a screen being built for you. */
+    .preset, .kind { animation: rise .42s var(--out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+    .row { animation: rise .38s var(--out) both; animation-delay: calc(var(--i, 0) * 32ms); }
+
 
     body {
       margin: 0;
@@ -143,8 +161,65 @@
     .done { text-align: center; padding: 22px 6px 6px; }
     .done .mark { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 16px; background: #46d39a; color: #06281c; display: grid; place-items: center; font-size: 28px; font-weight: 700; }
 
+    /* The count is the one number on the screen, so it gets the weight. */
+    .tally b { transition: color .2s var(--out); }
+    /* A changed number nudges, it does not re-enter: this fires on every
+       toggle, and `pop` (an entrance, from scale .7) reads as the panel
+       rebuilding itself each time. */
+    @keyframes nudge { 40% { transform: scale(1.035); } }
+    .tally.bump { animation: nudge .28s var(--out); }
+
+    .mark { animation: pop .5s var(--out) both; }
+
+    /* The payoff: real covers from the sources just switched on, sliding.
+       Constant motion, so linear -- and a CSS animation so it keeps its
+       frames while the page is still fetching the images it is showing. */
+    .reel { margin: 20px 0 6px; display: grid; gap: 10px; }
+    .lane {
+      display: flex; gap: 10px; width: max-content;
+      animation: run var(--dur, 46s) linear infinite;
+    }
+    .lane.rev { animation-direction: reverse; }
+    @keyframes run { to { transform: translateX(-50%); } }
+    .reelMask:not([hidden]) { animation: rise .5s var(--out) both; }
+    .reelMask {
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    }
+    .lane img {
+      width: 74px; aspect-ratio: 2/3; flex: none; object-fit: cover;
+      border-radius: 8px; background: var(--raised); border: 1px solid var(--line);
+      opacity: 0; transition: opacity .5s var(--out);
+    }
+    .lane img.in { opacity: 1; }
+
+    .cta { position: relative; overflow: hidden; }
+    /* One sweep of light, once, when the CTA arrives. Not a loop -- a loop on
+       a button reads as a banner ad. */
+    .cta::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 38%, #ffffff5c 50%, transparent 62%);
+      transform: translateX(-120%);
+      animation: sweep 1.1s var(--out) .45s 1 both;
+    }
+    @keyframes sweep { to { transform: translateX(120%); } }
+
+    @media (hover: hover) and (pointer: fine) {
+      .btn:hover { filter: brightness(1.06); }
+    }
+
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+    /* Fewer and gentler, not none: the fades that explain a state change stay,
+       the movement goes, and the reel holds still rather than scrolling. */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition-duration: .01ms !important; }
+      .pane, .preset, .kind, .row, .mark { animation: none; opacity: 1; transform: none; }
+      .tally.bump { animation: none; }
+      .lane, .reelMask:not([hidden]) { animation: none; }
+      .cta::after { animation: none; display: none; }
+      .lane img { transition: none; opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -208,8 +283,9 @@
       <div class="mark" aria-hidden="true">&#10003;</div>
       <h1 style="margin-bottom:8px">Your shelves are full</h1>
       <p class="blurb" style="margin-inline:auto" id="doneLine">Ready when you are.</p>
+      <div class="reelMask" id="reelMask" hidden><div class="reel" id="reel"></div></div>
       <div class="acts" style="justify-content:center">
-        <a class="btn" href="/" id="go">Start reading</a>
+        <a class="btn cta" href="/" id="go">Start reading</a>
       </div>
       <p class="blurb" style="margin:16px auto 0;font-size:12.5px">Add more any time in Settings → Sources, where Source Fabric can read almost any site you paste into it.</p>
     </div>
@@ -342,6 +418,7 @@
       const small = document.createElement('small');
       small.textContent = pre.custom ? 'Type a name' : 'and its colour';
 
+      b.style.setProperty('--i', String(box.children.length));
       b.append(dot, face, strong, small);
       b.addEventListener('click', () => {
         profile = pre;
@@ -395,6 +472,7 @@
       const strong = document.createElement('b'); strong.textContent = k.name;
       const small = document.createElement('small');
       small.textContent = k.count ? fmt(k.count) + ' on MangaDex alone' : k.note;
+      b.style.setProperty('--i', String(box.children.length));
       b.append(tick, strong, small);
       b.addEventListener('click', () => {
         if (picked.has(k.id)) picked.delete(k.id); else picked.add(k.id);
@@ -447,6 +525,7 @@
         tally();
       });
 
+      row.style.setProperty('--i', String(list.children.length));
       row.append(rc, val, sw);
       list.append(row);
     });
@@ -486,6 +565,42 @@
     });
   }
 
+  /* The number rolls to its new value instead of cutting.
+   *
+   * State indication: ticking Manhwa adds 6,378 and the roll is what makes
+   * that legible as an amount rather than a different string. Short, eased
+   * out, and it retargets from wherever it currently is -- tick three kinds
+   * quickly and it chases the total rather than restarting three times. */
+  let rollFrom = 0;
+  let rollTimer = null;
+  let rollSeen = false;
+  function rollTo(target, suffix) {
+    const el = $('tallyNum');
+    const start = rollFrom;
+    const delta = target - start;
+    if (rollTimer) cancelAnimationFrame(rollTimer);
+    if (!delta) { el.textContent = fmt(target) + suffix; rollFrom = target; return; }
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = fmt(target) + suffix; rollFrom = target; return;
+    }
+
+    const began = performance.now();
+    const DUR = 420;
+    const tick = (now) => {
+      const t = Math.min(1, (now - began) / DUR);
+      const eased = 1 - Math.pow(1 - t, 3);              // ease-out cubic
+      el.textContent = fmt(Math.round(start + delta * eased)) + suffix;
+      if (t < 1) rollTimer = requestAnimationFrame(tick);
+      else { rollTimer = null; rollFrom = target; }
+    };
+    rollTimer = requestAnimationFrame(tick);
+    const box = el.parentElement;
+    box.classList.remove('bump');
+    void box.offsetWidth;                                 // restart the pop
+    box.classList.add('bump');
+  }
+
   function tally() {
     const on = SOURCES.filter((s) => s.on);
     const mdOn = SOURCES.find((s) => s.id === 'mangadex').on;
@@ -494,7 +609,7 @@
       : 0;
     const uncounted = on.filter((s) => s.id !== 'mangadex').length;
 
-    $('tallyNum').textContent = counted ? fmt(counted) + '+' : String(on.length);
+    rollTo(counted ? counted : on.length, counted ? '+' : '');
     $('tallyText').textContent = !on.length
       ? 'nothing on yet — pick at least one'
       : counted
@@ -512,12 +627,36 @@
 
   /* ---- steps ----------------------------------------------------------- */
   function go(next) {
+    /* Spatial consistency: going on enters from the right, going back enters
+       from the left, so the flow has a direction you can feel. */
+    const back = next < step;
     step = next;
     [0, 1, 2, 3].forEach((i) => { $('pane-' + i).hidden = i !== step; });
+    const pane = $('pane-' + step);
+    pane.classList.toggle('back', back);
+    pane.style.animation = 'none';
+    void pane.offsetWidth;
+    pane.style.animation = '';
     document.title = 'Yomu · ' + TITLES[step];
     $('track').style.width = Math.round((step / 3) * 100) + '%';
     $('crumbNow').textContent = step < 3 ? 'Step ' + (step + 1) : 'Done';
     $('crumbOf').textContent = step < 3 ? 'of 3' : '';
+
+    /* The count lives on this pane, and boot ran its roll behind `hidden`,
+       so arriving here meant meeting a number that was simply already there.
+       Replay it once, on first arrival, starting as the pane slides in.
+       Once only -- counting up from zero every time you step back and forth
+       would be noise rather than news. */
+    if (step === 2) warmReel();
+    if (step === 2 && !rollSeen) {
+      rollSeen = true;
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        rollFrom = 0;
+        $('tallyNum').textContent = '0';
+        setTimeout(tally, 180);
+      }
+    }
+
     scrollTo({ top: 0, behavior: 'smooth' });
   }
   document.querySelectorAll('[data-go]').forEach((b) =>
@@ -550,7 +689,73 @@
     try { localStorage.setItem(DONE, '1'); } catch {}
 
     go(3);
+    showReel(on);
   });
+
+  /**
+   * The payoff: covers from the sources just switched on.
+   *
+   * Not stock art and not a confetti burst -- the actual shelves, moving.
+   * It is the only honest way to say "this is what you just did", and it is
+   * the one screen in the app that will be seen exactly once.
+   *
+   * /api/catalog/popular would be the obvious call and is currently returning
+   * a Cloudflare 1102 (the Worker runs out of CPU merging every provider), so
+   * this asks two sources directly instead. If both fail there is simply no
+   * reel -- a broken row of missing images would be worse than none.
+   */
+  const coverCache = new Map();
+  function coversFor(src) {
+    if (coverCache.has(src.id)) return coverCache.get(src.id);
+    const id = src.id.replace('yomuext-', '');
+    const p = fetch('/api/ext/source/' + encodeURIComponent(id) + '/series?page=1')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => ((d && d.series) || []).map((x) => x.cover).filter(Boolean))
+      .catch(() => []);
+    coverCache.set(src.id, p);
+    return p;
+  }
+
+  /* Warmed on the sources step, where there is nothing to wait for anyway, so
+     the covers are in hand by the time Finish is pressed. Otherwise the reel
+     lands a second late and shoves the button the user is reaching for. */
+  function warmReel() {
+    SOURCES.filter((s) => s.on && s.id.startsWith('yomuext-')).slice(0, 2).forEach(coversFor);
+  }
+
+  async function showReel(on) {
+    const pickable = on.filter((s) => s.id.startsWith('yomuext-')).slice(0, 2);
+    if (!pickable.length) return;
+
+    const lists = await Promise.all(pickable.map(coversFor));
+
+    const covers = [...new Set(lists.flat())].slice(0, 22);
+    if (covers.length < 6) return;
+
+    const half = Math.ceil(covers.length / 2);
+    const rows = [covers.slice(0, half), covers.slice(half)];
+
+    const reel = $('reel');
+    reel.textContent = '';
+    rows.forEach((row, n) => {
+      if (row.length < 3) return;
+      const lane = document.createElement('div');
+      lane.className = 'lane' + (n % 2 ? ' rev' : '');
+      // Each lane holds its covers twice, so translateX(-50%) loops seamlessly.
+      lane.style.setProperty('--dur', (row.length * 2.6) + 's');
+      [...row, ...row].forEach((url) => {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = '';
+        img.addEventListener('load', () => img.classList.add('in'), { once: true });
+        img.src = url;
+        lane.append(img);
+      });
+      reel.append(lane);
+    });
+    if (reel.children.length) $('reelMask').hidden = false;
+  }
 
   // Marked done on the way out too. Somebody who reaches this page and leaves
   // through the back button has still seen it, and showing it again on the
