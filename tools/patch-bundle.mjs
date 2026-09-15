@@ -343,26 +343,46 @@ const PAGES_DIR = 'dist-app';
 // Each is matched by its own filename, so adding one later tops up pages that
 // already carry the other rather than being mistaken for done.
 const ASSETS = [
+  /* Archivo is one variable family covering both roles -- width 62..125 gives
+     the expanded display cut, so display and UI are a single request. No
+     `file`, so the local-existence check skips it; `probe` is what marks a
+     page as already carrying it. */
+  {
+    probe: 'family=Archivo',
+    label: 'Archivo (Google Fonts)',
+    tag:
+      '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+      '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">',
+  },
   { file: 'yomu-overrides.css', tag: '<link rel="stylesheet" href="/yomu-overrides.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shell.js', tag: '<script src="/yomu-shell.js" defer></scr' + 'ipt>' },
   { file: 'yomu-sync.js', tag: '<script src="/yomu-sync.js" defer></scr' + 'ipt>' },
   { file: 'yomu-circle.js', tag: '<script src="/yomu-circle.js" defer></scr' + 'ipt>' },
   { file: 'yomu-ledger.js', tag: '<script src="/yomu-ledger.js" defer></scr' + 'ipt>' },
+  /* Last, so it overrides both the compiled palette and yomu-overrides.css on
+     equal specificity. Moving it earlier silently un-skins the app. */
+  { file: 'yomu-skin.css', tag: '<link rel="stylesheet" href="/yomu-skin.css">' },
 ];
 
 // /start is the first-run flow and must not carry the shell: the shell is
 // what redirects to /start, and a page that redirects to itself is a loop.
-const SKIP_ASSETS = new Set(['start.html']);
+// That applies to the scripts, not the stylesheets -- skipping the page
+// wholesale left the first screen a new reader ever sees as the only
+// unskinned one in the app. These pages get the CSS and the fonts, no JS.
+const SCRIPT_FREE_PAGES = new Set(['start.html']);
+const isScript = (a) => a.tag.includes('<script');
 
 for (const { file: assetFile } of ASSETS) {
+  if (!assetFile) continue;
   if (fs.existsSync(path.join(PAGES_DIR, assetFile))) continue;
   console.error(`\nMissing ${path.join(PAGES_DIR, assetFile)} — nothing to link.`);
   failed++;
 }
 
 if (!failed) {
-  for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html') && !SKIP_ASSETS.has(f))) {
+  for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html'))) {
     const pagePath = path.join(PAGES_DIR, page);
     let html = fs.readFileSync(pagePath, 'utf8');
 
@@ -374,14 +394,26 @@ if (!failed) {
      * Unlike the bundle anchors these are stable, readable markup; they are
      * matched exactly and skipped when a page does not contain them. */
     const HTML_EDITS = [
-      {
-        name: 'theme-color',
-        // The status bar tint iOS paints behind a standalone web app. Expo
-        // wrote the old palette's #070708; the approved ground is #0c131b,
-        // and a mismatch shows as a seam above the content on a phone.
-        from: '<meta name="theme-color" content="#070708"/>',
-        to:   '<meta name="theme-color" content="#0c131b"/>',
-      },
+      /* The status bar tint iOS paints behind a standalone web app. A value
+         that is not the page's own ground shows as a seam above the content
+         on a phone. Four have been in circulation -- Expo's #070708 and
+         #0b0d12, a hand-written #141414, and the previous kit's #0c131b --
+         so each is mapped straight to Aurora's ground rather than chained,
+         which would need two passes after a fresh export.
+
+         One value, not a light/dark pair: the app's mode is a stored setting
+         rather than an OS preference, so a media-switched meta would be right
+         for System viewers and wrong for anyone who forced the other mode.
+         Aurora is the default, so Aurora is the tint. */
+      ...['#070708', '#0b0d12', '#141414', '#0c131b'].flatMap((old) =>
+        // Expo writes the tag as `"/>`; the hand-written pages write `" />`.
+        // Both spellings are in the tree, so both are matched.
+        ['/>', ' />'].map((close) => ({
+          name: `theme-color ${old}${close === ' />' ? ' (hand-written)' : ''}`,
+          from: `<meta name="theme-color" content="${old}"${close}`,
+          to:   `<meta name="theme-color" content="#080d14"${close}`,
+        })),
+      ),
       {
         name: 'duplicate genre chips',
         // Pairs with the bundle edit of the same name. Reincarnation and
@@ -405,14 +437,17 @@ if (!failed) {
 
     // Matched on the href/src, not the bare filename: a page that merely
     // mentions an asset in a comment must not be mistaken for one that links it.
-    const missing = ASSETS.filter((a) => !html.includes('"/' + a.file + '"'));
+    const wanted = SCRIPT_FREE_PAGES.has(page) ? ASSETS.filter((a) => !isScript(a)) : ASSETS;
+    const probeOf = (a) => a.probe ?? ('"/' + a.file + '"');
+    const nameOf = (a) => a.file ?? a.label;
+    const missing = wanted.filter((a) => !html.includes(probeOf(a)));
     if (!missing.length) { console.log(`already      assets: ${page}`); continue; }
     if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }
-    if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map((a) => a.file).join(', ')})`); failed++; continue; }
+    if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map(nameOf).join(', ')})`); failed++; continue; }
 
     html = html.replace('</head>', missing.map((a) => a.tag).join('') + '</head>');
     fs.writeFileSync(pagePath, html);
-    console.log(`applied      assets: ${page} (${missing.map((a) => a.file).join(', ')})`);
+    console.log(`applied      assets: ${page} (${missing.map(nameOf).join(', ')})`);
     changed++;
   }
 }

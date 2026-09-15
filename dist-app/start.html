@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0c131b" />
+  <meta name="theme-color" content="#080d14" />
   <title>Yomu · Getting set up</title>
   <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
   <style>
@@ -221,7 +221,7 @@
       .lane img { transition: none; opacity: 1; }
     }
   </style>
-</head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-overrides.css"><link rel="stylesheet" href="/yomu-skin.css"></head>
 <body>
 <main>
   <div class="top">
@@ -383,8 +383,22 @@
   let toneId = '';
   const picked = new Set(['manga', 'manhwa']);
 
-  function paintAccent(hex, ink) {
+  /* An inline style beats every stylesheet, so writing the default tone here
+     would pin the accent to one hex and lock the skin out of it -- and the
+     skin needs two, because the kit's amber is #e9b45c on Aurora and #b8791c
+     on Paper, and a single value cannot be legible on both grounds. So the
+     default clears the properties instead of setting them and lets the
+     stylesheet decide per mode. yomu-shell.js already works this way on every
+     other page ("amber is the stylesheet's own"); this brings /start in line.
+     A tone the reader actually picked is still theirs, and still wins. */
+  const ACCENT_PROPS = ['--accent', '--accentText', '--accentSoft', '--accentLine'];
+
+  function paintAccent(hex, ink, isDefault) {
     const root = document.documentElement;
+    if (isDefault) {
+      ACCENT_PROPS.forEach((prop) => root.style.removeProperty(prop));
+      return;
+    }
     root.style.setProperty('--accent', hex);
     root.style.setProperty('--accentText', ink);
     root.style.setProperty('--accentSoft', hex + '1f');
@@ -424,7 +438,7 @@
         profile = pre;
         if (!pre.custom) name = pre.name;
         toneId = pre.tone;
-        paintAccent(pre.hex, pre.ink);
+        paintAccent(pre.hex, pre.ink, !pre.tone);
         $('customWrap').hidden = !pre.custom;
         drawPresets();
         drawTones();
@@ -445,7 +459,7 @@
       b.setAttribute('aria-checked', String(t.id === toneId));
       b.addEventListener('click', () => {
         toneId = t.id;
-        paintAccent(t.hex, t.ink);
+        paintAccent(t.hex, t.ink, !t.id);
         drawTones();
         drawPresets();
       });
@@ -765,7 +779,7 @@
   /* ---- boot -------------------------------------------------------------- */
   const saved = localStorage.getItem(ACCENT) || '';
   const savedTone = TONES.find((t) => t.id === saved);
-  if (savedTone) { toneId = savedTone.id; paintAccent(savedTone.hex, savedTone.ink); }
+  if (savedTone) { toneId = savedTone.id; paintAccent(savedTone.hex, savedTone.ink, !savedTone.id); }
 
   drawPresets();
   drawTones();

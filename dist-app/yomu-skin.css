@@ -1,0 +1,407 @@
+/* ==================================================================== *
+ * Yomu skin — the 2026-09 handoff kit, bridged onto the app's tokens
+ * ====================================================================
+ *
+ * The handoff ships its palette under its own names (--card, --card2,
+ * --line2, --accsoft, --on-accent). The compiled app reads a different set of
+ * thirty-five, defined in _expo/static/css/glass-*.css. Renaming 2130 lines of
+ * yomu-overrides.css to match the kit would be a large diff that changes
+ * nothing on screen, so this file is the bridge instead: the kit's values are
+ * declared once, and every name the app actually reads is pointed at them.
+ *
+ * Load order matters and is handled in tools/patch-bundle.mjs: this file is
+ * linked after yomu-overrides.css, so it wins on equal specificity. Nothing
+ * here is !important; if a rule does not take, the fix is the order, not force.
+ *
+ * Two things the app does that shape every selector below:
+ *
+ *   1. GlassRoot sets `document.documentElement.dataset.mode` from
+ *      localStorage 'yomu.appearance', defaulting to 'dark'. The value can be
+ *      'light', 'dark' or *'system'* -- and 'system' matches neither of the
+ *      compiled stylesheet's two blocks. Left alone, a viewer on System would
+ *      get whichever palette happened to be the fallback. Handled explicitly
+ *      at the bottom of this file.
+ *
+ *   2. That line runs in a useEffect, so the first paint carries no data-mode
+ *      at all. Aurora is therefore the bare default -- an attribute-less
+ *      document must be dark, or every load flashes light before hydration.
+ *      A viewer on System with a light OS still sees one dark frame; that is
+ *      the lesser of the two, and fixing it properly needs an inline script
+ *      in the head rather than a stylesheet.
+ *
+ * Values marked EXTENDED are not in the handoff. The kit specifies eleven
+ * colours per mode; the app reads thirty-five. The rest are derived from the
+ * kit's own values -- never invented from a different hue -- and are the first
+ * thing to revisit if a screen looks off.
+ * ==================================================================== */
+
+
+/* -------------------------------------------------------------------- *
+ * 1. The two palettes, declared once
+ *
+ * Raw values only. Nothing on the page reads these names; the mapping blocks
+ * below point the app's real tokens at them. Keeping them separate means the
+ * Paper mapping can be repeated for 'system' without repeating the colours.
+ * -------------------------------------------------------------------- */
+:root {
+  /* --- Aurora (night) -------------------------------------------- */
+  --au-bg:        #080d14;                      /* kit --bg   */
+  --au-surface:   rgba(255,255,255,.055);       /* kit --card */
+  --au-raised:    rgba(255,255,255,.09);        /* kit --card2 */
+  --au-elevated:  rgba(255,255,255,.14);        /* EXTENDED: one step past card2 */
+  --au-line:      rgba(255,255,255,.10);        /* kit --line  */
+  --au-line2:     rgba(255,255,255,.17);        /* kit --line2 */
+  --au-hairline:  rgba(255,255,255,.06);        /* EXTENDED */
+  --au-hair:      rgba(255,255,255,.05);        /* EXTENDED */
+  --au-sep:       rgba(255,255,255,.09);        /* EXTENDED */
+  --au-text:      #eaf0f7;                      /* kit --text  */
+  --au-muted:     #c2d0de;                      /* EXTENDED: between text and dim */
+  --au-dim:       #9fb2c6;                      /* kit --dim   */
+  --au-faint:     #6a809a;                      /* kit --faint */
+  --au-accent:    #e9b45c;                      /* kit --accent */
+  --au-onaccent:  #1b1305;                      /* kit --on-accent */
+  --au-accsoft:   rgba(233,180,92,.16);         /* kit --accsoft */
+  --au-accline:   rgba(233,180,92,.45);         /* EXTENDED */
+  --au-overlay:   rgba(10,16,24,.92);           /* EXTENDED */
+  --au-scrim:     rgba(2,5,9,.72);              /* EXTENDED */
+  --au-glass:     rgba(17,25,35,.72);           /* EXTENDED */
+  --au-warn:      #f0c274;                      /* EXTENDED: accent, desaturated warm */
+  --au-warnsoft:  rgba(240,194,116,.14);        /* EXTENDED */
+  --au-warnline:  rgba(240,194,116,.42);        /* EXTENDED */
+  --au-bad:       #ff9a8f;                      /* EXTENDED */
+  --au-hot:       #ff7a66;                      /* EXTENDED */
+  --au-shadow:    0 12px 44px rgba(0,0,0,.42);  /* EXTENDED */
+  --au-bezel:     inset 0 1px 0 rgba(255,255,255,.10);                      /* EXTENDED */
+  --au-lift:      0 1px 2px rgba(0,0,0,.40), 0 6px 18px rgba(0,0,0,.28);    /* EXTENDED */
+
+  /* --- Paper (day) ------------------------------------------------ */
+  --pa-bg:        #f5f2ec;                      /* kit --bg    */
+  --pa-surface:   #fffdfa;                      /* kit --card  */
+  --pa-raised:    #efeade;                      /* kit --card2 */
+  --pa-elevated:  #e6dfd0;                      /* EXTENDED */
+  --pa-line:      #e4ded2;                      /* kit --line  */
+  --pa-line2:     #d8d0c1;                      /* kit --line2 */
+  --pa-hairline:  #ece7dd;                      /* EXTENDED */
+  --pa-hair:      rgba(30,27,22,.05);           /* EXTENDED */
+  --pa-sep:       rgba(30,27,22,.09);           /* EXTENDED */
+  --pa-text:      #1e1b16;                      /* kit --text  */
+  --pa-muted:     #4a443a;                      /* EXTENDED: between text and dim */
+  --pa-dim:       #6d6558;                      /* kit --dim   */
+  --pa-faint:     #9b9184;                      /* kit --faint */
+  --pa-accent:    #b8791c;                      /* kit --accent */
+  --pa-onaccent:  #fff8ec;                      /* kit --on-accent */
+  --pa-accsoft:   rgba(184,121,28,.10);         /* kit --accsoft */
+  --pa-accline:   rgba(184,121,28,.42);         /* EXTENDED */
+  --pa-overlay:   rgba(250,248,243,.96);        /* EXTENDED */
+  --pa-scrim:     rgba(30,27,22,.38);           /* EXTENDED */
+  --pa-glass:     rgba(255,253,250,.86);        /* EXTENDED */
+  --pa-warn:      #9a6516;                      /* EXTENDED */
+  --pa-warnsoft:  #f6ecd9;                      /* EXTENDED */
+  --pa-warnline:  #d8b884;                      /* EXTENDED */
+  --pa-bad:       #a8331f;                      /* EXTENDED */
+  --pa-hot:       #b4471f;                      /* EXTENDED */
+  --pa-shadow:    0 12px 40px rgba(60,48,30,.12);                           /* EXTENDED */
+  --pa-bezel:     inset 0 1px 0 rgba(255,255,255,.90);                      /* EXTENDED */
+  --pa-lift:      0 1px 2px rgba(60,48,30,.12), 0 6px 18px rgba(60,48,30,.09); /* EXTENDED */
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 2. Type
+ *
+ * Archivo carries both roles. It is one variable family with a width axis, so
+ * display is the same download as UI -- 62..125 width, 400..900 weight, one
+ * request. --titleFont and --uiFont are the names the compiled CSS reads;
+ * --font-display and --font-ui are the kit's names, kept so kit-authored rules
+ * drop in without translation.
+ *
+ * Width is not expressible in a font-family value, so the expanded display
+ * cut is applied by rule rather than by token -- see section 5.
+ * -------------------------------------------------------------------- */
+:root {
+  --font-ui:      'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --uiFont:       var(--font-ui);
+  --titleFont:    var(--font-display);
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 3. Scale — radius, space, motion
+ *
+ * Straight from tokens/yomu-tokens.css, unchanged. Nothing consumes these yet;
+ * the screen passes do. They live here so there is one source for them.
+ * -------------------------------------------------------------------- */
+:root {
+  --radius-pill:    999px;
+  --radius-sheet:   22px;
+  --radius-hero:    18px;
+  --radius-card:    16px;
+  --radius-control: 14px;
+  --radius-field:   12px;
+  --radius-cover:   12px;
+  --radius-thumb:   8px;
+
+  --space-1: 4px;   --space-2: 6px;   --space-3: 8px;   --space-4: 10px;
+  --space-5: 12px;  --space-6: 14px;  --space-7: 16px;  --space-8: 20px;
+  --space-9: 26px;  --space-10: 30px;
+
+  --motion-sheet:  400ms cubic-bezier(.3,1,.5,1);
+  --motion-chrome: 340ms cubic-bezier(.3,1,.5,1);
+  --motion-tap:    200ms ease;
+  --motion-page:   250ms cubic-bezier(.3,1,.5,1);
+  --motion-loader: 1.1s steps(12);
+
+  /* The four reading surfaces. Unused until the reader pass; the reader has no
+     paper setting yet, so these are inert. */
+  --paper-paper: #f6f4f0;  --paper-paper-text: #191919;
+  --paper-sepia: #e7dbc2;  --paper-sepia-text: #2c2618;
+  --paper-ink:   #0b121a;  --paper-ink-text:   #eaf0f7;
+  --paper-void:  #04070b;  --paper-void-text:  #eaf0f7;
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 4a. Aurora — the default
+ *
+ * :not([data-mode='light']) matches the attribute-less first paint, an
+ * explicit 'dark', and 'system'. The System-on-a-light-OS case is peeled back
+ * off in 4c, which comes later in the file and wins on source order.
+ *
+ * --accent and its three companions are aliased to --selection* by the
+ * compiled stylesheet, so both sets are written. --cta is a separate hue there
+ * (periwinkle); the kit spends its boldness in one place, so it becomes the
+ * accent too. That is a deliberate flattening -- if a selected chip beside a
+ * CTA stops reading as two things, this is why.
+ * -------------------------------------------------------------------- */
+:root:not([data-mode='light']) {
+  --bg:            var(--au-bg);
+  --surface:       var(--au-surface);
+  --raised:        var(--au-raised);
+  --elevated:      var(--au-elevated);
+  --overlay:       var(--au-overlay);
+  --scrim:         var(--au-scrim);
+  --glass:         var(--au-glass);
+
+  --line:          var(--au-line);
+  --line2:         var(--au-line2);
+  --hairline:      var(--au-hairline);
+  --hair:          var(--au-hair);
+  --sep:           var(--au-sep);
+
+  --text:          var(--au-text);
+  --muted:         var(--au-muted);
+  --dim:           var(--au-dim);
+  --faint:         var(--au-faint);
+
+  --accent:        var(--au-accent);
+  --accentText:    var(--au-onaccent);
+  --accentSoft:    var(--au-accsoft);
+  --accentLine:    var(--au-accline);
+  --selection:     var(--au-accent);
+  --selectionText: var(--au-onaccent);
+  --selectionSoft: var(--au-accsoft);
+  --selectionLine: var(--au-accline);
+  --cta:           var(--au-accent);
+  --ctaText:       var(--au-onaccent);
+
+  --warn:          var(--au-warn);
+  --warnSoft:      var(--au-warnsoft);
+  --warnLine:      var(--au-warnline);
+  --bad:           var(--au-bad);
+  --hot:           var(--au-hot);
+
+  --shadow:        var(--au-shadow);
+  --bezel:         var(--au-bezel);
+  --lift:          var(--au-lift);
+
+  /* Kit names, for rules copied out of the handoff verbatim. */
+  --card:          var(--au-surface);
+  --card2:         var(--au-raised);
+  --accsoft:       var(--au-accsoft);
+  --on-accent:     var(--au-onaccent);
+
+  color-scheme: dark;
+}
+
+/* The kit calls Aurora "navy with a three-point gradient". yomu-overrides.css
+   paints the previous kit's two-point wash on the same elements, so both are
+   restated here rather than left to blend. */
+:root:not([data-mode='light']) body,
+:root:not([data-mode='light']) .g-app {
+  background:
+    radial-gradient(ellipse 120% 80% at 6% -10%,  rgba(22,48,74,.40),  transparent 60%),
+    radial-gradient(ellipse 100% 70% at 96% 18%,  rgba(29,47,74,.30),  transparent 55%),
+    radial-gradient(ellipse 140% 90% at 50% 108%, rgba(16,37,58,.35),  transparent 60%),
+    var(--bg);
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 4b. Paper — an explicit light choice
+ *
+ * The compiled stylesheet already ships a complete light palette; this
+ * replaces its values rather than adding a mode. Equal specificity to the
+ * block it overrides, so it depends on this file loading second.
+ * -------------------------------------------------------------------- */
+:root[data-mode='light'] {
+  --bg:            var(--pa-bg);
+  --surface:       var(--pa-surface);
+  --raised:        var(--pa-raised);
+  --elevated:      var(--pa-elevated);
+  --overlay:       var(--pa-overlay);
+  --scrim:         var(--pa-scrim);
+  --glass:         var(--pa-glass);
+
+  --line:          var(--pa-line);
+  --line2:         var(--pa-line2);
+  --hairline:      var(--pa-hairline);
+  --hair:          var(--pa-hair);
+  --sep:           var(--pa-sep);
+
+  --text:          var(--pa-text);
+  --muted:         var(--pa-muted);
+  --dim:           var(--pa-dim);
+  --faint:         var(--pa-faint);
+
+  --accent:        var(--pa-accent);
+  --accentText:    var(--pa-onaccent);
+  --accentSoft:    var(--pa-accsoft);
+  --accentLine:    var(--pa-accline);
+  --selection:     var(--pa-accent);
+  --selectionText: var(--pa-onaccent);
+  --selectionSoft: var(--pa-accsoft);
+  --selectionLine: var(--pa-accline);
+  --cta:           var(--pa-accent);
+  --ctaText:       var(--pa-onaccent);
+
+  --warn:          var(--pa-warn);
+  --warnSoft:      var(--pa-warnsoft);
+  --warnLine:      var(--pa-warnline);
+  --bad:           var(--pa-bad);
+  --hot:           var(--pa-hot);
+
+  --shadow:        var(--pa-shadow);
+  --bezel:         var(--pa-bezel);
+  --lift:          var(--pa-lift);
+
+  --card:          var(--pa-surface);
+  --card2:         var(--pa-raised);
+  --accsoft:       var(--pa-accsoft);
+  --on-accent:     var(--pa-onaccent);
+
+  color-scheme: light;
+}
+
+:root[data-mode='light'] body,
+:root[data-mode='light'] .g-app {
+  background:
+    radial-gradient(ellipse 120% 80% at 8% -8%,   rgba(255,255,255,.80), transparent 60%),
+    radial-gradient(ellipse 110% 70% at 95% 12%,  rgba(239,231,215,.45), transparent 55%),
+    radial-gradient(ellipse 140% 90% at 50% 106%, rgba(233,224,205,.55), transparent 60%),
+    var(--bg);
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 4c. Paper — System, on a light OS
+ *
+ * data-mode='system' is matched by 4a, so without this a viewer on System
+ * would be dark whatever their OS says. This repeats 4b's *mapping* only --
+ * the colours live in section 1 and are not duplicated. It must stay in sync
+ * with 4b by hand; patch-bundle.mjs cannot check a stylesheet.
+ * -------------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  :root[data-mode='system'] {
+    --bg:            var(--pa-bg);
+    --surface:       var(--pa-surface);
+    --raised:        var(--pa-raised);
+    --elevated:      var(--pa-elevated);
+    --overlay:       var(--pa-overlay);
+    --scrim:         var(--pa-scrim);
+    --glass:         var(--pa-glass);
+
+    --line:          var(--pa-line);
+    --line2:         var(--pa-line2);
+    --hairline:      var(--pa-hairline);
+    --hair:          var(--pa-hair);
+    --sep:           var(--pa-sep);
+
+    --text:          var(--pa-text);
+    --muted:         var(--pa-muted);
+    --dim:           var(--pa-dim);
+    --faint:         var(--pa-faint);
+
+    --accent:        var(--pa-accent);
+    --accentText:    var(--pa-onaccent);
+    --accentSoft:    var(--pa-accsoft);
+    --accentLine:    var(--pa-accline);
+    --selection:     var(--pa-accent);
+    --selectionText: var(--pa-onaccent);
+    --selectionSoft: var(--pa-accsoft);
+    --selectionLine: var(--pa-accline);
+    --cta:           var(--pa-accent);
+    --ctaText:       var(--pa-onaccent);
+
+    --warn:          var(--pa-warn);
+    --warnSoft:      var(--pa-warnsoft);
+    --warnLine:      var(--pa-warnline);
+    --bad:           var(--pa-bad);
+    --hot:           var(--pa-hot);
+
+    --shadow:        var(--pa-shadow);
+    --bezel:         var(--pa-bezel);
+    --lift:          var(--pa-lift);
+
+    --card:          var(--pa-surface);
+    --card2:         var(--pa-raised);
+    --accsoft:       var(--pa-accsoft);
+    --on-accent:     var(--pa-onaccent);
+
+    color-scheme: light;
+  }
+
+  :root[data-mode='system'] body,
+  :root[data-mode='system'] .g-app {
+    background:
+      radial-gradient(ellipse 120% 80% at 8% -8%,   rgba(255,255,255,.80), transparent 60%),
+      radial-gradient(ellipse 110% 70% at 95% 12%,  rgba(239,231,215,.45), transparent 55%),
+      radial-gradient(ellipse 140% 90% at 50% 106%, rgba(233,224,205,.55), transparent 60%),
+      var(--bg);
+  }
+}
+
+
+/* -------------------------------------------------------------------- *
+ * 5. Type, applied
+ *
+ * The family reaches everything through --uiFont, which the compiled CSS
+ * already uses. What it cannot carry is width: Archivo Expanded is the same
+ * file at a higher wdth, reachable only through font-variation-settings. So
+ * headings get the expanded cut by rule.
+ *
+ * Deliberately narrow for now: h1 and h2 are the app's own heading elements
+ * and safe to claim. Screen-specific titles are the screen passes' job, not
+ * a blanket selector's.
+ * -------------------------------------------------------------------- */
+body {
+  font-family: var(--font-ui);
+}
+
+h1, h2 {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+
+/* Digits that sit in columns or tick upward -- page counters, chapter counts,
+   title totals -- should not jitter. */
+.rd-count,
+.rd-rail,
+.g-stat,
+[class*='count'],
+[class*='Count'] {
+  font-variant-numeric: tabular-nums;
+}
