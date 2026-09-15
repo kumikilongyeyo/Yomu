@@ -13,6 +13,7 @@ on:
       - 'dist-app/source-fabric-panel.js'
       - 'dist-app/source-fabric-bulk.js'
       - 'dist-app/source-pack-json.js'
+      - 'dist-app/source-pack-live.js'
       - 'dist-app/source-packs/**'
       - 'dist-app/source-fabric-layout.js'
       - 'dist-app/source-fabric-diagnostics.js'
@@ -45,6 +46,7 @@ jobs:
           node --check dist-app/source-fabric-panel.js
           node --check dist-app/source-fabric-bulk.js
           node --check dist-app/source-pack-json.js
+          node --check dist-app/source-pack-live.js
           node --check dist-app/source-fabric-layout.js
           node --check dist-app/source-fabric-diagnostics.js
           node --check dist-app/source-fabric-discover.js
