@@ -29,6 +29,36 @@ async function injectV7Ui(response: Response): Promise<Response> {
   return new Response(html, { status: response.status, headers });
 }
 
+async function normalizeFederationResponse(response: Response): Promise<Response> {
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('application/json')) return response;
+  const payload: any = await response.clone().json().catch(() => null);
+  if (!payload || typeof payload !== 'object') return response;
+
+  if (payload.route === 'store-federation' && payload.federation?.runtimeBrokerConfigured) {
+    payload.message = payload.federation?.best?.name
+      ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.`
+      : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.';
+    payload.runtimeBroker = 'connected-source-not-ready';
+  } else if (payload.route === 'store-federation') {
+    payload.runtimeBroker = 'not-configured';
+  }
+
+  payload.fabric = {
+    ...(payload.fabric ?? {}),
+    version: '7.2',
+    generation: 'Beast Adaptive',
+  };
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('content-type', 'application/json; charset=utf-8');
+  headers.set('x-yomu-entrypoint', 'v7.2');
+  headers.set('x-yomu-source-fabric', '7.2');
+  return new Response(JSON.stringify(payload), { status: response.status, headers });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -48,12 +78,12 @@ export default {
         headers: request.headers,
         body: bodyText,
       });
-      return handleFederatedResolve(
+      return normalizeFederationResponse(await handleFederatedResolve(
         bodyText,
         env,
         url,
         handleFabric(fabricRequest, env, url),
-      );
+      ));
     }
 
     if (url.pathname.startsWith('/api/fabric/')) {
