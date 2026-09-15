@@ -1918,28 +1918,42 @@
   /**
    * Fabric pieces that mount *into* the panel, and the id each leaves behind.
    *
-   * source-fabric-bulk.js adds the Single source / Source pack tabs. It
-   * mounts once and then opts out of watching -- its `if (mount()) return`
-   * succeeds against the prerendered markup, before React has hydrated.
-   * React then replaces that tree, source-fabric-panel.js rebuilds the card
-   * from its own observer, which never stops, and the tabs are gone with
-   * nobody left to put them back. The tell is a page carrying the bulk
-   * stylesheet with no tabs on the card: it ran, it just ran against a DOM
-   * that no longer exists.
+   * All three mount once and then opt out of watching -- each ends in
+   * `if (mount()) return`, and that first mount succeeds against the
+   * prerendered markup, before React has hydrated. React then replaces that
+   * tree, source-fabric-panel.js rebuilds the card from its own observer,
+   * which never stops, and everything the others added is gone with nobody
+   * left to put it back. The tell is a page carrying the bulk stylesheet
+   * with no tabs on the card: the script ran, it just ran against a DOM that
+   * no longer exists.
    *
-   * Re-running the script is the whole fix -- the tabs appear immediately --
-   * and its own guard makes a re-run a no-op whenever they are already
-   * there. Done from here because that file is not mine to edit.
+   * They also stack. Reviving the bulk importer builds a fresh pack block,
+   * which throws away the Load JSON row that source-pack-json.js had put in
+   * the old one -- and arming the Community pack button is a third script
+   * again. So the chain is checked and re-run in order, and because they are
+   * appended with async=false they execute in that order too.
+   *
+   * Re-running is the whole fix, and each script's own guard makes a re-run
+   * a no-op once its part is there. Done from here because these files are
+   * not mine to edit.
    */
   const FABRIC_PARTS = [
-    { src: '/source-fabric-bulk.js', id: 'yomu-source-pack-mode', pending: false },
+    { src: '/source-fabric-bulk.js', has: '#yomu-source-pack-mode', pending: false },
+    { src: '/source-pack-json.js', has: '.sp-json-import', pending: false },
+    { src: '/source-pack-live.js', has: '.sp-json-community[data-yomu-live-pack="1"]', pending: false },
   ];
   /** Enough to cover a rebuild or two; past that something else is wrong. */
   const REVIVE_LIMIT = 3;
 
+  /** Long enough for hydration to settle and for the scripts' own observers
+   *  to win on their own, short enough not to be a visible wait. */
+  const REVIVE_SETTLE_MS = 400;
+
   let fabricAsked = false;
   let revivedFor = null;
+  let revivedSince = 0;
   let revived = 0;
+  let reviveTimer = null;
 
   /* Every /source-*.js the Worker writes, not only the source-fabric- ones:
      the fifth file it grew was called source-pack-json.js. */
@@ -2001,18 +2015,38 @@
       return;
     }
 
-    if (panel !== revivedFor) { revivedFor = panel; revived = 0; }
+    if (panel !== revivedFor) {
+      revivedFor = panel;
+      revivedSince = Date.now();
+      revived = 0;
+    }
     if (revived >= REVIVE_LIMIT) return;
+    /* Give the card a moment to stop being replaced. Reviving the instant a
+       panel appears means reviving into the pre-hydration one and then doing
+       it all again -- and most of the time the scripts' own observers get
+       there first inside this window, so the best outcome is no revival at
+       all. The timer is here because a settled page stops mutating, and this
+       runs off mutations. */
+    if (Date.now() - revivedSince < REVIVE_SETTLE_MS) {
+      if (!reviveTimer) {
+        reviveTimer = setTimeout(() => { reviveTimer = null; gateFabric(); }, REVIVE_SETTLE_MS + 40);
+      }
+      return;
+    }
     const here = fabricScriptsHere();
+    let round = false;
     for (const part of FABRIC_PARTS) {
-      if (part.pending || document.getElementById(part.id)) continue;
+      if (part.pending || document.querySelector(part.has)) continue;
       // Only revive a part this build actually ships.
       if (!here.includes(part.src)) continue;
       part.pending = true;
-      revived++;
+      round = true;
       const tag = runFabric(part.src);
       tag.onload = tag.onerror = () => { part.pending = false; };
     }
+    // Counted per round, not per script: the chain is three deep and a limit
+    // counting scripts would be spent before the first pass finished.
+    if (round) revived++;
   };
 
   /* ------------------------------------------------------------------ *
