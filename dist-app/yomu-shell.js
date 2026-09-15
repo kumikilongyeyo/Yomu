@@ -2329,6 +2329,8 @@
   function placeWindow(state) {
     const { rows } = state;
 
+    // The filter owns `display` while it is on, and hands it back on clear.
+    if (state.filter) return;
     // Reads nothing: the scroll handler already knows how far the page went.
     if (state.placedAt !== null && Math.abs(state.top - state.placedAt) < LIST_STEP) return;
 
@@ -2448,7 +2450,8 @@
         heights: null, offsets: null, gap: 0, natural: 0, measured: false,
         lo: -1, hi: -1, retries: 0, padTop: null, padEnd: null,
         firstSeen: performance.now(), lastTall: -1, stableAt: performance.now(),
-        settleTimer: null, onScroll: null, onResize: null,
+        settleTimer: null, filter: '', text: null, hits: 0,
+        onScroll: null, onResize: null,
       };
       state.onScroll = (event) => {
         // Whatever scrolled says so, and says how far. Identifying the
@@ -2486,6 +2489,129 @@
       windowedLists.add(state);
       placeWindow(state);
     }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Finding a chapter in a list of thousands
+   *
+   * Martial Peak's list is 415,000 pixels long and sorted newest first, so
+   * chapter 1,200 is somewhere in the middle of five hundred screens and the
+   * only tool for reaching it is distance. Windowing made that scroll
+   * smooth; it did not make it short.
+   *
+   * A field beside the Chapters heading filters the list instead. Numbers
+   * match chapter numbers, anything else matches the chapter's own text, and
+   * the filter drives the same `display` the window does -- so a filtered
+   * list is as cheap to render as a windowed one, and clearing it hands the
+   * rows straight back to the window.
+   * ------------------------------------------------------------------ */
+
+  const JUMP_ID = 'yomu-chapter-jump';
+  /** Short lists are faster to look at than to describe. */
+  const JUMP_MIN = 40;
+
+  /** What a row can be matched against, worked out once and kept. */
+  function rowText(state, row, index) {
+    if (!state.text) state.text = [];
+    if (state.text[index] === undefined) {
+      state.text[index] = (row.textContent || '').toLowerCase().replace(/\s+/g, ' ');
+    }
+    return state.text[index];
+  }
+
+  function applyFilter(state) {
+    const rows = state.rows;
+    const query = state.filter;
+    if (!query) return;
+
+    const numeric = /^[0-9]+(\.[0-9]+)?$/.test(query);
+    let hits = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      let match;
+      if (numeric) {
+        const n = row.getAttribute('data-chn');
+        // Exact first, then "starts with", so 12 finds 12 before 120.
+        match = n === query || (n != null && String(n).startsWith(query));
+      } else {
+        match = rowText(state, row, i).includes(query);
+      }
+      if (match) hits++;
+      const value = match ? '' : 'none';
+      if (row.style.display !== value) row.style.display = value;
+    }
+    // Nothing is standing in for hidden rows while filtering: the list is
+    // meant to be short.
+    if (state.padTop) state.padTop.style.height = '0px';
+    if (state.padEnd) state.padEnd.style.height = '0px';
+    state.hits = hits;
+    return hits;
+  }
+
+  function setFilter(list, query) {
+    let state = null;
+    for (const known of windowedLists) if (known.list === list) state = known;
+    // A list too short to window still gets to be searched.
+    if (!state) {
+      state = {
+        list,
+        rows: [...list.children].filter((row) => !row.classList.contains('yomu-list-pad')),
+        text: null, filter: '', hits: 0, padTop: null, padEnd: null, loose: true,
+      };
+      looseFilters.set(list, state);
+    }
+    state.filter = query;
+    const field = document.getElementById(JUMP_ID);
+
+    if (!query) {
+      for (const row of state.rows) row.style.display = '';
+      state.placedAt = null;
+      state.lo = -1;
+      state.hi = -1;
+      field?.removeAttribute('data-empty');
+      if (!state.loose) placeWindow(state);
+      return;
+    }
+    const hits = applyFilter(state);
+    if (field) field.toggleAttribute('data-empty', hits === 0);
+  }
+
+  /** Filter state for lists short enough that no window was built for them. */
+  const looseFilters = new WeakMap();
+
+  function mountChapterJump() {
+    const list = document.querySelector('.chapter-list');
+    const line = document.querySelector('.section-line');
+    const existing = document.getElementById(JUMP_ID);
+    if (!list || !line) { existing?.remove(); return; }
+
+    const rows = [...list.children].filter((row) => !row.classList.contains('yomu-list-pad'));
+    if (rows.length < JUMP_MIN) { existing?.remove(); return; }
+    if (existing && existing.parentElement === line) return;
+
+    const field = existing || document.createElement('input');
+    field.id = JUMP_ID;
+    field.type = 'search';
+    field.inputMode = 'numeric';
+    field.autocomplete = 'off';
+    field.placeholder = 'Chapter…';
+    field.setAttribute('aria-label', 'Find a chapter');
+    if (!field.dataset.wired) {
+      field.dataset.wired = '1';
+      field.addEventListener('input', () => {
+        const target = document.querySelector('.chapter-list');
+        if (target) setFilter(target, field.value.trim().toLowerCase());
+      });
+      // A search input's own clear button fires `search`, not `input`.
+      field.addEventListener('search', () => {
+        const target = document.querySelector('.chapter-list');
+        if (target) setFilter(target, field.value.trim().toLowerCase());
+      });
+    }
+    // Between the heading and the sort control, which is the order the line
+    // already reads in.
+    const sort = line.querySelector('button');
+    if (sort) line.insertBefore(field, sort); else line.append(field);
   }
 
   /* ------------------------------------------------------------------ *
@@ -2568,6 +2694,7 @@
     badgeProgress();
     trackSeriesPage();
     mountSeriesResume();
+    mountChapterJump();
     foldSourceSwitch();
     mountKin();
     windowLongLists();

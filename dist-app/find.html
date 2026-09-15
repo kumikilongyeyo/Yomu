@@ -401,18 +401,46 @@
     box.append(row);
   }
 
+  /**
+   * Where in the feed to start showing, this visit.
+   *
+   * Both feeds come back merged and long -- popular is 244 titles -- and the
+   * page was showing the first twelve of them, every time, forever. The other
+   * 232 were fetched and thrown away. So the window moves along by a rowful
+   * each visit and wraps at the end: the same real ordering, a different part
+   * of it, and not one extra request to get it.
+   */
+  const ROTATE_KEY = 'yomu.v1.feedTurn';
+  const turn = (() => {
+    let n = 0;
+    try { n = (Number(localStorage.getItem(ROTATE_KEY)) || 0) + 1; } catch {}
+    try { localStorage.setItem(ROTATE_KEY, String(n % 1000)); } catch {}
+    return n;
+  })();
+
+  /** Twelve from `all`, starting a rowful further along on each visit. */
+  function slice(all, step, size = 12) {
+    if (all.length <= size) return all;
+    const start = ((turn * size * step) % all.length + all.length) % all.length;
+    const out = all.slice(start, start + size);
+    // Wrap rather than return a short row at the end of the list.
+    if (out.length < size) out.push(...all.slice(0, size - out.length));
+    return out;
+  }
+
   async function renderFeeds() {
     const have = enabledSourceIds();
     const rows = [
-      { id: 'feed-popular', title: 'Popular on your sources', url: '/api/catalog/popular' },
-      { id: 'feed-latest', title: 'New chapters', url: '/api/catalog/latest' },
+      { id: 'feed-popular', title: 'Popular on your sources', url: '/api/catalog/popular', step: 1 },
+      // Stepped differently so the two rows do not travel in lockstep.
+      { id: 'feed-latest', title: 'New chapters', url: '/api/catalog/latest', step: 2 },
     ];
 
-    await Promise.all(rows.map(async ({ id, title, url }) => {
+    await Promise.all(rows.map(async ({ id, title, url, step }) => {
       const box = $(id);
       try {
         const payload = await (await fetch(url, { signal: AbortSignal.timeout(25000) })).json();
-        const entries = (payload.series || []).slice(0, 12);
+        const entries = slice(payload.series || [], step);
         if (!entries.length) return;
         box.textContent = '';
         const heading = document.createElement('h2');

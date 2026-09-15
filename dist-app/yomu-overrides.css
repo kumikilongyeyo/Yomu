@@ -2110,3 +2110,21 @@ html[data-yomu-src="expanded"] .yomu-src-more::after { transform: rotate(90deg);
 @media (prefers-reduced-motion: reduce) {
   .yomu-src-more::after { transition: none; }
 }
+
+/* Find a chapter, in a list that is five hundred screens long.
+   Sits between the Chapters heading and the sort control, and takes what
+   room the line has left. */
+#yomu-chapter-jump {
+  flex: 1 1 90px; min-width: 0; max-width: 200px; margin-inline: 10px;
+  min-height: 34px; padding: 6px 11px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--m-fill, #ffffff0d); color: var(--text);
+  font: 400 13px/1.2 var(--uiFont);
+  appearance: none; -webkit-appearance: none;
+  transition: border-color .15s, background .15s;
+}
+#yomu-chapter-jump::placeholder { color: var(--faint); }
+#yomu-chapter-jump:focus { outline: none; border-color: var(--accentLine, #ffc45f66); background: var(--m-fill-hi, #ffffff14); }
+#yomu-chapter-jump[data-empty] { border-color: #f2887d80; }
+#yomu-chapter-jump::-webkit-search-cancel-button { filter: grayscale(1) opacity(.6); }
+.yomu-list-pad { pointer-events: none; }
