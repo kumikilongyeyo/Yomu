@@ -1,11 +1,12 @@
 {
   "name": "yomu-source-forge",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "check": "node --check src/runtime.js && node --check src/heuristics.js && node --check src/discovery.js && node --check src/forge.js && node --check src/source-forge.js && node --check src/source-intelligence.js && node --check src/suwayomi-manager.js && node --check src/yomu-descriptor.js && node --check src/project-installer.js && node --check src/github-publisher.js && node --check src/server.js",
+    "hunter": "node src/hunter.js",
+    "check": "node --check src/runtime.js && node --check src/heuristics.js && node --check src/discovery.js && node --check src/forge.js && node --check src/gauntlet.js && node --check src/source-forge.js && node --check src/source-intelligence.js && node --check src/hunter.js && node --check src/suwayomi-manager.js && node --check src/yomu-descriptor.js && node --check src/project-installer.js && node --check src/github-publisher.js && node --check src/server.js",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
