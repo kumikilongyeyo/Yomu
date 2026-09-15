@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import { testCandidate } from './hunter.js';
+import { probeTapasPublicFree } from './source-intel.js';
 
 const candidates = [
   {
@@ -48,9 +49,12 @@ const config = { freshDays: 5, timeout: 18000, maxProbes: 12 };
 const results = [];
 for (const candidate of candidates) {
   console.log(`Testing ${candidate.name} — ${candidate.url}`);
-  const result = await testCandidate(candidate, config);
+  const result = candidate.host === 'tapas.io'
+    ? await probeTapasPublicFree(config)
+    : await testCandidate(candidate, config);
   result.countsTowardGoal = candidate.countsTowardGoal;
   result.promotionTags = candidate.promotionTags;
+  result.evidence = result.evidence || candidate.evidence;
   results.push(result);
   console.log(`${result.status} ${result.score}/100 — ${(result.reasons || []).join('; ')}`);
 }
@@ -59,7 +63,7 @@ const adultManhuaPass = results.filter(x => x.status === 'PASS' && x.countsTowar
 const tapas = results.find(x => x.host === 'tapas.io') || null;
 const generatedAt = new Date().toISOString();
 const report = {
-  schema: 'yomu.hunter-targeted-report/2',
+  schema: 'yomu.hunter-targeted-report/3',
   target: 'two adult-capable manhua sources plus Tapas public/free reader',
   generatedAt,
   freshDays: 5,
@@ -72,7 +76,7 @@ const pack = {
   schema: 'yomu.source-pack/1',
   id: 'yomu-hunter-adult-manhua-candidates',
   name: 'Yomu Hunter Adult Manhua Candidates',
-  version: 2,
+  version: 3,
   updatedAt: generatedAt,
   sources: adultManhuaPass.slice(0, 2).map(row => ({
     url: row.url,
