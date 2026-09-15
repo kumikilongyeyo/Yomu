@@ -1648,3 +1648,51 @@
   font: 700 9.5px/1.6 var(--uiFont);
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------------------ *
+ * Different titles, on demand
+ *
+ * A button beside the heading for a pointer, a pull for a thumb. The same
+ * reset-and-refetch behind both.
+ * ------------------------------------------------------------------ */
+
+.home-reload {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--m-fill, #ffffff0d);
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .15s, background .15s, transform .35s;
+}
+.home-reload:hover { color: var(--text); background: var(--m-fill-hi, #ffffff14); }
+.home-reload:active { transform: rotate(180deg); }
+@media (max-width: 767px) { .home-reload { width: 44px; height: 44px; } }
+
+.yomu-pull {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%) scale(calc(.9 + (var(--reach, 0) * .1)));
+  z-index: 60;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: var(--overlay, #14212bf0);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--faint);
+  font: 600 11.5px/1.4 var(--uiFont);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: var(--reach, 0);
+}
+.yomu-pull.is-armed { color: var(--accentText); background: var(--accent); border-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-reload, .yomu-pull { transition: none; }
+}

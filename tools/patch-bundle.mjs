@@ -151,6 +151,66 @@ const EDITS = [
     to: "N=[{tag:'Cultivation',label:'Cultivation'},{tag:'Wuxia',label:'Wuxia'}]",
   },
 
+  {
+    name: 'home: the grid is filtered and ordered by the shell',
+    why:
+      'Two problems in one expression. The default view leads with M, the ' +
+      'most recently updated titles across every source -- which is a ' +
+      'firehose, so the first thing on the page was whatever some site ' +
+      'touched in the last hour rather than anything worth reading. And ' +
+      'nothing filtered the feed at all, so one-chapter entries with no ' +
+      'cover sat beside real series.\n' +
+      'Both are judgement calls about what to show, which is the kind of ' +
+      'thing that should be readable. So the array is handed to the shell, ' +
+      'which decides; with the shell absent the old behaviour is exactly ' +
+      'what happens.',
+    from:
+      'return[...M.map(({summary:e,sourceId:s,sourceLabel:a})=>' +
+      '({summary:e,sourceId:s,sourceLabel:a})),' +
+      '...e.filter(e=>!s.has(`${e.sourceId}:${e.summary.id}`))]},[ce,M,E,z,U,W])',
+    to:
+      'const _g=[...M.map(({summary:e,sourceId:s,sourceLabel:a})=>' +
+      '({summary:e,sourceId:s,sourceLabel:a})),' +
+      '...e.filter(e=>!s.has(`${e.sourceId}:${e.summary.id}`))];' +
+      'return globalThis.__yomuGrid?globalThis.__yomuGrid(_g,e):_g},[ce,M,E,z,U,W])',
+  },
+  {
+    name: 'home: a refresh control, and a handle for pull to refresh',
+    why:
+      'There was no way to ask for a different set of recommendations short ' +
+      'of reloading the page. The reset-and-refetch the mount effect already ' +
+      'runs is exactly the right action; it just had no button. Exposed as a ' +
+      'global as well, so the shell can drive it from a pull gesture without ' +
+      'needing a second copy of the sequence.',
+    // Anchored through to the next statement so the patched form no longer
+    // matches: a `to` that starts with its own `from` reapplies for ever.
+    from:
+      '(0,e.useEffect)(()=>{oe([]),he(0),fe(0,!0).catch(e=>F(e.message))},[pe]);' +
+      'const xe=(0,e.useMemo)',
+    to:
+      '(0,e.useEffect)(()=>{oe([]),he(0),fe(0,!0).catch(e=>F(e.message))},[pe]);' +
+      '(0,e.useEffect)(()=>{globalThis.__yomuReload=()=>{oe([]),he(0),' +
+      'fe(0,!0).catch(e=>F(e.message))};return()=>{delete globalThis.__yomuReload}});' +
+      'const xe=(0,e.useMemo)',
+  },
+  {
+    name: 'home: the refresh button itself',
+    why:
+      'Beside the heading it belongs to, so it reads as "another of these" ' +
+      'rather than as a page-level control.',
+    // Same trap, same fix: the anchor runs into the segment row that follows,
+    // so the button cannot be inserted twice.
+    from:
+      '(0,p.jsx)("h2",{children:"Find your next obsession"}),' +
+      '(0,p.jsx)("div",{className:"m-seg"',
+    to:
+      '(0,p.jsx)("h2",{children:"Find your next obsession"}),' +
+      '(0,p.jsx)("button",{className:"home-reload","aria-label":"Show different titles",' +
+      'title:"Show different titles",onClick:()=>{oe([]),he(0),' +
+      'fe(0,!0).catch(e=>F(e.message))},children:"\\u21bb"}),' +
+      '(0,p.jsx)("div",{className:"m-seg"',
+  },
+
   /* --- search entry points — app/_layout.tsx, index.web.tsx, library.web.tsx ---
    *
    * The compiled search screen groups results by source, so one work carried by

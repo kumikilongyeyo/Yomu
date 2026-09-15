@@ -561,6 +561,138 @@
 
 
   /* ------------------------------------------------------------------ *
+   * What the home grid shows, and in what order
+   *
+   * Two separate complaints, and they had one cause each.
+   *
+   * ORDER. The default view led with the most recently updated titles across
+   * every enabled source. That is a firehose: the first thing on the page was
+   * whatever some site touched in the last hour, which is mostly one-chapter
+   * uploads nobody asked for. Recency is worth knowing -- the tiles already
+   * carry a "New chapter" tag for it -- but it is a bad thing to sort by. The
+   * popular feed leads now, and the recent ones fall in behind it.
+   *
+   * QUALITY. There is no rating, no view count and no follower count anywhere
+   * in a SeriesSummary, so there is no quality number to sort on and inventing
+   * one would be a lie. What there is: whether a source bothered to give the
+   * title a cover, and whether anything is actually published. Those two
+   * remove most of what reads as junk without pretending to judge anything.
+   *
+   * ABOUT "manga, manhua, manhwa": that was the ask, and taken literally it
+   * empties the page. Weeb Central -- the largest source here, over a thousand
+   * chapters on a long series -- sets no category at all, and Webtoons.com
+   * sets "webtoon". Filtering to the three named kinds would delete both.
+   * Absence of a label is not evidence of low quality, so the rule is the
+   * other way round: everything is welcome except the kinds that were
+   * deliberately not asked for.
+   * ------------------------------------------------------------------ */
+
+  /** The two the ask left out. Adult has its own page and its own gate. */
+  const UNWANTED_KINDS = new Set(['adult', 'comic']);
+
+  function worthShowing(item) {
+    const summary = item && item.summary;
+    if (!summary) return false;
+    if (UNWANTED_KINDS.has(String(summary.category || '').toLowerCase())) return false;
+    // No cover is the one signal that means the same thing on every source:
+    // nobody has looked at this entry.
+    if (!summary.cover) return false;
+    // Nothing published yet. A real series acquires both of these quickly.
+    if (!summary.latestChapter && !summary.synopsis) return false;
+    return true;
+  }
+
+  /**
+   * Called by the home grid with the popular feed and the recently-updated
+   * one. Returns what to draw.
+   *
+   * Falls back to the unfiltered list only when the filter keeps nothing at
+   * all. That is the one outcome that means the rule is wrong rather than
+   * working -- a source that never sets a cover, say -- and an empty grid is
+   * a worse answer than an imperfect one. Short of that the filter is
+   * trusted: two good titles out of forty is the right answer when
+   * thirty-eight of them have no cover and nothing published.
+   */
+  globalThis.__yomuGrid = (recentFirst, popular) => {
+    const seen = new Set();
+    const ordered = [];
+    for (const item of [...(popular || []), ...(recentFirst || [])]) {
+      const key = item.sourceId + ':' + item.summary.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      ordered.push(item);
+    }
+    const kept = ordered.filter(worthShowing);
+    return kept.length ? kept : ordered;
+  };
+
+
+  /* ------------------------------------------------------------------ *
+   * Pull down to get different titles
+   *
+   * The phone half of the refresh button. Only on Home, only from a page that
+   * is already at the top, and only for touch -- a mouse has the button.
+   *
+   * Deliberately not preventDefault on the move: fighting the browser's own
+   * overscroll to own the gesture is how pull-to-refresh ends up feeling
+   * worse than no pull-to-refresh. This watches, shows how far along the pull
+   * is, and lets the platform do the rubber-banding.
+   * ------------------------------------------------------------------ */
+
+  const PULL_TRIGGER = 88;
+  const PULL_ID = 'yomu-pull';
+
+  let pullFrom = null;
+
+  const onHome = () => location.pathname === '/' || location.pathname === '/index.html';
+  const scrolledToTop = () =>
+    (document.scrollingElement || document.documentElement).scrollTop <= 0;
+
+  function pullIndicator(distance, armed) {
+    let mark = document.getElementById(PULL_ID);
+    if (distance <= 0) { mark?.remove(); return; }
+    if (!mark) {
+      mark = document.createElement('div');
+      mark.id = PULL_ID;
+      mark.className = 'yomu-pull';
+      mark.innerHTML = '<span></span>';
+      document.body.append(mark);
+    }
+    const reach = Math.min(1, distance / PULL_TRIGGER);
+    mark.style.setProperty('--reach', String(reach));
+    mark.classList.toggle('is-armed', armed);
+    const label = armed ? 'Release for different titles' : 'Pull for different titles';
+    if (mark.querySelector('span').textContent !== label) {
+      mark.querySelector('span').textContent = label;
+    }
+  }
+
+  addEventListener('touchstart', (event) => {
+    pullFrom = onHome() && scrolledToTop() && event.touches.length === 1
+      ? event.touches[0].clientY
+      : null;
+  }, { passive: true });
+
+  addEventListener('touchmove', (event) => {
+    if (pullFrom === null) return;
+    // Scrolled away mid-gesture, or the finger went up: this is a scroll now.
+    if (!scrolledToTop()) { pullFrom = null; pullIndicator(0); return; }
+    const distance = event.touches[0].clientY - pullFrom;
+    pullIndicator(Math.max(0, distance), distance >= PULL_TRIGGER);
+  }, { passive: true });
+
+  addEventListener('touchend', (event) => {
+    if (pullFrom === null) return;
+    const distance = (event.changedTouches[0]?.clientY ?? pullFrom) - pullFrom;
+    pullFrom = null;
+    pullIndicator(0);
+    // __yomuReload is the home screen's own reset-and-refetch. Absent means
+    // the screen is not mounted, and there is nothing sensible to refresh.
+    if (distance >= PULL_TRIGGER) globalThis.__yomuReload?.();
+  }, { passive: true });
+
+
+  /* ------------------------------------------------------------------ *
    * Watching the reader
    *
    * Everything the index needs is already on screen while you read: the title
