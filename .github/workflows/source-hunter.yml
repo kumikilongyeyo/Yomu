@@ -2,8 +2,7 @@ name: Source Hunter v2
 
 on:
   schedule:
-    # Daily candidate rotation. A source only passes the freshness gate when
-    # visible chapter activity is within the configured five-day window.
+    # Daily candidate rotation. Freshness is a ranking preference, not a hard gate.
     - cron: '37 1 * * *'
   workflow_dispatch:
   push:
@@ -11,6 +10,8 @@ on:
       - main
     paths:
       - 'tools/source-forge/src/hunter.js'
+      - 'tools/source-forge/src/availability-policy.js'
+      - 'tools/source-forge/tests/availability-policy.test.js'
       - '.github/workflows/source-hunter.yml'
   pull_request:
     paths:
@@ -32,7 +33,9 @@ jobs:
       - name: Install Source Forge dependencies
         run: npm --prefix tools/source-forge install --no-audit --no-fund
       - name: Syntax check
-        run: npm --prefix tools/source-forge run check
+        run: |
+          npm --prefix tools/source-forge run check
+          node --check tools/source-forge/src/availability-policy.js
       - name: Unit tests
         run: npm --prefix tools/source-forge test
 
@@ -54,6 +57,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Hunt unseen GitHub source candidates
         run: npm --prefix tools/source-forge run hunter -- --max 8 --fresh-days 5 --out hunter-output
+      - name: Apply availability-first promotion policy
+        run: node tools/source-forge/src/availability-policy.js --report hunter-output/report.json --pack hunter-output/candidate-pack.json --summary hunter-output/summary.md
       - name: Publish Hunter summary
         if: always()
         run: |
