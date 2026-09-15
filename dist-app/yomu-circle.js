@@ -42,6 +42,15 @@
   };
   const setState = (patch) => writeJSON(STATE_KEY, { ...state(), ...patch });
   const joined = () => !!(state().code && state().memberId);
+  /**
+   * Comments in the reader, off unless asked for.
+   *
+   * The end of a chapter is the end of a chapter. Putting a conversation
+   * there by default -- and, worse, an invitation to set one up when there is
+   * no circle at all -- turns the last page into a prompt. The circle is
+   * worth having and is not worth interrupting a book with uninvited.
+   */
+  const commentsInReader = () => state().inReader === true;
 
   const display = (code) =>
     code ? 'YOMU-' + code.slice(0, 5) + '-' + code.slice(5) : '';
@@ -178,6 +187,16 @@
         isOwner && !member.isYou ? () => removeMember(member) : null,
       ));
     }
+
+    const showing = commentsInReader();
+    group.append(row(
+      'Comments in the reader',
+      showing
+        ? 'On · shown at the end of each chapter'
+        : 'Off · the reader stays a reader',
+      () => { setState({ inReader: !showing }); renderGroup(); },
+      showing ? ' is-accent' : '',
+    ));
 
     group.append(row(
       isOwner ? 'Close this circle' : 'Leave this circle',
@@ -412,18 +431,6 @@
     top.append(kicker, title);
     section.append(top);
 
-    if (!joined()) {
-      const invite = document.createElement('p');
-      invite.className = 'yomu-thread__quiet';
-      invite.textContent = 'Reading with friends? A circle puts their comments here, and only ever the ones for chapters you have reached.';
-      const go = document.createElement('a');
-      go.className = 'yomu-thread__go';
-      go.href = '/settings';
-      go.textContent = 'Set up a circle';
-      section.append(invite, go);
-      return section;
-    }
-
     const head = document.createElement('div');
     head.className = 'yomu-thread__head';
     const label = document.createElement('h3');
@@ -526,6 +533,14 @@
 
   function tickReader() {
     const context = readerContext();
+    // Not joined, or not asked for: the reader is left completely alone. No
+    // thread, no placeholder, no invitation.
+    if (!joined() || !commentsInReader()) {
+      threadFor = '';
+      thread = null;
+      document.getElementById(THREAD_ID)?.remove();
+      return;
+    }
     if (!context || !context.chapter) {
       threadFor = '';
       thread = null;

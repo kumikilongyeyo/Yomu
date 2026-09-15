@@ -912,6 +912,89 @@
 
 
   /* ------------------------------------------------------------------ *
+   * Swipe up and hold, at the end of a chapter, for the next one
+   *
+   * The end of a chapter is the one place in a reader where there is exactly
+   * one thing you are likely to want, and it was two taps away: wake the bars,
+   * find the arrow. This is the same motion you were already making -- you
+   * reached the bottom by pushing the page up -- carried on for a moment
+   * longer.
+   *
+   * A hold rather than a flick because a flick is indistinguishable from the
+   * end of an ordinary scroll, and loading the next chapter by accident is a
+   * worse failure than not loading it at all. The ring fills while you hold,
+   * so the wait is visible and letting go plainly cancels it.
+   *
+   * It drives the reader's own Next chapter button rather than routing itself:
+   * that button already knows whether there is a next chapter, handles the
+   * flush of your position, and goes wherever the app would have gone.
+   * ------------------------------------------------------------------ */
+
+  const NEXT_HOLD_MS = 1500;
+  const NEXT_PULL_PX = 40;
+  const NEXT_ID = 'yomu-next-hold';
+
+  let pullStart = null;
+  let pullTimer = null;
+
+  const nextChapterButton = () =>
+    [...document.querySelectorAll('.rd-dock .rd-icon')]
+      .find((b) => /next chapter/i.test(b.getAttribute('aria-label') || ''));
+
+  function nextHint(on) {
+    let ring = document.getElementById(NEXT_ID);
+    if (!on) { ring?.remove(); return; }
+    if (ring) return ring;
+    ring = document.createElement('div');
+    ring.id = NEXT_ID;
+    ring.className = 'yomu-next-hold';
+    ring.innerHTML = '<i></i><span></span>';
+    ring.querySelector('span').textContent = 'Hold for the next chapter';
+    document.body.append(ring);
+    // Started on the next frame so the transition has a value to run from.
+    requestAnimationFrame(() => ring.classList.add('is-filling'));
+    return ring;
+  }
+
+  function cancelPull() {
+    if (pullTimer) { clearTimeout(pullTimer); pullTimer = null; }
+    pullStart = null;
+    nextHint(false);
+  }
+
+  addEventListener('touchstart', (event) => {
+    cancelPull();
+    if (!inReader() || event.touches.length !== 1) return;
+    if (!atChapterEnd()) return;
+    const button = nextChapterButton();
+    if (!button || button.disabled) return;   // nothing after this one
+    pullStart = event.touches[0].clientY;
+  }, { passive: true });
+
+  addEventListener('touchmove', (event) => {
+    if (pullStart === null) return;
+    // Up is negative. Anything downward is a scroll back into the chapter.
+    const lifted = pullStart - event.touches[0].clientY;
+    if (lifted < NEXT_PULL_PX || !atChapterEnd()) {
+      if (pullTimer) { clearTimeout(pullTimer); pullTimer = null; nextHint(false); }
+      return;
+    }
+    if (pullTimer) return;                    // already counting
+    nextHint(true);
+    pullTimer = setTimeout(() => {
+      pullTimer = null;
+      pullStart = null;
+      nextHint(false);
+      nextChapterButton()?.click();
+    }, NEXT_HOLD_MS);
+  }, { passive: true });
+
+  for (const type of ['touchend', 'touchcancel']) {
+    addEventListener(type, cancelPull, { passive: true });
+  }
+
+
+  /* ------------------------------------------------------------------ *
    * Chapters sheet: what a row can say before you open it
    *
    * The sheet listed a number and a name, so the only chapter distinguishable
