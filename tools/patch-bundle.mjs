@@ -274,7 +274,96 @@ const EDITS = [
     from: "onClick:()=>b.push(w?'/search':'/')",
     to:   "onClick:()=>{w?location.assign('/find.html'):b.push('/')}",
   },
+
+  /* --- chapter ids carry their series — src/sources/httpAdapter.ts ---------
+   *
+   * The reader is handed one thing, a chapter id, and has to work out which
+   * series it belongs to: it reads `chapterId.split(':')[0]`. The MangaDex
+   * adapter is built for that -- getSeries() mints `${seriesId}:${chapterId}`,
+   * and every method taking a chapter id splits it back apart. The HTTP
+   * adapter, which is every extension-backed source (Asura, Flame Comics, Weeb
+   * Central, Webtoons, NamiComi) and every imported one, passed the source's
+   * own chapter id straight through. With no colon in it the split returned the
+   * whole chapter id as the series id, so the reader asked the Worker for a
+   * series that does not exist, got a 502, and left `series` null forever: the
+   * header read "Loading..." with no chapter name under it, the Chapters sheet
+   * on the bottom bar came up empty, and the previous/next chapter buttons
+   * stayed disabled. The pages themselves rendered, because a manifest is
+   * fetched by chapter id alone -- which is why this looked like a reader that
+   * had loaded nothing while the artwork was on the screen.
+   *
+   * The four edits below give the HTTP adapter the same convention as MangaDex.
+   * They belong together: minting composite ids without stripping them again
+   * would send `series:chapter` to the Worker and break every chapter.
+   *
+   * Ids stored before this (resume anchors, downloads, read marks) have no
+   * colon, so they still fetch their manifest and read exactly as they did.
+   * They simply do not gain a series until they are opened from a series page
+   * again. A source whose own series id contains a colon is not supported, and
+   * was not before either -- the reader's split predates this.
+   */
+  {
+    name: 'http adapter: chapter ids are minted with their series',
+    why:
+      'getSeries() is the one place that holds both ids, so it is where the ' +
+      'chapter ids the rest of the app navigates with get their series prefix ' +
+      '-- exactly as the MangaDex adapter does a few modules over.',
+    from:
+      'getSeries:async function(e,t){const n=g.get(e);if(n)return n;' +
+      'const s=c(await y(`series/${encodeURIComponent(e)}`,t));return g.set(e,s),s}',
+    to:
+      'getSeries:async function(e,t){const n=g.get(e);if(n)return n;' +
+      'const s=c(await y(`series/${encodeURIComponent(e)}`,t));' +
+      's.chapters=s.chapters.map($=>({...$,id:`${e}:${$.id}`}));' +
+      'return g.set(e,s),s}',
+  },
+  {
+    name: 'http adapter: the manifest request strips the series back off',
+    why:
+      'The Worker knows nothing of composite ids, so the id on the wire has to ' +
+      "be the source's own. An id with no colon is unchanged, which is what " +
+      'keeps anchors saved before this edit working.',
+    from:
+      'async getManifest(n,s){const o=await y(`chapters/${encodeURIComponent(n)}/manifest`,s);',
+    to:
+      "async getManifest(n,s){const $i=n.indexOf(':'),$c=n.slice($i+1)," +
+      'o=await y(`chapters/${encodeURIComponent($c)}/manifest`,s);',
+  },
+  {
+    name: 'http adapter: the manifest keeps the id the reader routed on',
+    why:
+      'Second half of the edit above. The refresh path has to strip too, and ' +
+      'both paths now return through one re-stamp, because useReader() saves ' +
+      'the resume anchor under manifest.chapterId and compares it against the ' +
+      'route -- stamp the bare id and every chapter resumes from the top. ' +
+      'sourceSeriesId is corrected the same way: the Worker can only infer it ' +
+      'from the shape of a chapter id, and for a source with opaque ids it ' +
+      'falls back to the chapter id itself, which files an offline download ' +
+      'under a series of one chapter.',
+    from:
+      'if((0,e.isManifestExpired)(i)){const t=await y(`chapters/${encodeURIComponent(n)}/manifest?refresh=1`,s);' +
+      'return(0,e.parseChapterManifest)(t)}return i}',
+    to:
+      'if((0,e.isManifestExpired)(i)){const t=await y(`chapters/${encodeURIComponent($c)}/manifest?refresh=1`,s);' +
+      'i=(0,e.parseChapterManifest)(t)}' +
+      'return{...i,chapterId:n,...($i>0?{sourceSeriesId:n.slice(0,$i)}:{})}}',
+  },
+  {
+    name: 'http adapter: neighbours load the series they need',
+    why:
+      'getNeighbours() only searched series already in the memo, so whether the ' +
+      'previous/next buttons worked at all depended on the series request ' +
+      'winning a race against the manifest. The MangaDex adapter fetches the ' +
+      'chapter list it needs; now this one does too, and the composite id says ' +
+      'which series to ask for. A failure leaves the buttons disabled, as before.',
+    from: 'async getNeighbours(e){for(const t of g.values()){',
+    to:
+      "async getNeighbours(e){const $i=e.indexOf(':');" +
+      'if($i>0&&!g.has(e.slice(0,$i)))try{await this.getSeries(e.slice(0,$i))}catch{}' +
+      'for(const t of g.values()){',
+  },
 ];
+
 
 const entries = fs.readdirSync(BUNDLE_DIR).filter((f) => /^entry-.*\.js$/.test(f));
 if (entries.length !== 1) {
