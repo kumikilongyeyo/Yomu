@@ -5,8 +5,8 @@ edition = "2024"
 publish = false
 
 [dependencies]
-aidoku = { git = "https://github.com/Aidoku/aidoku-rs", rev = "e1320b0a2e11afb59e4dee374883a2212d325699", package = "aidoku", default-features = false }
-aidoku-test-runner = { git = "https://github.com/Aidoku/aidoku-rs", rev = "e1320b0a2e11afb59e4dee374883a2212d325699", package = "aidoku-test-runner" }
+aidoku = { git = "https://github.com/Aidoku/aidoku-rs", rev = "b0818704a5487778999bcd11239fa4c7a44da6ab", package = "aidoku", default-features = false }
+aidoku-test-runner = { git = "https://github.com/Aidoku/aidoku-rs", rev = "b0818704a5487778999bcd11239fa4c7a44da6ab", package = "aidoku-test-runner" }
 anyhow = "1"
 axum = { version = "0.8", features = ["json"] }
 base64 = "0.22"
