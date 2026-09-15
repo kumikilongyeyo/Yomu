@@ -2688,7 +2688,72 @@
    * That is what lets the same pass serve both the initial mount and every
    * later mutation, with no per-screen bookkeeping to get out of step.
    */
+  /* ------------------------------------------------------------------ *
+   * The brand lockup
+   *
+   * The app's logo is an inline <svg class="yomu-logo"> compiled into the
+   * bundle, and the kit's lockup is a different shape entirely: the mark, then
+   * "Yomu" as live text with one span per letter so each can lift and turn
+   * accent 85ms after the one before it. Pseudo-elements do not render on an
+   * <svg>, so this cannot be done from the stylesheet -- it is new DOM, which
+   * is what this file is for.
+   *
+   * Inserted as the logo's previous sibling rather than replacing it, so the
+   * app's own element is never touched: React re-renders it freely, and the
+   * stylesheet hides it with an adjacent-sibling rule. Idempotent -- a logo
+   * that already has a lockup in front of it is skipped -- so the pass that
+   * runs on every mutation costs nothing after the first.
+   *
+   * Geometry is the kit's: 195x168, two rounded parallelograms, 16 stroke.
+   * ------------------------------------------------------------------ */
+  const MARK_POINTS = [
+    '8.00,12.75 79.00,47.02 79.00,155.25 8.00,120.98',
+    '116.00,47.02 187.00,12.75 187.00,120.98 116.00,155.25',
+  ];
+
+  function brandLockup() {
+    for (const logo of document.querySelectorAll('svg.yomu-logo')) {
+      const prev = logo.previousElementSibling;
+      if (prev && prev.classList.contains('yomu-lockup')) continue;
+
+      const lockup = document.createElement('span');
+      lockup.className = 'yomu-lockup';
+      lockup.setAttribute('role', 'img');
+      lockup.setAttribute('aria-label', 'Yomu');
+
+      const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      mark.setAttribute('class', 'ymark');
+      mark.setAttribute('viewBox', '0 0 195 168');
+      mark.setAttribute('aria-hidden', 'true');
+      for (const points of MARK_POINTS) {
+        const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        poly.setAttribute('points', points);
+        poly.setAttribute('fill', 'currentColor');
+        poly.setAttribute('stroke', 'currentColor');
+        poly.setAttribute('stroke-width', '16');
+        poly.setAttribute('stroke-linejoin', 'round');
+        mark.append(poly);
+      }
+
+      // aria-hidden because the lockup already carries the name; a screen
+      // reader should hear "Yomu" once, not four letters.
+      const word = document.createElement('span');
+      word.className = 'yword';
+      word.setAttribute('aria-hidden', 'true');
+      [...'Yomu'].forEach((letter, i) => {
+        const span = document.createElement('span');
+        span.style.setProperty('--i', String(i));
+        span.textContent = letter;
+        word.append(span);
+      });
+
+      lockup.append(mark, word);
+      logo.before(lockup);
+    }
+  }
+
   const pass = () => {
+    brandLockup();
     gateFabric();
     tagCompleted();
     badgeProgress();

@@ -405,3 +405,128 @@ h1, h2 {
 [class*='Count'] {
   font-variant-numeric: tabular-nums;
 }
+
+
+/* ==================================================================== *
+ * 6. Brand — the mark, the wordmark, the loader
+ * ====================================================================
+ *
+ * The app draws its logo as an inline <svg class="yomu-logo"> compiled into
+ * the bundle, and yomu-overrides.css hid its glyph and painted the previous
+ * kit's wordmark over it as a background image. Pseudo-elements do not render
+ * on an <svg>, so the new lockup -- mark plus live text -- cannot come from
+ * CSS alone; yomu-shell.js builds it and re-asserts it against React, the same
+ * way it mounts everything else that is new DOM. This file styles it, and
+ * covers the case where that script has not run: the <svg> keeps a background,
+ * but of the new mark rather than the old wordmark, so a page without the
+ * shell is still the new brand rather than the old one.
+ * ==================================================================== */
+
+/* Fallback, and the only logo on a page the shell does not touch. */
+.yomu-logo {
+  background: url('/brand/yomu-mark-paper.svg') left center / contain no-repeat;
+  min-width: 34px;
+}
+:root[data-mode='light'] .yomu-logo {
+  background-image: url('/brand/yomu-mark-ink.svg');
+}
+@media (prefers-color-scheme: light) {
+  :root[data-mode='system'] .yomu-logo {
+    background-image: url('/brand/yomu-mark-ink.svg');
+  }
+}
+
+/* Once the lockup is in front of it, the original <svg> is redundant. Matched
+   as an adjacent sibling so nothing has to be written onto the app's own
+   element -- React would drop a class on its next render. */
+.yomu-lockup + .yomu-logo { display: none; }
+
+.yomu-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  line-height: 1;
+}
+.yomu-lockup .ymark {
+  width: 26px;
+  height: auto;
+  flex: none;
+  color: var(--accent);
+}
+
+/* The wordmark is live text, one span per letter, each lifting and turning
+   accent 85ms after the one before it on the loader's own 1.1s cycle. */
+.yword {
+  display: inline-flex;
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -.01em;
+}
+.yword span {
+  display: inline-block;
+  animation: yletter 1.1s ease-in-out infinite;
+  animation-delay: calc(var(--i) * .085s);
+}
+@keyframes yletter {
+  0%, 60%, 100% { transform: translateY(0);      color: var(--text); }
+  26%           { transform: translateY(-.14em); color: var(--accent); }
+}
+
+/* ---- the loader ---------------------------------------------------- *
+ *
+ * Twelve frames of the mark with a page turning through it, right to left;
+ * the reset is the loop. .spin is the app's only spinner -- twelve call sites
+ * in the bundle, one rule in the compiled stylesheet -- so replacing it here
+ * reaches every loading state in the app at once.
+ *
+ * The sprite is a fixed colour, not currentColor, so it is chosen by the
+ * surface rather than inherited: paper (light ink) on dark grounds, ink on
+ * light ones. A primary button is amber in both modes, so it always takes the
+ * ink sheet regardless of palette.
+ * -------------------------------------------------------------------- */
+.spin,
+.yomu-loader {
+  --s: 22px;
+  width: var(--s);
+  height: var(--s);
+  flex: none;
+  display: inline-block;
+  border: 0;
+  border-radius: 0;
+  background: url('/brand/yomu-loader-paper.png') 0 0 / calc(var(--s) * 12) var(--s) no-repeat;
+  animation: yomu-flip var(--motion-loader) infinite;
+}
+:root[data-mode='light'] .spin,
+:root[data-mode='light'] .yomu-loader {
+  background-image: url('/brand/yomu-loader-ink.png');
+}
+@media (prefers-color-scheme: light) {
+  :root[data-mode='system'] .spin,
+  :root[data-mode='system'] .yomu-loader {
+    background-image: url('/brand/yomu-loader-ink.png');
+  }
+}
+/* Amber ground in either palette, so never the light sheet. */
+.g-button.primary .spin,
+.m-btn.primary .spin {
+  background-image: url('/brand/yomu-loader-ink.png');
+}
+
+@keyframes yomu-flip {
+  to { background-position: calc(var(--s) * -12) 0; }
+}
+
+/* Both stop, rather than slow down: a twelve-step sprite has no meaningful
+   reduced form, and a wordmark that jitters is exactly what the setting is
+   asking to be spared. The loader holds on its first frame, which is the
+   whole mark. */
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .yomu-loader,
+  .yword span {
+    animation: none;
+  }
+}
