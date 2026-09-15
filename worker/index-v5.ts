@@ -1,15 +1,16 @@
 import legacy, { type Env } from './index';
-import { fabricSourceCards, handleFabric } from './source-fabric';
+import { fabricSourceCards, handleFabric } from './source-fabric-v6';
 import { handleKaganeV53 } from './kagane-v53';
 import { handleFederatedResolve, handleStoreFederation } from './store-federation';
 
 /**
  * Source Fabric wrapper.
  *
- * v5 keeps the existing Worker intact and layers remote source execution on top.
- * Store Federation v6 now sits in front of the same Add Source button: it finds
- * maintained Aidoku/Mihon/Mangayomi implementations before Yomu falls back to
- * generic remote probing. The UI stays paste -> Add -> read.
+ * Adaptive Source Fabric v6 keeps the existing Worker intact and layers a
+ * bounded multi-strategy remote source runtime on top. Store Federation still
+ * sits in front of the same Add Source button: maintained ecosystem runtimes
+ * get first crack, then the adaptive Worker ladder tries safe public methods.
+ * The UI stays paste -> Add -> read.
  */
 async function withPageScripts(request: Request, env: Env, scripts: string[]): Promise<Response> {
   const response = await legacy.fetch(request, env);
