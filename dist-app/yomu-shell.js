@@ -2228,14 +2228,26 @@
    * at 42fps with a 34ms 95th-percentile frame. A phone is several times
    * worse, which is where it was reported.
    *
-   * Rows far from the viewport get `visibility: hidden`. Of the three ways
-   * to stop painting something, it is the only one that keeps the list's
-   * true height -- the row's box stays exactly where it was, so nothing
-   * jumps and no scroll position drifts -- while the browser skips painting
-   * it. The other two were measured and both were worse:
-   * `content-visibility: auto` costs more than it saves at this row count
-   * (41fps against 60), and `display: none` collapses 415,224 pixels of
-   * scroll to 54,232.
+   * Rows far from the viewport are skipped with `content-visibility: hidden`,
+   * each holding the height it was last rendered at, so the row keeps its box
+   * -- nothing jumps, no scroll position drifts -- while the browser skips
+   * both painting *and* laying out the seventeen nodes inside it. Measured
+   * across the whole list: 972 pixels of drift in 415,221, a quarter of a
+   * pixel a row.
+   *
+   * It was `visibility: hidden` first. That skips the painting and keeps the
+   * layout, which fixed the frame rate and did not fix the lag, because
+   * painting was not the expensive part. With every row still in layout, one
+   * reflow of this list measured 88ms on an idle desktop and 414ms on a busy
+   * one -- and a page being scrolled on a phone reflows constantly, the URL
+   * bar collapsing being a viewport resize all by itself. Skipping the
+   * contents takes the same measurement to 13ms and 45ms: six to nine times
+   * cheaper, on the operation that was actually stalling.
+   *
+   * `content-visibility: auto` was measured too and is worse than either
+   * (41fps against 60) -- at this row count its own intersection tracking
+   * costs more than it saves -- and `display: none` collapses 415,224 pixels
+   * of scroll to 54,232.
    *
    * Written inline on the rows rather than through one nth-child rule. The
    * rule is a single write but re-matches every row in the list, and lands
@@ -2248,8 +2260,11 @@
    * that no browser can search comfortably anyway, that is the cheaper loss.
    * ------------------------------------------------------------------ */
 
-  /** Under this a list costs nothing to render and the bookkeeping is waste. */
-  const LONG_LIST = 600;
+  /** Under this a list costs little enough that the bookkeeping is waste.
+   *  Set at 600 first, which left a 500-chapter series -- 8,500 nodes and
+   *  55,000 pixels of scroll -- carrying the whole cost on a phone for no
+   *  reason. A window is cheap; the threshold does not need to be brave. */
+  const LONG_LIST = 250;
   /** Pixels kept painted past each edge of the viewport. */
   const LIST_MARGIN = 25000;
   /** How far the viewport must travel before the window is worth moving. */
@@ -2257,10 +2272,16 @@
 
   const windowedLists = new Set();
 
+  function showRow(row) {
+    if (!row.style.contentVisibility) return;
+    row.style.contentVisibility = '';
+    row.style.containIntrinsicSize = '';
+  }
+
   function releaseList(state) {
     removeEventListener('scroll', state.onScroll, true);
     removeEventListener('resize', state.onResize);
-    for (const row of state.rows) if (row.style.visibility === 'hidden') row.style.visibility = '';
+    for (const row of state.rows) showRow(row);
     windowedLists.delete(state);
   }
 
@@ -2306,9 +2327,79 @@
     const lo = search(-LIST_MARGIN);
     const hi = search(innerHeight + LIST_MARGIN);
 
+    /* A skipped row has to be told how tall to stand, and by then it cannot
+       be asked -- the answer would be whatever it was last told. So heights
+       are taken while the rows are still laying themselves out: every row
+       once, and the window's own rows on every placement, which is what
+       keeps the record honest as the page settles. */
+    if (!state.heights) {
+      state.heights = new Array(rows.length).fill(0);
+      // contain-intrinsic-size names the content box; the rows carry a border.
+      const style = getComputedStyle(rows[0]);
+      state.chrome = (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0)
+        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+    }
+    for (let i = lo; i <= hi; i++) {
+      if (!rows[i].style.contentVisibility) state.heights[i] = rows[i].getBoundingClientRect().height;
+    }
+    /* The sweep runs while nothing is skipped yet, so every number in it is
+       a height the row was actually standing at. Measuring a row that is
+       already skipped reads back the height it was told to hold, which is
+       how a list ends up 52,000 pixels short of itself. */
+    if (!state.measured) {
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].style.contentVisibility) continue;
+        state.heights[i] = rows[i].getBoundingClientRect().height;
+      }
+      state.natural = state.list.getBoundingClientRect().height;
+      state.measured = true;
+    }
+
+    // Reads are done; everything below writes.
     for (let i = 0; i < rows.length; i++) {
-      const want = i >= lo && i <= hi ? '' : 'hidden';
-      if (rows[i].style.visibility !== want) rows[i].style.visibility = want;
+      const row = rows[i];
+      if (i >= lo && i <= hi) { showRow(row); continue; }
+      if (row.style.contentVisibility) continue;
+      // No measured height means the row has never been laid out. Leaving it
+      // alone costs one row of work; guessing costs a hole in the list.
+      if (!state.heights[i]) continue;
+      /* `auto` rather than a bare size: it tells the browser to reserve the
+         height it last actually rendered this row at, and to fall back on
+         the number below only for one it has never laid out. That is what
+         makes a stale measurement harmless -- pinning a plain height instead
+         shipped a list 52,000 pixels short, because the first measurement
+         ran before the titles had wrapped. */
+      row.style.containIntrinsicSize =
+        'auto ' + Math.max(0, state.heights[i] - state.chrome).toFixed(2) + 'px';
+      row.style.contentVisibility = 'hidden';
+    }
+
+    /* And then check the arithmetic against the list's own height, taken
+       while every row was standing on its own. Skipped rows hold remembered
+       heights, and if those were remembered wrong the list changes length --
+       the one failure here a reader would feel, because everything below the
+       window moves under them. A pixel a row is the tolerance; past that the
+       whole list is let go and measured again, later, when whatever was
+       still arriving has arrived. */
+    /* One corrective pass before settling. The search above ran on the
+       positions as they stood before anything was skipped, and skipping moves
+       them -- by a fraction of a pixel a row, which is a dozen rows by the
+       bottom of a list this long, and that was enough to leave blank rows in
+       the viewport after a jump. This pass only reveals: hiding again can
+       wait for the next placement, a hole in front of the reader cannot. */
+    const lo2 = search(-LIST_MARGIN);
+    const hi2 = search(innerHeight + LIST_MARGIN);
+    for (let i = lo2; i <= hi2; i++) showRow(rows[i]);
+
+    const tallAfter = state.list.getBoundingClientRect().height;
+    if (Math.abs(tallAfter - state.natural) > rows.length && state.retries < 3) {
+      state.retries++;
+      for (const row of rows) showRow(row);
+      state.heights = null;
+      state.measured = false;
+      state.placedAt = null;
+      setTimeout(() => placeWindow(state), 900);
+      return;
     }
     state.placedAt = state.top;
   }
@@ -2335,7 +2426,11 @@
       }
       if (state) releaseList(state);
 
-      state = { list, rows, top: 0, placedAt: null, ticking: false, onScroll: null, onResize: null };
+      state = {
+        list, rows, top: 0, placedAt: null, ticking: false,
+        heights: null, measured: false, natural: 0, chrome: 0, retries: 0,
+        onScroll: null, onResize: null,
+      };
       state.onScroll = (event) => {
         // Whatever scrolled tells us it scrolled, and how far. Identifying
         // the scrolling ancestor up front was guessed wrong once already --
@@ -2349,7 +2444,16 @@
         state.ticking = true;
         requestAnimationFrame(() => { state.ticking = false; placeWindow(state); });
       };
-      state.onResize = () => { state.placedAt = null; placeWindow(state); };
+      state.onResize = () => {
+        /* A different width is different heights. Every row is let go first,
+           so the next pass measures what they are rather than what they were
+           told to be. */
+        for (const row of state.rows) showRow(row);
+        state.heights = null;
+        state.measured = false;
+        state.placedAt = null;
+        placeWindow(state);
+      };
       // Capture, because a scroll event does not bubble out of the element
       // that scrolled.
       addEventListener('scroll', state.onScroll, { capture: true, passive: true });
