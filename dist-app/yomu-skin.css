@@ -682,3 +682,135 @@ h1, h2 {
   letter-spacing: -.028em;
 }
 .genre-row { gap: var(--space-3); }
+
+
+/* ==================================================================== *
+ * 8. The other screens, on the same cadence
+ * ====================================================================
+ *
+ * Home got the kit's rhythm in section 7 and the rest of the app did not, so
+ * moving between them felt like moving between two designs. These are the
+ * shared parts -- page titles, section headers, chip rows, panels, rows --
+ * given the same type, the same radii and the same vertical rhythm.
+ *
+ * Deliberately not a layout rewrite. Every screen keeps the structure it
+ * has; what changes is the cadence they share. The parts of the kit the app
+ * does not render at all are a different job, and not one CSS can do.
+ * ==================================================================== */
+
+/* ---- page titles --------------------------------------------------- */
+.page-heading h1,
+.series-hero-copy h1,
+.find-title {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 800;
+  letter-spacing: -.028em;
+  line-height: 1.04;
+  text-wrap: balance;
+}
+.page-heading {
+  margin-bottom: var(--space-7);
+}
+
+/* ---- section headers ----------------------------------------------- *
+ * .home-sec on home, .section-line on library and the series page,
+ * .yomu-kin-head on the related rails. One rule so they cannot drift. */
+.section-line,
+.yomu-kin-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin: var(--space-9) 0 var(--space-5);
+}
+.section-line h2,
+.section-line h3,
+.yomu-kin-head,
+.yomu-kin-head > * {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 108;
+  font-weight: 800;
+  letter-spacing: -.028em;
+}
+
+/* An eyebrow is uppercase, spaced, and quiet -- it labels, it does not
+   compete with the title under it. */
+.group-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ---- chip rows ----------------------------------------------------- */
+.chip-row,
+.tag-row {
+  gap: var(--space-3);
+}
+
+/* ---- panels and grouped rows --------------------------------------- *
+ * The kit has one card radius and one hairline. These carried three
+ * different radii between them. */
+.g-panel,
+.settings-group,
+.catalog-empty {
+  border-radius: var(--radius-card);
+  border-color: var(--line);
+}
+
+.settings-row,
+.setting-link {
+  min-height: 44px;                       /* the kit's minimum control */
+  padding-block: var(--space-5);
+}
+.settings-row strong,
+.setting-link strong,
+.settings-row__copy strong,
+.row-copy strong {
+  font-weight: 700;
+  letter-spacing: -.008em;
+}
+.settings-row small,
+.setting-link small,
+.settings-row__copy small,
+.row-copy small {
+  color: var(--faint);
+  line-height: 1.45;
+}
+
+/* ---- the series hero ----------------------------------------------- *
+ * Same veil as the home slide, so a title opened from the carousel does not
+ * change character on the way in. */
+.series-hero-shade {
+  background:
+    linear-gradient(rgba(0,0,0,0) 34%, rgba(4,7,11,.90) 88%),
+    linear-gradient(90deg, rgba(4,7,11,.62) 0%, rgba(4,7,11,.12) 62%);
+}
+:root[data-mode='light'] .series-hero-shade {
+  background:
+    linear-gradient(rgba(0,0,0,0) 34%, rgba(20,17,12,.84) 88%),
+    linear-gradient(90deg, rgba(20,17,12,.55) 0%, rgba(20,17,12,.10) 62%);
+}
+.series-hero-copy h1 {
+  font-size: clamp(25px, 6.4vw, 38px);
+}
+.series-actions { gap: var(--space-4); }
+.series-actions button { border-radius: var(--radius-pill); }
+
+/* ---- chapter rows -------------------------------------------------- */
+.chapter-line {
+  border-radius: var(--radius-control);
+}
+.chapter-thumb {
+  border-radius: var(--radius-thumb);
+}
+
+/* ---- related rails ------------------------------------------------- *
+ * The kit's rail: it runs off the edge of the screen rather than stopping at
+ * the gutter, because a row that ends flush reads as a grid that ran out. */
+.yomu-kin-rail {
+  gap: var(--space-5);
+  scrollbar-width: none;
+}
+.yomu-kin-rail::-webkit-scrollbar { display: none; }
