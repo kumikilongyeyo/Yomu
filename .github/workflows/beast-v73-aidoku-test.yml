@@ -17,6 +17,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Install native runtime build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libssl-dev libfontconfig1-dev libfreetype6-dev ca-certificates
       - name: Build real Aidoku WASM runtime
         run: cargo build --release --manifest-path runtime/aidoku/Cargo.toml
       - name: Start runtime
