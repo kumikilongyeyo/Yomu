@@ -1,0 +1,46 @@
+{
+  "schema": "yomu.source-pack/1",
+  "id": "yomu-community-core",
+  "name": "Yomu Community Core",
+  "version": 1,
+  "updatedAt": "2026-09-15",
+  "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it.",
+  "sources": [
+    {
+      "url": "https://mangaball.net/",
+      "tags": ["general", "manga", "manhwa", "manhua", "webtoon"]
+    },
+    {
+      "url": "https://mangahub.io/",
+      "tags": ["general", "manga", "manhwa", "manhua"]
+    },
+    {
+      "url": "https://www.zinmanga.net/",
+      "tags": ["general", "manhwa", "manhua"]
+    },
+    {
+      "url": "https://mangapill.com/",
+      "tags": ["manga", "older-titles"]
+    },
+    {
+      "url": "https://www.mangabats.com/",
+      "tags": ["general", "manga", "manhwa", "manhua"]
+    },
+    {
+      "url": "https://manhuaplus.top/",
+      "tags": ["manhua", "cultivation"]
+    },
+    {
+      "url": "https://www.zazamanga.com/",
+      "tags": ["general", "manga", "manhwa", "manhua"]
+    },
+    {
+      "url": "https://qtoon.org/",
+      "tags": ["manhwa", "webtoon"]
+    },
+    {
+      "url": "https://mangadistrict.com/",
+      "tags": ["general", "manga", "manhwa"]
+    }
+  ]
+}
