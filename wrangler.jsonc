@@ -18,10 +18,10 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": true
   },
-  // Source Fabric v7 runtime broker. This Vercel Hobby deployment runs the
-  // Aidoku/Wasmer container so phones never depend on a desktop process.
+  // Source Fabric v7.2 runtime broker. Hatchable exposes the broker under
+  // /api, so the Worker appends /v1/resolve and /v1/source/* to this base.
   "vars": {
-    "SOURCE_RUNTIME_URL": "https://yomu-aidoku-runtime-klydesosaart09-1824s-projects.vercel.app"
+    "SOURCE_RUNTIME_URL": "https://yomu-source-runtime.hatchable.site/api"
   },
   // Yomu Sync's store. One entry per library code, plus short-lived pairing
   // codes and rate-limit counters that KV expires on its own.
