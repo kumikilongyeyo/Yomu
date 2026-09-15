@@ -2,7 +2,7 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 2,
+  "version": 3,
   "updatedAt": "2026-09-15",
   "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it.",
   "sources": [
@@ -57,6 +57,14 @@
     {
       "url": "https://mangabuddy1.co.uk/",
       "tags": ["general", "manga", "manhwa", "manhua", "older-titles"]
+    },
+    {
+      "url": "https://manhuabuddy.com/",
+      "tags": ["manhua", "manhwa", "cultivation", "general"]
+    },
+    {
+      "url": "https://manganato.gg/",
+      "tags": ["general", "manga", "older-titles", "long-running"]
     }
   ]
 }
