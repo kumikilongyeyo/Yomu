@@ -47,16 +47,96 @@ const EDITS = [
     to:   "onPointerMove:e=>{e.pointerType==='mouse'&&Y()}",
   },
   {
-    name: 'reader: double tap to bring the chrome back',
+    name: 'reader: double tap toggles the chrome, and leaves immersive first',
     why:
-      'A single tap toggled the bars, so any tap while reading flashed them up. ' +
-      'Two taps within 320ms toggle instead -- the same window the native reader ' +
-      'already uses -- and a single tap does nothing.',
-    from: 'onTap:()=>Z?F(!1):Y()',
-    to:
+      'Originally `onTap:()=>Z?F(!1):Y()` -- a single tap toggled the bars, so ' +
+      'any tap while reading flashed them up. An earlier pass made it two taps ' +
+      'within 320ms, the same window the native reader uses, and that form is ' +
+      'what the shipped bundle contains; it is the anchor below.\n' +
+      'Now that the shell can also take the reader fullscreen, the same double ' +
+      'tap has to be the way back out, or the only exit is a gesture the OS ' +
+      'owns. The shell installs __yomuExit and returns true when it actually ' +
+      'left something; the bar toggle is what happens when there was nothing to ' +
+      'leave. Kept as one edit rather than two so that re-running the script ' +
+      'sees exactly one anchor, applied or not.',
+    from:
       'onTap:()=>{const t=Date.now();' +
       'if(t-(globalThis.__yomuTap??0)<320){globalThis.__yomuTap=0;Z?F(!1):Y()}' +
       'else globalThis.__yomuTap=t}',
+    to:
+      'onTap:()=>{const t=Date.now();' +
+      'if(t-(globalThis.__yomuTap??0)<320){globalThis.__yomuTap=0;' +
+      'globalThis.__yomuExit?.()?Y():Z?F(!1):Y()}' +
+      'else globalThis.__yomuTap=t}',
+  },
+
+  {
+    name: 'reader: pages sit flush in scroll mode',
+    why:
+      'buildLayout was given an 8px gap between every page. The scroll surface ' +
+      'behind it is #0b0b0e, so on a webtoon -- where consecutive pages are ' +
+      'slices of one continuous drawing -- that gap reads as a black bar cutting ' +
+      'through the art. Page mode keeps the gap, because there the pages really ' +
+      'are separate sheets and the seam is what tells them apart.',
+    from: '(0,n.buildLayout)(h,j,P,s),[h,j,P])',
+    to:   "(0,n.buildLayout)(h,j,P,'page'===w?s:0),[h,j,P,w])",
+  },
+  {
+    name: 'reader: chapter rows carry their chapter id',
+    why:
+      'The chapter sheet lists rows whose id only exists inside the closure, so ' +
+      'nothing outside React can tell which row is read and which is the one ' +
+      'you are on. Exposing the id and number as attributes is the whole edit; ' +
+      'the thumbnail and the read state are drawn by the shell, which is where ' +
+      'the progress keys are already understood.',
+    from:
+      '(0,o.jsxs)("button",{"aria-current":e.id===v,onClick:()=>{se(e.id)},' +
+      'children:[(0,o.jsxs)("strong",{children:["Chapter ",e.number]})',
+    to:
+      '(0,o.jsxs)("button",{"aria-current":e.id===v,"data-ch":e.id,"data-n":e.number,' +
+      'onClick:()=>{se(e.id)},' +
+      'children:[(0,o.jsxs)("strong",{children:["Chapter ",e.number]})',
+  },
+
+  {
+    name: 'tiles: cover tiles carry their series id',
+    why:
+      'A tile prints a title and a source label and nothing a lookup can key ' +
+      'on, so nothing outside React can tell that the title under the cursor is ' +
+      'one you are part-way through. This is the same one-attribute edit as the ' +
+      'chapter rows, and it is what lets the shell put "Chapter 41" back on a ' +
+      'title you find again through search.',
+    from: 'return(0,t.jsxs)("div",{className:"tile-card",children:[',
+    to:   'return(0,t.jsxs)("div",{className:"tile-card","data-series":n.id,children:[',
+  },
+
+  /* --- home — app/index.web.tsx --------------------------------------- */
+  {
+    name: 'home: the app\'s own Continue card yields to the shell\'s row',
+    why:
+      'The built-in card reads its resume state only for titles in the ' +
+      'discovery feed -- readResume is mapped over the feed, never over ' +
+      'listSeriesWithProgress -- so the title you were actually reading shows ' +
+      'up only if a source happens to return it in its first 18. That is why ' +
+      'Continue Reading kept vanishing. The shell builds the row from stored ' +
+      'progress instead, and this guard stops the two stacking. Left as a ' +
+      'fallback rather than deleted: if the shell fails to load, the old card ' +
+      'still appears on the days it can.',
+    from: 'Se&&Ce?(0,p.jsxs)(p.Fragment,',
+    to:   'Se&&Ce&&!globalThis.__yomuContinue?(0,p.jsxs)(p.Fragment,',
+  },
+  {
+    name: 'home: drop the duplicated genre chips',
+    why:
+      'The genre row printed Reincarnation and Martial arts twice -- once as a ' +
+      'MangaDex genre and again as an AniList tag, identical labels, different ' +
+      'filters. Eleven chips over three wrapped rows, two of them decoys. The ' +
+      'MangaDex six stay (nothing else reaches them; More tags only offers ' +
+      'AniList tags); the two duplicates go.',
+    from:
+      "N=[{tag:'Cultivation',label:'Cultivation'},{tag:'Wuxia',label:'Wuxia'}," +
+      "{tag:'Reincarnation',label:'Reincarnation'},{tag:'Martial Arts',label:'Martial arts'}]",
+    to: "N=[{tag:'Cultivation',label:'Cultivation'},{tag:'Wuxia',label:'Wuxia'}]",
   },
 
   /* --- search entry points — app/_layout.tsx, index.web.tsx, library.web.tsx ---
@@ -154,6 +234,7 @@ const ASSETS = [
   { file: 'yomu-overrides.css', tag: '<link rel="stylesheet" href="/yomu-overrides.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shell.js', tag: '<script src="/yomu-shell.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-sync.js', tag: '<script src="/yomu-sync.js" defer></scr' + 'ipt>' },
 ];
 
 for (const { file: assetFile } of ASSETS) {
@@ -167,19 +248,41 @@ if (!failed) {
     const pagePath = path.join(PAGES_DIR, page);
     let html = fs.readFileSync(pagePath, 'utf8');
 
-    // The status bar tint iOS paints behind a standalone web app. Expo wrote
-    // the old palette's #070708; the approved ground is #0c131b, and a
-    // mismatch shows as a seam above the content on a phone.
-    const OLD_THEME = '<meta name="theme-color" content="#070708"/>';
-    const NEW_THEME = '<meta name="theme-color" content="#0c131b"/>';
-    if (html.includes(OLD_THEME)) {
-      if (check) { console.log(`NOT APPLIED  theme-color: ${page}`); failed++; }
-      else {
-        html = html.replace(OLD_THEME, NEW_THEME);
-        fs.writeFileSync(pagePath, html);
-        console.log(`applied      theme-color: ${page}`);
-        changed++;
-      }
+    /* Edits to the prerendered markup itself.
+     *
+     * Expo writes each route's first paint into the HTML and React hydrates
+     * onto it, so a bundle edit that changes what a route renders has to be
+     * made here as well or the two disagree and React throws #418 and redraws.
+     * Unlike the bundle anchors these are stable, readable markup; they are
+     * matched exactly and skipped when a page does not contain them. */
+    const HTML_EDITS = [
+      {
+        name: 'theme-color',
+        // The status bar tint iOS paints behind a standalone web app. Expo
+        // wrote the old palette's #070708; the approved ground is #0c131b,
+        // and a mismatch shows as a seam above the content on a phone.
+        from: '<meta name="theme-color" content="#070708"/>',
+        to:   '<meta name="theme-color" content="#0c131b"/>',
+      },
+      {
+        name: 'duplicate genre chips',
+        // Pairs with the bundle edit of the same name. Reincarnation and
+        // Martial arts were printed twice -- once as a MangaDex genre and
+        // again as an AniList tag -- and the AniList pair is the one dropped.
+        from:
+          '<button class="genre-chip genre-chip--ani" aria-pressed="false">Reincarnation</button>' +
+          '<button class="genre-chip genre-chip--ani" aria-pressed="false">Martial arts</button>',
+        to: '',
+      },
+    ];
+
+    for (const edit of HTML_EDITS) {
+      if (!html.includes(edit.from)) continue;
+      if (check) { console.log(`NOT APPLIED  ${edit.name}: ${page}`); failed++; continue; }
+      html = html.split(edit.from).join(edit.to);
+      fs.writeFileSync(pagePath, html);
+      console.log(`applied      ${edit.name}: ${page}`);
+      changed++;
     }
 
     // Matched on the href/src, not the bare filename: a page that merely

@@ -18,6 +18,7 @@ import {
   suwayomiBases,
 } from './providers/suwayomi';
 import { handleCatalog, handleExtensions } from './routes-extensions';
+import { handleSync } from './routes-sync';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -26,6 +27,9 @@ export interface Env {
   EXTENSIONS_REPO?: string;
   SUWAYOMI_URL?: string;
   SUWAYOMI_AUTH_HEADER?: string;
+  /** Yomu Sync's store. Optional: without the binding /api/sync/* answers 503
+   *  and every other route, and the whole app, is unaffected. */
+  SYNC: KVNamespace;
 }
 
 type AnyObject = Record<string, any>;
@@ -359,6 +363,7 @@ export default {
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname.startsWith('/api/catalog/')) return handleCatalog(request, env, url);
     if (url.pathname.startsWith('/api/suwayomi/')) return handleSuwayomi(request, env, url);
+    if (url.pathname.startsWith('/api/sync/')) return handleSync(request, env, url);
     return handleLegacyProxy(request, url);
   },
 };

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0c131b" />
+  <title>Yomu · Pair this device</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    /* Theme tokens come from the app stylesheet and yomu-overrides.css. */
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px max(16px, env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom));
+      background: var(--bg, #0c131b);
+      color: var(--text, #f4f6fa);
+      font-family: var(--uiFont, system-ui, sans-serif);
+    }
+    main { width: min(420px, 100%); text-align: center; }
+    h1 { font-size: 23px; font-weight: 800; letter-spacing: -.01em; margin: 0 0 8px; }
+    p  { font-size: 14px; line-height: 1.55; color: var(--muted, #a8b6c7); margin: 0 0 18px; }
+    .card {
+      border: 1px solid var(--line, #b5c9df29);
+      background: var(--surface, #17232d);
+      border-radius: 18px;
+      padding: 22px 20px;
+    }
+    .spin {
+      width: 22px; height: 22px; margin: 0 auto 14px; display: block;
+      border: 2px solid var(--line, #b5c9df29);
+      border-top-color: var(--accent, #ffc45f);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+    .go {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 12px 22px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent, #ffc45f);
+      color: var(--accentText, #18212a);
+      font: 700 14px/1 var(--uiFont, system-ui, sans-serif);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .quiet {
+      background: none;
+      border: 1px solid var(--line, #b5c9df29);
+      color: var(--muted, #a8b6c7);
+      margin-left: 8px;
+    }
+    .bad { color: var(--bad, #ff968c); }
+  </style>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script></head>
+<body>
+<main>
+  <div class="card">
+    <div id="state">
+      <span class="spin" aria-hidden="true"></span>
+      <h1>Pairing this device</h1>
+      <p>One moment.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+/**
+ * Redeem a pairing code and hand over to the app.
+ *
+ * The code arrives in the URL fragment, after the #, which browsers never send
+ * to a server and never put in a Referer header. So the one-time credential in
+ * a QR someone points a camera at does not end up in an access log between
+ * here and Cloudflare. The page reads it client-side and posts it.
+ *
+ * A pairing code is good once and for ten minutes; this page is where it is
+ * spent. What it gets back is the library code, which yomu-sync.js stores.
+ */
+(() => {
+  'use strict';
+
+  const panel = document.getElementById('state');
+
+  const say = (title, line, extra) => {
+    panel.innerHTML = '<h1></h1><p></p>';
+    panel.querySelector('h1').textContent = title;
+    const p = panel.querySelector('p');
+    p.textContent = line;
+    if (extra) panel.append(extra);
+  };
+
+  const button = (label, href, className) => {
+    const a = document.createElement('a');
+    a.className = 'go' + (className ? ' ' + className : '');
+    a.href = href;
+    a.textContent = label;
+    return a;
+  };
+
+  const deviceName = () => {
+    const ua = navigator.userAgent || '';
+    if (/iPhone/.test(ua)) return 'iPhone';
+    if (/iPad/.test(ua)) return 'iPad';
+    if (/Android/.test(ua)) return 'Android phone';
+    if (/Macintosh/.test(ua)) return 'Mac';
+    if (/Windows/.test(ua)) return 'Windows PC';
+    return 'A device';
+  };
+
+  const code = decodeURIComponent((location.hash || '').replace(/^#/, '')).trim();
+  if (!code) {
+    say('No pairing code', 'Open Settings → Devices on a device that already has your library, and scan the code it shows.',
+        button('Open Yomu', '/'));
+    return;
+  }
+
+  (async () => {
+    try {
+      const response = await fetch('/api/sync/redeem', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pairingCode: code, deviceName: deviceName() }),
+      });
+      const doc = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(doc.error || 'That did not work.');
+
+      // Spent: leaving it in the address bar invites a reload that cannot
+      // succeed, and the message for that would be a confusing "expired".
+      history.replaceState(null, '', '/join');
+
+      if (typeof globalThis.__yomuSyncAdopt === 'function') {
+        globalThis.__yomuSyncAdopt(doc, doc.deviceId);
+      } else {
+        // yomu-sync.js is deferred and normally in place by now. If it is not,
+        // write the same keys it would have: losing the pairing over a script
+        // that has not parsed yet would mean burning a one-time code.
+        localStorage.setItem('yomu.v1.sync', JSON.stringify({
+          code: doc.code, deviceId: doc.deviceId, addedAt: {}, seen: [], removed: [],
+        }));
+      }
+
+      const count = (doc.library || []).length;
+      say('Paired',
+        count ? `This device now shares your library — ${count} ${count === 1 ? 'title' : 'titles'}.`
+              : 'This device now shares your library.',
+        button('Start reading', '/'));
+    } catch (error) {
+      const retry = document.createElement('div');
+      retry.append(button('Open Yomu', '/'), button('Enter a code instead', '/settings', 'quiet'));
+      say('Could not pair', error.message, retry);
+      panel.querySelector('p').className = 'bad';
+    }
+  })();
+})();
+</script>
+</body>
+</html>

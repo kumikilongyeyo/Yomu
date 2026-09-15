@@ -891,18 +891,55 @@
   color: transparent !important;
 }
 
-/* True fullscreen. The app's own bars already fade to nothing; this is for the
-   browser's. Set while the Fullscreen API is engaged. */
+/* ------------------------------------------------------------------ *
+ * Immersive reading
+ *
+ * Two halves, because two different things are in the way.
+ *
+ * The browser's chrome is the Fullscreen API's to remove, and where that
+ * exists the first rule is the whole job. Yomu's own chrome is this file's,
+ * and that is the second rule -- it matters most exactly where fullscreen is
+ * missing, which is every iPhone.
+ *
+ * What neither can touch, and no web page ever will: the iOS status bar and
+ * the home indicator. There is no API, meta tag or manifest field for them.
+ * The page already runs underneath both -- viewport-fit=cover and a
+ * black-translucent status bar see to that, so the art reaches y=0 -- but the
+ * clock and the bar are painted on top by the system and they stay.
+ * ------------------------------------------------------------------ */
+
 .rd:fullscreen,
 .rd:-webkit-full-screen {
   width: 100vw;
   height: 100dvh;
-  background: #07080b;
+  background: #000;
 }
 
-/* The control itself, injected into the footer by yomu-shell.js so it fades
-   with the rest of the chrome. */
-.yomu-fs {
+/* Set on <html>, because the sidebar is a child of <body> and sits outside
+   the reader entirely. The reader's own header and footer are left alone:
+   they already fade on their own timer, and forcing them down here would take
+   the exit button with them. */
+.yomu-immersive #yomu-sidebar,
+.yomu-immersive .dock,
+.yomu-immersive .masthead {
+  display: none !important;
+}
+
+/* The settle. A colour crossfade and nothing else -- no transform, because
+   the element beneath this one is the scroll container and moving it moves
+   your place on the page. */
+.rd { transition: background-color .45s ease; }
+.yomu-immersive .rd { background: #000; }
+/* !important is the only lever here: the scroll surface's #0b0b0e is an inline
+   style written by the component, and an inline style outranks a stylesheet
+   rule. It shows above the first page and below the last, which is where a
+   near-black that is not black reads as a letterbox. */
+.yomu-immersive [data-testid='reader-scroll'] { background: #000 !important; }
+.yomu-immersive [data-testid='reader-scroll'] { transition: background-color .45s ease; }
+
+/* The control, injected into the footer by yomu-shell.js so it fades with the
+   rest of the chrome. */
+.yomu-imm-toggle {
   width: 44px;
   height: 44px;
   border: 0;
@@ -914,24 +951,62 @@
   cursor: pointer;
   flex: none;
 }
-.yomu-fs:hover { background: var(--m-fill-hi, #ffffff14); }
-.yomu-fs svg { width: 20px; height: 20px; }
-.yomu-fs__hint {
+.yomu-imm-toggle:hover { background: var(--m-fill-hi, #ffffff14); }
+.yomu-imm-toggle[aria-pressed='true'] { color: var(--accent); }
+.yomu-imm-toggle svg { width: 20px; height: 20px; }
+
+/* The note that says how to get out.
+ *
+ * Centred rather than docked to an edge, because the edges are where the bars
+ * it is replacing used to be and the point is that they are gone. No panel,
+ * no border, no button: a line of text over a soft disc, up for two seconds. */
+.yomu-imm-note {
   position: fixed;
   left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 60;
+  margin: 0;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #0a0f14cc;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #f4f6fa;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: .01em;
+  text-align: center;
+  pointer-events: none;
+  /* backwards, not both: a forwards fill would keep asserting opacity:1 from
+     the last keyframe and the fade-out below would never be visible. */
+  animation: yomu-imm-note-in .28s ease backwards;
+}
+/* The one that has something to explain rather than something to confirm.
+   Its own fade, because the shared keyframe animates the centring transform
+   and this note is not centred. */
+.yomu-imm-note--wide {
+  top: auto;
   bottom: calc(96px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  z-index: 40;
-  max-width: min(420px, calc(100vw - 32px));
-  padding: 12px 16px;
-  border: 1px solid var(--line);
   border-radius: 14px;
-  background: var(--overlay, #14212bf0);
-  backdrop-filter: blur(18px);
-  color: var(--text);
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: center;
+  font-weight: 400;
+  pointer-events: auto;
+  animation-name: yomu-imm-note-fade;
+}
+.yomu-imm-note.is-going {
+  opacity: 0;
+  transition: opacity .32s ease;
+}
+@keyframes yomu-imm-note-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes yomu-imm-note-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ------------------------------------------------------------------ *
@@ -986,4 +1061,365 @@
   .g-panel:has(.quality-row) {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Chapters sheet
+ *
+ * The sheet listed a number and a name, so every row looked like every other
+ * row and the only one you could pick out was the one you were on. A picture
+ * and a state fix that, and both are drawn from things already in storage.
+ *
+ * No source ships per-chapter artwork. The picture is the series cover panned
+ * to a different corner per chapter -- the same trick the series screen plays
+ * with Artwork -- which makes a row recognisable without pretending to be a
+ * page out of it. With no cover yet, the tile takes a hue from the chapter id
+ * so it still reads as a tile rather than a hole.
+ * ------------------------------------------------------------------ */
+
+.rd-chapters button {
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+}
+/* The name has to be the part that gives way when the row is tight. */
+.rd-chapters span { flex: 0 1 auto; min-width: 0; }
+
+.yomu-ch__art {
+  order: -1;                       /* appended last, drawn first */
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background-color: hsl(var(--tone, 210) 20% 26%);
+  background-size: 190%;
+  background-repeat: no-repeat;
+}
+.yomu-ch__art.is-empty {
+  background-image: linear-gradient(145deg, #ffffff1f, #ffffff05);
+}
+
+.yomu-ch__state {
+  order: 99;
+  flex: none;
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: var(--m-fill, #ffffff0d);
+}
+.yomu-ch__state[data-kind='now']  { color: var(--accent); background: var(--accentSoft); }
+.yomu-ch__state[data-kind='read'] { color: var(--good, #5fc79b); background: #5fc79b1f; }
+
+/* ------------------------------------------------------------------ *
+ * Progress on a cover tile
+ *
+ * So that finding a title again through search says what the library already
+ * knew: you are part-way through this one, and here is where.
+ * ------------------------------------------------------------------ */
+
+/* Top left, where the eye lands first. Not the foot: the footer is absolutely
+   positioned over the bottom of the cover and the title would sit on top of
+   this. Accent rather than neutral, so it reads as yours rather than as
+   another thing the source is announcing. */
+.yomu-tile__progress {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  max-width: calc(100% - 56px);        /* clear of the save button */
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--accent, #ffc45f);
+  color: var(--accentText, #18212a);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+/* Both want the same corner, and the freshness tag was there first. */
+.tile-card__cover:has(.freshness) .yomu-tile__progress { top: 38px; }
+
+/* ------------------------------------------------------------------ *
+ * Home: the filters stop being a wall
+ *
+ * Five segments and eleven chips, all set to wrap, came to five rows of
+ * controls above the first cover -- on a 380px phone the whole opening screen
+ * was filters. Two of the chips were duplicates, and those are gone from the
+ * bundle; the rest is a layout problem, not a count problem.
+ *
+ * One scrolling line each. Nothing is removed, nothing is hidden behind a
+ * "more" that has to be discovered -- the row just stops claiming five rows
+ * of height for something you use once a session.
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 599px) {
+  .home-sec .m-seg {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .home-sec .m-seg::-webkit-scrollbar { display: none; }
+  .home-sec .m-seg button { flex: none; }
+}
+
+.genre-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.genre-row::-webkit-scrollbar { display: none; }
+.genre-chip { flex: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .yomu-imm-note,
+  .yomu-imm-note.is-going,
+  .rd,
+  .yomu-immersive [data-testid='reader-scroll'] {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Sync: the Devices group and the pairing sheet
+ *
+ * The group borrows the Settings screen's own row shapes so it reads as one
+ * of the app's groups rather than a panel bolted to it. The sheet is the
+ * pairing moment and gets the screen while it lasts: the QR has to scan off a
+ * monitor from across a desk, which is the real situation, and that needs
+ * room a settings row cannot give it.
+ * ------------------------------------------------------------------ */
+
+#yomu-devices .settings-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 56px;
+  padding: 11px 14px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#yomu-devices .settings-row:first-child { border-top: 0; }
+#yomu-devices div.settings-row { cursor: default; }
+#yomu-devices .settings-row:hover:not(div) { background: var(--m-fill-hi, #ffffff0d); }
+#yomu-devices .settings-row__copy { flex: 1; min-width: 0; }
+#yomu-devices .settings-row strong {
+  display: block;
+  font: 600 14px/1.3 var(--uiFont);
+  letter-spacing: -.005em;
+}
+#yomu-devices .settings-row small {
+  display: block;
+  margin-top: 2px;
+  font: 400 12px/1.4 var(--uiFont);
+  color: var(--faint);
+  overflow-wrap: anywhere;
+}
+#yomu-devices .settings-row.is-accent { background: var(--accentSoft); }
+#yomu-devices .settings-row.is-accent small {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: .06em;
+}
+#yomu-devices .settings-row.is-warn small { color: var(--bad); }
+#yomu-devices .settings-row[disabled] { opacity: .55; }
+
+.yomu-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--faint);
+}
+.yomu-dot.is-on { background: #5fc79b; }
+
+/* --- the pairing sheet ------------------------------------------------- */
+
+.yomu-pair {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.yomu-pair__scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: var(--scrim, #03080db3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+.yomu-pair__sheet {
+  position: relative;
+  border-width: 1px 0 0;
+  border-radius: 22px 22px 0 0;
+  padding: 14px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  animation: yomu-pair-rise .24s ease;
+}
+@media (min-width: 620px) {
+  .yomu-pair { justify-content: center; align-items: center; }
+  .yomu-pair__sheet {
+    border-width: 1px;
+    border-radius: 22px;
+    width: 420px;
+    padding-bottom: 24px;
+    animation: none;
+  }
+  .yomu-pair__grab { display: none; }
+}
+@keyframes yomu-pair-rise { from { transform: translateY(16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .yomu-pair__sheet { animation: none; } }
+
+.yomu-pair__grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin: 0 auto 14px;
+}
+.yomu-pair__body { text-align: center; }
+.yomu-pair__body h2 {
+  margin: 0 0 6px;
+  font: 800 20px/1.2 var(--uiFont);
+  letter-spacing: -.012em;
+}
+.yomu-pair__body > p {
+  margin: 0 0 16px;
+  font: 400 13px/1.5 var(--uiFont);
+  color: var(--muted);
+}
+
+/* White ground under the QR whatever the theme: a scanner needs the contrast
+   the code was designed for, and inverting one is how you get a code that
+   half the phones in the room refuse to read. */
+.yomu-pair__qr {
+  display: inline-block;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f4f6fa;
+  line-height: 0;
+  min-height: 48px;
+}
+.yomu-pair__qr canvas {
+  display: block;
+  width: min(224px, 62vw);
+  height: min(224px, 62vw);
+  image-rendering: pixelated;
+}
+.yomu-pair__qr.is-text {
+  background: none;
+  color: var(--faint);
+  font: 400 12px/1.5 var(--uiFont);
+  padding: 4px 0 0;
+}
+
+.yomu-pair__code {
+  margin: 14px 0 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.yomu-pair__expiry {
+  margin: 0;
+  font: 400 11.5px/1.45 var(--uiFont);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.yomu-pair__field {
+  width: 100%;
+  margin: 2px 0 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raised);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;            /* 16px or iOS zooms the page on focus */
+  letter-spacing: .06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.yomu-pair__go,
+.yomu-pair__close {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accentText);
+  font: 700 14px/1 var(--uiFont);
+  cursor: pointer;
+}
+.yomu-pair__close {
+  margin-top: 16px;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.yomu-pair__go[disabled] { opacity: .6; }
+
+/* --- "your library changed elsewhere" ---------------------------------- *
+ *
+ * The app's collection store reads localStorage once and has no storage
+ * listener, so a pull that lands after React has mounted cannot reach the
+ * screen. Reloading the page under someone mid-chapter is the worse answer;
+ * this is one line and a button, and it leaves on its own.
+ */
+.yomu-sync-note {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--overlay, #14212bf0);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: var(--text);
+  font: 400 13px/1.4 var(--uiFont);
+}
+.yomu-sync-note button {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accentText);
+  font: 700 12.5px/1 var(--uiFont);
+  cursor: pointer;
 }

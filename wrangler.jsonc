@@ -12,5 +12,10 @@
     "directory": "./dist-app",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
+  },
+  // Yomu Sync's store. One entry per library code, plus short-lived pairing
+  // codes and rate-limit counters that KV expires on its own.
+  "kv_namespaces": [
+    { "binding": "SYNC", "id": "a8c9b92d33444b45a5e1875b896c51b6" }
+  ]
 }
