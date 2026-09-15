@@ -45,6 +45,10 @@ async function withExpandedDiscover(request: Request, env: Env): Promise<Respons
   return withPageScripts(request, env, ['/source-fabric-discover.js']);
 }
 
+async function withSeriesAutoSource(request: Request, env: Env): Promise<Response> {
+  return withPageScripts(request, env, ['/source-auto-switch.js']);
+}
+
 async function proxyRuntime(request: Request, env: Env, url: URL): Promise<Response> {
   if (!['GET', 'HEAD'].includes(request.method)) {
     return new Response(JSON.stringify({ error: 'Runtime source routes use GET.' }), {
@@ -148,6 +152,7 @@ export default {
 
     if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') return withSourcesCommandCenter(request, env);
     if (url.pathname === '/discover' || url.pathname === '/discover/' || url.pathname === '/discover.html') return withExpandedDiscover(request, env);
+    if (url.pathname.startsWith('/series/')) return withSeriesAutoSource(request, env);
     return legacy.fetch(request, env);
   },
 };
