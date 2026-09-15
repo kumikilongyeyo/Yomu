@@ -617,12 +617,48 @@
    * because the way past is the normal route: series page, tap a chapter,
    * reader. Waiting for a position would mean the first card a title ever
    * draws is the one without a picture.
+   *
+   * Two things make this harder than it looks, and getting either wrong stores
+   * the wrong picture against the right title -- which then sticks, because
+   * the reader has no cover of its own to correct it with.
+   *
+   * The selectors are the series screen's own, not the first .cover and the
+   * first h1 on the page. Those matched the home carousel's hero and recorded
+   * whatever happened to be featured that minute.
+   *
+   * And the route is required to have been current for a moment first. This
+   * app navigates without a document load, so for a tick or two after a tap
+   * the URL is already the new series while the DOM is still the old screen --
+   * long enough for an observer callback to read one and attribute it to the
+   * other.
    */
+  const SETTLE_MS = 600;
+  let seriesSettling = { route: '', at: 0, timer: null };
+
   function trackSeriesPage() {
     const context = seriesPageContext();
-    if (!context) return;
-    const cover = backgroundUrl(document.querySelector('.cover'));
-    const title = document.querySelector('.page-heading h1, h1')?.textContent?.trim() || '';
+    if (!context) {
+      if (seriesSettling.timer) clearTimeout(seriesSettling.timer);
+      seriesSettling = { route: '', at: 0, timer: null };
+      return;
+    }
+
+    const route = titleKey(context.sourceId, context.seriesId);
+    if (seriesSettling.route !== route) {
+      if (seriesSettling.timer) clearTimeout(seriesSettling.timer);
+      // A settled page stops mutating, so the tick that would finally pass the
+      // check may never come. This is that tick.
+      seriesSettling = {
+        route,
+        at: Date.now(),
+        timer: setTimeout(() => { seriesSettling.timer = null; trackSeriesPage(); }, SETTLE_MS + 60),
+      };
+      return;
+    }
+    if (Date.now() - seriesSettling.at < SETTLE_MS) return;
+
+    const cover = backgroundUrl(document.querySelector('.series-hero-art'));
+    const title = document.querySelector('.series-hero-copy h1')?.textContent?.trim() || '';
     if (!cover && !title) return;
     noteReading({ ...context, cover, title });
   }
