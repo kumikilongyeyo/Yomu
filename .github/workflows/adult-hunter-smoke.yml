@@ -1,0 +1,85 @@
+name: Adult Hunter smoke test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/adult-hunter-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  hunt-two:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Source Forge dependencies
+        run: npm --prefix tools/source-forge install --no-audit --no-fund
+      - name: Syntax check adult Hunter
+        run: node --check tools/source-forge/src/hunter-adult-smoke.js
+      - name: Install Chromium for live gauntlet
+        run: |
+          cd tools/source-forge
+          npx playwright install --with-deps chromium
+      - name: Hunt until two strict 18+ sources pass
+        run: node tools/source-forge/src/hunter-adult-smoke.js
+      - name: Publish smoke summary
+        if: always()
+        run: |
+          if [ -f adult-hunter-output/summary.md ]; then
+            cat adult-hunter-output/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Adult Hunter did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yomu-adult-hunter-smoke
+          path: adult-hunter-output/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Promote exactly two verified survivors to Community Pack
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const result = JSON.parse(fs.readFileSync('adult-hunter-output/candidate-pack.json', 'utf8'));
+          if (!Array.isArray(result.sources) || result.sources.length < 2) {
+            throw new Error(`Need 2 strict PASS sources; got ${result.sources?.length || 0}`);
+          }
+          const file = 'dist-app/source-packs/community.json';
+          const pack = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const host = value => new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+          const existing = new Set((pack.sources || []).map(source => host(source.url)));
+          const additions = [];
+          for (const source of result.sources) {
+            if (additions.length >= 2) break;
+            if (existing.has(host(source.url))) continue;
+            existing.add(host(source.url));
+            additions.push(source);
+          }
+          if (additions.length !== 2) throw new Error(`Expected 2 new survivors; only ${additions.length} are new.`);
+          pack.sources = [...(pack.sources || []), ...additions];
+          pack.version = Number(pack.version || 0) + 1;
+          pack.updatedAt = new Date().toISOString().slice(0, 10);
+          pack.description = 'Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it. Adult-tagged entries remain subject to Yomu adult-content controls.';
+          fs.writeFileSync(file, JSON.stringify(pack, null, 2) + '\n');
+          console.log('Promoting:', additions.map(source => source.url).join(', '));
+          NODE
+      - name: Commit Community Pack delta
+        run: |
+          git config user.name "Yomu Hunter"
+          git config user.email "actions@users.noreply.github.com"
+          git add dist-app/source-packs/community.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Promote 2 verified adult Hunter sources"
+          git push origin HEAD:main
