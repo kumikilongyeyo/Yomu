@@ -1565,8 +1565,16 @@
 
   function mountImmersiveToggle() {
     if (!inReader()) return;
-    const foot = document.querySelector('.rd-foot');
-    if (!foot) return;
+    // Top right, beside Save, not in the footer.
+    //
+    // It sat under the page counter and the chapter arrows, which are the
+    // controls you press while reading -- so the one control that changes the
+    // shape of the screen was mixed in with the ones that turn pages, and it
+    // read as a misplaced part of the pager rather than a mode switch. Top
+    // right is where a window control belongs, and the header is the bar that
+    // is already about this chapter rather than about your position in it.
+    const head = document.querySelector('.rd-head');
+    if (!head) return;
 
     let button = document.getElementById(IMM_ID);
     if (!button) {
@@ -1599,8 +1607,8 @@
     }
     button.setAttribute('aria-pressed', String(on));
 
-    // Re-asserted rather than rebuilt: React owns the footer.
-    if (button.parentElement !== foot) foot.append(button);
+    // Re-asserted rather than rebuilt: React owns the header.
+    if (button.parentElement !== head) head.append(button);
   }
 
   /* --- gestures and the browser's own exits ----------------------------- */

@@ -1803,3 +1803,13 @@
 @media (max-width: 420px) {
   .chapter-releases { max-width: 38%; }
 }
+
+/* The immersive toggle lives in the header now, so it should read as one of
+   the header's own controls rather than as something added to it. */
+.rd-head .yomu-imm-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  color: var(--text);
+}
+.rd-head .yomu-imm-toggle[aria-pressed='true'] { color: var(--accent); }
