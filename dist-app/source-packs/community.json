@@ -2,7 +2,7 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 1,
+  "version": 2,
   "updatedAt": "2026-09-15",
   "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it.",
   "sources": [
@@ -41,6 +41,22 @@
     {
       "url": "https://mangadistrict.com/",
       "tags": ["general", "manga", "manhwa"]
+    },
+    {
+      "url": "https://asurascans.com/",
+      "tags": ["manhwa", "action", "fantasy"]
+    },
+    {
+      "url": "https://manhuarmtl.com/",
+      "tags": ["manhua", "cultivation", "long-running"]
+    },
+    {
+      "url": "https://kingofshojo.com/",
+      "tags": ["manhwa", "romance", "shoujo"]
+    },
+    {
+      "url": "https://mangabuddy1.co.uk/",
+      "tags": ["general", "manga", "manhwa", "manhua", "older-titles"]
     }
   ]
 }
