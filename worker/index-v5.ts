@@ -1,13 +1,15 @@
 import legacy, { type Env } from './index';
 import { fabricSourceCards, handleFabric } from './source-fabric';
 import { handleKaganeV53 } from './kagane-v53';
+import { handleFederatedResolve, handleStoreFederation } from './store-federation';
 
 /**
  * Source Fabric wrapper.
  *
  * v5 keeps the existing Worker intact and layers remote source execution on top.
- * The Sources screen also receives a tiny portal script at response time, which
- * lets the main UX evolve without rebuilding the exported Expo bundle.
+ * Store Federation v6 now sits in front of the same Add Source button: it finds
+ * maintained Aidoku/Mihon/Mangayomi implementations before Yomu falls back to
+ * generic remote probing. The UI stays paste -> Add -> read.
  */
 async function withSourcesCommandCenter(request: Request, env: Env, url: URL): Promise<Response> {
   const response = await legacy.fetch(request, env);
@@ -44,6 +46,19 @@ export default {
 
     if (url.pathname.startsWith('/api/fabric/source/kagane/')) {
       return handleKaganeV53(request, url);
+    }
+
+    if (url.pathname === '/api/fabric/resolve') {
+      return handleFederatedResolve(
+        request,
+        env,
+        url,
+        (nextRequest) => handleFabric(nextRequest, env, url),
+      );
+    }
+
+    if (url.pathname.startsWith('/api/fabric/stores/')) {
+      return handleStoreFederation(request, env, url);
     }
 
     if (url.pathname.startsWith('/api/fabric/')) {
