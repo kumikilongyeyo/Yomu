@@ -174,7 +174,7 @@
  * accent too. That is a deliberate flattening -- if a selected chip beside a
  * CTA stops reading as two things, this is why.
  * -------------------------------------------------------------------- */
-:root:not([data-mode='light']) {
+:root[data-mode='dark'] {
   --bg:            var(--au-bg);
   --surface:       var(--au-surface);
   --raised:        var(--au-raised);
@@ -231,8 +231,8 @@
 /* The kit calls Aurora "navy with a three-point gradient". yomu-overrides.css
    paints the previous kit's two-point wash on the same elements, so both are
    restated here rather than left to blend. */
-:root:not([data-mode='light']) body,
-:root:not([data-mode='light']) .g-app {
+:root[data-mode='dark'] body,
+:root[data-mode='dark'] .g-app {
   background:
     radial-gradient(ellipse 120% 80% at 6% -10%,  rgba(22,48,74,.40),  transparent 60%),
     radial-gradient(ellipse 100% 70% at 96% 18%,  rgba(29,47,74,.30),  transparent 55%),
@@ -248,6 +248,7 @@
  * replaces its values rather than adding a mode. Equal specificity to the
  * block it overrides, so it depends on this file loading second.
  * -------------------------------------------------------------------- */
+:root:not([data-mode='dark']),
 :root[data-mode='light'] {
   --bg:            var(--pa-bg);
   --surface:       var(--pa-surface);
@@ -297,7 +298,9 @@
   color-scheme: light;
 }
 
+:root:not([data-mode='dark']) body,
 :root[data-mode='light'] body,
+:root:not([data-mode='dark']) .g-app,
 :root[data-mode='light'] .g-app {
   background:
     radial-gradient(ellipse 120% 80% at 8% -8%,   rgba(255,255,255,.80), transparent 60%),
@@ -315,31 +318,31 @@
  * the colours live in section 1 and are not duplicated. It must stay in sync
  * with 4b by hand; patch-bundle.mjs cannot check a stylesheet.
  * -------------------------------------------------------------------- */
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root[data-mode='system'] {
-    --bg:            var(--pa-bg);
-    --surface:       var(--pa-surface);
-    --raised:        var(--pa-raised);
-    --elevated:      var(--pa-elevated);
-    --overlay:       var(--pa-overlay);
-    --scrim:         var(--pa-scrim);
-    --glass:         var(--pa-glass);
+    --bg:            var(--au-bg);
+    --surface:       var(--au-surface);
+    --raised:        var(--au-raised);
+    --elevated:      var(--au-elevated);
+    --overlay:       var(--au-overlay);
+    --scrim:         var(--au-scrim);
+    --glass:         var(--au-glass);
 
-    --line:          var(--pa-line);
-    --line2:         var(--pa-line2);
-    --hairline:      var(--pa-hairline);
-    --hair:          var(--pa-hair);
-    --sep:           var(--pa-sep);
+    --line:          var(--au-line);
+    --line2:         var(--au-line2);
+    --hairline:      var(--au-hairline);
+    --hair:          var(--au-hair);
+    --sep:           var(--au-sep);
 
-    --text:          var(--pa-text);
-    --muted:         var(--pa-muted);
-    --dim:           var(--pa-dim);
-    --faint:         var(--pa-faint);
+    --text:          var(--au-text);
+    --muted:         var(--au-muted);
+    --dim:           var(--au-dim);
+    --faint:         var(--au-faint);
 
-    --accent:        var(--ua-l, var(--pa-accent));
-    --accentText:    var(--ua-l-ink, var(--pa-onaccent));
-    --accentSoft:    var(--ua-l-soft, var(--pa-accsoft));
-    --accentLine:    var(--ua-l-line, var(--pa-accline));
+    --accent:        var(--ua-d, var(--au-accent));
+    --accentText:    var(--ua-d-ink, var(--au-onaccent));
+    --accentSoft:    var(--ua-d-soft, var(--au-accsoft));
+    --accentLine:    var(--ua-d-line, var(--au-accline));
     --selection:     var(--accent);
     --selectionText: var(--accentText);
     --selectionSoft: var(--accentSoft);
@@ -347,30 +350,30 @@
     --cta:           var(--accent);
     --ctaText:       var(--accentText);
 
-    --warn:          var(--pa-warn);
-    --warnSoft:      var(--pa-warnsoft);
-    --warnLine:      var(--pa-warnline);
-    --bad:           var(--pa-bad);
-    --hot:           var(--pa-hot);
+    --warn:          var(--au-warn);
+    --warnSoft:      var(--au-warnsoft);
+    --warnLine:      var(--au-warnline);
+    --bad:           var(--au-bad);
+    --hot:           var(--au-hot);
 
-    --shadow:        var(--pa-shadow);
-    --bezel:         var(--pa-bezel);
-    --lift:          var(--pa-lift);
+    --shadow:        var(--au-shadow);
+    --bezel:         var(--au-bezel);
+    --lift:          var(--au-lift);
 
-    --card:          var(--pa-surface);
-    --card2:         var(--pa-raised);
-    --accsoft:       var(--pa-accsoft);
-    --on-accent:     var(--pa-onaccent);
+    --card:          var(--au-surface);
+    --card2:         var(--au-raised);
+    --accsoft:       var(--au-accsoft);
+    --on-accent:     var(--au-onaccent);
 
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   :root[data-mode='system'] body,
   :root[data-mode='system'] .g-app {
     background:
-      radial-gradient(ellipse 120% 80% at 8% -8%,   rgba(255,255,255,.80), transparent 60%),
-      radial-gradient(ellipse 110% 70% at 95% 12%,  rgba(239,231,215,.45), transparent 55%),
-      radial-gradient(ellipse 140% 90% at 50% 106%, rgba(233,224,205,.55), transparent 60%),
+      radial-gradient(ellipse 120% 80% at 6% -10%,  rgba(22,48,74,.40),  transparent 60%),
+      radial-gradient(ellipse 100% 70% at 96% 18%,  rgba(29,47,74,.30),  transparent 55%),
+      radial-gradient(ellipse 140% 90% at 50% 108%, rgba(16,37,58,.35),  transparent 60%),
       var(--bg);
   }
 }
@@ -431,12 +434,16 @@ h1, h2 {
   background: url('/brand/yomu-mark-paper.svg') left center / contain no-repeat;
   min-width: 34px;
 }
+:root:not([data-mode='dark']) .yomu-logo,
 :root[data-mode='light'] .yomu-logo {
   background-image: url('/brand/yomu-mark-ink.svg');
 }
-@media (prefers-color-scheme: light) {
+:root[data-mode='dark'] .yomu-logo {
+  background-image: url('/brand/yomu-mark-paper.svg');
+}
+@media (prefers-color-scheme: dark) {
   :root[data-mode='system'] .yomu-logo {
-    background-image: url('/brand/yomu-mark-ink.svg');
+    background-image: url('/brand/yomu-mark-paper.svg');
   }
 }
 
@@ -503,14 +510,20 @@ h1, h2 {
   background: url('/brand/yomu-loader-paper.png') 0 0 / calc(var(--s) * 12) var(--s) no-repeat;
   animation: yomu-flip var(--motion-loader) infinite;
 }
+:root:not([data-mode='dark']) .spin,
+:root:not([data-mode='dark']) .yomu-loader,
 :root[data-mode='light'] .spin,
 :root[data-mode='light'] .yomu-loader {
   background-image: url('/brand/yomu-loader-ink.png');
 }
-@media (prefers-color-scheme: light) {
+:root[data-mode='dark'] .spin,
+:root[data-mode='dark'] .yomu-loader {
+  background-image: url('/brand/yomu-loader-paper.png');
+}
+@media (prefers-color-scheme: dark) {
   :root[data-mode='system'] .spin,
   :root[data-mode='system'] .yomu-loader {
-    background-image: url('/brand/yomu-loader-ink.png');
+    background-image: url('/brand/yomu-loader-paper.png');
   }
 }
 /* Amber ground in either palette, so never the light sheet. */

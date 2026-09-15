@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#080d14" />
+  <meta name="theme-color" content="#f5f2ec" />
   <title>Yomu · Getting set up</title>
   <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
   <style>
@@ -38,7 +38,34 @@
       color: var(--text, #f4f6fa);
       font-family: var(--uiFont, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
     }
-    main { width: min(620px, 100%); margin: 0 auto; }
+    /* The kit centres the step in the screen rather than stacking it under
+       the progress bar, and centres the welcome outright. */
+    main {
+      width: min(620px, 100%);
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    .pane { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .pane[hidden] { display: none; }
+    #pane-0 { text-align: center; align-items: center; }
+    #pane-0 .blurb { margin-inline: auto; }
+    #pane-0 .acts { justify-content: center; }
+
+    /* Back on the left, the rest on the right, and never past the edge:
+       three buttons in a row that was drawn for two is what pushed Continue
+       and Finish off the side of a phone. */
+    .acts {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 100%;
+    }
+    .acts .grow { flex: 1 1 auto; min-width: 0; }
+    .acts .btn { flex: 0 1 auto; min-width: 0; }
 
     .top { padding: 26px 0 4px; }
     .track { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
@@ -321,6 +348,7 @@
     <p class="gtitle">Add more later</p>
     <div class="card" id="extraList"></div>
 
+    <p class="blurb" id="finishNote" hidden style="color:var(--warn)">Turn at least one source on — Yomu has nothing to read without one.</p>
     <div class="acts">
       <button class="btn plain" type="button" data-go="3">Back</button>
       <span class="grow"></span>
@@ -394,8 +422,6 @@
     { id: 'manga',   name: 'Manga',      note: 'Japanese, right to left',         count: 75579 },
     { id: 'manhua',  name: 'Manhua',     note: 'Chinese, colour',                 count: 6378 },
     { id: 'webtoon', name: 'Comics',     note: 'Western, page based',             count: null },
-    { id: 'novel',   name: 'Web novels', note: 'Text chapters — no source yet',   count: null, dead: true },
-    { id: 'nsfw',    name: 'Mature 18+', note: 'Off by default, and asked for separately', count: null, gate: true },
   ];
 
   const ORIGIN = location.origin;
@@ -563,17 +589,6 @@
       small.textContent = k.count ? fmt(k.count) + ' on MangaDex alone' : k.note;
       b.style.setProperty('--i', String(box.children.length));
       b.append(tick, strong, small);
-      if (k.dead || k.gate) {
-        // Shown because the kit shows them, greyed because choosing them here
-        // would be a lie: nothing carries web novels yet, and mature titles
-        // are behind a confirmation screen that this flow must not walk past.
-        b.classList.add('dim');
-        b.setAttribute('aria-disabled', 'true');
-        b.removeAttribute('role');
-        if (k.gate) small.textContent = 'Off by default. Settings asks you to confirm your age.';
-        box.append(b);
-        return;
-      }
       b.addEventListener('click', () => {
         if (picked.has(k.id)) picked.delete(k.id); else picked.add(k.id);
         b.setAttribute('aria-checked', String(picked.has(k.id)));
@@ -658,6 +673,10 @@
         a.className = 'btn quiet';
         a.style.padding = '9px 14px';
         a.href = item.href;
+        // A new tab, because setup is not saved until Finish: following this
+        // in place threw the flow away and left you back at step one.
+        a.target = '_blank';
+        a.rel = 'noopener';
         a.textContent = 'Open';
         row.append(a);
       }
@@ -720,6 +739,8 @@
 
     $('onCount').textContent = on.length + ' on';
     $('finish').disabled = on.length === 0;
+    // A disabled button with no reason beside it reads as a broken one.
+    $('finishNote').hidden = on.length > 0;
     $('doneLine').textContent = counted
       ? fmt(counted) + '+ titles across ' + on.length + ' sources, waiting on your home page.'
       : on.length + ' source' + (on.length === 1 ? '' : 's') + ' ready.';
@@ -765,7 +786,9 @@
   /* ---- writing it down --------------------------------------------------- */
   $('finish').addEventListener('click', () => {
     const on = SOURCES.filter((s) => s.on);
-    if (!on.length) return;
+    // Cannot happen while the button is disabled, but a stuck screen with no
+    // reason given is the worst way to find out otherwise.
+    if (!on.length) { $('finishNote').hidden = false; return; }
 
     // The collection's own shape. Anything already there is kept and simply
     // switched on or off, so re-running setup never destroys a source that

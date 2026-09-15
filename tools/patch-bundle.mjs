@@ -461,6 +461,16 @@ const EDITS = [
     from: "close:(0,n.jsx)(\"path\",{d:\"M6 6l12 12M18 6 6 18\"})",
     to: "close:(0,n.jsx)(\"path\",{d:\"M6 6 18 18M18 6 6 18\"})",
   },
+  {
+    name: 'appearance: light is the default',
+    why:
+      'GlassRoot read localStorage yomu.appearance and fell back to dark. The ' +
+      'brand is white and yellow, so the app opens on Paper now and dark is ' +
+      'something you choose. The stylesheet defaults the same way, and the ' +
+      'status bar tint below follows.',
+    from: "document.documentElement.dataset.mode=localStorage.getItem('yomu.appearance')||'dark'",
+    to:   "document.documentElement.dataset.mode=localStorage.getItem('yomu.appearance')||'light'",
+  },
 ];
 
 
@@ -613,13 +623,13 @@ if (!failed) {
          rather than an OS preference, so a media-switched meta would be right
          for System viewers and wrong for anyone who forced the other mode.
          Aurora is the default, so Aurora is the tint. */
-      ...['#070708', '#0b0d12', '#141414', '#0c131b'].flatMap((old) =>
+      ...['#070708', '#0b0d12', '#141414', '#0c131b', '#080d14'].flatMap((old) =>
         // Expo writes the tag as `"/>`; the hand-written pages write `" />`.
         // Both spellings are in the tree, so both are matched.
         ['/>', ' />'].map((close) => ({
           name: `theme-color ${old}${close === ' />' ? ' (hand-written)' : ''}`,
           from: `<meta name="theme-color" content="${old}"${close}`,
-          to:   `<meta name="theme-color" content="#080d14"${close}`,
+          to:   `<meta name="theme-color" content="#f5f2ec"${close}`,
         })),
       ),
       {
