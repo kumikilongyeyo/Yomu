@@ -108,20 +108,25 @@
   function readSeenOrigins() {
     try {
       const raw = localStorage.getItem(COMMUNITY_SEEN_KEY);
-      if (!raw) return null;
+      if (!raw) return new Set();
       const value = JSON.parse(raw);
-      return Array.isArray(value?.origins) ? new Set(value.origins.map(String)) : null;
+      return Array.isArray(value?.origins) ? new Set(value.origins.map(String)) : new Set();
     } catch {
-      return null;
+      return new Set();
     }
   }
 
-  function saveSeenOrigins(parsed) {
+  function saveAddedOrigins(urls, version = '') {
     try {
+      const seen = readSeenOrigins();
+      for (const url of urls || []) {
+        const key = originKey(url);
+        if (key) seen.add(key);
+      }
       localStorage.setItem(COMMUNITY_SEEN_KEY, JSON.stringify({
-        version: parsed.version || '',
+        version: String(version || ''),
         checkedAt: Date.now(),
-        origins: parsed.urls.map(originKey).filter(Boolean),
+        origins: [...seen],
       }));
     } catch {}
   }
@@ -147,11 +152,6 @@
 
   async function communityDelta(parsed) {
     const seen = readSeenOrigins();
-    if (seen) {
-      const fresh = parsed.urls.filter((url) => !seen.has(originKey(url)));
-      return { fresh, known: parsed.urls.length - fresh.length, basis: 'seen' };
-    }
-
     const collection = readCollection();
     const enabledIds = new Set(collection.sources
       .filter((source) => source && source.enabled !== false)
@@ -166,10 +166,12 @@
     for (const url of parsed.urls) {
       const extension = extensionForUrl(url, extensions);
       const id = extension?.id ? 'yomuext-' + extension.id : '';
-      if (id && enabledIds.has(id)) known += 1;
+      const alreadyInstalled = !!id && enabledIds.has(id);
+      const alreadyAddedThroughPack = seen.has(originKey(url));
+      if (alreadyInstalled || alreadyAddedThroughPack) known += 1;
       else fresh.push(url);
     }
-    return { fresh, known, basis: 'installed' };
+    return { fresh, known, basis: 'installed+added' };
   }
 
   function mount() {
@@ -219,6 +221,19 @@
       if (modeButton) modeButton.dataset.new = String(safe);
     }
 
+    async function refreshCommunityBadge() {
+      try {
+        const parsed = await loadJson(RAW_COMMUNITY_PACK);
+        const delta = await communityDelta(parsed);
+        paintBadge(delta.fresh.length);
+        if (delta.fresh.length) status.textContent = `${delta.fresh.length} new Community Pack source${delta.fresh.length === 1 ? '' : 's'} available.`;
+        return { parsed, delta };
+      } catch {
+        paintBadge(0);
+        return null;
+      }
+    }
+
     async function applyPack(url) {
       load.disabled = true;
       community.disabled = true;
@@ -228,21 +243,23 @@
         const version = parsed.version ? ` v${parsed.version}` : '';
 
         if (isCommunityUrl(url)) {
+          pack.dataset.communityPack = '1';
+          pack.dataset.communityVersion = parsed.version || '';
           status.textContent = `Checking ${parsed.name}${version} against this device…`;
           const delta = await communityDelta(parsed);
           textarea.value = delta.fresh.join('\n');
           paintBadge(delta.fresh.length);
 
           if (delta.fresh.length) {
-            status.textContent = `${parsed.name}${version} · ${delta.fresh.length} new · ${delta.known} already known. Only the new sources are queued below.`;
-            if (summary) summary.textContent = `${delta.fresh.length} new source${delta.fresh.length === 1 ? '' : 's'} ready to test · ${delta.known} skipped as already known.`;
+            status.textContent = `${parsed.name}${version} · ${delta.fresh.length} new. Only new sources are queued.`;
+            if (summary) summary.textContent = `${delta.fresh.length} new Community Pack source${delta.fresh.length === 1 ? '' : 's'} ready to test.`;
           } else {
-            status.textContent = `${parsed.name}${version} · You're up to date. ${delta.known} existing source${delta.known === 1 ? '' : 's'} will not be retested.`;
-            if (summary) summary.textContent = 'Community Pack is up to date. Nothing to retest.';
+            status.textContent = `${parsed.name}${version} · You're up to date.`;
+            if (summary) summary.textContent = 'Community Pack is up to date.';
           }
-          saveSeenOrigins(parsed);
-          paintBadge(0);
         } else {
+          delete pack.dataset.communityPack;
+          delete pack.dataset.communityVersion;
           textarea.value = parsed.urls.join('\n');
           status.textContent = `Loaded ${parsed.name}${version} · ${parsed.urls.length} sources${parsed.truncated ? ` · first ${MAX_URLS} shown` : ''}. Review, then press Test & add source pack.`;
           if (summary) summary.textContent = `${parsed.urls.length} sources loaded from JSON. Ready to test.`;
@@ -278,17 +295,13 @@
       }
     });
 
-    (async () => {
-      try {
-        const parsed = await loadJson(RAW_COMMUNITY_PACK);
-        const delta = await communityDelta(parsed);
-        paintBadge(delta.fresh.length);
-        if (delta.fresh.length) status.textContent = `${delta.fresh.length} new Community Pack source${delta.fresh.length === 1 ? '' : 's'} available.`;
-      } catch {
-        paintBadge(0);
-      }
-    })();
+    window.addEventListener('yomu:community-pack-added', (event) => {
+      const urls = Array.isArray(event?.detail?.urls) ? event.detail.urls : [];
+      if (urls.length) saveAddedOrigins(urls, event?.detail?.version || pack.dataset.communityVersion || '');
+      refreshCommunityBadge();
+    });
 
+    refreshCommunityBadge();
     return true;
   }
 
