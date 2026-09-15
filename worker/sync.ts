@@ -117,6 +117,9 @@ export interface SyncPatch {
   progress?: ProgressEntry[];
   sources?: SourceEntry[];
   searchHistory?: string[];
+  /** Turning the setting off: drop what is stored rather than just stopping.
+   *  An opt-in that leaves the old data behind was never really opt-in. */
+  forgetSearchHistory?: boolean;
 }
 
 export const titleKey = (sourceId: string, id: string) => `${sourceId}:${id}`;
@@ -363,9 +366,13 @@ export function applyPatch(doc: SyncDoc, patch: SyncPatch, now: number): SyncDoc
     removed,
     progress,
     sources: mergeSources(doc.sources, patch.sources, now),
-    ...(patch.searchHistory
-      ? { searchHistory: [...new Set([...(patch.searchHistory ?? []), ...(doc.searchHistory ?? [])])].slice(0, 100) }
-      : {}),
+    // Absent means "this device is not sharing", which must not erase what
+    // another device shares -- so only an explicit forget clears it.
+    ...(patch.forgetSearchHistory
+      ? { searchHistory: undefined }
+      : patch.searchHistory
+        ? { searchHistory: [...new Set([...patch.searchHistory, ...(doc.searchHistory ?? [])])].slice(0, 100) }
+        : {}),
     revision: doc.revision + 1,
     updatedAt: now,
   };

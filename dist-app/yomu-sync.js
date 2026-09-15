@@ -22,7 +22,16 @@
  *   18+ allowed / blur   a shared laptop must not inherit the phone's answer
  *   theme, fullscreen    a phone and a 27" monitor want different answers
  *   downloads            actual files on actual disks
- *   the Mihon bridge URL a tunnel address is a secret and it changes
+ *   the configured API   yomu.v1.source-config holds a base URL somebody typed,
+ *                        which can be a LAN or tunnel address
+ *   search history       off unless asked for: it is a record of what you
+ *                        looked for, not a setting
+ *
+ * The Mihon bridge is not on that list, contrary to what the proposal assumed.
+ * Its rows are stored as <origin>/api/suwayomi/source/<id>/ and hold nothing
+ * private -- the tunnel address is a Worker secret, set once per deployment
+ * and shared by every device, so there is no per-device URL to withhold or to
+ * re-enter. The bridge sources ride along with every other source row.
  *
  * When the Expo source turns up this belongs in a store beside the collection;
  * delete this file then.
@@ -32,6 +41,10 @@
 
   const STATE_KEY = 'yomu.v1.sync';
   const COLLECTION_KEY = 'yomu.v1.collection';
+  // find.html's key, not the compiled screen's yomu.v1.search: /find.html is
+  // what Discover opens now, and eight entries is the list it keeps.
+  const HISTORY_KEY = 'yomu.v1.searchHistory';
+  const HISTORY_MAX = 8;
   const READING_KEY = 'yomu.v1.reading';
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
 
@@ -59,6 +72,9 @@
   };
   const setState = (patch) => writeJSON(STATE_KEY, { ...state(), ...patch });
   const linked = () => !!(state().code && state().deviceId);
+  /** Off unless asked for. A search history is a record of what you looked
+   *  for, which is a different kind of thing from a library. */
+  const sharingSearches = () => state().searchHistory === true;
 
   /** Enough to tell two of your own devices apart in a list, and no more. */
   function deviceName() {
@@ -193,6 +209,11 @@
         .filter((s) => s && s.enabled && s.id)
         .map((s) => ({ id: s.id, label: s.label, category: s.category, kind: s.kind, url: s.url })),
       progress: progressPatch(),
+      ...(sharingSearches()
+        ? { searchHistory: readJSON(HISTORY_KEY, []) || [] }
+        // Sent once on the way out, so turning the setting off removes what is
+        // already stored rather than merely stopping the next push.
+        : state().forgetSearches ? { forgetSearchHistory: true } : {}),
     };
   }
 
@@ -299,6 +320,14 @@
       }
     }
 
+    if (sharingSearches() && Array.isArray(doc.searchHistory)) {
+      const merged = [...new Set([
+        ...(readJSON(HISTORY_KEY, []) || []),
+        ...doc.searchHistory,
+      ])].filter((q) => typeof q === 'string').slice(0, HISTORY_MAX);
+      writeJSON(HISTORY_KEY, merged);
+    }
+
     seedReadingIndex(doc);
 
     // `seen` is re-based on what was just written, so a title removed by
@@ -372,7 +401,8 @@
       // not acknowledged has to be sent again, or closing the tab between
       // noticing it and pushing it loses the delete.
       const stillPending = (state().removed || []).filter((k) => !patch.removed.includes(k));
-      setState({ lastPush: Date.now(), removed: stillPending });
+      setState({ lastPush: Date.now(), removed: stillPending,
+        ...(patch.forgetSearchHistory ? { forgetSearches: false } : {}) });
       if (applyDoc(doc)) announce();
       renderGroup();
     } catch (error) {
@@ -507,6 +537,25 @@
     }
 
     group.append(row('Pair a device', 'Show a QR or a one-time code', () => openSheet('show')));
+
+    // The one thing here that is opt-in, and the only row that states which
+    // way it is set: everything else in this group syncs because that is what
+    // the group is for, but a list of what you searched for is a different
+    // kind of thing and the answer should be visible without tapping.
+    const on = sharingSearches();
+    group.append(row(
+      'Sync search history',
+      on ? 'On · shared with your other devices' : 'Off · stays on this device',
+      () => {
+        // forgetSearches survives until a push confirms it, so switching off
+        // and closing the tab still removes what was stored.
+        setState({ searchHistory: !on, ...(on ? { forgetSearches: true } : {}) });
+        renderGroup();
+        pushNow();
+      },
+      on ? ' is-accent' : '',
+    ));
+
     group.append(row('Replace the code', 'Unpairs every other device at once', regenerate));
   }
 
