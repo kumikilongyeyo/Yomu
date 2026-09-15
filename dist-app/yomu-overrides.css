@@ -1849,3 +1849,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* The circle's rows now sit on Your Yomu rather than in Settings, so they
+   need the same shapes there. */
+#yomu-circle-here .settings-group { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; overflow: hidden; }
+#yomu-circle-here .settings-row {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; min-height: 54px; padding: 11px 14px;
+  border: 0; border-top: 1px solid var(--line);
+  background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+#yomu-circle-here .settings-row:first-child { border-top: 0; }
+#yomu-circle-here div.settings-row { cursor: default; }
+#yomu-circle-here .settings-row__copy { flex: 1; min-width: 0; }
+#yomu-circle-here .settings-row strong { display: block; font: 600 14px/1.3 var(--uiFont); }
+#yomu-circle-here .settings-row small { display: block; margin-top: 2px; font: 400 12px/1.4 var(--uiFont); color: var(--faint); overflow-wrap: anywhere; }
+#yomu-circle-here .settings-row.is-accent { background: var(--accentSoft); }
+#yomu-circle-here .settings-row.is-accent small {
+  color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px; letter-spacing: .06em;
+}

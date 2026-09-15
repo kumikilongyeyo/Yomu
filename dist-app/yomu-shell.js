@@ -877,12 +877,27 @@
       pages: count ? count.pages : null,
     });
 
-    if (!count || count.pages <= 0 || !atChapterEnd()) return;
+    if (!count || count.pages <= 0 || !atChapterEnd()) { atEnd = false; return; }
+
+    // Reaching the foot of a chapter is the one moment the reader can be
+    // sure you want the controls back: the next chapter is behind them, and
+    // double tapping to summon something the reader already knows you need
+    // is a step for nothing. Held open rather than flashed for two seconds,
+    // so it waits for you. Announced once per arrival -- scrolling about
+    // down there must not keep re-summoning a bar you just dismissed.
+    if (!atEnd) {
+      atEnd = true;
+      globalThis.__yomuHoldChrome?.();
+    }
+
     const seen = context.seriesId + ' ' + context.chapterId;
     if (markedRead.has(seen)) return;
     markedRead.add(seen);
     markChapterRead(context.seriesId, context.chapterId);
   }
+
+  /** Whether the foot of the current chapter has already been announced. */
+  let atEnd = false;
 
   // Scrolling to the foot of the last page changes no markup, so the mutation
   // observer never runs and the chapter goes unmarked. Capture phase because a

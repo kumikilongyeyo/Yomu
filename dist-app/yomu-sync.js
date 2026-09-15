@@ -484,12 +484,30 @@
     return element;
   }
 
+  /** The door to Your Yomu. The sidebar has one too, but it is desktop only,
+   *  so on a phone this is the only way in. */
+  function youRow() {
+    const link = document.createElement('a');
+    link.className = 'settings-row';
+    link.href = '/you';
+    const copy = document.createElement('div');
+    copy.className = 'settings-row__copy';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Your Yomu';
+    const small = document.createElement('small');
+    small.textContent = 'Your name, what you have read, your circle, the accent colour';
+    copy.append(strong, small);
+    link.append(copy);
+    return link;
+  }
+
   function renderGroup() {
     const group = document.getElementById(GROUP_ID);
     if (!group) return;
     group.textContent = '';
 
     if (!linked()) {
+      group.append(youRow());
       const start = row(
         'Turn on sync',
         'One library across every device. No email, no password.',
@@ -520,8 +538,8 @@
       return;
     }
 
-    const code = row('Your Yomu code', display(state().code), () => openSheet('show'), ' is-accent');
-    group.append(code);
+    group.append(youRow());
+    group.append(row('Your Yomu code', display(state().code), () => openSheet('show'), ' is-accent'));
 
     for (const device of devices) {
       const mine = device.id === state().deviceId;
@@ -592,7 +610,7 @@
       label = document.createElement('div');
       label.className = 'group-label';
       label.id = GROUP_ID + '-label';
-      label.textContent = 'Devices';
+      label.textContent = 'Your Yomu';
       group = document.createElement('section');
       group.className = 'settings-group glass';
       group.id = GROUP_ID;

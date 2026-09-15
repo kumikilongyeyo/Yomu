@@ -235,55 +235,29 @@
   }
 
   /**
-   * A way in to Your Yomu from Settings.
+   * The circle lives on Your Yomu, not in Settings.
    *
-   * The sidebar has an entry for it, but the sidebar is desktop only -- on a
-   * phone the screen would have had no door at all.
+   * It was a third group of mine in a screen that already had six of the
+   * app's own plus whatever Source Fabric injects, and the result was that
+   * nothing in there had room -- including things that were there first.
+   * Settings keeps the one job that is unambiguously settings: pairing your
+   * own devices. Who you are, and who reads with you, belong together on the
+   * screen that is about that.
+   *
+   * you.html supplies the container; this stays the only copy of the UI.
    */
-  function mountYouRow() {
-    const group = document.getElementById(GROUP_ID);
-    if (!group || document.getElementById('yomu-you-row')) return;
-    const link = document.createElement('a');
-    link.id = 'yomu-you-row';
-    link.className = 'settings-row';
-    link.href = '/you';
-    const copy = document.createElement('div');
-    copy.className = 'settings-row__copy';
-    const strong = document.createElement('strong');
-    strong.textContent = 'Your Yomu';
-    const small = document.createElement('small');
-    small.textContent = 'Your name, what you have read, and the accent colour';
-    copy.append(strong, small);
-    link.append(copy);
-    group.append(link);
-  }
-
   function mountGroup() {
-    if (!location.pathname.startsWith('/settings')) return;
-    const labels = [...document.querySelectorAll('.group-label')];
-    // After Devices, which is where the other code lives. Same neighbourhood,
-    // separate group, so the difference between them is visible.
-    const anchor = document.getElementById('yomu-devices')
-      ?? labels.find((l) => /storage/i.test(l.textContent || ''));
-    if (!anchor) return;
+    const host = document.getElementById('yomu-circle-here');
+    if (!host) return;
 
-    let label = document.getElementById(GROUP_ID + '-label');
     let group = document.getElementById(GROUP_ID);
-    if (!label || !group) {
-      label = document.createElement('div');
-      label.className = 'group-label';
-      label.id = GROUP_ID + '-label';
-      label.textContent = 'Circle';
+    if (!group) {
       group = document.createElement('section');
       group.className = 'settings-group glass';
       group.id = GROUP_ID;
     }
-    // Same rule as the Devices group, and for the same reason: placed once,
-    // then only the label-to-group pairing is re-asserted. Testing position
-    // against the neighbour makes two observer-driven groups chase each other
-    // around the screen forever.
-    if (!group.isConnected || label.nextElementSibling !== group) {
-      anchor.after(label, group);
+    if (!group.isConnected) {
+      host.append(group);
       renderGroup();
       if (joined()) refreshMembers();
     }
@@ -675,7 +649,7 @@
 
   /* --- boot -------------------------------------------------------------- */
 
-  const pass = () => { mountGroup(); mountYouRow(); tickReader(); tickSeries(); };
+  const pass = () => { mountGroup(); tickReader(); tickSeries(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pass);
   else pass();
 

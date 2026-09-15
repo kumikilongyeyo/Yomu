@@ -122,6 +122,27 @@ const EDITS = [
     to:   'return(0,x.jsxs)("div",{className:"chapter-line"+(t?\' is-read\':\'\'),"data-chn":e.number,children:[',
   },
 
+  {
+    name: 'reader: the chrome can be held open from outside',
+    why:
+      'The bars fade after two seconds, which is right while you are reading ' +
+      'and wrong the moment you reach the foot of a chapter -- that is exactly ' +
+      'when you want the next-chapter control, and double tapping to summon it ' +
+      'is a step for something the reader already knows you need.\n' +
+      'Y() shows them and re-arms the hide; this exposes a variant that shows ' +
+      'them and cancels it, so the shell can hold the bar open at the end of a ' +
+      'chapter until you do something.',
+    from:
+      'const X=(0,e.useRef)(null),Y=(0,e.useCallback)(()=>{F(!0),' +
+      'X.current&&clearTimeout(X.current),X.current=setTimeout(()=>F(!1),j)},[]);',
+    to:
+      'const X=(0,e.useRef)(null),Y=(0,e.useCallback)(()=>{F(!0),' +
+      'X.current&&clearTimeout(X.current),X.current=setTimeout(()=>F(!1),j)},[]);' +
+      '(0,e.useEffect)(()=>{globalThis.__yomuHoldChrome=()=>{' +
+      'X.current&&clearTimeout(X.current),F(!0)};' +
+      'return()=>{delete globalThis.__yomuHoldChrome}});',
+  },
+
   /* --- home — app/index.web.tsx --------------------------------------- */
   {
     name: 'home: the app\'s own Continue card yields to the shell\'s row',

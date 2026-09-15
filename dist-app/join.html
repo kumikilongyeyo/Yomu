@@ -55,6 +55,20 @@
       margin-left: 8px;
     }
     .bad { color: var(--bad, #ff968c); }
+    .hand {
+      margin: 16px 0 10px; padding: 11px 13px;
+      border: 1px dashed var(--line, #b5c9df29); border-radius: 12px;
+      font-size: 12.5px; line-height: 1.5; color: var(--muted, #a8b6c7);
+    }
+    .code {
+      margin: 0 0 16px; padding: 12px;
+      border-radius: 12px; background: var(--surface, #17232d);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 17px; font-weight: 700; letter-spacing: .07em;
+      color: var(--accent, #ffc45f); cursor: pointer; overflow-wrap: anywhere;
+    }
+    .code[data-copied] { color: var(--text, #f4f6fa); }
+    .code[data-copied]::after { content: ' · copied'; font-size: 11px; letter-spacing: 0; opacity: .7; }
   </style>
 <link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script></head>
 <body>
@@ -144,10 +158,47 @@
       }
 
       const count = (doc.library || []).length;
+      const extra = document.createElement('div');
+
+      /* The part that matters more than the success message.
+       *
+       * A QR scanned with the Camera app always opens in Safari, and on iOS a
+       * Home Screen app has its own storage that Safari's cannot reach. So
+       * pairing here has paired *Safari*, and if Yomu is installed it still
+       * knows nothing about it -- which looks exactly like the pairing having
+       * failed, and is the single most confusing thing this flow can do.
+       *
+       * So the code is handed over rather than hidden. Typing it into the
+       * installed app is the step that actually finishes the job, and it
+       * cannot be skipped by any means available to a web page. */
+      const standalone = matchMedia('(display-mode: standalone)').matches
+        || navigator.standalone === true;
+
+      if (!standalone) {
+        const heads = document.createElement('p');
+        heads.className = 'hand';
+        heads.textContent = 'If you use Yomu from your Home Screen, open it there and enter this code — '
+          + 'an installed app cannot see what the browser just saved.';
+        const code = document.createElement('p');
+        code.className = 'code';
+        code.textContent = doc.display;
+        code.tabIndex = 0;
+        code.setAttribute('role', 'button');
+        code.title = 'Tap to copy';
+        code.addEventListener('click', () => {
+          navigator.clipboard?.writeText(doc.display).then(
+            () => { code.dataset.copied = 'yes'; },
+            () => {},
+          );
+        });
+        extra.append(heads, code);
+      }
+      extra.append(button('Start reading', '/'));
+
       say('Paired',
         count ? `This device now shares your library — ${count} ${count === 1 ? 'title' : 'titles'}.`
               : 'This device now shares your library.',
-        button('Start reading', '/'));
+        extra);
     } catch (error) {
       const retry = document.createElement('div');
       retry.append(button('Open Yomu', '/'), button('Enter a code instead', '/settings', 'quiet'));
