@@ -9,7 +9,7 @@ import { loadPage, unique } from './runtime.js';
 
 const AIDOKU_INDEX = 'https://raw.githubusercontent.com/Aidoku-Community/sources/gh-pages/index.min.json';
 const MANGA_SCRAPER_MODULES = 'https://raw.githubusercontent.com/YofaGh/MangaScraper/master/modules.yaml';
-const USER_AGENT = 'Yomu-Hunter/2.0 (+github.com/kumikilongyeyo/Yomu)';
+const USER_AGENT = 'Yomu-Hunter/2.1 (+github.com/kumikilongyeyo/Yomu)';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
 
@@ -521,18 +521,95 @@ function compactError(error) {
   return String(error?.message || error || 'Unknown error').replace(/\s+/g, ' ').slice(0, 500);
 }
 
-async function testCandidate(candidate, config) {
+function candidateSeedUrls(candidate) {
+  const urls = [];
+  for (const evidence of candidate?.evidence || []) {
+    const sample = evidence?.sample;
+    if (/^https?:\/\//i.test(sample || '') && sameHost(sample, candidate.host) && !urls.includes(sample)) {
+      urls.push(sample);
+    }
+  }
+  if (candidate?.url && !urls.includes(candidate.url)) urls.push(candidate.url);
+  return urls;
+}
+
+function failureKind(error) {
+  const code = error?.code || '';
+  const message = compactError(error).toLowerCase();
+  if (code === 'ACCESS_BLOCKED' || code === 'ACCESS_CHALLENGE' || /http 403|captcha|access check/.test(message)) return 'access-blocked';
+  if (code === 'NO_SERIES_DISCOVERED' || /could not automatically find a series/.test(message)) return 'discovery-miss';
+  if (/timeout/.test(message)) return 'timeout';
+  return 'probe-error';
+}
+
+async function tryAdapterAware(candidate, config) {
+  if (sameHost(candidate.host, 'tapas.io')) {
+    const { probeTapasPublicFree } = await import('./source-intel.js');
+    const result = await probeTapasPublicFree(config);
+    return {
+      ...result,
+      evidence: candidate.evidence,
+      strategy: 'adapter-aware-public',
+      strategyAttempts: [{ strategy: 'adapter-aware-public', input: candidate.url, ok: result.status !== 'REJECT', status: result.status }]
+    };
+  }
+  return null;
+}
+
+async function genericProbe(candidate, config) {
+  const attempts = [];
+  let lastError = null;
+
+  for (const inputUrl of candidateSeedUrls(candidate)) {
+    const source = inputUrl === candidate.url ? 'generic-site' : 'registry-sample';
+    try {
+      const discovery = await discoverSeriesEntry(inputUrl, {
+        timeout: config.timeout,
+        maxProbes: config.maxProbes,
+        accessMode: 'headless'
+      });
+      const forged = await forgeAdapter(discovery.seriesUrl, {
+        timeout: config.timeout,
+        accessMode: 'headless'
+      });
+      attempts.push({ strategy: source, input: inputUrl, ok: true, seriesUrl: discovery.seriesUrl });
+      return { discovery, forged, attempts, strategy: source };
+    } catch (error) {
+      lastError = error;
+      attempts.push({
+        strategy: source,
+        input: inputUrl,
+        ok: false,
+        failureKind: failureKind(error),
+        error: compactError(error)
+      });
+    }
+  }
+
+  const error = lastError || new Error('No Hunter probe strategy succeeded.');
+  error.strategyAttempts = attempts;
+  throw error;
+}
+
+export async function testCandidate(candidate, config) {
   const startedAt = new Date().toISOString();
   try {
-    const discovery = await discoverSeriesEntry(candidate.url, {
-      timeout: config.timeout,
-      maxProbes: config.maxProbes,
-      accessMode: 'headless'
-    });
-    const forged = await forgeAdapter(discovery.seriesUrl, {
-      timeout: config.timeout,
-      accessMode: 'headless'
-    });
+    const adapterAware = await tryAdapterAware(candidate, config).catch(error => ({
+      adapterProbeError: compactError(error),
+      adapterProbeFailureKind: failureKind(error)
+    }));
+    if (adapterAware?.status) {
+      return {
+        ...adapterAware,
+        host: candidate.host,
+        name: candidate.name,
+        url: candidate.url,
+        startedAt,
+        finishedAt: new Date().toISOString()
+      };
+    }
+
+    const { discovery, forged, attempts, strategy } = await genericProbe(candidate, config);
 
     const [freshness, quality] = await Promise.all([
       inspectFreshness(discovery.seriesUrl, {
@@ -587,6 +664,8 @@ async function testCandidate(candidate, config) {
       score,
       reasons,
       evidence: candidate.evidence,
+      strategy,
+      strategyAttempts: attempts,
       discovery: {
         seriesUrl: discovery.seriesUrl,
         confidence: discovery.confidence,
@@ -613,7 +692,10 @@ async function testCandidate(candidate, config) {
       score: 0,
       reasons: [compactError(error)],
       evidence: candidate.evidence,
+      strategy: 'exhausted',
+      strategyAttempts: error?.strategyAttempts || [],
       errorCode: error?.code || null,
+      failureKind: failureKind(error),
       startedAt,
       finishedAt: new Date().toISOString()
     };
@@ -622,15 +704,15 @@ async function testCandidate(candidate, config) {
 
 function markdownReport(report) {
   const lines = [
-    '# Yomu Hunter v2',
+    '# Yomu Hunter v2.1',
     '',
     `Run: ${report.generatedAt}`,
-    `Filter: full reader gauntlet + high-quality image samples + activity within ${report.config.freshDays} days`,
+    `Filter: adaptive strategy ladder + full reader gauntlet + high-quality image samples + activity within ${report.config.freshDays} days`,
     '',
     `**${report.counts.pass} PASS · ${report.counts.review} REVIEW · ${report.counts.reject} REJECT · ${report.counts.skippedKnown} already known**`,
     '',
-    '| Status | Source | Score | Reader | Freshness | Images |',
-    '|---|---|---:|---|---|---|'
+    '| Status | Source | Score | Strategy | Reader | Freshness | Images |',
+    '|---|---|---:|---|---|---|---|'
   ];
 
   for (const row of report.results) {
@@ -639,7 +721,7 @@ function markdownReport(report) {
       ? `${row.freshness.ageDays}d`
       : row.freshness?.status || '—';
     lines.push(
-      `| ${row.status} | ${row.name || row.host} (${row.host}) | ${row.score} | ${reader} | ${freshness} | ${row.quality?.status || '—'} |`
+      `| ${row.status} | ${row.name || row.host} (${row.host}) | ${row.score} | ${row.strategy || '—'} | ${reader} | ${freshness} | ${row.quality?.status || '—'} |`
     );
   }
 
@@ -652,15 +734,16 @@ function candidatePack(report) {
     schema: 'yomu.source-pack/1',
     id: 'yomu-hunter-candidates',
     name: 'Yomu Hunter Candidates',
-    version: 1,
+    version: 2,
     updatedAt: report.generatedAt,
-    description: `Hunter v2 survivors: reader gauntlet + high-quality images + activity within ${report.config.freshDays} days. Review before promotion.`,
+    description: `Hunter v2.1 survivors: adaptive probe ladder + reader gauntlet + high-quality images + activity within ${report.config.freshDays} days. Review before promotion.`,
     sources: report.results
       .filter(row => row.status === 'PASS')
       .map(row => ({
         url: row.url,
         tags: unique([
           'hunter-v2',
+          'adaptive-probe',
           'high-quality',
           `fresh-${report.config.freshDays}d`,
           ...row.evidence.map(item => item.ecosystem).filter(Boolean)
@@ -718,21 +801,22 @@ export async function runHunter(options = {}) {
     console.log(`[Hunter ${index + 1}/${selected.length}] ${candidate.name} — ${candidate.url}`);
     const result = await testCandidate(candidate, config);
     results.push(result);
-    console.log(`  ${result.status} ${result.score}/100 — ${result.reasons.join('; ')}`);
+    console.log(`  ${result.status} ${result.score}/100 [${result.strategy || 'unknown'}] — ${result.reasons.join('; ')}`);
   }
 
   const rank = { PASS: 0, REVIEW: 1, REJECT: 2 };
   results.sort((a, b) => (rank[a.status] - rank[b.status]) || (b.score - a.score));
 
   const report = {
-    schema: 'yomu.hunter-report/2',
+    schema: 'yomu.hunter-report/3',
     generatedAt: new Date().toISOString(),
     config: {
       max: config.max,
       freshDays: config.freshDays,
       timeout: config.timeout,
       maxProbes: config.maxProbes,
-      allLanguages: config.allLanguages
+      allLanguages: config.allLanguages,
+      adaptiveStrategies: true
     },
     registries: discovery.registries,
     discovery: {
