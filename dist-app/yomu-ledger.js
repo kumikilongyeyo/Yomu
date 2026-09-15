@@ -60,6 +60,11 @@
     if (providerId.startsWith('suwayomi:')) return 'mihon-' + providerId.slice(9);
     return providerId;
   };
+  const toProviderId = (sourceId) => {
+    if (sourceId.startsWith('yomuext-')) return 'ext:' + sourceId.slice(8);
+    if (sourceId.startsWith('mihon-')) return 'suwayomi:' + sourceId.slice(6);
+    return sourceId;
+  };
 
   const collection = () => readJSON(COLLECTION_KEY, null) || {};
   const enabledSourceIds = () =>
@@ -128,10 +133,13 @@
         return;
       }
       // Ordering and gaps are both relative to the source you are reading
-      // from, so the Worker needs to know which that is.
+      // from, so the Worker has to be told which that is -- and told on the
+      // first request, which is the only one that matters. Reading it back out
+      // of the previous response meant it was never sent on a cold open, so
+      // the Worker fell back to the highest-ranked provider and computed gaps
+      // against a source the reader was not using.
       const mine = [...enabledSourceIds()];
-      const preferred = (ledger?.sources || []).find((s) => toAppSource(s.providerId) === context.sourceId);
-      if (preferred) params.set('prefer', preferred.providerId);
+      params.set('prefer', toProviderId(context.sourceId));
 
       const response = await fetch('/api/catalog/chapters?' + params.toString());
       const data = await response.json().catch(() => null);
