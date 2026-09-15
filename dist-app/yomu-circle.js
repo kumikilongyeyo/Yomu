@@ -234,6 +234,30 @@
     setTimeout(() => element.remove(), 5000);
   }
 
+  /**
+   * A way in to Your Yomu from Settings.
+   *
+   * The sidebar has an entry for it, but the sidebar is desktop only -- on a
+   * phone the screen would have had no door at all.
+   */
+  function mountYouRow() {
+    const group = document.getElementById(GROUP_ID);
+    if (!group || document.getElementById('yomu-you-row')) return;
+    const link = document.createElement('a');
+    link.id = 'yomu-you-row';
+    link.className = 'settings-row';
+    link.href = '/you.html';
+    const copy = document.createElement('div');
+    copy.className = 'settings-row__copy';
+    const strong = document.createElement('strong');
+    strong.textContent = 'Your Yomu';
+    const small = document.createElement('small');
+    small.textContent = 'Your name, what you have read, and the accent colour';
+    copy.append(strong, small);
+    link.append(copy);
+    group.append(link);
+  }
+
   function mountGroup() {
     if (!location.pathname.startsWith('/settings')) return;
     const labels = [...document.querySelectorAll('.group-label')];
@@ -651,7 +675,7 @@
 
   /* --- boot -------------------------------------------------------------- */
 
-  const pass = () => { mountGroup(); tickReader(); tickSeries(); };
+  const pass = () => { mountGroup(); mountYouRow(); tickReader(); tickSeries(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pass);
   else pass();
 

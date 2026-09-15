@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0c131b" />
+  <title>Yomu · Your Yomu</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      padding: 0 max(16px, env(safe-area-inset-left)) calc(120px + env(safe-area-inset-bottom));
+      background: var(--bg, #0c131b);
+      color: var(--text, #f4f6fa);
+      font-family: var(--uiFont, system-ui, sans-serif);
+    }
+    main { width: min(560px, 100%); margin: 0 auto; }
+    .top { display: flex; align-items: center; gap: 12px; padding: 22px 0 6px; }
+    .back {
+      width: 40px; height: 40px; display: grid; place-items: center;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: none; color: var(--muted); font-size: 19px;
+      text-decoration: none; flex: none;
+    }
+    h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.015em; }
+
+    .who { display: flex; align-items: center; gap: 15px; margin: 18px 0 4px; }
+    .avatar {
+      width: 62px; height: 62px; border-radius: 50%; flex: none;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, var(--accent, #ffc45f), color-mix(in srgb, var(--accent, #ffc45f) 62%, #000));
+      color: var(--accentText, #18212a);
+      font-size: 25px; font-weight: 900;
+    }
+    .who input {
+      width: 100%; padding: 8px 10px; margin: 0 0 2px;
+      border: 1px solid transparent; border-radius: 10px;
+      background: none; color: var(--text);
+      font: 800 19px/1.2 var(--uiFont); letter-spacing: -.012em;
+    }
+    .who input:hover, .who input:focus {
+      border-color: var(--line); background: var(--surface); outline: none;
+    }
+    .who small { display: block; padding-left: 10px; font-size: 12px; color: var(--faint); }
+
+    .stats { display: flex; margin: 16px 0 6px; }
+    .stat { flex: 1; text-align: center; padding: 10px 4px; }
+    .stat b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat span { font-size: 9.5px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+
+    h2 {
+      margin: 26px 0 9px; font-size: 10px; font-weight: 700;
+      letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
+    }
+    .card {
+      border: 1px solid var(--line); background: var(--surface);
+      border-radius: 14px; overflow: hidden;
+    }
+    .swatches { display: flex; gap: 10px; flex-wrap: wrap; padding: 14px; }
+    .sw {
+      width: 34px; height: 34px; border-radius: 10px; flex: none;
+      border: 2px solid transparent; cursor: pointer; padding: 0;
+    }
+    .sw[aria-checked='true'] { border-color: var(--text); }
+    .sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .row {
+      display: flex; align-items: center; gap: 11px;
+      width: 100%; min-height: 54px; padding: 11px 14px;
+      border: 0; border-top: 1px solid var(--line);
+      background: none; color: var(--text); font: inherit; text-align: left;
+      text-decoration: none; cursor: pointer;
+    }
+    .row:first-child { border-top: 0; }
+    .row div { flex: 1; min-width: 0; }
+    .row strong { display: block; font: 600 14px/1.3 var(--uiFont); }
+    .row small { display: block; margin-top: 2px; font: 400 12px/1.4 var(--uiFont); color: var(--faint); }
+    .note { margin: 10px 2px 0; font: 400 11.5px/1.5 var(--uiFont); color: var(--faint); }
+  </style>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script></head>
+<body>
+<main>
+  <div class="top">
+    <a class="back" href="/settings" aria-label="Back to settings">&lsaquo;</a>
+    <h1>Your Yomu</h1>
+  </div>
+
+  <div class="who">
+    <div class="avatar" id="avatar">Y</div>
+    <div style="min-width:0;flex:1">
+      <input id="name" maxlength="32" placeholder="Your name" aria-label="Your name" />
+      <small id="since"></small>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-series">0</b><span>In library</span></div>
+    <div class="stat"><b id="s-read">0</b><span>Chapters read</span></div>
+    <div class="stat"><b id="s-sources">0</b><span>Sources</span></div>
+  </div>
+  <p class="note" id="stat-note"></p>
+
+  <h2>Accent</h2>
+  <div class="card"><div class="swatches" id="swatches" role="radiogroup" aria-label="Accent colour"></div></div>
+  <p class="note">Yomu draws every screen from one colour token, so this reaches all of them at once.</p>
+
+  <h2>Elsewhere</h2>
+  <div class="card">
+    <a class="row" href="/settings"><div><strong>Devices &amp; sync code</strong><small>Pair another device, or see what is paired</small></div></a>
+    <a class="row" href="/library"><div><strong>Your library</strong><small>Everything you have saved</small></div></a>
+  </div>
+</main>
+
+<script>
+/**
+ * Your Yomu — the identity and cosmetics screen.
+ *
+ * The proposal's Mockup B, built last on purpose: it was the one that could
+ * not justify itself while nobody else was in the app. Circles changed that.
+ * The name here is the name your circle sees, which is the whole reason this
+ * is a screen rather than a settings row.
+ *
+ * Every number on it is derived from storage that already exists. There is
+ * deliberately no "hours read": nothing tracks time, and a number that looks
+ * measured but is guessed is worse than no number.
+ */
+(() => {
+  'use strict';
+
+  const ACCENT_KEY = 'yomu.v1.accent';
+  const SINCE_KEY = 'yomu.v1.since';
+  const CIRCLE_KEY = 'yomu.v1.circle';
+  const COLLECTION_KEY = 'yomu.v1.collection';
+  const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
+
+  const readJSON = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
+    catch { return fallback; }
+  };
+  const writeJSON = (key, value) => {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  };
+
+  /* --- who --- */
+
+  const circle = readJSON(CIRCLE_KEY, {}) || {};
+  const nameField = document.getElementById('name');
+  nameField.value = circle.name || '';
+  const paintAvatar = () => {
+    const text = (nameField.value || 'You').trim();
+    document.getElementById('avatar').textContent = [...text][0].toUpperCase();
+  };
+  paintAvatar();
+  nameField.addEventListener('input', paintAvatar);
+  nameField.addEventListener('change', () => {
+    // Shared with the circle rather than stored twice. Comments already
+    // posted keep the name they were posted under -- that is the server's
+    // rule, and renaming yourself should not rewrite what you said last week.
+    writeJSON(CIRCLE_KEY, { ...readJSON(CIRCLE_KEY, {}), name: nameField.value.trim().slice(0, 32) });
+  });
+
+  /* --- since --- */
+
+  let since = localStorage.getItem(SINCE_KEY);
+  if (!since) { since = String(Date.now()); try { localStorage.setItem(SINCE_KEY, since); } catch {} }
+  const started = new Date(Number(since));
+  const collection = readJSON(COLLECTION_KEY, {}) || {};
+  const sources = (collection.sources || []).filter((s) => s && s.enabled).length;
+  document.getElementById('since').textContent =
+    `Reading since ${started.toLocaleString(undefined, { month: 'long', year: 'numeric' })}`
+    + ` · ${sources} source${sources === 1 ? '' : 's'}`;
+
+  /* --- the numbers --- */
+
+  const library = Array.isArray(collection.library) ? collection.library : [];
+  let read = 0;
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith(RESUME_PREFIX) || !key.endsWith('.read')) continue;
+      const list = readJSON(key, []);
+      if (Array.isArray(list)) read += list.length;
+    }
+  } catch {}
+
+  document.getElementById('s-series').textContent = String(library.filter((t) => !t.hidden).length);
+  document.getElementById('s-read').textContent = read.toLocaleString();
+  document.getElementById('s-sources').textContent = String(sources);
+  document.getElementById('stat-note').textContent = read
+    ? 'Chapters read counts the ones finished to the last page on this device.'
+    : 'Chapters count once you read one to its last page.';
+
+  /* --- accent --- */
+
+  const ACCENTS = [
+    { id: '', hex: '#ffc45f', ink: '#18212a', name: 'Amber' },
+    { id: 'blue', hex: '#9db8ff', ink: '#111a2e', name: 'Periwinkle' },
+    { id: 'green', hex: '#7fd6b0', ink: '#0d241c', name: 'Jade' },
+    { id: 'coral', hex: '#ff968c', ink: '#2c1110', name: 'Coral' },
+    { id: 'violet', hex: '#d3a2ff', ink: '#231133', name: 'Violet' },
+  ];
+
+  const swatches = document.getElementById('swatches');
+  const current = () => localStorage.getItem(ACCENT_KEY) || '';
+
+  function choose(accent) {
+    try { localStorage.setItem(ACCENT_KEY, accent.id); } catch {}
+    // Applied here immediately and by yomu-shell.js on every other page, so
+    // the change is visible before this screen is left.
+    const root = document.documentElement;
+    root.style.setProperty('--accent', accent.hex);
+    root.style.setProperty('--accentText', accent.ink);
+    root.style.setProperty('--accentSoft', accent.hex + '1f');
+    root.style.setProperty('--accentLine', accent.hex + '66');
+    for (const button of swatches.children) {
+      button.setAttribute('aria-checked', String(button.dataset.id === accent.id));
+    }
+  }
+
+  for (const accent of ACCENTS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'sw';
+    button.dataset.id = accent.id;
+    button.style.background = accent.hex;
+    button.setAttribute('role', 'radio');
+    button.setAttribute('aria-label', accent.name);
+    button.setAttribute('aria-checked', String(accent.id === current()));
+    button.addEventListener('click', () => choose(accent));
+    swatches.append(button);
+  }
+  const startingWith = ACCENTS.find((a) => a.id === current()) ?? ACCENTS[0];
+  choose(startingWith);
+})();
+</script>
+</body>
+</html>
