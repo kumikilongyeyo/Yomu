@@ -8,6 +8,8 @@ on:
     paths:
       - '.github/workflows/hunter-adult-manhua-test.yml'
       - 'tools/source-forge/src/hunter-adult-manhua-test.js'
+      - 'tools/source-forge/src/hunter.js'
+      - 'tools/source-forge/src/source-intel.js'
 
 permissions:
   contents: read
@@ -27,8 +29,6 @@ jobs:
         run: |
           cd tools/source-forge
           npx playwright install --with-deps chromium
-      - name: Expose Hunter candidate tester on runner
-        run: echo 'export { testCandidate };' >> tools/source-forge/src/hunter.js
       - name: Run targeted adult/manhua gauntlet
         run: node tools/source-forge/src/hunter-adult-manhua-test.js
       - name: Publish summary
