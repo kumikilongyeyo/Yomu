@@ -814,3 +814,66 @@ h1, h2 {
   scrollbar-width: none;
 }
 .yomu-kin-rail::-webkit-scrollbar { display: none; }
+
+
+/* ==================================================================== *
+ * 9. The home feed sections
+ *
+ * "New chapters" and "Because you read" are built by yomu-shell.js. The rail
+ * borrows .yomu-kin-row wholesale, so only the list needs styling: the kit's
+ * .li -- a small cover, two lines of copy, and nothing else competing.
+ * ==================================================================== */
+
+.yomu-feed__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--line);
+}
+
+.yomu-feed__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+  transition: background var(--motion-tap);
+}
+.yomu-feed__row:hover,
+.yomu-feed__row:focus-visible {
+  background: var(--raised);
+}
+
+.yomu-feed__cv {
+  flex: none;
+  width: 40px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-thumb);
+  background: var(--raised) center / cover no-repeat;
+}
+
+.yomu-feed__tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.yomu-feed__tx b {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -.008em;
+  /* A long title truncates rather than pushing the row taller than its
+     neighbours -- the list reads as a list only while the rows match. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.yomu-feed__tx small {
+  font-size: 12px;
+  color: var(--faint);
+}

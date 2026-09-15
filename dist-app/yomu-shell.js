@@ -2779,6 +2779,240 @@
     }
   }
 
+  /* ------------------------------------------------------------------ *
+   * The rest of the home feed
+   *
+   * The kit's home is a feed, not a grid: the slide, then where you left off,
+   * then what is new, then a rail of things like the last thing you opened.
+   * Continue reading was already built here; these are the other two, and they
+   * live here rather than in the stylesheet because they are new sections with
+   * their own data, not a restyle of something the app already draws.
+   *
+   * Both are home-only. Both fetch once per page load and remember the answer,
+   * including "nothing", so a source that is down is not retried on every
+   * mutation pass. Both take themselves off the page when there is nothing
+   * worth showing, rather than leaving a heading over an empty space.
+   * ------------------------------------------------------------------ */
+
+  const FRESH_ID = 'yomu-fresh';
+  const BECAUSE_ID = 'yomu-because';
+  const FEED_COUNT = 8;
+
+  // onHome is already defined above, for the pull-to-refresh gesture.
+  const adultQuery = () => (adultAllowed() ? '?adult=1' : '');
+
+  const feedRows = new Map();      // key -> the rows, once they have arrived
+  const feedPending = new Set();   // key -> a request already in flight
+
+  /** Null while the answer is unknown; an array once it is, empty included. */
+  function feedOnce(key, url, pick) {
+    if (feedRows.has(key)) return feedRows.get(key);
+    if (feedPending.has(key)) return null;
+    feedPending.add(key);
+    fetch(url, { headers: { accept: 'application/json' } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => { feedRows.set(key, pick(body) || []); })
+      .catch(() => { feedRows.set(key, []); })
+      .finally(() => { feedPending.delete(key); pass(); });
+    return null;
+  }
+
+  /* The same three filters the rest of the app applies: a title the reader
+     hid, one they rated adult, and anything nsfw while the gate is off. */
+  function showable(rows) {
+    const blocked = adultTitles();
+    const saved = library();
+    const allowAdult = adultAllowed();
+    return rows.filter((row) => {
+      if (!row || !row.id) return false;
+      if (!allowAdult && row.nsfw) return false;
+      if (row.sourceId && blocked.has(titleKey(row.sourceId, row.id))) return false;
+      const entry = saved.find((title) => String(title.id) === String(row.id));
+      if (entry && (entry.hidden || String(entry.category || '').toLowerCase() === 'adult')) return false;
+      return true;
+    });
+  }
+
+  /* The catalog names providers its own way and the app addresses sources by
+     the id they carry in the saved collection. Same source, two vocabularies --
+     this is the same mapping find.html uses. */
+  const appSourceId = (providerId) =>
+    providerId.startsWith('ext:') ? 'yomuext-' + providerId.slice(4)
+    : providerId.startsWith('suwayomi:') ? 'mihon-' + providerId.slice(9)
+    : providerId;
+
+  /* Sources that cannot serve pages. Comick is discovery-only by design: it
+     has the widest catalog, which is exactly why it turns up as a title's
+     first provider, and asking it for a chapter is a 502. A row must never
+     open something that cannot be read. Not knowing is survivable -- the
+     catalog's own order is the fallback. */
+  const pageless = new Set();
+  let capabilitiesAsked = false;
+  function learnCapabilities() {
+    if (capabilitiesAsked) return;
+    capabilitiesAsked = true;
+    fetch('/api/ext/sources', { headers: { accept: 'application/json' } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        for (const extension of (body && body.extensions) || []) {
+          if (!(extension.capabilities && extension.capabilities.pages)) {
+            pageless.add('yomuext-' + extension.id);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(pass);
+  }
+
+  /** The provider a row should open: readable, and one the reader has on. */
+  function pickProvider(row) {
+    const providers = Array.isArray(row && row.providers) ? row.providers : [];
+    const readable = providers.filter((provider) => provider && provider.id
+      && !pageless.has(appSourceId(provider.id)));
+    if (!readable.length) return null;
+    const enabled = new Set();
+    const collection = readJSON(COLLECTION_KEY, null);
+    for (const source of (collection && collection.sources) || []) {
+      if (source && source.enabled) enabled.add(String(source.id));
+    }
+    const mine = readable.find((provider) => enabled.has(appSourceId(provider.id)));
+    const chosen = mine || readable[0];
+    return {
+      sourceId: appSourceId(chosen.id),
+      seriesId: String(chosen.seriesId || row.id),
+      label: chosen.name || '',
+    };
+  }
+
+  function feedHead(text) {
+    const head = document.createElement('div');
+    head.className = 'home-sec';
+    const heading = document.createElement('h2');
+    heading.textContent = text;
+    head.append(heading);
+    return head;
+  }
+
+  /** Where a feed section goes: under the one before it, under Continue
+   *  reading if that is there, and under the hero if it is not. */
+  function feedAnchor(afterId) {
+    const previous = afterId && document.getElementById(afterId);
+    if (previous && previous.parentNode) return { parent: previous.parentNode, after: previous };
+    const cont = document.getElementById(CONTINUE_ID);
+    if (cont && cont.parentNode) return { parent: cont.parentNode, after: cont };
+    return continueAnchor();
+  }
+
+  function place(section, anchor) {
+    if (!anchor) return;
+    if (anchor.after) anchor.after.after(section);
+    else anchor.parent.append(section);
+  }
+
+  /* ---- what is new --------------------------------------------------- */
+
+  function freshRow(entry) {
+    const provider = pickProvider(entry);
+    const row = document.createElement('a');
+    row.className = 'yomu-feed__row';
+    row.href = '/series/' + encodeURIComponent(provider ? provider.seriesId : entry.id)
+      + (provider ? '?source=' + encodeURIComponent(provider.sourceId) : '');
+
+    const art = document.createElement('i');
+    art.className = 'yomu-feed__cv';
+    art.setAttribute('aria-hidden', 'true');
+    if (entry.cover) art.style.backgroundImage = 'url("' + entry.cover + '")';
+
+    const copy = document.createElement('span');
+    copy.className = 'yomu-feed__tx';
+    const name = document.createElement('b');
+    name.textContent = entry.title || 'Untitled';
+    const meta = document.createElement('small');
+    meta.textContent = provider ? provider.label : '';
+    copy.append(name, meta);
+
+    row.append(art, copy);
+    return row;
+  }
+
+  function mountFresh() {
+    const existing = document.getElementById(FRESH_ID);
+    if (!onHome()) { if (existing) existing.remove(); return; }
+    if (existing) return;
+
+    const rows = feedOnce('latest', '/api/catalog/latest' + adultQuery(),
+      (body) => (Array.isArray(body && body.series) ? body.series : []));
+    if (!rows) return;
+
+    const visible = showable(rows).filter(pickProvider).slice(0, FEED_COUNT);
+    if (!visible.length) return;
+
+    const section = document.createElement('section');
+    section.id = FRESH_ID;
+    section.className = 'yomu-feed';
+    section.append(feedHead('New chapters'));
+
+    const list = document.createElement('div');
+    list.className = 'yomu-feed__list';
+    for (const entry of visible) list.append(freshRow(entry));
+    section.append(list);
+
+    place(section, feedAnchor(null));
+  }
+
+  /* ---- because you read ---------------------------------------------- */
+
+  function mountBecause() {
+    const existing = document.getElementById(BECAUSE_ID);
+    if (!onHome()) { if (existing) existing.remove(); return; }
+    if (existing) return;
+
+    // The title opened most recently is the one the row is about.
+    const seed = continueItems().sort((a, b) => (b.at || 0) - (a.at || 0))[0];
+    if (!seed) return;
+
+    const key = 'related:' + titleKey(seed.sourceId, seed.seriesId);
+    const url = '/api/catalog/related?id=' + encodeURIComponent(seed.seriesId)
+      + '&source=' + encodeURIComponent(seed.sourceId)
+      + '&title=' + encodeURIComponent(seed.title || '')
+      + (adultAllowed() ? '&adult=1' : '');
+
+    const rows = feedOnce(key, url, (body) => (Array.isArray(body && body.similar) ? body.similar : []));
+    if (!rows) return;
+
+    const visible = showable(rows).slice(0, FEED_COUNT);
+    if (!visible.length) return;
+
+    // Two words, not the whole title: on a phone "Because you read I Got a
+    // Cheat Skill in Another World" is three lines of heading.
+    const short = String(seed.title || '').split(/\s+/).slice(0, 2).join(' ');
+
+    const section = document.createElement('section');
+    section.id = BECAUSE_ID;
+    section.className = 'yomu-feed yomu-kin';
+    section.append(kinRow('Because you read ' + short, '', visible));
+
+    place(section, feedAnchor(FRESH_ID));
+  }
+
+  /* The feed reads hero, where you left off, what is new, what is like it --
+     and each section mounts whenever its own data arrives, so the order they
+     appear in is the order the network answered, not the order they belong in.
+     This puts them back. Idempotent: a section already in place is not moved,
+     so the mutation pass this runs in does not thrash the DOM. */
+  function orderFeed() {
+    if (!onHome()) return;
+    const anchor = continueAnchor();
+    if (!anchor || !anchor.after) return;
+    let previous = anchor.after;
+    for (const id of [CONTINUE_ID, FRESH_ID, BECAUSE_ID]) {
+      const section = document.getElementById(id);
+      if (!section) continue;
+      if (section.previousElementSibling !== previous) previous.after(section);
+      previous = section;
+    }
+  }
+
   const pass = () => {
     brandLockup();
     gateFabric();
@@ -2792,6 +3026,10 @@
     windowLongLists();
     trackReader();
     mountContinue();
+    learnCapabilities();
+    mountFresh();
+    mountBecause();
+    orderFeed();
     explainIconButtons();
     foldSettingsGroups();
     mountBridge();
