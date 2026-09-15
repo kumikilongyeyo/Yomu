@@ -2359,6 +2359,72 @@
     }
   }
 
+  /* ------------------------------------------------------------------ *
+   * The source switcher, folded to its first line
+   *
+   * The app opens a series page with every other source that carries the
+   * title listed in full. On a title four sources carry, with one of them
+   * naming it in Chinese, that is most of a phone screen standing above the
+   * cover -- the artwork, the title and Play all below the fold on the one
+   * screen whose job is to make you want to read.
+   *
+   * Folded rather than removed. Which source you are reading from is the
+   * useful half, and it is how you move off a source that is behind on
+   * chapters; the list of the others is a thing you go looking for, once.
+   * So the line stays, gains a count, and opens on a tap.
+   *
+   * The state lives on <html> and the tap is a delegated listener, so
+   * nothing here writes to the bar itself -- React rebuilds that subtree
+   * whenever the source list changes, and anything written into it would go
+   * with it.
+   * ------------------------------------------------------------------ */
+
+  const SRC_FOLD_KEY = 'yomu.v1.srcSwitch';
+  let srcFoldOpen = false;
+  try { srcFoldOpen = localStorage.getItem(SRC_FOLD_KEY) === 'open'; } catch {}
+
+  function paintSrcFold() {
+    const want = srcFoldOpen ? 'expanded' : 'collapsed';
+    const root = document.documentElement;
+    if (root.getAttribute('data-yomu-src') !== want) root.setAttribute('data-yomu-src', want);
+    const now = document.querySelector('.src-switch__now[role="button"]');
+    if (now) now.setAttribute('aria-expanded', String(srcFoldOpen));
+  }
+
+  function foldSourceSwitch() {
+    const bar = document.querySelector('.src-switch');
+    if (!bar) return;
+    const now = bar.querySelector('.src-switch__now');
+    if (!now) return;
+    const others = bar.querySelectorAll('.src-switch__list > li').length;
+
+    // Nothing to fold away: one line is all there was.
+    if (!others) {
+      now.querySelector('.yomu-src-more')?.remove();
+      now.removeAttribute('role');
+      now.removeAttribute('tabindex');
+      now.removeAttribute('aria-expanded');
+      document.documentElement.setAttribute('data-yomu-src', 'expanded');
+      return;
+    }
+
+    if (now.getAttribute('role') !== 'button') {
+      now.setAttribute('role', 'button');
+      now.setAttribute('tabindex', '0');
+    }
+
+    let more = now.querySelector('.yomu-src-more');
+    if (!more) {
+      more = document.createElement('em');
+      more.className = 'yomu-src-more';
+      now.append(more);
+    }
+    const label = others + (others === 1 ? ' other' : ' others');
+    if (more.textContent !== label) more.textContent = label;
+
+    paintSrcFold();
+  }
+
   /**
    * One pass over everything this file maintains.
    *
@@ -2373,6 +2439,7 @@
     badgeProgress();
     trackSeriesPage();
     mountSeriesResume();
+    foldSourceSwitch();
     mountKin();
     windowLongLists();
     trackReader();
@@ -2404,5 +2471,20 @@
   // change and nothing else. The observer catches it in practice -- the new
   // chapter always repaints something -- but a chapter that renders identical
   // markup would not fire one, and the arm would stay pointed at the old id.
+  /* Delegated from the document, so it survives every rebuild of the bar. */
+  const toggleSrcFold = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const now = target.closest('.src-switch__now[role="button"]');
+    if (!now) return;
+    if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    srcFoldOpen = !srcFoldOpen;
+    try { localStorage.setItem(SRC_FOLD_KEY, srcFoldOpen ? 'open' : 'shut'); } catch {}
+    paintSrcFold();
+  };
+  addEventListener('click', toggleSrcFold);
+  addEventListener('keydown', toggleSrcFold);
+
   for (const type of ['popstate', 'hashchange']) addEventListener(type, pass);
 })();

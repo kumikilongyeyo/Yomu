@@ -33,6 +33,14 @@
     @keyframes sp{to{transform:rotate(360deg)}}
 
     .meta{color:var(--dim);font-size:12.5px;margin:14px 2px 4px;min-height:16px}
+    /* Results no enabled source can open get their own line rather than
+       sitting dimmed among the ones you can read. Comick alone accounted for
+       25 of the 73 rows on a search for "dandadan" -- it can find a title but
+       not serve a page, so those rows were noise sitting in the good ones. */
+    .shelf-line{grid-column:1/-1;display:flex;align-items:center;gap:10px;
+      margin:20px 2px 2px;color:var(--dim);font-size:11px;
+      letter-spacing:.08em;text-transform:uppercase}
+    .shelf-line::after{content:'';flex:1;height:1px;background:var(--line)}
     .meta b{color:var(--muted);font-weight:600}
 
     /* --- tile grid, per YOMU_implementation_kit docs/IMPLEMENTATION.md ---
@@ -181,6 +189,8 @@
     }
   }
   const canRead = (appId) => !readOnlyMeta.has(appId);
+  /** Whether anything carrying this title can actually serve a page of it. */
+  const canOpen = (entry) => (entry.providers ?? []).some((p) => canRead(appSourceId(p.id)));
 
   function enabledSourceIds() {
     try {
@@ -293,15 +303,35 @@
     }
     if (!query) { $('meta').textContent = ''; return; }
 
+    /* Split before counting. A search that turns up 73 titles of which only
+       48 can be opened has found 48 titles and a footnote, and saying 73 sets
+       up the disappointment. */
+    const readable = [];
+    const shelved = [];
+    for (const entry of entries) (canOpen(entry) ? readable : shelved).push(entry);
+
     const alsoLine = payload.alsoSearched
       ? ` · also searched <b>${escapeHtml(payload.alsoSearched)}</b>`
       : '';
     $('meta').innerHTML =
-      `<b>${entries.length}</b> title${entries.length === 1 ? '' : 's'} across ` +
+      `<b>${readable.length}</b> title${readable.length === 1 ? '' : 's'} across ` +
       `${payload.providersTried ?? 0} of ${payload.providersTotal ?? 0} sources${alsoLine}`;
 
     const have = enabledSourceIds();
-    for (const entry of entries) results.append(buildTile(entry, have));
+    for (const entry of readable) results.append(buildTile(entry, have));
+
+    /* Kept, not dropped: knowing a title exists somewhere Yomu cannot reach
+       yet is worth something -- it is the reason to add a source. It just
+       does not belong above the titles you can open. */
+    if (shelved.length) {
+      const line = document.createElement('p');
+      line.className = 'shelf-line';
+      line.textContent = shelved.length === 1
+        ? '1 more found · no source can open it yet'
+        : `${shelved.length} more found · no source can open them yet`;
+      results.append(line);
+      for (const entry of shelved) results.append(buildTile(entry, have));
+    }
   }
 
   /* --- the resting state ------------------------------------------------- *

@@ -2077,3 +2077,36 @@ html.yomu-fabric-away #yomu-source-fabric-command { display: none !important; }
    a better-sourced one actually rendered in its place. */
 html[data-yomu-kin] #yomu-kin ~ .section-line,
 html[data-yomu-kin] #yomu-kin ~ .shelf-grid { display: none; }
+
+/* ------------------------------------------------------------------ *
+ * The source switcher, folded to its first line
+ *
+ * On a title four sources carry, this was most of a phone screen of chrome
+ * standing above the cover -- the artwork, the title and Play all pushed
+ * below the fold on the one screen whose job is to make you want to read.
+ * Which source you are reading from is worth keeping, because it is how you
+ * move off one that is behind on chapters. The standing list of the others
+ * is not, so it waits behind its own line.
+ * ------------------------------------------------------------------ */
+html[data-yomu-src="collapsed"] .src-switch__lead,
+html[data-yomu-src="collapsed"] .src-switch__list { display: none; }
+html[data-yomu-src="collapsed"] .src-switch__now { margin-bottom: 0; }
+
+.src-switch__now[role="button"] { cursor: pointer; }
+.src-switch__now[role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.yomu-src-more {
+  margin-left: auto; flex: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  font: 500 11.5px/1 var(--uiFont); font-style: normal;
+  color: var(--muted);
+}
+.yomu-src-more::after {
+  content: '\203A';                      /* › */
+  font-size: 14px; line-height: 1;
+  transition: transform .18s cubic-bezier(.23, 1, .32, 1);
+}
+html[data-yomu-src="expanded"] .yomu-src-more::after { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .yomu-src-more::after { transition: none; }
+}
