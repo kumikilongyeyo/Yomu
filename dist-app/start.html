@@ -51,6 +51,29 @@
 
     .pane[hidden] { display: none; }
 
+    /* welcome */
+    .ob-hero { display: grid; place-items: center; padding: 30px 0 6px; }
+    .ob-mark { width: 96px; height: auto; color: var(--accent); }
+
+    /* the five readers */
+    .ob-avatars { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 12px; }
+    .av {
+      display: grid; justify-items: center; gap: 9px; cursor: pointer;
+      padding: 12px 6px; border-radius: 16px; border: 1px solid transparent;
+      background: none; color: var(--text); font: inherit;
+      transition: background .22s var(--ease), border-color .22s var(--ease), transform .12s ease-out;
+    }
+    .av:active { transform: scale(.96); }
+    .av[aria-checked="true"] { background: var(--accentSoft); border-color: var(--accentLine); }
+    .av .ring {
+      width: 74px; height: 74px; border-radius: 50%; overflow: hidden;
+      background: var(--raised) center / cover no-repeat;
+      box-shadow: inset 0 0 0 1.5px #0000002e;
+      transition: transform .3s var(--ease);
+    }
+    .av[aria-checked="true"] .ring { transform: scale(1.05); box-shadow: inset 0 0 0 2px var(--accent); }
+    .av .nm { font-size: 12px; font-weight: 600; line-height: 1.3; text-align: center; }
+
     /* presets */
     .presets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
     @media (max-width: 380px) { .presets { grid-template-columns: repeat(2, minmax(0,1fr)); } }
@@ -113,6 +136,10 @@
       transition: background .24s var(--ease), border-color .24s var(--ease), color .24s var(--ease);
     }
     .kind[aria-checked="true"] .tick { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+
+    .kind.dim { opacity: .5; cursor: default; }
+    .kind.dim:active { transform: none; }
+    .kind.dim .tick { display: none; }
 
     /* tally */
     .tally {
@@ -226,41 +253,65 @@
 <main>
   <div class="top">
     <div class="track"><i id="track"></i></div>
-    <div class="crumbs"><b id="crumbNow">Step 1</b><span id="crumbOf">of 3</span></div>
+    <div class="crumbs"><b id="crumbNow">Step 1</b><span id="crumbOf">of 5</span></div>
   </div>
 
-  <!-- 1 · who -->
+  <!-- 1 · welcome -->
   <section class="pane" id="pane-0">
-    <h1>Pick a reader</h1>
-    <p class="blurb">A name and a colour in one tap. Only ever seen by a reading circle, if you join one — and you can change it later.</p>
-    <div class="presets" id="presets" role="radiogroup" aria-label="Reader profile"></div>
-    <div id="customWrap" hidden>
-      <input class="field" id="name" placeholder="Type a name" autocomplete="off" aria-label="Your name" maxlength="32" />
+    <div class="ob-hero" aria-hidden="true">
+      <svg viewBox="0 0 195 168" class="ob-mark"><polygon points="8.00,12.75 79.00,47.02 79.00,155.25 8.00,120.98" fill="currentColor" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/><polygon points="116.00,47.02 187.00,12.75 187.00,120.98 116.00,155.25" fill="currentColor" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/></svg>
     </div>
-    <p class="gtitle">Or a different colour</p>
-    <div class="card"><div class="swatches" id="tones" role="radiogroup" aria-label="Accent colour"></div></div>
+    <h1>Welcome to Yomu</h1>
+    <p class="blurb">A reading room for everything your sources carry. Four short steps and one that matters.</p>
     <div class="acts">
-      <button class="btn" type="button" data-go="1">Continue</button>
-      <button class="btn plain" type="button" data-go="1">Skip this</button>
+      <button class="btn" type="button" data-go="1">Get started</button>
+      <a class="btn plain" href="/">Preview without setting up</a>
     </div>
   </section>
 
-  <!-- 2 · what -->
+  <!-- 2 · who -->
   <section class="pane" id="pane-1" hidden>
-    <h1>What do you read?</h1>
-    <p class="blurb">Pick as many as you like. It only decides which sources start switched on — you can change any of them next.</p>
-    <div class="kinds" id="kinds" role="group" aria-label="What you read"></div>
+    <h1>Pick a reader</h1>
+    <p class="blurb">Five presets for now, and you can change it any time from Your Yomu.</p>
+    <div class="ob-avatars" id="avatars" role="radiogroup" aria-label="Reader profile"></div>
     <div class="acts">
       <button class="btn plain" type="button" data-go="0">Back</button>
       <span class="grow"></span>
-      <button class="btn" type="button" id="toSources" data-go="2">Continue</button>
+      <button class="btn plain" type="button" data-go="2">Skip</button>
+      <button class="btn" type="button" data-go="2">Continue</button>
     </div>
   </section>
 
-  <!-- 3 · sources -->
+  <!-- 3 · name -->
   <section class="pane" id="pane-2" hidden>
-    <h1>Where should they come from?</h1>
-    <p class="blurb">Switched on to match what you picked. All free, nothing to sign up for — you need at least one.</p>
+    <h1>What should we call you?</h1>
+    <p class="blurb">Used on your home screen and nowhere else. It never leaves this device.</p>
+    <input class="field" id="name" placeholder="Your name" autocomplete="off" aria-label="Your name" maxlength="18" />
+    <p class="blurb" id="nameNote" style="margin-top:12px"></p>
+    <div class="acts">
+      <button class="btn plain" type="button" data-go="1">Back</button>
+      <span class="grow"></span>
+      <button class="btn plain" type="button" data-go="3">Skip</button>
+      <button class="btn" type="button" data-go="3">Continue</button>
+    </div>
+  </section>
+
+  <!-- 4 · interests -->
+  <section class="pane" id="pane-3" hidden>
+    <h1>What do you want to see first?</h1>
+    <p class="blurb">This sets which sources start switched on. Change any of them next, or later in Settings.</p>
+    <div class="kinds" id="kinds" role="group" aria-label="What you read"></div>
+    <div class="acts">
+      <button class="btn plain" type="button" data-go="2">Back</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="toSources" data-go="4">Continue</button>
+    </div>
+  </section>
+
+  <!-- 5 · sources -->
+  <section class="pane" id="pane-4" hidden>
+    <h1>Add your first source</h1>
+    <p class="blurb">Yomu ships empty on purpose. A source is the library it reads from, so this one is not optional. These are switched on to match what you picked.</p>
 
     <div class="tally"><b id="tallyNum">0</b><span id="tallyText">titles</span></div>
 
@@ -271,14 +322,14 @@
     <div class="card" id="extraList"></div>
 
     <div class="acts">
-      <button class="btn plain" type="button" data-go="1">Back</button>
+      <button class="btn plain" type="button" data-go="3">Back</button>
       <span class="grow"></span>
       <button class="btn" type="button" id="finish">Finish</button>
     </div>
   </section>
 
   <!-- done -->
-  <section class="pane" id="pane-3" hidden>
+  <section class="pane" id="pane-5" hidden>
     <div class="done">
       <div class="mark" aria-hidden="true">&#10003;</div>
       <h1 style="margin-bottom:8px">Your shelves are full</h1>
@@ -332,11 +383,19 @@
 
   /* Measured off MangaDex's API, one query per original language, on
      2026-09-15. It is the only source that publishes a catalogue size. */
+  /* The kit's six, in its order and its words.
+   *
+   * Two of them cannot switch a source on, and say so rather than pretending:
+   * nothing here carries web novels yet, and mature titles are behind the 18+
+   * gate, which is a confirmation screen and not a checkbox -- flipping it
+   * from here would walk straight past the thing it exists to ask. */
   const KINDS = [
-    { id: 'manga',   name: 'Manga',    note: 'Japanese · right-to-left pages',    count: 75579 },
-    { id: 'manhwa',  name: 'Manhwa',   note: 'Korean · usually colour, vertical', count: 8809 },
-    { id: 'manhua',  name: 'Manhua',   note: 'Chinese · usually colour',          count: 6378 },
-    { id: 'webtoon', name: 'Webtoons', note: 'Vertical scroll, one long strip',   count: null },
+    { id: 'manhwa',  name: 'Manhwa',     note: 'Korean, colour, vertical scroll', count: 8809 },
+    { id: 'manga',   name: 'Manga',      note: 'Japanese, right to left',         count: 75579 },
+    { id: 'manhua',  name: 'Manhua',     note: 'Chinese, colour',                 count: 6378 },
+    { id: 'webtoon', name: 'Comics',     note: 'Western, page based',             count: null },
+    { id: 'novel',   name: 'Web novels', note: 'Text chapters — no source yet',   count: null, dead: true },
+    { id: 'nsfw',    name: 'Mature 18+', note: 'Off by default, and asked for separately', count: null, gate: true },
   ];
 
   const ORIGIN = location.origin;
@@ -372,6 +431,19 @@
      Paper, because one value cannot be legible on both grounds. The default
      row carries neither: it clears the properties and lets the stylesheet
      supply the kit's amber, which is already a pair. */
+  /* The kit's five, by the names it gives them. The art is the same webp the
+     avatar picker on Your Yomu uses, so the face chosen here is the face that
+     greets you on home. */
+  const AVATARS = [
+    { id: '01_sleep_deprived_reader',     name: 'Sleep deprived' },
+    { id: '02_sexy_romance_reader',       name: 'Hopeless romantic' },
+    { id: '03_chill_dinosaur_reader',     name: 'Chill dinosaur' },
+    { id: '04_undead_knight_reader',      name: 'Undead knight' },
+    { id: '05_shocked_cliffhanger_reader', name: 'Cliffhanger victim' },
+  ];
+  const AVATAR_KEY = 'yomu.v1.avatar';
+  let avatarId = '';
+
   const TONES = [
     { id: '',       hex: '#e9b45c', ink: '#1b1305' },
     { id: 'blue',   hex: '#9db8ff', ink: '#111a2e', lhex: '#5681f1', link: '#fff8ec' },
@@ -380,7 +452,8 @@
     { id: 'violet', hex: '#d3a2ff', ink: '#231133', lhex: '#ae61f2', link: '#fff8ec' },
   ];
 
-  const TITLES = ['Pick a reader', 'What do you read?', 'Where should they come from?', 'All set'];
+  const TITLES = ['Welcome', 'Pick a reader', 'What should we call you?',
+                  'What do you want to see first?', 'Add your first source', 'All set'];
 
   let step = 0;
   let name = '';
@@ -419,70 +492,59 @@
   }
 
   /* ---- presets --------------------------------------------------------- */
-  function drawPresets() {
-    const box = $('presets');
+  /* ---- the five readers ------------------------------------------------ *
+   *
+   * The kit's step 1: five faces and their names, nothing else. The colour
+   * row that used to live here is gone on purpose -- Your Yomu carries a full
+   * accent picker, which is where the kit puts it ("change it any time from
+   * Settings"), and two places to set one thing is how they drift apart.
+   * -------------------------------------------------------------------- */
+  function drawAvatars() {
+    const box = $('avatars');
     box.textContent = '';
-    PRESETS.forEach((pre) => {
+    AVATARS.forEach((av) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'preset';
+      b.className = 'av';
       b.setAttribute('role', 'radio');
-      b.setAttribute('aria-checked', String(profile === pre));
-
-      const dot = document.createElement('span');
-      dot.className = 'dot'; dot.style.background = pre.hex; dot.setAttribute('aria-hidden', 'true');
-
-      const face = document.createElement('span');
-      face.className = 'face';
-      face.style.background = pre.hex;
-      face.style.color = pre.ink;
-      face.textContent = pre.custom
-        ? (profile === pre && name ? [...name][0].toUpperCase() : pre.mark)
-        : pre.mark;
-
-      const strong = document.createElement('b');
-      strong.textContent = pre.custom && name && profile === pre ? name : pre.name;
-      const small = document.createElement('small');
-      small.textContent = pre.custom ? 'Type a name' : 'and its colour';
-
+      b.setAttribute('aria-checked', String(avatarId === av.id));
       b.style.setProperty('--i', String(box.children.length));
-      b.append(dot, face, strong, small);
+
+      const ring = document.createElement('span');
+      ring.className = 'ring';
+      ring.style.backgroundImage = 'url("/brand/avatars/' + av.id + '.webp")';
+      ring.setAttribute('aria-hidden', 'true');
+
+      const nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = av.name;
+
+      b.append(ring, nm);
       b.addEventListener('click', () => {
-        profile = pre;
-        if (!pre.custom) name = pre.name;
-        toneId = pre.tone;
-        paintAccent(TONES.find((t) => t.id === pre.tone) || TONES[0], !pre.tone);
-        $('customWrap').hidden = !pre.custom;
-        drawPresets();
-        drawTones();
-        if (pre.custom) $('name').focus();
+        // Tapping the one already chosen clears it, so "none" stays reachable
+        // without a sixth tile that means nothing.
+        avatarId = avatarId === av.id ? '' : av.id;
+        drawAvatars();
       });
       box.append(b);
     });
   }
 
-  function drawTones() {
-    const box = $('tones');
-    box.textContent = '';
-    TONES.forEach((t) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'tone'; b.style.background = t.hex;
-      b.setAttribute('role', 'radio');
-      b.setAttribute('aria-label', t.id || 'amber');
-      b.setAttribute('aria-checked', String(t.id === toneId));
-      b.addEventListener('click', () => {
-        toneId = t.id;
-        paintAccent(t, !t.id);
-        drawTones();
-        drawPresets();
-      });
-      box.append(b);
-    });
+  /* ---- your name ------------------------------------------------------- *
+   * The note under the field is the kit's: it shows the reader exactly what
+   * home will say, which is the only place the name is ever used. */
+  function drawNameNote() {
+    const hour = new Date().getHours();
+    const greet = hour < 5 ? 'Still up' : hour < 12 ? 'Good morning'
+      : hour < 18 ? 'Good afternoon' : 'Good evening';
+    $('nameNote').textContent = name
+      ? 'Home will say \u201c' + greet + ', ' + name + '\u201d.'
+      : 'Leave it blank and Yomu just says hello.';
   }
 
   $('name').addEventListener('input', (e) => {
-    name = e.target.value.trim().slice(0, 32);
-    drawPresets();
+    name = e.target.value.trim().slice(0, 18);
+    drawNameNote();
   });
 
   /* ---- kinds ----------------------------------------------------------- */
@@ -501,6 +563,17 @@
       small.textContent = k.count ? fmt(k.count) + ' on MangaDex alone' : k.note;
       b.style.setProperty('--i', String(box.children.length));
       b.append(tick, strong, small);
+      if (k.dead || k.gate) {
+        // Shown because the kit shows them, greyed because choosing them here
+        // would be a lie: nothing carries web novels yet, and mature titles
+        // are behind a confirmation screen that this flow must not walk past.
+        b.classList.add('dim');
+        b.setAttribute('aria-disabled', 'true');
+        b.removeAttribute('role');
+        if (k.gate) small.textContent = 'Off by default. Settings asks you to confirm your age.';
+        box.append(b);
+        return;
+      }
       b.addEventListener('click', () => {
         if (picked.has(k.id)) picked.delete(k.id); else picked.add(k.id);
         b.setAttribute('aria-checked', String(picked.has(k.id)));
@@ -658,24 +731,24 @@
        from the left, so the flow has a direction you can feel. */
     const back = next < step;
     step = next;
-    [0, 1, 2, 3].forEach((i) => { $('pane-' + i).hidden = i !== step; });
+    [0, 1, 2, 3, 4, 5].forEach((i) => { $('pane-' + i).hidden = i !== step; });
     const pane = $('pane-' + step);
     pane.classList.toggle('back', back);
     pane.style.animation = 'none';
     void pane.offsetWidth;
     pane.style.animation = '';
     document.title = 'Yomu · ' + TITLES[step];
-    $('track').style.width = Math.round((step / 3) * 100) + '%';
-    $('crumbNow').textContent = step < 3 ? 'Step ' + (step + 1) : 'Done';
-    $('crumbOf').textContent = step < 3 ? 'of 3' : '';
+    $('track').style.width = Math.round((step / 5) * 100) + '%';
+    $('crumbNow').textContent = step < 5 ? 'Step ' + (step + 1) : 'Done';
+    $('crumbOf').textContent = step < 5 ? 'of 5' : '';
 
     /* The count lives on this pane, and boot ran its roll behind `hidden`,
        so arriving here meant meeting a number that was simply already there.
        Replay it once, on first arrival, starting as the pane slides in.
        Once only -- counting up from zero every time you step back and forth
        would be noise rather than news. */
-    if (step === 2) warmReel();
-    if (step === 2 && !rollSeen) {
+    if (step === 4) warmReel();
+    if (step === 4 && !rollSeen) {
       rollSeen = true;
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
         rollFrom = 0;
@@ -712,10 +785,13 @@
 
     if (toneId) { try { localStorage.setItem(ACCENT, toneId); } catch {} }
     if (name) writeJSON(CIRCLE, { ...(readJSON(CIRCLE, {}) || {}), name });
+    // The same shape Your Yomu reads and writes, so the face chosen here is
+    // the one its picker shows as current and the one home greets you with.
+    if (avatarId) writeJSON(AVATAR_KEY, { kind: 'preset', id: avatarId });
     if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
     try { localStorage.setItem(DONE, '1'); } catch {}
 
-    go(3);
+    go(5);
     showReel(on);
   });
 
@@ -794,8 +870,8 @@
   const savedTone = TONES.find((t) => t.id === saved);
   if (savedTone) { toneId = savedTone.id; paintAccent(savedTone, !savedTone.id); }
 
-  drawPresets();
-  drawTones();
+  drawAvatars();
+  drawNameNote();
   drawKinds();
   applyKinds();
   go(0);
