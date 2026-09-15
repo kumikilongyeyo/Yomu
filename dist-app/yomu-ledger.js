@@ -444,6 +444,55 @@
     }
 
     paintGaps(list);
+    paintElsewhere(context, list);
+  }
+
+  /**
+   * When the source you are on has nothing, and others have everything.
+   *
+   * This is the ledger's whole reason for existing at its sharpest -- Solo
+   * Leveling on MangaDex says "lists this title but hosts no chapters", while
+   * three other enabled sources carry two hundred -- and it was the one case
+   * that drew nothing at all, because there were no rows to hang chips on.
+   *
+   * So the ledger supplies the rows itself. Not a redesign of the chapter
+   * list: a plain list of what exists elsewhere, which is the answer to the
+   * question the empty screen leaves you with.
+   */
+  function paintElsewhere(context, list) {
+    const ELSEWHERE_ID = 'yomu-ledger-elsewhere';
+    const existing = document.getElementById(ELSEWHERE_ID);
+    const native = list.querySelectorAll('.chapter-line[data-chn]').length;
+
+    if (native || !ledger.rows.length) { existing?.remove(); return; }
+
+    const signature = 'e' + ledger.rows.length + ':' + ledger.rows[0]?.label;
+    if (existing && existing.getAttribute('data-sig') === signature) return;
+
+    const box = document.createElement('div');
+    box.id = ELSEWHERE_ID;
+    box.className = 'yomu-elsewhere';
+    box.setAttribute('data-sig', signature);
+
+    const head = document.createElement('p');
+    const here = ledger.sources.find((s) => toAppSource(s.providerId) === context.sourceId);
+    head.className = 'yomu-elsewhere__head';
+    head.textContent = `${here ? here.providerName : 'This source'} has none of these. `
+      + `${ledger.rows.length} chapter${ledger.rows.length === 1 ? '' : 's'} are on your other sources.`;
+    box.append(head);
+
+    for (const row of ledger.rows) {
+      const line = document.createElement('div');
+      line.className = 'yomu-elsewhere__row';
+      const number = document.createElement('b');
+      number.textContent = row.label || '—';
+      const name = document.createElement('span');
+      name.textContent = row.name || '';
+      line.append(number, name, releasesRow(context, row, null, false));
+      box.append(line);
+    }
+
+    if (existing) existing.replaceWith(box); else list.append(box);
   }
 
   /**
