@@ -547,3 +547,138 @@ h1, h2 {
 }
 .yomu-sidebar__brand .ymark { width: 29px; }
 .yomu-sidebar__brand .yword { font-size: 23px; }
+
+
+/* ==================================================================== *
+ * 7. Layout — one family across phone and web
+ * ====================================================================
+ *
+ * The kit is drawn at 390x780 and its web rule is that the same design
+ * widens: the dock becomes a left rail, rails become grids, sheets become
+ * centred cards. It does not become a different screen.
+ *
+ * What made web read as a second app was width. yomu-overrides.css took
+ * .g-main from the compiled 1120px out to 1440px and the home grid to six
+ * columns, so a phone showed a composed column and a laptop showed a wall of
+ * covers four hundred pixels wider than the design was ever drawn at. The
+ * tiles ended up narrower on the big screen than on the small one, which is
+ * the tell -- the same card should get larger as the window does, not smaller.
+ *
+ * So: one column width, one tile size that grows with the window, and the
+ * hero composed the same way at both ends.
+ * ==================================================================== */
+
+/* The content column. 1180 is the kit's 390 at three columns plus its gutters,
+   which is the widest the design holds before the eye stops tracking a row. */
+.masthead,
+.g-main {
+  max-width: 1180px;
+}
+
+/* Tiles size themselves, rather than a column count per breakpoint deciding
+   how small they get. 150px is the kit's cover at phone width; the grid takes
+   as many as fit and they grow into whatever is left over. */
+.home-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-5);
+}
+@media (min-width: 700px) {
+  .home-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-7);
+  }
+}
+
+.tile-card {
+  border-radius: var(--radius-cover);
+}
+
+/* ---- the hero ------------------------------------------------------ *
+ *
+ * The kit's slide is a tall portrait with the art full-bleed behind a veil,
+ * and the copy sitting in the bottom-left: source, title, a genre line, then
+ * one pill. The app already renders those parts; they were laid out short and
+ * wide, which is what made the phone and the desktop disagree most.
+ *
+ * Height is a ratio at phone width so the art has room to be art, and capped
+ * on web so a wide window does not turn the first screen into a billboard.
+ * -------------------------------------------------------------------- */
+.hero-carousel {
+  aspect-ratio: 39 / 26;
+  height: auto;
+  border-radius: var(--radius-hero);
+  overflow: hidden;
+}
+
+/* The track is the scroll-snap container -- it must keep overflow-x, or the
+   carousel stops swiping. Only its height is claimed here. */
+.hero-track {
+  aspect-ratio: 39 / 26;
+  height: auto;
+}
+
+/* Each slide carries a hard height of its own, at .hero.hero-slide, so the
+   selector has to match that specificity or the taller carousel is just empty
+   box under a short piece of art. The track is a flex row, so auto stretches. */
+.hero.hero-slide {
+  height: auto;
+  align-self: stretch;
+}
+@media (min-width: 700px) {
+  .hero-carousel,
+  .hero-track {
+    aspect-ratio: 5 / 2;
+    max-height: 420px;
+  }
+}
+
+.hero__copy {
+  max-width: min(32ch, 78%);
+  bottom: var(--space-8);
+  left: var(--space-8);
+  right: var(--space-8);
+}
+.hero__title {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 112;
+  font-weight: 800;
+  font-size: clamp(26px, 6vw, 40px);
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  margin: 0 0 var(--space-3);
+  text-wrap: balance;
+}
+.hero__acts { gap: var(--space-4); }
+.hero__acts button { border-radius: var(--radius-pill); }
+
+/* The veil is the kit's: dark enough at the copy end to hold text, gone by
+   the far edge so the art is still art. */
+.hero__shade {
+  background:
+    linear-gradient(90deg, rgba(4,7,11,.94) 0%, rgba(4,7,11,.62) 46%, rgba(4,7,11,.10) 82%),
+    linear-gradient(rgba(0,0,0,0) 42%, rgba(4,7,11,.86));
+}
+:root[data-mode='light'] .hero__shade {
+  background:
+    linear-gradient(90deg, rgba(20,17,12,.88) 0%, rgba(20,17,12,.55) 46%, rgba(20,17,12,.08) 82%),
+    linear-gradient(rgba(0,0,0,0) 42%, rgba(20,17,12,.78));
+}
+
+/* ---- section headers ----------------------------------------------- *
+ * The kit's .sec: a title on the left, one quiet action on the right, and
+ * the same space above every one of them so the page has a rhythm rather
+ * than each block setting its own.
+ * -------------------------------------------------------------------- */
+.home-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin: var(--space-9) 0 var(--space-5);
+}
+.home-sec h2 {
+  font-family: var(--font-display);
+  font-variation-settings: 'wdth' 108;
+  font-weight: 800;
+  letter-spacing: -.028em;
+}
+.genre-row { gap: var(--space-3); }
