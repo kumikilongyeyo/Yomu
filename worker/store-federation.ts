@@ -28,6 +28,15 @@ export type FederatedMatch = {
   priority: number;
 };
 
+export type KnownReadingSite = {
+  source: 'wotaku-websites';
+  name: string;
+  baseUrl: string;
+  library?: string;
+  category: 'manga';
+  directory: string;
+};
+
 const STORE_DEFINITIONS: StoreDefinition[] = [
   { id: 'aidoku-yomu-community', name: 'Yomu Aidoku Sources', ecosystem: 'aidoku', url: 'https://smexhy.github.io/yomu-aidoku-sources/index.json', priority: 100 },
   { id: 'aidoku-community', name: 'Aidoku Community', ecosystem: 'aidoku', url: 'https://aidoku-community.github.io/sources/index.min.json', priority: 90 },
@@ -36,7 +45,14 @@ const STORE_DEFINITIONS: StoreDefinition[] = [
   { id: 'mihon-yuzono', name: 'Yuzono', ecosystem: 'mihon', url: 'https://raw.githubusercontent.com/yuzono/cursed-manga-repo/repo/index.min.json', priority: 92, directory: 'https://wotaku.wiki/ext/mihon' },
 ];
 
-const UA = 'Mozilla/5.0 (compatible; Yomu-Store-Federation/6.0; +https://yomu.yomuread.workers.dev)';
+const WOTAKU_DIRECTORY = {
+  id: 'wotaku-websites',
+  name: 'Wotaku Websites',
+  page: 'https://wotaku.wiki/websites',
+  source: 'https://raw.githubusercontent.com/wotakumoe/wotaku/main/docs/websites.md',
+};
+
+const UA = 'Mozilla/5.0 (compatible; Yomu-Store-Federation/6.1; +https://yomu.yomuread.workers.dev)';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 
 function normalizeHost(value: string): string {
@@ -68,6 +84,40 @@ async function fetchStore(store: StoreDefinition): Promise<any> {
   const response = await fetch(store.url, { headers: { accept: 'application/json', 'user-agent': UA }, signal: AbortSignal.timeout(9_000) });
   if (!response.ok) throw new Error(`${store.name} returned HTTP ${response.status}.`);
   return response.json();
+}
+
+async function fetchWotakuDirectory(): Promise<KnownReadingSite[]> {
+  const response = await fetch(WOTAKU_DIRECTORY.source, { headers: { accept: 'text/plain, text/markdown;q=0.9, */*;q=0.5', 'user-agent': UA }, signal: AbortSignal.timeout(7_000) });
+  if (!response.ok) throw new Error(`${WOTAKU_DIRECTORY.name} returned HTTP ${response.status}.`);
+  return parseWotakuMangaMarkdown(await response.text());
+}
+
+function parseWotakuMangaMarkdown(markdown: string): KnownReadingSite[] {
+  const header = markdown.search(/^##\s+Manga\s*$/m);
+  if (header < 0) return [];
+  const firstBreak = markdown.indexOf('\n', header);
+  if (firstBreak < 0) return [];
+  const tail = markdown.slice(firstBreak + 1);
+  const nextSection = tail.search(/^##\s+/m);
+  const section = nextSection >= 0 ? tail.slice(0, nextSection) : tail;
+  const rows: KnownReadingSite[] = [];
+  const seen = new Set<string>();
+
+  for (const line of section.split(/\r?\n/)) {
+    if (!line.trim().startsWith('|')) continue;
+    const cells = line.split('|').map((cell) => cell.trim());
+    const websiteCell = cells[1] ?? '';
+    const link = websiteCell.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/i);
+    if (!link) continue;
+    const name = link[1].trim();
+    const baseUrl = link[2].trim();
+    const host = normalizeHost(baseUrl);
+    if (!host || seen.has(host)) continue;
+    seen.add(host);
+    const libraryRaw = (cells[2] ?? '').replace(/==[^=]+==/g, '').replace(/[*_`]/g, '').trim();
+    rows.push({ source: 'wotaku-websites', name, baseUrl, library: libraryRaw || undefined, category: 'manga', directory: WOTAKU_DIRECTORY.page });
+  }
+  return rows;
 }
 
 function stringValue(value: unknown): string | undefined {
@@ -122,9 +172,25 @@ function rankMatch(match: FederatedMatch, targetHost: string): number {
   return hostScore + match.priority + portability + artifact + protectedPenalty;
 }
 
-export async function findFederatedSources(target: URL): Promise<{ matches: FederatedMatch[]; storesChecked: number; storesHealthy: number }> {
+function bestKnownSite(rows: KnownReadingSite[], targetHost: string): KnownReadingSite | undefined {
+  return rows
+    .map((site) => ({ site, score: hostMatch(site.baseUrl, targetHost) }))
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score || a.site.name.localeCompare(b.site.name))[0]?.site;
+}
+
+export async function findFederatedSources(target: URL): Promise<{
+  matches: FederatedMatch[];
+  storesChecked: number;
+  storesHealthy: number;
+  directoriesChecked: number;
+  directoriesHealthy: number;
+  knownSite?: KnownReadingSite;
+}> {
   const targetHost = target.hostname.toLowerCase().replace(/^www\./, '');
-  const settled = await Promise.allSettled(STORE_DEFINITIONS.map(async (store) => ({ store, rows: parseStore(store, await fetchStore(store)) })));
+  const storesPromise = Promise.allSettled(STORE_DEFINITIONS.map(async (store) => ({ store, rows: parseStore(store, await fetchStore(store)) })));
+  const directoryPromise = fetchWotakuDirectory().then((rows) => ({ healthy: true, rows })).catch(() => ({ healthy: false, rows: [] as KnownReadingSite[] }));
+  const [settled, directory] = await Promise.all([storesPromise, directoryPromise]);
   const all: FederatedMatch[] = [];
   let storesHealthy = 0;
   for (const result of settled) {
@@ -139,17 +205,29 @@ export async function findFederatedSources(target: URL): Promise<{ matches: Fede
     seen.add(key);
     return true;
   }).slice(0, 20);
-  return { matches, storesChecked: STORE_DEFINITIONS.length, storesHealthy };
+  return {
+    matches,
+    storesChecked: STORE_DEFINITIONS.length,
+    storesHealthy,
+    directoriesChecked: 1,
+    directoriesHealthy: directory.healthy ? 1 : 0,
+    knownSite: bestKnownSite(directory.rows, targetHost),
+  };
 }
 
 function publicEvidence(match: FederatedMatch) {
   return { ecosystem: match.ecosystem, store: match.storeName, storeId: match.storeId, name: match.name, id: match.id, version: match.version, package: match.package, baseUrl: match.baseUrl, artifact: match.artifact, sourceCodeUrl: match.sourceCodeUrl, language: match.language, runtimeHint: match.runtimeHint, hasCloudflare: match.hasCloudflare };
 }
 
-function mergeEvidence(existing: any[], matches: FederatedMatch[]): any[] {
+function publicKnownSite(site: KnownReadingSite) {
+  return { source: site.source, name: site.name, baseUrl: site.baseUrl, library: site.library, category: site.category, directory: site.directory };
+}
+
+function mergeEvidence(existing: any[], matches: FederatedMatch[], knownSite?: KnownReadingSite): any[] {
   const out: any[] = [];
   const seen = new Set<string>();
-  for (const row of [...(Array.isArray(existing) ? existing : []), ...matches.map(publicEvidence)]) {
+  const discovery = knownSite ? [{ ecosystem: 'directory', store: WOTAKU_DIRECTORY.name, storeId: WOTAKU_DIRECTORY.id, ...publicKnownSite(knownSite) }] : [];
+  for (const row of [...(Array.isArray(existing) ? existing : []), ...matches.map(publicEvidence), ...discovery]) {
     const key = `${row?.ecosystem ?? ''}|${row?.storeId ?? row?.store ?? ''}|${row?.id ?? row?.package ?? row?.name ?? ''}|${row?.baseUrl ?? ''}`;
     if (!key.replace(/\|/g, '') || seen.has(key)) continue;
     seen.add(key);
@@ -185,12 +263,23 @@ export async function handleFederatedResolve(bodyText: string, env: Env, url: UR
   let target: URL;
   try { target = normalizeInput(String(body?.url ?? '')); } catch { return fallbackResponsePromise; }
   const federationPromise = findFederatedSources(target);
-  const [{ matches, storesChecked, storesHealthy }, fallbackResponse] = await Promise.all([federationPromise, fallbackResponsePromise]);
+  const [federationResult, fallbackResponse] = await Promise.all([federationPromise, fallbackResponsePromise]);
+  const { matches, storesChecked, storesHealthy, directoriesChecked, directoriesHealthy, knownSite } = federationResult;
   const fallbackPayload: any = await fallbackResponse.clone().json().catch(() => null);
   if (!fallbackPayload) return fallbackResponse;
-  const evidence = mergeEvidence(fallbackPayload.evidence, matches);
+  const evidence = mergeEvidence(fallbackPayload.evidence, matches, knownSite);
   const best = matches[0];
-  const federation = { version: '6.0', storesChecked, storesHealthy, implementations: matches.length, best: best ? publicEvidence(best) : undefined, runtimeBrokerConfigured: Boolean(runtimeConfig(env).url) };
+  const federation = {
+    version: '6.1',
+    storesChecked,
+    storesHealthy,
+    directoriesChecked,
+    directoriesHealthy,
+    implementations: matches.length,
+    best: best ? publicEvidence(best) : undefined,
+    discovery: knownSite ? publicKnownSite(knownSite) : undefined,
+    runtimeBrokerConfigured: Boolean(runtimeConfig(env).url),
+  };
   if (fallbackPayload.ready && fallbackPayload.adapter) return json({ ...fallbackPayload, evidence, federation });
   if (matches.length) {
     const broker = await tryRuntimeBroker(env, target, matches).catch(() => null);
@@ -206,14 +295,20 @@ export async function handleStoreFederation(request: Request, env: Env, url: URL
   if (url.pathname === '/api/fabric/stores/status') {
     if (request.method !== 'GET') return json({ error: 'Use GET.' }, 405);
     const config = runtimeConfig(env);
-    return json({ ok: true, version: '6.0', runtimeBrokerConfigured: Boolean(config.url), stores: STORE_DEFINITIONS.map(({ id, name, ecosystem, priority, directory }) => ({ id, name, ecosystem, priority, directory })) });
+    return json({
+      ok: true,
+      version: '6.1',
+      runtimeBrokerConfigured: Boolean(config.url),
+      stores: STORE_DEFINITIONS.map(({ id, name, ecosystem, priority, directory }) => ({ id, name, ecosystem, priority, directory })),
+      directories: [{ id: WOTAKU_DIRECTORY.id, name: WOTAKU_DIRECTORY.name, page: WOTAKU_DIRECTORY.page, source: WOTAKU_DIRECTORY.source, role: 'discovery-only' }],
+    });
   }
   if (url.pathname === '/api/fabric/stores/lookup') {
     if (request.method !== 'GET') return json({ error: 'Use GET.' }, 405);
     let target: URL;
     try { target = normalizeInput(url.searchParams.get('url') ?? ''); } catch (error: any) { return json({ error: error?.message ?? 'Invalid URL.' }, 400); }
     const result = await findFederatedSources(target);
-    return json({ ok: true, target: target.toString(), ...result, matches: result.matches.map(publicEvidence) });
+    return json({ ok: true, target: target.toString(), ...result, knownSite: result.knownSite ? publicKnownSite(result.knownSite) : undefined, matches: result.matches.map(publicEvidence) });
   }
   return json({ error: 'Unknown Store Federation route.' }, 404);
 }
