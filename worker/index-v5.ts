@@ -37,6 +37,7 @@ async function withSourcesCommandCenter(request: Request, env: Env): Promise<Res
   return withPageScripts(request, env, [
     '/source-fabric-panel.js',
     '/source-fabric-bulk.js',
+    '/source-pack-json.js',
     '/source-fabric-layout.js',
     '/source-fabric-diagnostics.js',
   ]);
