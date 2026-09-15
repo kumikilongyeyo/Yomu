@@ -5,6 +5,9 @@
   const ROOT_ID = 'yomu-source-fabric-command';
   const PACK_ID = 'yomu-source-pack-mode';
   const COMMUNITY_PACK = '/source-packs/community.json';
+  const RAW_COMMUNITY_PACK = 'https://raw.githubusercontent.com/kumikilongyeyo/Yomu/main/dist-app/source-packs/community.json';
+  const COLLECTION_KEY = 'yomu.v1.collection';
+  const COMMUNITY_SEEN_KEY = 'yomu.v1.community-pack-seen';
   const MAX_URLS = 25;
 
   function cleanUrl(value) {
@@ -14,6 +17,11 @@
     if (!/^https?:$/.test(url.protocol) || url.username || url.password) throw new Error('Source URLs must be public http/https links.');
     url.hash = '';
     return url.toString();
+  }
+
+  function originKey(value) {
+    try { return new URL(cleanUrl(value)).origin.toLowerCase(); }
+    catch { return ''; }
   }
 
   function githubRawUrl(value) {
@@ -34,6 +42,18 @@
       return url.toString();
     } catch {
       throw new Error('Paste a valid JSON pack URL.');
+    }
+  }
+
+  function isCommunityUrl(value) {
+    try {
+      const resolved = githubRawUrl(value);
+      return resolved === new URL(COMMUNITY_PACK, location.origin).toString()
+        || resolved === RAW_COMMUNITY_PACK
+        || /\/dist-app\/source-packs\/community\.json(?:\?|$)/i.test(resolved)
+        || /\/source-packs\/community\.json(?:\?|$)/i.test(resolved);
+    } catch {
+      return false;
     }
   }
 
@@ -74,6 +94,84 @@
     return parseDocument(document);
   }
 
+  function readCollection() {
+    try {
+      const raw = localStorage.getItem(COLLECTION_KEY);
+      if (!raw) return { sources: [] };
+      const value = JSON.parse(raw);
+      return value && Array.isArray(value.sources) ? value : { sources: [] };
+    } catch {
+      return { sources: [] };
+    }
+  }
+
+  function readSeenOrigins() {
+    try {
+      const raw = localStorage.getItem(COMMUNITY_SEEN_KEY);
+      if (!raw) return null;
+      const value = JSON.parse(raw);
+      return Array.isArray(value?.origins) ? new Set(value.origins.map(String)) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveSeenOrigins(parsed) {
+    try {
+      localStorage.setItem(COMMUNITY_SEEN_KEY, JSON.stringify({
+        version: parsed.version || '',
+        checkedAt: Date.now(),
+        origins: parsed.urls.map(originKey).filter(Boolean),
+      }));
+    } catch {}
+  }
+
+  async function registry() {
+    const response = await fetch('/api/ext/sources', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return [];
+    const body = await response.json().catch(() => ({}));
+    return Array.isArray(body.extensions) ? body.extensions : [];
+  }
+
+  function extensionForUrl(url, extensions) {
+    let hostname = '';
+    try { hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, ''); } catch { return null; }
+    const matches = (extensions || []).filter((extension) => (extension.hosts || []).some((host) => {
+      const wildcard = String(host).startsWith('*.');
+      const domain = String(host).replace(/^\*\./, '').replace(/^www\./, '').toLowerCase();
+      return hostname === domain || (wildcard && hostname.endsWith('.' + domain));
+    }));
+    if (!matches.length) return null;
+    return matches.find((extension) => String(extension.runtime || '').startsWith('fabric-')) || matches[0];
+  }
+
+  async function communityDelta(parsed) {
+    const seen = readSeenOrigins();
+    if (seen) {
+      const fresh = parsed.urls.filter((url) => !seen.has(originKey(url)));
+      return { fresh, known: parsed.urls.length - fresh.length, basis: 'seen' };
+    }
+
+    const collection = readCollection();
+    const enabledIds = new Set(collection.sources
+      .filter((source) => source && source.enabled !== false)
+      .map((source) => String(source.id || ''))
+      .filter(Boolean));
+
+    let extensions = [];
+    try { extensions = await registry(); } catch {}
+
+    const fresh = [];
+    let known = 0;
+    for (const url of parsed.urls) {
+      const extension = extensionForUrl(url, extensions);
+      const id = extension?.id ? 'yomuext-' + extension.id : '';
+      if (id && enabledIds.has(id)) known += 1;
+      else fresh.push(url);
+    }
+    return { fresh, known, basis: 'installed' };
+  }
+
   function mount() {
     const root = document.getElementById(ROOT_ID);
     const pack = document.getElementById(PACK_ID);
@@ -82,6 +180,7 @@
     const textarea = pack.querySelector('textarea');
     const meta = pack.querySelector('.sp-meta');
     const summary = pack.querySelector('.sp-summary');
+    const modeButton = root.querySelector('.sf-mode-switch button[data-mode="pack"]');
     if (!textarea || !meta) return false;
 
     const style = document.createElement('style');
@@ -91,7 +190,9 @@
       #${PACK_ID} .sp-json-import button{height:40px;padding:0 13px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
       #${PACK_ID} .sp-json-load{border:1px solid var(--line,#263747);background:transparent;color:var(--text,#f7f8fa)}
       #${PACK_ID} .sp-json-community{border:0;background:color-mix(in srgb,var(--accent,#ffc15a) 18%,var(--surface,#111b25));color:var(--text,#f7f8fa);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#ffc15a) 38%,transparent)}
+      #${PACK_ID} .sp-json-community[data-new]:not([data-new="0"]){box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#ffc15a) 68%,transparent),0 0 18px color-mix(in srgb,var(--accent,#ffc15a) 13%,transparent)}
       #${PACK_ID} .sp-json-status{grid-column:1/-1;min-height:14px;color:var(--dim,#8297aa);font-size:10.5px}
+      #${ROOT_ID} .sf-mode-switch button[data-mode="pack"][data-new]:not([data-new="0"])::after{content:'+' attr(data-new);display:inline-flex;align-items:center;justify-content:center;margin-left:6px;min-width:20px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent,#ffc15a);color:var(--accentText,#0c131b);font-size:9px;font-weight:900;line-height:1}
       @media(max-width:760px){#${PACK_ID} .sp-json-import{grid-template-columns:1fr 1fr}#${PACK_ID} .sp-json-import input{grid-column:1/-1}#${PACK_ID} .sp-json-import button{width:100%}}
     `;
     document.head.append(style);
@@ -101,8 +202,8 @@
     box.innerHTML = `
       <input type="url" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="GitHub or JSON source-pack URL" aria-label="JSON source-pack URL">
       <button type="button" class="sp-json-load">Load JSON</button>
-      <button type="button" class="sp-json-community">Community pack</button>
-      <div class="sp-json-status">Portable packs contain site URLs only. Yomu still tests every source before adding it.</div>`;
+      <button type="button" class="sp-json-community" data-new="0">Community pack</button>
+      <div class="sp-json-status">Portable packs contain site URLs only. Yomu still tests every new source before adding it.</div>`;
     meta.insertAdjacentElement('afterend', box);
 
     const input = box.querySelector('input');
@@ -110,16 +211,43 @@
     const community = box.querySelector('.sp-json-community');
     const status = box.querySelector('.sp-json-status');
 
+    function paintBadge(count) {
+      const safe = Math.max(0, Number(count) || 0);
+      community.dataset.new = String(safe);
+      community.textContent = safe ? `Community pack · +${safe} new` : 'Community pack · up to date';
+      community.title = safe ? `${safe} new source${safe === 1 ? '' : 's'} available` : 'No new Community Pack sources';
+      if (modeButton) modeButton.dataset.new = String(safe);
+    }
+
     async function applyPack(url) {
       load.disabled = true;
       community.disabled = true;
       status.textContent = 'Loading source pack…';
       try {
         const parsed = await loadJson(url);
-        textarea.value = parsed.urls.join('\n');
         const version = parsed.version ? ` v${parsed.version}` : '';
-        status.textContent = `Loaded ${parsed.name}${version} · ${parsed.urls.length} sources${parsed.truncated ? ` · first ${MAX_URLS} shown` : ''}. Review, then press Test & add source pack.`;
-        if (summary) summary.textContent = `${parsed.urls.length} sources loaded from JSON. Ready to test.`;
+
+        if (isCommunityUrl(url)) {
+          status.textContent = `Checking ${parsed.name}${version} against this device…`;
+          const delta = await communityDelta(parsed);
+          textarea.value = delta.fresh.join('\n');
+          paintBadge(delta.fresh.length);
+
+          if (delta.fresh.length) {
+            status.textContent = `${parsed.name}${version} · ${delta.fresh.length} new · ${delta.known} already known. Only the new sources are queued below.`;
+            if (summary) summary.textContent = `${delta.fresh.length} new source${delta.fresh.length === 1 ? '' : 's'} ready to test · ${delta.known} skipped as already known.`;
+          } else {
+            status.textContent = `${parsed.name}${version} · You're up to date. ${delta.known} existing source${delta.known === 1 ? '' : 's'} will not be retested.`;
+            if (summary) summary.textContent = 'Community Pack is up to date. Nothing to retest.';
+          }
+          saveSeenOrigins(parsed);
+          paintBadge(0);
+        } else {
+          textarea.value = parsed.urls.join('\n');
+          status.textContent = `Loaded ${parsed.name}${version} · ${parsed.urls.length} sources${parsed.truncated ? ` · first ${MAX_URLS} shown` : ''}. Review, then press Test & add source pack.`;
+          if (summary) summary.textContent = `${parsed.urls.length} sources loaded from JSON. Ready to test.`;
+        }
+
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       } catch (error) {
         status.textContent = error?.message || 'Could not load this source pack.';
@@ -139,8 +267,8 @@
     });
 
     community.addEventListener('click', () => {
-      input.value = COMMUNITY_PACK;
-      applyPack(COMMUNITY_PACK);
+      input.value = RAW_COMMUNITY_PACK;
+      applyPack(RAW_COMMUNITY_PACK);
     });
 
     input.addEventListener('keydown', (event) => {
@@ -149,6 +277,17 @@
         load.click();
       }
     });
+
+    (async () => {
+      try {
+        const parsed = await loadJson(RAW_COMMUNITY_PACK);
+        const delta = await communityDelta(parsed);
+        paintBadge(delta.fresh.length);
+        if (delta.fresh.length) status.textContent = `${delta.fresh.length} new Community Pack source${delta.fresh.length === 1 ? '' : 's'} available.`;
+      } catch {
+        paintBadge(0);
+      }
+    })();
 
     return true;
   }
