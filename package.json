@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit --pretty false",
     "source:forge": "npm --prefix tools/source-forge start",
     "source:forge:check": "npm --prefix tools/source-forge run check",
-    "source:forge:install": "npm --prefix tools/source-forge install && npm --prefix tools/source-forge exec -- playwright install chromium"
+    "source:forge:install": "npm --prefix tools/source-forge install && npm --prefix tools/source-forge exec -- playwright install chromium",
+    "source:hunter": "npm --prefix tools/source-forge run hunter --"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260914.1",
