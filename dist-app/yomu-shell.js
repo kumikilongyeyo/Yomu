@@ -1914,12 +1914,72 @@
    * one node is how you get a loop.
    */
   const FABRIC_ID = 'yomu-source-fabric-command';
-  const FABRIC_SCRIPTS = [
-    '/source-fabric-panel.js',
-    '/source-fabric-layout.js',
-    '/source-fabric-diagnostics.js',
+
+  /**
+   * Fabric pieces that mount *into* the panel, and the id each leaves behind.
+   *
+   * source-fabric-bulk.js adds the Single source / Source pack tabs. It
+   * mounts once and then opts out of watching -- its `if (mount()) return`
+   * succeeds against the prerendered markup, before React has hydrated.
+   * React then replaces that tree, source-fabric-panel.js rebuilds the card
+   * from its own observer, which never stops, and the tabs are gone with
+   * nobody left to put them back. The tell is a page carrying the bulk
+   * stylesheet with no tabs on the card: it ran, it just ran against a DOM
+   * that no longer exists.
+   *
+   * Re-running the script is the whole fix -- the tabs appear immediately --
+   * and its own guard makes a re-run a no-op whenever they are already
+   * there. Done from here because that file is not mine to edit.
+   */
+  const FABRIC_PARTS = [
+    { src: '/source-fabric-bulk.js', id: 'yomu-source-pack-mode', pending: false },
   ];
+  /** Enough to cover a rebuild or two; past that something else is wrong. */
+  const REVIVE_LIMIT = 3;
+
   let fabricAsked = false;
+  let revivedFor = null;
+  let revived = 0;
+
+  /* Every /source-*.js the Worker writes, not only the source-fabric- ones:
+     the fifth file it grew was called source-pack-json.js. */
+  const fabricScriptsHere = () =>
+    [...document.querySelectorAll('script[src*="/source-"]')]
+      .map((tag) => { try { return new URL(tag.src).pathname; } catch { return ''; } })
+      .filter((path) => /^\/source-[a-z0-9-]+\.js$/.test(path));
+
+  function runFabric(src) {
+    const tag = document.createElement('script');
+    tag.src = src;
+    // Not `defer`, which does nothing for a script inserted this late.
+    // async=false is what keeps inserted scripts running in order.
+    tag.async = false;
+    document.body.append(tag);
+    return tag;
+  }
+
+  /**
+   * The scripts this route would have been served, asked of the route.
+   *
+   * Hardcoded here first, and the list was stale within the day: the Worker
+   * grew a fourth file and in-app navigation to Sources silently lost the
+   * feature it carried. The Worker's own HTML is the only list that cannot
+   * drift.
+   */
+  async function loadFabricFor(path) {
+    let wanted = [];
+    try {
+      const response = await fetch(path, { headers: { accept: 'text/html' } });
+      if (response.ok) {
+        const html = await response.text();
+        wanted = [...html.matchAll(/src="(\/source-[a-z0-9-]+\.js)"/g)].map((hit) => hit[1]);
+      }
+    } catch {}
+    if (!wanted.length) {
+      wanted = ['/source-fabric-panel.js', '/source-fabric-layout.js', '/source-fabric-diagnostics.js'];
+    }
+    for (const src of [...new Set(wanted)]) runFabric(src);
+  }
 
   const gateFabric = () => {
     const onSources = location.pathname.startsWith('/sources');
@@ -1929,21 +1989,29 @@
     if (root.classList.contains('yomu-fabric-away') === onSources) {
       root.classList.toggle('yomu-fabric-away', !onSources);
     }
+    if (!onSources) return;
 
-    if (!onSources || fabricAsked) return;
-    if (document.getElementById(FABRIC_ID)) return;
-    // Nothing to do when this load came in through /sources: the Worker has
-    // already put the tags in the document.
-    if (FABRIC_SCRIPTS.some((src) => document.querySelector('script[src="' + src + '"]'))) return;
+    const panel = document.getElementById(FABRIC_ID);
+    if (!panel) {
+      // Nothing to do when this load came in through /sources: the Worker has
+      // already put the tags in the document.
+      if (fabricAsked || fabricScriptsHere().length) return;
+      fabricAsked = true;
+      loadFabricFor(location.pathname + location.search);
+      return;
+    }
 
-    fabricAsked = true;
-    for (const src of FABRIC_SCRIPTS) {
-      const tag = document.createElement('script');
-      tag.src = src;
-      // Not `defer`, which does nothing for a script inserted this late.
-      // async=false is what keeps inserted scripts running in order.
-      tag.async = false;
-      document.body.append(tag);
+    if (panel !== revivedFor) { revivedFor = panel; revived = 0; }
+    if (revived >= REVIVE_LIMIT) return;
+    const here = fabricScriptsHere();
+    for (const part of FABRIC_PARTS) {
+      if (part.pending || document.getElementById(part.id)) continue;
+      // Only revive a part this build actually ships.
+      if (!here.includes(part.src)) continue;
+      part.pending = true;
+      revived++;
+      const tag = runFabric(part.src);
+      tag.onload = tag.onerror = () => { part.pending = false; };
     }
   };
 
