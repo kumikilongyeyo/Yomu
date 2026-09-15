@@ -1,19 +1,12 @@
 {
   // One Worker serves both the app's files and its fetching.
   //
-  // `main` is the script; `assets.binding` lets it hand anything that is not
-  // an /api/ request back to the static site. Keeping them together means the
-  // app calls /api/... on its own address, so there is no cross-site
-  // permission problem to solve at all.
+  // v5 routes through index-v5.ts, a thin Source Fabric wrapper around the
+  // existing Worker. All legacy routes still delegate to worker/index.ts.
   //
-  // `not_found_handling` is what the dashboard uploader cannot set: it serves
-  // index.html for a path with no file behind it, so Expo's dynamic routes --
-  // written to disk as the literal `series/[id].html` -- resolve client-side
-  // instead of 404-ing on a reload.
-  //
-  // Deploy with:  npx wrangler deploy
+  // Deploy with: npx wrangler deploy
   "name": "yomu",
-  "main": "worker/index.ts",
+  "main": "worker/index-v5.ts",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist-app",
