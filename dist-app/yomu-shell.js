@@ -135,10 +135,14 @@
     nav.id = ID;
     nav.setAttribute('aria-label', 'Main');
 
+    // The same lockup the in-app header gets. This one is built rather than
+    // re-asserted: the sidebar lives outside React's tree, so nothing rebuilds
+    // it. The stylesheet drops the old wordmark background it used to carry.
     const brand = document.createElement('a');
     brand.className = 'yomu-sidebar__brand';
     brand.href = '/';
     brand.setAttribute('aria-label', 'Yomu home');
+    brand.append(makeLockup());
     nav.append(brand);
 
     const current = activeHref(location.pathname);
@@ -2731,44 +2735,47 @@
     '116.00,47.02 187.00,12.75 187.00,120.98 116.00,155.25',
   ];
 
+  function makeLockup() {
+    const lockup = document.createElement('span');
+    lockup.className = 'yomu-lockup';
+    lockup.setAttribute('role', 'img');
+    lockup.setAttribute('aria-label', 'Yomu');
+
+    const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    mark.setAttribute('class', 'ymark');
+    mark.setAttribute('viewBox', '0 0 195 168');
+    mark.setAttribute('aria-hidden', 'true');
+    for (const points of MARK_POINTS) {
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      poly.setAttribute('points', points);
+      poly.setAttribute('fill', 'currentColor');
+      poly.setAttribute('stroke', 'currentColor');
+      poly.setAttribute('stroke-width', '16');
+      poly.setAttribute('stroke-linejoin', 'round');
+      mark.append(poly);
+    }
+
+    // aria-hidden because the lockup already carries the name; a screen
+    // reader should hear "Yomu" once, not four letters.
+    const word = document.createElement('span');
+    word.className = 'yword';
+    word.setAttribute('aria-hidden', 'true');
+    [...'Yomu'].forEach((letter, i) => {
+      const span = document.createElement('span');
+      span.style.setProperty('--i', String(i));
+      span.textContent = letter;
+      word.append(span);
+    });
+
+    lockup.append(mark, word);
+    return lockup;
+  }
+
   function brandLockup() {
     for (const logo of document.querySelectorAll('svg.yomu-logo')) {
       const prev = logo.previousElementSibling;
       if (prev && prev.classList.contains('yomu-lockup')) continue;
-
-      const lockup = document.createElement('span');
-      lockup.className = 'yomu-lockup';
-      lockup.setAttribute('role', 'img');
-      lockup.setAttribute('aria-label', 'Yomu');
-
-      const mark = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      mark.setAttribute('class', 'ymark');
-      mark.setAttribute('viewBox', '0 0 195 168');
-      mark.setAttribute('aria-hidden', 'true');
-      for (const points of MARK_POINTS) {
-        const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        poly.setAttribute('points', points);
-        poly.setAttribute('fill', 'currentColor');
-        poly.setAttribute('stroke', 'currentColor');
-        poly.setAttribute('stroke-width', '16');
-        poly.setAttribute('stroke-linejoin', 'round');
-        mark.append(poly);
-      }
-
-      // aria-hidden because the lockup already carries the name; a screen
-      // reader should hear "Yomu" once, not four letters.
-      const word = document.createElement('span');
-      word.className = 'yword';
-      word.setAttribute('aria-hidden', 'true');
-      [...'Yomu'].forEach((letter, i) => {
-        const span = document.createElement('span');
-        span.style.setProperty('--i', String(i));
-        span.textContent = letter;
-        word.append(span);
-      });
-
-      lockup.append(mark, word);
-      logo.before(lockup);
+      logo.before(makeLockup());
     }
   }
 

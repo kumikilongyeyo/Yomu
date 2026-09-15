@@ -534,3 +534,16 @@ h1, h2 {
     animation: none;
   }
 }
+
+/* The desktop sidebar's brand was a bare <a> with the old wordmark painted on
+   as a background. yomu-shell.js now builds the same lockup into it that the
+   in-app header gets, so the background comes off and the box just lays the
+   lockup out. Sized a little larger than the header's -- it is the only brand
+   on screen at desktop width. */
+.yomu-sidebar__brand {
+  display: flex;
+  align-items: center;
+  background: none;
+}
+.yomu-sidebar__brand .ymark { width: 29px; }
+.yomu-sidebar__brand .yword { font-size: 23px; }
