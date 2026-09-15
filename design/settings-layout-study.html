@@ -1,0 +1,654 @@
+<title>Yomu Settings, Three Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+/* ---- document tokens: cool paper, the product's amber as the one accent --- */
+:root {
+  --paper:  #eceff3;
+  --card:   #ffffff;
+  --sunk:   #e0e5eb;
+  --ink:    #121920;
+  --muted:  #54636f;
+  --faint:  #7a8894;
+  --rule:   #c7d0d8;
+  --hair:   #dbe1e7;
+  --accent: #8a5600;
+  --accentbg: #ffc45f2e;
+  --good:   #1c6a4b;
+  --warn:   #8a5600;
+  --crit:   #983326;
+  --shadow: 0 1px 2px #12192014, 0 10px 28px #1219200f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:  #0e1319;
+    --card:   #161e26;
+    --sunk:   #121a21;
+    --ink:    #e8eef4;
+    --muted:  #99a8b5;
+    --faint:  #78889a;
+    --rule:   #2a343d;
+    --hair:   #202a33;
+    --accent: #ffc45f;
+    --accentbg: #ffc45f1c;
+    --good:   #5fc79b;
+    --warn:   #ffc45f;
+    --crit:   #ff968c;
+    --shadow: 0 1px 2px #0006, 0 12px 32px #0000004d;
+  }
+}
+:root[data-theme="dark"] {
+  --paper:  #0e1319;
+  --card:   #161e26;
+  --sunk:   #121a21;
+  --ink:    #e8eef4;
+  --muted:  #99a8b5;
+  --faint:  #78889a;
+  --rule:   #2a343d;
+  --hair:   #202a33;
+  --accent: #ffc45f;
+  --accentbg: #ffc45f1c;
+  --good:   #5fc79b;
+  --warn:   #ffc45f;
+  --crit:   #ff968c;
+  --shadow: 0 1px 2px #0006, 0 12px 32px #0000004d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 0 96px;
+}
+
+h1, h2, h3, h4, .ui, .eyebrow, .num { font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", system-ui, sans-serif; }
+
+/* ---- masthead ---------------------------------------------------------- */
+.masthead { padding-block: 54px 30px; border-bottom: 2px solid var(--ink); }
+.eyebrow {
+  font-size: 11.5px; font-weight: 700; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+}
+h1 {
+  font-size: clamp(36px, 6.4vw, 58px); font-weight: 900; line-height: 1.03;
+  letter-spacing: -.022em; margin: 0 0 16px; text-wrap: balance;
+}
+.standfirst { font-size: clamp(16.5px, 2.2vw, 19px); color: var(--muted); margin: 0; max-width: 62ch; }
+.byline {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 24px;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--faint);
+}
+.byline b { color: var(--muted); font-weight: 400; }
+
+/* ---- prose ------------------------------------------------------------- */
+section { padding-block: 44px 0; }
+h2 {
+  font-size: clamp(23px, 3.4vw, 31px); font-weight: 800; letter-spacing: -.014em;
+  line-height: 1.16; margin: 0 0 8px; text-wrap: balance;
+}
+h2 .num {
+  display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .16em;
+  color: var(--faint); margin-bottom: 9px;
+}
+h3 { font-size: 18px; font-weight: 700; letter-spacing: -.006em; margin: 28px 0 6px; }
+h4 {
+  font-size: 11.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint); margin: 0 0 10px;
+}
+p { margin: 0 0 15px; max-width: 66ch; }
+.lede { font-size: 17.5px; color: var(--muted); max-width: 62ch; }
+strong { font-weight: 600; }
+code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .86em; }
+code { background: var(--accentbg); color: var(--accent); padding: 1px 5px; border-radius: 4px; }
+hr { border: 0; border-top: 1px solid var(--hair); margin: 44px 0 0; }
+
+/* ---- the count strip --------------------------------------------------- */
+.counts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  border-radius: 10px; overflow: hidden; margin: 22px 0 8px;
+}
+.counts div { background: var(--card); padding: 14px 15px; }
+.counts b {
+  display: block; font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+  font-size: 25px; font-weight: 900; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.counts span {
+  display: block; margin-top: 3px; font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+  font-size: 11px; color: var(--faint); letter-spacing: .04em;
+}
+
+/* ---- the scatter map --------------------------------------------------- */
+.scatter { margin: 20px 0 6px; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.scatter-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px; align-items: baseline;
+  padding: 10px 14px; border-top: 1px solid var(--hair);
+  background: var(--card);
+  font-family: "Zen Kaku Gothic New", system-ui, sans-serif; font-size: 13.5px;
+}
+.scatter-row:first-child { border-top: 0; }
+.scatter-row span { color: var(--muted); }
+.scatter-row em {
+  font-style: normal; font-family: "JetBrains Mono", monospace;
+  font-size: 11px; color: var(--faint); white-space: nowrap;
+}
+.scatter-row.is-hot { background: var(--accentbg); }
+.scatter-row.is-hot span { color: var(--accent); }
+
+/* ---- option blocks ----------------------------------------------------- */
+.option { margin-top: 26px; }
+.frames {
+  display: grid; grid-template-columns: 300px minmax(0, 1fr);
+  gap: 26px; align-items: start; margin: 22px 0 0;
+}
+@media (max-width: 860px) { .frames { grid-template-columns: 1fr; } }
+
+.cap {
+  font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+  font-size: 11px; color: var(--faint); letter-spacing: .1em;
+  text-transform: uppercase; margin: 0 0 8px;
+}
+
+/* ---- device chrome ----------------------------------------------------- */
+.phone {
+  width: 300px; max-width: 100%; padding: 10px; border-radius: 34px;
+  background: linear-gradient(160deg, #2b343c, #11171c); box-shadow: var(--shadow);
+}
+.desk {
+  width: 100%; padding: 8px; border-radius: 10px;
+  background: linear-gradient(160deg, #2b343c, #11171c); box-shadow: var(--shadow);
+}
+
+/* The screen keeps Yomu's real tokens in both document themes: these are the
+   product's palette, not this page's. */
+.screen {
+  --bg: #0c131b; --surface: #17232d; --raised: #25333e;
+  --text: #f4f6fa; --dim: #a8b6c7; --sfaint: #7b8b9e;
+  --line: #b5c9df29; --acc: #ffc45f; --accInk: #18212a; --accSoft: #ffc45f1f;
+  position: relative; overflow: hidden; border-radius: 25px;
+  background: radial-gradient(ellipse at 8% 0, #2a3a4b80, transparent 55%), var(--bg);
+  color: var(--text); font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+  font-size: 12.5px; line-height: 1.42;
+}
+.phone .screen { height: 540px; display: flex; flex-direction: column; }
+.desk .screen { height: 430px; border-radius: 5px; display: flex; }
+
+.sbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 18px 2px; font-size: 10.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums; flex: none;
+}
+.sbar span:last-child { font-size: 9.5px; color: var(--dim); letter-spacing: .07em; }
+.shead { padding: 6px 16px 10px; flex: none; }
+.shead h5 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.012em; }
+.sbody { flex: 1; overflow: hidden; padding: 0 14px 12px; }
+
+.glabel {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--sfaint); margin: 12px 3px 5px; display: flex;
+  justify-content: space-between; align-items: center;
+}
+.glabel:first-child { margin-top: 0; }
+.grp { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .rc { flex: 1; min-width: 0; }
+.row h6 { margin: 0; font-size: 12.5px; font-weight: 600; }
+.row small {
+  display: block; font-size: 10.5px; color: var(--sfaint); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row .chev { color: var(--sfaint); font-size: 13px; flex: none; }
+.row.hi { background: var(--accSoft); }
+.row.hi h6 { color: var(--acc); }
+
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot.on { background: #5fc79b; } .dot.slow { background: #ffc45f; }
+.dot.off { background: #ff968c; } .dot.idle { background: var(--sfaint); }
+
+.btn {
+  display: block; width: 100%; text-align: center; padding: 9px;
+  border-radius: 10px; background: var(--acc); color: var(--accInk);
+  font-size: 12.5px; font-weight: 700; border: 0; margin-top: 10px; font-family: inherit;
+}
+.btn.ghost { background: transparent; color: var(--dim); border: 1px solid var(--line); }
+
+/* desktop two-pane */
+.rail { width: 158px; flex: none; border-right: 1px solid var(--line); padding: 12px 10px; }
+.rail p {
+  margin: 0 0 9px; font-size: 9.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--sfaint); max-width: none;
+}
+.rail a {
+  display: block; padding: 6px 9px; border-radius: 8px; color: var(--dim);
+  font-size: 12px; text-decoration: none; margin-bottom: 1px;
+}
+.rail a.on { background: var(--accSoft); color: var(--acc); font-weight: 700; }
+.pane { flex: 1; min-width: 0; padding: 14px 16px; overflow: hidden; }
+.pane h6 { margin: 0 0 3px; font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+.pane .sub { margin: 0 0 12px; font-size: 11px; color: var(--sfaint); max-width: none; }
+
+/* source board */
+.board { display: grid; gap: 7px; }
+.card {
+  display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px;
+  align-items: center; padding: 9px 11px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.card b { font-size: 12.5px; font-weight: 600; display: block; }
+.card small { font-size: 10px; color: var(--sfaint); }
+.card .stat { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--dim); white-space: nowrap; }
+.stripe { width: 3px; align-self: stretch; border-radius: 2px; }
+.stripe.on { background: #5fc79b; } .stripe.slow { background: #ffc45f; }
+.stripe.off { background: #ff968c; } .stripe.idle { background: var(--sfaint); }
+
+/* table (desktop board) */
+.tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tbl th {
+  text-align: left; font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--sfaint); padding: 0 10px 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tbl td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); color: var(--dim); }
+.tbl td:first-child { color: var(--text); font-weight: 600; }
+.tbl .mono { font-family: "JetBrains Mono", monospace; font-size: 10px; font-variant-numeric: tabular-nums; }
+
+/* stepper */
+.steps { display: grid; gap: 6px; }
+.step {
+  display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 10px;
+  align-items: start; padding: 9px 11px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.step i {
+  width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font-style: normal; font-size: 10px; font-weight: 800;
+  background: var(--raised); color: var(--sfaint); font-family: "JetBrains Mono", monospace;
+}
+.step.done i { background: #5fc79b; color: #0d241c; }
+.step.now { border-color: var(--acc); background: var(--accSoft); }
+.step.now i { background: var(--acc); color: var(--accInk); }
+.step b { display: block; font-size: 12.5px; font-weight: 600; }
+.step small { font-size: 10.5px; color: var(--sfaint); line-height: 1.35; }
+
+.meter { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; margin: 10px 0 0; }
+.meter i { display: block; height: 100%; background: var(--acc); }
+
+/* ---- annotation -------------------------------------------------------- */
+.annot { padding-top: 2px; }
+.annot h4 { margin-top: 18px; }
+.annot h4:first-child { margin-top: 0; }
+.annot ul { margin: 0 0 14px; padding-left: 17px; }
+.annot li { margin-bottom: 6px; color: var(--muted); }
+.annot li b { color: var(--ink); font-weight: 600; }
+
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--hair); }
+.chip {
+  font-family: "Zen Kaku Gothic New", system-ui, sans-serif; font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px; background: var(--sunk); color: var(--muted);
+  border: 1px solid var(--hair);
+}
+.chip.pick { background: var(--accentbg); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
+
+.tablebox { overflow-x: auto; margin: 20px 0 6px; }
+table.cmp { width: 100%; min-width: 520px; border-collapse: collapse; font-family: "Zen Kaku Gothic New", system-ui, sans-serif; font-size: 13.5px; }
+table.cmp th {
+  text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--faint); padding: 0 12px 8px 0; border-bottom: 1px solid var(--rule);
+}
+table.cmp td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair); color: var(--muted); vertical-align: top; }
+table.cmp td:first-child { color: var(--ink); font-weight: 500; }
+table.cmp tr:last-child td { border-bottom: 0; }
+.pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; white-space: nowrap; }
+.pill.y { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.pill.n { color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+.pill.p { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+
+.note { border-left: 3px solid var(--accent); background: var(--accentbg); padding: 13px 17px; margin: 22px 0; border-radius: 0 6px 6px 0; }
+.note p:last-child { margin-bottom: 0; }
+.note h4 { color: var(--accent); margin-bottom: 5px; }
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Layout study · nothing built</p>
+  <h1>Yomu Settings, Three Ways</h1>
+  <p class="standfirst">Adding a source is a process, and Settings presents it as a list of preferences. Here is what is actually on the screen today, three ways to lay it out on a phone and a desktop, and which one I would build.</p>
+  <div class="byline">
+    <span><b>Measured</b> yomu.yomuread.workers.dev/settings</span>
+    <span><b>Status</b> study only</span>
+    <span><b>Decision</b> pick a shape</span>
+  </div>
+</header>
+
+<section id="today">
+  <h2><span class="num">01 — What is there now</span>The screen, counted</h2>
+  <p class="lede">Not an impression. This is the live Settings screen read off the DOM.</p>
+
+  <div class="counts">
+    <div><b>7</b><span>groups</span></div>
+    <div><b>21</b><span>rows</span></div>
+    <div><b>1281<span style="font-size:13px">px</span></b><span>tall</span></div>
+    <div><b>4</b><span>separate pages</span></div>
+    <div><b>3</b><span>groups touch sources</span></div>
+  </div>
+
+  <p>Twenty-one rows is not the problem — a settings screen is allowed to be long. The problem is that <strong>one task is spread across three of the seven groups and four pages that are not this one</strong>, and none of them says so.</p>
+
+  <h3>Where "add a source" actually lives</h3>
+  <div class="scatter">
+    <div class="scatter-row is-hot"><span><b>Sources</b> — Find and add sources</span><em>settings group</em></div>
+    <div class="scatter-row is-hot"><span><b>Sources</b> — Manage sources</span><em>settings group</em></div>
+    <div class="scatter-row is-hot"><span><b>Free to read</b> — Komga, Kavita, Internet Archive +2</span><em>settings group</em></div>
+    <div class="scatter-row is-hot"><span><b>Advanced</b> — Yomu API connection, Discovery token</span><em>settings group</em></div>
+    <div class="scatter-row"><span>Sources screen — order, health, on/off</span><em>/sources</em></div>
+    <div class="scatter-row"><span>Source Fabric v7 — paste any site</span><em>/sources, injected</em></div>
+    <div class="scatter-row"><span>Yomu extensions — enable the built-in six</span><em>/extensions.html</em></div>
+    <div class="scatter-row"><span>Mihon bridge — tunnel, auth, source picker</span><em>/suwayomi-setup.html</em></div>
+    <div class="scatter-row"><span>Add a source by URL</span><em>/add-sources.html</em></div>
+  </div>
+
+  <div class="note">
+    <h4>The actual diagnosis</h4>
+    <p>These are not settings. A setting is a value you change and forget. <strong>Every row above is a step in a process with a success condition</strong> — the source answers, or it does not. A process presented as a list of preferences gives you no order to follow, no sense of progress, and no way to tell a finished step from one you never started.</p>
+  </div>
+</section>
+
+<hr>
+
+<section id="a">
+  <h2><span class="num">Option A</span>Settings, minus the process</h2>
+  <p class="lede">The smallest honest change. Settings keeps only things that are genuinely settings; everything about acquiring sources moves behind one door that already half exists.</p>
+
+  <div class="frames">
+    <div>
+      <p class="cap">Phone</p>
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:41</span><span>YOMU</span></div>
+        <div class="shead"><h5>Settings</h5></div>
+        <div class="sbody">
+          <div class="glabel">Reading</div>
+          <div class="grp">
+            <div class="row"><div class="rc"><h6>Theme</h6><small>Dark</small></div><span class="chev">›</span></div>
+            <div class="row"><div class="rc"><h6>18+ content</h6><small>Off. Adult titles hidden everywhere</small></div><span class="chev">›</span></div>
+          </div>
+
+          <div class="glabel">Sources</div>
+          <div class="grp">
+            <div class="row hi">
+              <span class="dot on"></span>
+              <div class="rc"><h6>Your sources</h6><small>7 answering · 1 unreachable</small></div>
+              <span class="chev">›</span>
+            </div>
+          </div>
+
+          <div class="glabel">You</div>
+          <div class="grp">
+            <div class="row"><div class="rc"><h6>Your Yomu</h6><small>Klyde · 3 devices · 1 circle</small></div><span class="chev">›</span></div>
+            <div class="row"><div class="rc"><h6>Storage &amp; backup</h6><small>412 MB downloaded</small></div><span class="chev">›</span></div>
+          </div>
+
+          <div class="glabel">Advanced <span style="color:var(--acc);letter-spacing:.03em">Show 3</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="cap">Desktop</p>
+      <div class="desk"><div class="screen">
+        <div class="rail">
+          <p>Settings</p>
+          <a href="#a">Reading</a>
+          <a href="#a" class="on">Sources</a>
+          <a href="#a">Your Yomu</a>
+          <a href="#a">Storage</a>
+          <a href="#a">Advanced</a>
+        </div>
+        <div class="pane">
+          <h6>Sources</h6>
+          <p class="sub">Seven answering, one unreachable. Ordered by preference — drag to change.</p>
+          <div class="board">
+            <div class="card"><span class="stripe on"></span><div><b>Weeb Central</b><small>Yomu extension</small></div><span class="stat">86 ms · 1,193</span></div>
+            <div class="card"><span class="stripe on"></span><div><b>MangaDex</b><small>Built in · via relay</small></div><span class="stat">104 ms · 24</span></div>
+            <div class="card"><span class="stripe slow"></span><div><b>Flame Comics</b><small>Yomu extension</small></div><span class="stat">1.9 s · 200</span></div>
+            <div class="card"><span class="stripe off"></span><div><b>Asura Scans (Mihon)</b><small>Bridge · tunnel down</small></div><span class="stat">no answer</span></div>
+          </div>
+          <button class="btn" type="button">Add a source</button>
+        </div>
+      </div></div>
+      <p class="cap" style="margin:9px 0 0">The rail is the sidebar Yomu already draws on desktop, reused.</p>
+    </div>
+  </div>
+
+  <div class="option">
+    <div class="annot" style="max-width:66ch">
+      <h4>What it gets right</h4>
+      <ul>
+        <li><b>Five groups become four, and one of them is a door.</b> The screen stops being a place you scroll looking for the right row.</li>
+        <li><b>State on the row.</b> "7 answering · 1 unreachable" is the only thing you actually wanted from this screen most visits, and today you have to open <code>/sources</code> to learn it.</li>
+        <li><b>Nothing new to learn.</b> Groups, rows, chevrons — the app's own furniture, rearranged.</li>
+        <li><b>Cheapest of the three by a distance.</b> The Sources destination already exists; this mostly deletes rows from Settings and points at it.</li>
+      </ul>
+      <h4>What it gives up</h4>
+      <ul>
+        <li>It moves the mess rather than resolving it. <code>/sources</code> now has to absorb Fabric, extensions, the bridge and the manual API source, and that page gets long.</li>
+        <li>Still no order. A first-time user opening "Your sources" meets five ways in and no hint which to try.</li>
+      </ul>
+      <div class="verdict">
+        <span class="chip">~1 day</span>
+        <span class="chip">No new screens</span>
+        <span class="chip pick">Lowest risk</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<section id="b">
+  <h2><span class="num">Option B</span>Sources as a status board</h2>
+  <p class="lede">Stop calling them settings. A source is infrastructure with a health state, and the question you actually bring to this screen is "which of these is working?" — so answer it first and make adding one a single button.</p>
+
+  <div class="frames">
+    <div>
+      <p class="cap">Phone</p>
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:41</span><span>YOMU</span></div>
+        <div class="shead"><h5>Sources</h5></div>
+        <div class="sbody">
+          <div class="glabel">8 sources <span style="color:var(--acc);letter-spacing:.03em">Check all</span></div>
+          <div class="board">
+            <div class="card"><span class="stripe on"></span><div><b>Weeb Central</b><small>Extension · 1,193 titles</small></div><span class="stat">86 ms</span></div>
+            <div class="card"><span class="stripe on"></span><div><b>MangaDex</b><small>Built in · 24 titles</small></div><span class="stat">104 ms</span></div>
+            <div class="card"><span class="stripe on"></span><div><b>Webtoons.com</b><small>Extension · 231 titles</small></div><span class="stat">210 ms</span></div>
+            <div class="card"><span class="stripe slow"></span><div><b>Flame Comics</b><small>Extension · slow, still working</small></div><span class="stat">1.9 s</span></div>
+            <div class="card"><span class="stripe off"></span><div><b>Asura Scans</b><small>Mihon bridge · tunnel is down</small></div><span class="stat">—</span></div>
+            <div class="card"><span class="stripe idle"></span><div><b>Comick</b><small>Discovery only · no chapters</small></div><span class="stat">—</span></div>
+          </div>
+          <button class="btn" type="button">+ Add a source</button>
+        </div>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="cap">Desktop</p>
+      <div class="desk"><div class="screen">
+        <div class="rail">
+          <p>Settings</p>
+          <a href="#b">Reading</a>
+          <a href="#b" class="on">Sources</a>
+          <a href="#b">Your Yomu</a>
+          <a href="#b">Storage</a>
+          <a href="#b">Advanced</a>
+        </div>
+        <div class="pane">
+          <h6>Sources</h6>
+          <p class="sub">Drag to set preference. The first that answers serves the chapter.</p>
+          <table class="tbl">
+            <thead><tr><th>Source</th><th>Kind</th><th>State</th><th>Reply</th><th>Titles</th></tr></thead>
+            <tbody>
+              <tr><td>Weeb Central</td><td>Extension</td><td style="color:#5fc79b">Answering</td><td class="mono">86 ms</td><td class="mono">1,193</td></tr>
+              <tr><td>MangaDex</td><td>Built in</td><td style="color:#5fc79b">Answering</td><td class="mono">104 ms</td><td class="mono">24</td></tr>
+              <tr><td>Webtoons.com</td><td>Extension</td><td style="color:#5fc79b">Answering</td><td class="mono">210 ms</td><td class="mono">231</td></tr>
+              <tr><td>Flame Comics</td><td>Extension</td><td style="color:#ffc45f">Slow</td><td class="mono">1.9 s</td><td class="mono">200</td></tr>
+              <tr><td>Asura Scans</td><td>Mihon bridge</td><td style="color:#ff968c">Unreachable</td><td class="mono">—</td><td class="mono">—</td></tr>
+              <tr><td>Comick</td><td>Extension</td><td style="color:var(--sfaint)">Discovery only</td><td class="mono">—</td><td class="mono">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+      <p class="cap" style="margin:9px 0 0">Adding opens a side sheet, so the board never leaves the screen.</p>
+    </div>
+  </div>
+
+  <div class="option">
+    <div class="annot" style="max-width:66ch">
+      <h4>What it gets right</h4>
+      <ul>
+        <li><b>It answers the question you came with.</b> Every visit to this screen is really "why is nothing loading" or "what do I have" — and both are on the first line.</li>
+        <li><b>The states are real and already computed.</b> Yomu tracks health per provider and demotes anything failing. Today that work is invisible; here it is the interface.</li>
+        <li><b>"Discovery only" stops being a bug report.</b> Comick lists titles and serves no chapters, by design. A status board has a word for that; a settings list does not, which is exactly why it read as broken.</li>
+        <li><b>One add button.</b> Extensions, Fabric, the bridge and a manual URL become four answers to one question instead of four places.</li>
+      </ul>
+      <h4>What it gives up</h4>
+      <ul>
+        <li>The most build of the three — a table, a side sheet, live health polling and drag ordering.</li>
+        <li>A board invites staring at latency numbers that do not matter. Milliseconds are diagnostic, not a leaderboard.</li>
+      </ul>
+      <div class="verdict">
+        <span class="chip">~3 days</span>
+        <span class="chip">New table + sheet</span>
+        <span class="chip pick">Best diagnosis</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<section id="c">
+  <h2><span class="num">Option C</span>One setup, resumable</h2>
+  <p class="lede">Take the diagnosis literally. If it is a process, give it an order, a position and a finish line — and let it be abandoned halfway without losing the thread, because that is what actually happens.</p>
+
+  <div class="frames">
+    <div>
+      <p class="cap">Phone</p>
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:41</span><span>YOMU</span></div>
+        <div class="shead"><h5>Set up sources</h5></div>
+        <div class="sbody">
+          <div class="meter" style="margin:0 0 12px"><i style="width:62%"></i></div>
+          <div class="steps">
+            <div class="step done"><i>✓</i><div><b>The built-in six</b><small>Weeb Central, Flame Comics, Webtoons, Asura, NamiComi, Comick</small></div></div>
+            <div class="step done"><i>✓</i><div><b>MangaDex</b><small>On by default, answering in 104 ms</small></div></div>
+            <div class="step now"><i>3</i><div><b>Anything else you read</b><small>Paste a site and Source Fabric will try to read it</small></div></div>
+            <div class="step"><i>4</i><div><b>Your own server</b><small>Komga, Kavita, or Mihon over a tunnel — optional</small></div></div>
+            <div class="step"><i>5</i><div><b>Check they all answer</b><small>One pass, and you are done</small></div></div>
+          </div>
+          <button class="btn" type="button">Continue step 3</button>
+          <button class="btn ghost" type="button">Skip — I'll manage them myself</button>
+        </div>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="cap">Desktop</p>
+      <div class="desk"><div class="screen">
+        <div class="rail">
+          <p>Set up sources</p>
+          <a href="#c">1 · Built-in six</a>
+          <a href="#c">2 · MangaDex</a>
+          <a href="#c" class="on">3 · Anything else</a>
+          <a href="#c">4 · Your server</a>
+          <a href="#c">5 · Check</a>
+          <div class="meter" style="margin-top:12px"><i style="width:62%"></i></div>
+        </div>
+        <div class="pane">
+          <h6>Anything else you read</h6>
+          <p class="sub">Paste the address of a site you read. Source Fabric will open it, work out how it is laid out, and tell you honestly whether it can be read reliably.</p>
+          <div class="grp" style="padding:10px 11px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sfaint)">https://</div>
+          </div>
+          <button class="btn" type="button">Try this site</button>
+          <p class="sub" style="margin:12px 0 0">Already added this way — <span style="color:var(--acc)">Kagane</span>, answering.</p>
+        </div>
+      </div></div>
+      <p class="cap" style="margin:9px 0 0">The rail is the order; the pane is one step at a time.</p>
+    </div>
+  </div>
+
+  <div class="option">
+    <div class="annot" style="max-width:66ch">
+      <h4>What it gets right</h4>
+      <ul>
+        <li><b>It is the only one that tells you where you are.</b> Three of five, and the two remaining are optional — nothing else here can say that.</li>
+        <li><b>Order carries the meaning.</b> Free and instant first, paste-a-site second, your own server last, because that is genuinely the order of effort.</li>
+        <li><b>Resumable is the whole point.</b> A tunnel is set up on a laptop on a Tuesday; the flow has to survive being left.</li>
+      </ul>
+      <h4>What it gives up</h4>
+      <ul>
+        <li><b>A wizard ages badly.</b> It is right once and in the way for ever after, so it needs the escape hatch shown — and then you have built two interfaces.</li>
+        <li>Steps imply completion, and this list never completes: a new source can always appear. "3 of 5" is a comforting fiction.</li>
+        <li>It answers the first-run question well and the everyday question — <em>is it working right now</em> — not at all.</li>
+      </ul>
+      <div class="verdict">
+        <span class="chip">~2.5 days</span>
+        <span class="chip">New flow + escape hatch</span>
+        <span class="chip pick">Best first run</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<section id="pick">
+  <h2><span class="num">02 — Recommendation</span>B, with A's Settings and one screen from C</h2>
+  <p class="lede">They are not really three alternatives. A is a Settings diet, B is the Sources screen that diet needs, and C is the first five minutes.</p>
+
+  <div class="tablebox">
+  <table class="cmp">
+    <thead><tr><th>&nbsp;</th><th>A — Settings diet</th><th>B — Status board</th><th>C — Setup flow</th></tr></thead>
+    <tbody>
+      <tr><td>Answers "what do I have"</td><td><span class="pill p">On one row</span></td><td><span class="pill y">Yes, first</span></td><td><span class="pill n">No</span></td></tr>
+      <tr><td>Answers "why is it broken"</td><td><span class="pill n">No</span></td><td><span class="pill y">Yes</span></td><td><span class="pill n">No</span></td></tr>
+      <tr><td>Good on a first run</td><td><span class="pill n">No</span></td><td><span class="pill p">Passable</span></td><td><span class="pill y">Yes</span></td></tr>
+      <tr><td>Good on the hundredth</td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td><td><span class="pill n">In the way</span></td></tr>
+      <tr><td>Shortens Settings</td><td><span class="pill y">7 → 4 groups</span></td><td><span class="pill y">Needs A</span></td><td><span class="pill p">One row</span></td></tr>
+      <tr><td>Build</td><td>~1 day</td><td>~3 days</td><td>~2.5 days</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>What I would actually build</h3>
+  <p><strong>A then B.</strong> A is a day and makes Settings a settings screen again: four groups, and Sources becomes one row carrying its own state. B is what that row opens, and it is the one that answers the question people bring — <em>which of these is working</em> — with data Yomu already computes and currently throws away.</p>
+  <p><strong>One screen from C, not the flow.</strong> Step 5 — <em>check they all answer</em> — is the best idea in the study and does not need a wizard around it. It is a button on B's board. Build the rest of C only if a real first run proves confusing; on an app with one user who set it up months ago, a wizard is a screen nobody will see twice.</p>
+
+  <div class="note">
+    <h4>The thing worth fixing first, whichever shape wins</h4>
+    <p>Four ways to add a source — extensions, Source Fabric, the Mihon bridge, a manual API URL — live on four pages and are described in four vocabularies. None of them says what it is <em>for</em>. Before any layout work: one screen, one question (<em>what do you want to add?</em>), four plainly-worded answers. That is most of the confusion, and it is independent of everything above.</p>
+  </div>
+</section>
+
+</div>

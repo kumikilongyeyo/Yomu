@@ -1,0 +1,891 @@
+<title>Yomu First Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ------------------------------------------------------------------ *
+ * Tokens
+ *
+ * The product's own palette, structured the way macOS structures one:
+ * a window ground, translucent chrome over it, and fills in three
+ * weights for controls. Semantic green/red are separate from the amber
+ * accent so "working" never competes with "selected".
+ * ------------------------------------------------------------------ */
+:root {
+  --page:        #e8ebef;
+  --pageInk:     #14191f;
+  --pageMuted:   #5b6875;
+  --pageRule:    #ccd4dc;
+
+  --win:         #0c131b;
+  --winRaise:    #17232d;
+  --chrome:      #1a2530cc;
+  --fill1:       #ffffff14;
+  --fill2:       #ffffff0d;
+  --fill3:       #ffffff08;
+  --sep:         #b5c9df26;
+
+  --text:        #f4f6fa;
+  --dim:         #aab8c8;
+  --faint:       #7e8d9d;
+
+  --accent:      #ffc45f;
+  --accentInk:   #18212a;
+  --accentSoft:  #ffc45f1f;
+
+  --good:        #46d39a;
+  --bad:         #ff8a7e;
+
+  --r-lg: 14px;
+  --r-md: 10px;
+  --r-sm: 7px;
+
+  /* The easing macOS uses for almost everything that isn't a gesture. */
+  --ease: cubic-bezier(.32, .72, 0, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0a0e13; --pageInk: #e7edf3; --pageMuted: #94a3b1; --pageRule: #232d37;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0a0e13; --pageInk: #e7edf3; --pageMuted: #94a3b1; --pageRule: #232d37;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--pageInk);
+  font: 400 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 80px; }
+
+/* ---- page header --------------------------------------------------- */
+.top { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 8px; }
+h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.021em;   /* negative tracking as it grows */
+  line-height: 1.06;
+}
+.sub { margin: 8px 0 0; max-width: 58ch; color: var(--pageMuted); font-size: 15px; }
+
+/* macOS segmented control */
+.seg {
+  display: inline-flex; gap: 2px; padding: 2px; flex: none;
+  background: color-mix(in srgb, var(--pageInk) 8%, transparent);
+  border-radius: 9px;
+}
+.seg button {
+  appearance: none; border: 0; cursor: pointer;
+  padding: 6px 15px; border-radius: 7px; background: transparent;
+  color: var(--pageMuted); font: 600 13px/1 inherit; letter-spacing: -0.005em;
+  transition: background .22s var(--ease), color .22s var(--ease), transform .12s ease-out;
+}
+.seg button:active { transform: scale(.97); }
+.seg button[aria-pressed="true"] {
+  background: var(--page); color: var(--pageInk);
+  box-shadow: 0 1px 2px #0000001f, 0 0 0 .5px #00000014;
+}
+
+/* ---- stage --------------------------------------------------------- */
+.stage { margin-top: 26px; display: flex; justify-content: center; }
+
+.device { transition: width .45s var(--ease); }
+.device.phone { width: 392px; max-width: 100%; }
+.device.mac   { width: 100%; }
+
+/* iPhone */
+.phone .bezel {
+  padding: 11px; border-radius: 46px;
+  background: linear-gradient(165deg, #333b44, #0f151a);
+  box-shadow: 0 2px 4px #0000002e, 0 26px 60px #0000003d;
+}
+.phone .win { height: 700px; border-radius: 36px; }
+
+/* Mac window */
+.mac .bezel { padding: 0; border-radius: 12px; box-shadow: 0 2px 5px #00000024, 0 30px 70px #00000038; }
+.mac .win { height: 620px; border-radius: 12px; }
+
+.win {
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+  background:
+    radial-gradient(ellipse at 6% 0, #2a3a4b6b, transparent 58%),
+    radial-gradient(ellipse at 96% 92%, #1f38484d, transparent 52%),
+    var(--win);
+  color: var(--text);
+}
+
+/* Title bar — translucent, content scrolls under it */
+.bar {
+  position: sticky; top: 0; z-index: 5; flex: none;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--chrome);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+.phone .bar { padding-top: 16px; }
+.lights { display: flex; gap: 7px; flex: none; }
+.phone .lights { display: none; }
+.lights i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.lights i:nth-child(1) { background: #ff5f57; }
+.lights i:nth-child(2) { background: #febc2e; }
+.lights i:nth-child(3) { background: #28c840; }
+.bar h2 {
+  margin: 0; flex: 1; text-align: center;
+  font-size: 13.5px; font-weight: 600; letter-spacing: -0.005em; color: var(--dim);
+}
+.phone .bar h2 { text-align: left; font-size: 16px; color: var(--text); font-weight: 700; }
+.barEnd { flex: none; min-width: 54px; text-align: right; }
+.phone .barEnd { min-width: 0; }
+
+/* The scroll-edge fade, instead of a 1px divider under floating chrome */
+.body { flex: 1; overflow-y: auto; overscroll-behavior: contain; position: relative; }
+.body::before {
+  content: ''; position: sticky; top: 0; display: block; height: 10px;
+  margin-bottom: -10px; z-index: 4;
+  background: linear-gradient(var(--win), transparent); pointer-events: none;
+}
+
+.inner { padding: 14px 16px 22px; }
+.mac .inner { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 26px; padding: 20px 24px 26px; align-items: start; }
+
+/* ---- step rail (Mac) / stepper (phone) ----------------------------- */
+.rail { position: sticky; top: 8px; }
+.phone .rail { position: static; margin-bottom: 14px; }
+
+.railTitle {
+  margin: 0 0 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--faint);
+}
+.phone .railTitle { display: none; }
+
+.steps { display: grid; gap: 3px; }
+.phone .steps { grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+
+.step {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border: 0; border-radius: var(--r-md);
+  background: transparent; color: var(--dim);
+  font: 500 13px/1.3 inherit; text-align: left; cursor: pointer;
+  transition: background .22s var(--ease), color .22s var(--ease);
+}
+.step:hover { background: var(--fill3); }
+.step[aria-current="step"] { background: var(--fill1); color: var(--text); font-weight: 600; }
+.step i {
+  flex: none; width: 19px; height: 19px; border-radius: 50%;
+  display: grid; place-items: center;
+  font: 600 10px/1 "JetBrains Mono", ui-monospace, monospace; font-style: normal;
+  background: var(--fill1); color: var(--faint);
+  transition: background .3s var(--ease), color .3s var(--ease);
+}
+.step.done i { background: var(--good); color: #06281c; }
+.step[aria-current="step"] i { background: var(--accent); color: var(--accentInk); }
+.phone .step span { display: none; }
+.phone .step { justify-content: center; padding: 7px; }
+
+.track { height: 3px; border-radius: 2px; background: var(--fill1); overflow: hidden; margin-top: 12px; }
+.track i { display: block; height: 100%; background: var(--accent); border-radius: 2px; transition: width .5s var(--ease); }
+
+/* ---- panes --------------------------------------------------------- */
+.pane { min-width: 0; }
+.pane[hidden] { display: none; }
+h3 { margin: 0 0 5px; font-size: 21px; font-weight: 700; letter-spacing: -0.016em; line-height: 1.15; }
+.phone h3 { font-size: 20px; }
+.blurb { margin: 0 0 16px; color: var(--dim); font-size: 13.5px; line-height: 1.5; max-width: 52ch; }
+
+/* Inset grouped list — the macOS/iOS settings shape */
+.group {
+  background: var(--winRaise); border: .5px solid var(--sep);
+  border-radius: var(--r-lg); overflow: hidden;
+}
+.group + .group { margin-top: 14px; }
+.gtitle {
+  margin: 18px 3px 7px; font-size: 11px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--faint);
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+}
+.gtitle:first-child { margin-top: 0; }
+.gtitle b { font-weight: 600; color: var(--dim); letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+
+.row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px; border-top: .5px solid var(--sep);
+}
+.row:first-child { border-top: 0; }
+.row .rc { flex: 1; min-width: 0; }
+.row b { display: block; font-size: 14px; font-weight: 500; letter-spacing: -0.006em; }
+.row small { display: block; margin-top: 1px; font-size: 12px; color: var(--faint); line-height: 1.35; }
+.row .val {
+  flex: none; font: 500 12.5px/1 "JetBrains Mono", ui-monospace, monospace;
+  color: var(--dim); font-variant-numeric: tabular-nums;
+}
+.row.dim { opacity: .55; }
+
+/* ---- the switch ----------------------------------------------------- */
+.sw {
+  position: relative; flex: none; width: 50px; height: 30px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--fill1);
+  transition: background .3s var(--ease);
+}
+.sw::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  box-shadow: 0 3px 7px #0000003d, 0 1px 1px #00000029;
+  transition: transform .34s var(--ease), width .2s var(--ease);
+}
+.sw[aria-checked="true"] { background: var(--accent); }
+.sw[aria-checked="true"]::after { transform: translateX(20px); }
+/* Press feedback lands on pointer-down, and the knob stretches the way a
+   real one would when you shove it. */
+.sw:active::after { width: 30px; }
+.sw[aria-checked="true"]:active::after { transform: translateX(16px); }
+
+/* ---- state dots ----------------------------------------------------- */
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }
+.state i { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--faint); }
+.state.ok i { background: var(--good); }
+.state.ok { color: var(--good); }
+.state.no i { background: var(--bad); }
+.state.no { color: var(--bad); }
+
+/* ---- buttons -------------------------------------------------------- */
+.btn {
+  appearance: none; border: 0; cursor: pointer; font: 600 14px/1 inherit;
+  letter-spacing: -0.006em; padding: 12px 18px; border-radius: var(--r-md);
+  background: var(--accent); color: var(--accentInk);
+  transition: transform .12s ease-out, filter .2s var(--ease), opacity .2s var(--ease);
+}
+.btn:active { transform: scale(.975); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.quiet { background: var(--fill1); color: var(--dim); }
+.btn.plain { background: transparent; color: var(--faint); padding-inline: 4px; }
+.btn.wide { width: 100%; }
+.acts { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+.acts .grow { flex: 1; }
+
+/* ---- field ---------------------------------------------------------- */
+.field {
+  width: 100%; padding: 12px 13px; border-radius: var(--r-md);
+  border: .5px solid var(--sep); background: var(--fill3); color: var(--text);
+  font: 400 16px/1.3 inherit; /* 16px: iOS zooms a smaller field on focus */
+}
+.field::placeholder { color: var(--faint); }
+.field:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+/* accent swatches */
+.swatches { display: flex; gap: 10px; padding: 13px; flex-wrap: wrap; }
+.tone {
+  width: 32px; height: 32px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 2px solid transparent; box-shadow: inset 0 0 0 1.5px #0000002e;
+  transition: transform .2s var(--ease), border-color .2s var(--ease);
+}
+.tone:active { transform: scale(.92); }
+.tone[aria-checked="true"] { border-color: var(--text); }
+
+/* ---- preset profiles -------------------------------------------------- */
+.presets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+.preset {
+  position: relative; cursor: pointer; text-align: center;
+  padding: 15px 8px 12px; border-radius: var(--r-lg);
+  border: .5px solid var(--sep); background: var(--winRaise); color: var(--text);
+  font: inherit;
+  transition: background .24s var(--ease), border-color .24s var(--ease), transform .12s ease-out;
+}
+.preset:active { transform: scale(.97); }
+.preset[aria-checked="true"] { background: var(--fill1); border-color: currentColor; }
+.preset .face {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 9px;
+  display: grid; place-items: center;
+  font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
+  transition: transform .3s var(--ease);
+}
+.preset[aria-checked="true"] .face { transform: scale(1.06); }
+.preset b { display: block; font-size: 13px; font-weight: 600; letter-spacing: -0.006em; }
+.preset small { display: block; margin-top: 1px; font-size: 11px; color: var(--faint); }
+.preset .dot {
+  position: absolute; top: 9px; right: 9px; width: 8px; height: 8px;
+  border-radius: 50%; opacity: 0; transition: opacity .24s var(--ease);
+}
+.preset[aria-checked="true"] .dot { opacity: 1; }
+.customWrap { margin-top: 12px; }
+.customWrap[hidden] { display: none; }
+
+/* ---- kind picker (multi-select) -------------------------------------- */
+.kinds { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.kind {
+  position: relative; text-align: left; cursor: pointer;
+  padding: 14px 14px 13px; border-radius: var(--r-lg);
+  border: .5px solid var(--sep); background: var(--winRaise); color: var(--text);
+  font: inherit;
+  transition: background .24s var(--ease), border-color .24s var(--ease), transform .12s ease-out;
+}
+.kind:active { transform: scale(.985); }
+.kind[aria-checked="true"] { background: var(--accentSoft); border-color: #ffc45f66; }
+.kind b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -0.008em; }
+.kind small { display: block; margin-top: 2px; font-size: 12px; color: var(--faint); line-height: 1.35; }
+.kind .tick {
+  position: absolute; top: 12px; right: 12px;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--sep); display: grid; place-items: center;
+  font-size: 11px; color: transparent;
+  transition: background .24s var(--ease), border-color .24s var(--ease), color .24s var(--ease);
+}
+.kind[aria-checked="true"] .tick {
+  background: var(--accent); border-color: var(--accent); color: var(--accentInk);
+}
+
+/* ---- the running count ---------------------------------------------- */
+.tally {
+  display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+  padding: 13px 15px; border-radius: var(--r-lg);
+  background: var(--accentSoft); border: .5px solid #ffc45f3d;
+  margin-bottom: 14px;
+}
+.tally b {
+  font: 600 25px/1 "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; color: var(--accent); letter-spacing: -0.02em;
+}
+.tally span { font-size: 12.5px; color: var(--dim); }
+
+/* ---- done pane ------------------------------------------------------- */
+.done { text-align: center; padding: 18px 6px 6px; }
+.done .mark {
+  width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
+  background: var(--good); display: grid; place-items: center;
+  color: #06281c; font-size: 27px; font-weight: 700;
+}
+.covers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0 4px; }
+.covers i {
+  display: block; aspect-ratio: 2 / 3; border-radius: var(--r-sm);
+  background: linear-gradient(150deg, var(--fill1), var(--fill3));
+  border: .5px solid var(--sep);
+}
+
+/* ---- notes under the stage ------------------------------------------ */
+.notes { margin-top: 34px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 22px; }
+.note h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: -0.005em; }
+.note p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--pageMuted); }
+.note code {
+  font: 500 12px/1 "JetBrains Mono", monospace;
+  background: color-mix(in srgb, var(--pageInk) 8%, transparent);
+  padding: 2px 5px; border-radius: 4px;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: .01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bar { background: #16212b; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (max-width: 720px) {
+  .mac .inner { grid-template-columns: 1fr; gap: 16px; }
+  .mac .rail { position: static; }
+}
+</style>
+
+<div class="page">
+
+  <div class="top">
+    <div>
+      <h1>Yomu First Run</h1>
+      <p class="sub">Option&nbsp;C as the first five minutes, Option&nbsp;A as the screen it leaves behind. The switches work — flip them and watch the count.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Device">
+      <button type="button" data-dev="phone" aria-pressed="true">iPhone</button>
+      <button type="button" data-dev="mac" aria-pressed="false">Mac</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="device phone" id="device">
+      <div class="bezel">
+        <div class="win">
+
+          <div class="bar">
+            <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+            <h2 id="winTitle">Welcome to Yomu</h2>
+            <span class="barEnd"></span>
+          </div>
+
+          <div class="body">
+            <div class="inner">
+
+              <div class="rail">
+                <p class="railTitle">Getting set up</p>
+                <div class="steps" id="steps"></div>
+                <div class="track"><i id="track" style="width:0%"></i></div>
+              </div>
+
+              <div>
+                <!-- 1 · You -->
+                <section class="pane" id="pane-0">
+                  <h3>Pick a reader</h3>
+                  <p class="blurb">A name and a colour in one tap. Only ever seen by a reading circle, if you join one \u2014 and you can change it later or skip it entirely.</p>
+
+                  <div class="presets" id="presets" role="radiogroup" aria-label="Reader profile"></div>
+
+                  <div class="customWrap" id="customWrap" hidden>
+                    <div class="group">
+                      <div class="row"><input class="field" id="name" placeholder="Type a name" autocomplete="off" aria-label="Your name" /></div>
+                    </div>
+                  </div>
+
+                  <p class="gtitle">Or a different colour</p>
+                  <div class="group"><div class="swatches" id="tones" role="radiogroup" aria-label="Accent colour"></div></div>
+
+                  <div class="acts">
+                    <button class="btn" type="button" data-go="1">Continue</button>
+                    <button class="btn plain" type="button" data-go="1">Skip this</button>
+                  </div>
+                </section>
+
+                <!-- 2 · What you read -->
+                <section class="pane" id="pane-1" hidden>
+                  <h3>What do you read?</h3>
+                  <p class="blurb">Pick as many as you like. It only decides which sources start switched on — you can change any of them on the next screen.</p>
+
+                  <div class="kinds" id="kinds" role="group" aria-label="What you read"></div>
+
+                  <div class="acts">
+                    <button class="btn plain" type="button" data-go="0">Back</button>
+                    <span class="grow"></span>
+                    <button class="btn" type="button" id="toSources" data-go="2">Continue</button>
+                  </div>
+                </section>
+
+                <!-- 3 · Sources -->
+                <section class="pane" id="pane-2" hidden>
+                  <h3>Where should they come from?</h3>
+                  <p class="blurb">Switched on to match what you picked. All free, nothing to sign up for — you need at least one.</p>
+
+                  <div class="tally">
+                    <b id="tallyNum">0</b>
+                    <span id="tallyText">titles</span>
+                  </div>
+
+                  <p class="gtitle">Ready to go <b id="onCount">0 on</b></p>
+                  <div class="group" id="sourceList"></div>
+
+                  <p class="gtitle">Needs a moment more</p>
+                  <div class="group" id="extraList"></div>
+
+                  <div class="acts">
+                    <button class="btn plain" type="button" data-go="1">Back</button>
+                    <span class="grow"></span>
+                    <button class="btn" type="button" id="toDone" data-go="3">Continue</button>
+                  </div>
+                </section>
+
+                <!-- 4 · Done -->
+                <section class="pane" id="pane-3" hidden>
+                  <div class="done">
+                    <div class="mark" aria-hidden="true">&#10003;</div>
+                    <h3>Your shelves are full</h3>
+                    <p class="blurb" style="margin-inline:auto" id="doneLine">Ready when you are.</p>
+                    <div class="covers" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                    <div class="acts" style="justify-content:center">
+                      <button class="btn" type="button" id="finish">Start reading</button>
+                    </div>
+                    <p class="blurb" style="margin:14px auto 0;font-size:12.5px">You can add more any time in Settings &#8594; Sources.</p>
+                  </div>
+                </section>
+
+                <!-- Settings afterwards (Option A) -->
+                <section class="pane" id="pane-4" hidden>
+                  <p class="gtitle">Reading</p>
+                  <div class="group">
+                    <div class="row"><div class="rc"><b>Theme</b><small>Dark</small></div><span class="val">&#8250;</span></div>
+                    <div class="row"><div class="rc"><b>18+ content</b><small>Off. Adult titles hidden everywhere</small></div><span class="val">&#8250;</span></div>
+                  </div>
+
+                  <p class="gtitle">Sources</p>
+                  <div class="group">
+                    <div class="row"><div class="rc"><b>Your sources</b><small id="settingsSub">&#8212;</small></div><span class="val">&#8250;</span></div>
+                  </div>
+
+                  <p class="gtitle">You</p>
+                  <div class="group">
+                    <div class="row"><div class="rc"><b id="settingsWho">Your Yomu</b><small>Name, circle, accent colour</small></div><span class="val">&#8250;</span></div>
+                    <div class="row"><div class="rc"><b>Storage &amp; backup</b><small>Nothing downloaded yet</small></div><span class="val">&#8250;</span></div>
+                  </div>
+
+                  <p class="gtitle">Advanced</p>
+                  <div class="group">
+                    <div class="row dim"><div class="rc"><b>Show 3 more</b><small>Tokens, API connection, UI kit</small></div><span class="val">&#8250;</span></div>
+                  </div>
+
+                  <div class="acts"><button class="btn quiet" type="button" data-go="0">Run setup again</button></div>
+                </section>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h4>Why the number is a floor, not a total</h4>
+      <p>The count moves because it is real: MangaDex publishes a total per original language, so ticking Manhwa genuinely adds its <code>8,809</code> Korean titles &#8212; <code>75,579</code> Japanese, <code>6,378</code> Chinese, <code>94,626</code> all told, each read off its API. Every other source pages without ever saying how deep it goes; Weeb Central still returns results on page 60. Hence the <code>+</code>: a floor, because a grand total would have to be invented.</p>
+    </div>
+    <div class="note">
+      <h4>Working, or not working</h4>
+      <p>No milliseconds. A source is fine, or it is not reachable, and only the second is worth interrupting you about. Comick gets a third state &#8212; it finds titles and serves no chapters by design, which is exactly what made it look broken before.</p>
+    </div>
+    <div class="note">
+      <h4>Skippable, then not</h4>
+      <p>A reader is one tap, not a blank field \u2014 a name and a colour bundled, because on a first run they are one decision. Typing your own is there, one card along, rather than being the default. The whole step is skippable and says so. Sources are not: Continue stays dim until one is on, because an empty home page is what this flow exists to prevent.</p>
+    </div>
+    <div class="note">
+      <h4>Only once</h4>
+      <p>Shown when there is no library, no reading history and no sync code &#8212; an unambiguous new install. Everyone else lands on Home and reaches the same screens from Settings &#8594; Sources, which is Option&nbsp;A: seven groups down to four.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* Real sources and real capabilities. MangaDex's total is the one measured
+     figure in here -- its API reports it. The extensions page indefinitely
+     and publish no total, so they claim none rather than inventing one. */
+  const SOURCES = [
+    { id:'mangadex',    name:'MangaDex',     note:'The one source that publishes a catalogue size', titles:94626, kinds:['manga','manhwa','manhua'], on:false },
+    { id:'weebcentral', name:'Weeb Central', note:'Still returning results on page 60 \u00b7 no total published', titles:null, kinds:['manga','manhwa','manhua'], on:false },
+    { id:'flame',       name:'Flame Comics', note:'Manhwa \u00b7 no total published', titles:null, kinds:['manhwa'], on:false },
+    { id:'asura',       name:'Asura Scans',  note:'Manhwa \u00b7 no total published', titles:null, kinds:['manhwa'], on:false },
+    { id:'webtoons',    name:'Webtoons.com', note:'Vertical scroll originals and canvas', titles:null, kinds:['webtoon'], on:false },
+    { id:'namicomi',    name:'NamiComi',     note:'Manga and webtoons \u00b7 newer, smaller', titles:null, kinds:['manga','webtoon'], on:false },
+  ];
+  const EXTRAS = [
+    { id:'comick', name:'Comick', note:'Finds titles but serves no chapters', state:'info', stateText:'Discovery only', locked:true },
+    { id:'mihon',  name:'Mihon bridge', note:'Opens 8\u201312 more sources from your own server', state:'no', stateText:'Not set up' },
+    { id:'komga',  name:'Komga or Kavita', note:'Your own library, served from your machine', state:'no', stateText:'Not set up' },
+  ];
+
+  /* Counts measured off MangaDex's own API, one query per original language:
+     ja 75,579 \u00b7 ko 8,809 \u00b7 zh + zh-hk 6,378 \u00b7 94,626 all told.
+     MangaDex is the only source that publishes a number, so it is the only
+     one contributing to the tally -- which is why the tally is a floor. */
+  const KINDS = [
+    { id:'manga',   name:'Manga',    note:'Japanese \u00b7 right-to-left pages',      count: 75579 },
+    { id:'manhwa',  name:'Manhwa',   note:'Korean \u00b7 usually colour, vertical',   count: 8809 },
+    { id:'manhua',  name:'Manhua',   note:'Chinese \u00b7 usually colour',            count: 6378 },
+    { id:'webtoon', name:'Webtoons', note:'Vertical scroll, one long strip',      count: null },
+  ];
+
+  /* A name and a colour bundled, because on a first run they are one
+     decision and two controls. Custom is the escape hatch, not the default:
+     a blank field is the slowest possible way to start reading. */
+  const PRESETS = [
+    { id:'reader',   name:'Reader',   mark:'R', hex:'#ffc45f', ink:'#18212a' },
+    { id:'nightowl', name:'Nightowl', mark:'N', hex:'#d3a2ff', ink:'#231133' },
+    { id:'margin',   name:'Margin',   mark:'M', hex:'#9db8ff', ink:'#111a2e' },
+    { id:'bookmark', name:'Bookmark', mark:'B', hex:'#7fd6b0', ink:'#0d241c' },
+    { id:'inkwell',  name:'Inkwell',  mark:'I', hex:'#ff968c', ink:'#2c1110' },
+    { id:'custom',   name:'Your own', mark:'+', hex:'#8fa0b4', ink:'#0c131b', custom:true },
+  ];
+
+  const TONES = [
+    { id:'amber', hex:'#ffc45f', ink:'#18212a' },
+    { id:'blue',  hex:'#9db8ff', ink:'#111a2e' },
+    { id:'jade',  hex:'#7fd6b0', ink:'#0d241c' },
+    { id:'coral', hex:'#ff968c', ink:'#2c1110' },
+    { id:'violet',hex:'#d3a2ff', ink:'#231133' },
+  ];
+
+  const STEPS = [
+    { label:'You',     title:'Welcome to Yomu' },
+    { label:'Reading', title:'What do you read?' },
+    { label:'Sources', title:'Choose your sources' },
+    { label:'Done',    title:'All set' },
+    { label:'Settings',title:'Settings' },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => n.toLocaleString('en-US');
+
+  let step = 0;
+  let name = '';
+  let tone = TONES[0];
+  let profile = null;
+  const picked = new Set(['manga', 'manhwa']);   // a sensible opening guess
+
+  /* ---- device ------------------------------------------------------ */
+  document.querySelectorAll('[data-dev]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const want = button.dataset.dev;
+      document.querySelectorAll('[data-dev]').forEach((b) =>
+        b.setAttribute('aria-pressed', String(b.dataset.dev === want)));
+      $('device').className = 'device ' + want;
+    });
+  });
+
+  function paintAccent(hex, ink) {
+    const root = document.documentElement;
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--accentInk', ink);
+    root.style.setProperty('--accentSoft', hex + '1f');
+  }
+
+  /* ---- preset profiles ------------------------------------------------ */
+  function drawPresets() {
+    const box = $('presets');
+    box.textContent = '';
+    PRESETS.forEach((pre) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(profile === pre));
+      b.style.color = pre.hex;
+
+      const dot = document.createElement('span');
+      dot.className = 'dot'; dot.style.background = pre.hex; dot.setAttribute('aria-hidden','true');
+
+      const face = document.createElement('span');
+      face.className = 'face';
+      face.style.background = pre.hex;
+      face.style.color = pre.ink;
+      face.textContent = pre.custom ? pre.mark : (name && profile === pre ? [...name][0].toUpperCase() : pre.mark);
+
+      const strong = document.createElement('b');
+      strong.textContent = pre.custom && name ? name : pre.name;
+      const small = document.createElement('small');
+      small.textContent = pre.custom ? 'Type a name' : 'and its colour';
+
+      b.append(dot, face, strong, small);
+      b.addEventListener('click', () => {
+        profile = pre;
+        if (!pre.custom) name = pre.name;
+        paintAccent(pre.hex, pre.ink);
+        tone = TONES.find((t) => t.hex === pre.hex) ?? tone;
+        $('customWrap').hidden = !pre.custom;
+        drawPresets();
+        [...$('tones').children].forEach((c, i) =>
+          c.setAttribute('aria-checked', String(TONES[i].hex === pre.hex)));
+        if (pre.custom) $('name').focus();
+        tally();
+      });
+      box.append(b);
+    });
+  }
+
+  /* ---- accent ------------------------------------------------------- */
+  const tones = $('tones');
+  TONES.forEach((t) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tone'; b.style.background = t.hex;
+    b.setAttribute('role','radio');
+    b.setAttribute('aria-label', t.id);
+    b.setAttribute('aria-checked', String(t === tone));
+    b.addEventListener('click', () => {
+      tone = t;
+      [...tones.children].forEach((c,i) => c.setAttribute('aria-checked', String(TONES[i] === t)));
+      paintAccent(t.hex, t.ink);
+      drawPresets();
+    });
+    tones.append(b);
+  });
+
+  $('name').addEventListener('input', (e) => {
+    name = e.target.value.trim();
+    drawPresets();
+    tally();
+  });
+
+  /* ---- what you read (multi-select) ---------------------------------- */
+  function drawKinds() {
+    const box = $('kinds');
+    box.textContent = '';
+    KINDS.forEach((k) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'kind';
+      b.setAttribute('role','checkbox');
+      b.setAttribute('aria-checked', String(picked.has(k.id)));
+      const tick = document.createElement('span');
+      tick.className = 'tick'; tick.textContent = '\u2713'; tick.setAttribute('aria-hidden','true');
+      const strong = document.createElement('b'); strong.textContent = k.name;
+      const small = document.createElement('small');
+      small.textContent = k.count
+        ? fmt(k.count) + ' on MangaDex alone'
+        : k.note;
+      b.append(tick, strong, small);
+      b.addEventListener('click', () => {
+        if (picked.has(k.id)) picked.delete(k.id); else picked.add(k.id);
+        b.setAttribute('aria-checked', String(picked.has(k.id)));
+        applyKinds();
+      });
+      box.append(b);
+    });
+  }
+
+  /* Picking a kind switches on the sources that carry it. Nothing is
+     switched off by it -- deselecting a kind you never had on should not
+     reach in and undo a source you turned on by hand. */
+  function applyKinds() {
+    SOURCES.forEach((src) => { src.on = src.kinds.some((k) => picked.has(k)); });
+    $('toSources').disabled = picked.size === 0;
+    drawSources();
+    tally();
+  }
+
+  /* ---- switches ------------------------------------------------------ */
+  function switchFor(item, onChange) {
+    const sw = document.createElement('button');
+    sw.type = 'button'; sw.className = 'sw';
+    sw.setAttribute('role','switch');
+    sw.setAttribute('aria-checked', String(item.on));
+    sw.setAttribute('aria-label', item.name);
+    sw.addEventListener('click', () => {
+      item.on = !item.on;
+      sw.setAttribute('aria-checked', String(item.on));
+      onChange();
+    });
+    return sw;
+  }
+
+  function stateNode(kind, text) {
+    const s = document.createElement('span');
+    s.className = 'state' + (kind === 'ok' ? ' ok' : kind === 'no' ? ' no' : '');
+    s.append(document.createElement('i'), document.createTextNode(text));
+    return s;
+  }
+
+  function drawSources() {
+    const list = $('sourceList');
+    list.textContent = '';
+    SOURCES.forEach((src) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const rc = document.createElement('div');
+      rc.className = 'rc';
+      const b = document.createElement('b'); b.textContent = src.name;
+      const small = document.createElement('small'); small.textContent = src.note;
+      rc.append(b, small);
+
+      const val = document.createElement('span');
+      val.className = 'val';
+      if (src.id === 'mangadex') {
+        // What it holds of the kinds you picked, not its whole catalogue.
+        const mine = KINDS.filter((k) => picked.has(k.id)).reduce((n, k) => n + (k.count || 0), 0);
+        val.textContent = mine ? fmt(mine) : '\u2014';
+        val.title = 'Titles MangaDex holds in the kinds you picked';
+      } else {
+        val.textContent = '\u2014';
+        val.title = 'This source publishes no total';
+      }
+
+      row.append(rc, val, switchFor(src, tally));
+      list.append(row);
+    });
+
+    const extra = $('extraList');
+    extra.textContent = '';
+    EXTRAS.forEach((src) => {
+      const row = document.createElement('div');
+      row.className = 'row' + (src.locked ? ' dim' : '');
+      const rc = document.createElement('div');
+      rc.className = 'rc';
+      const b = document.createElement('b'); b.textContent = src.name;
+      const small = document.createElement('small'); small.textContent = src.note;
+      rc.append(b, small);
+      row.append(rc, stateNode(src.state, src.stateText));
+      if (!src.locked) {
+        const go = document.createElement('button');
+        go.type = 'button'; go.className = 'btn quiet';
+        go.style.padding = '8px 13px'; go.textContent = 'Set up';
+        row.append(go);
+      }
+      extra.append(row);
+    });
+  }
+
+  function tally() {
+    const on = SOURCES.filter((s) => s.on);
+    /* The counted part is MangaDex's, per language, summed over the kinds you
+       picked -- so ticking Manhwa really does add 8,809 and not a rounded
+       guess. Everything else is genuinely unmeasurable from these APIs. */
+    const mdOn = SOURCES.find((x) => x.id === 'mangadex')?.on;
+    const counted = mdOn
+      ? KINDS.filter((k) => picked.has(k.id)).reduce((sum, k) => sum + (k.count || 0), 0)
+      : 0;
+    const uncounted = on.filter((s) => s.id !== 'mangadex').length;
+
+    /* A floor, never a total. Only MangaDex publishes a number; the rest
+       page indefinitely, so a grand total would be a guess dressed as data. */
+    $('tallyNum').textContent = counted ? fmt(counted) + '+' : String(on.length);
+    $('tallyText').textContent = !on.length
+      ? 'nothing on yet \u2014 pick at least one'
+      : counted
+        ? (uncounted
+            ? 'titles counted on MangaDex, plus ' + uncounted + ' source' + (uncounted === 1 ? '' : 's') + ' that publish no total'
+            : 'titles counted on MangaDex')
+        : 'source' + (on.length === 1 ? '' : 's') + ' on \u2014 none of them publishes a total';
+
+    $('onCount').textContent = on.length + ' on';
+    $('toDone').disabled = on.length === 0;
+
+    $('doneLine').textContent = counted
+      ? fmt(counted) + '+ titles across ' + on.length + ' sources, waiting on your home page.'
+      : on.length + ' source' + (on.length === 1 ? '' : 's') + ' ready.';
+    $('settingsSub').textContent = on.length + ' working \u00b7 2 not set up';
+    $('settingsWho').textContent = name ? 'Your Yomu \u00b7 ' + name : 'Your Yomu';
+  }
+
+  /* ---- steps --------------------------------------------------------- */
+  function drawSteps() {
+    const box = $('steps');
+    box.textContent = '';
+    STEPS.slice(0, 4).forEach((s, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'step' + (i < step ? ' done' : '');
+      if (i === step) b.setAttribute('aria-current','step');
+      const mark = document.createElement('i');
+      mark.textContent = i < step ? '\u2713' : String(i + 1);
+      const span = document.createElement('span');
+      span.textContent = s.label;
+      b.append(mark, span);
+      b.disabled = i > step;          // back is always allowed, skipping ahead is not
+      b.addEventListener('click', () => go(i));
+      box.append(b);
+    });
+    $('track').style.width = Math.round((Math.min(step, 3) / 3) * 100) + '%';
+  }
+
+  function go(next) {
+    step = next;
+    STEPS.forEach((_, i) => { $('pane-' + i).hidden = i !== step; });
+    $('winTitle').textContent = STEPS[step].title;
+    drawSteps();
+    document.querySelector('.body').scrollTop = 0;
+  }
+
+  document.querySelectorAll('[data-go]').forEach((b) =>
+    b.addEventListener('click', () => go(Number(b.dataset.go))));
+  $('finish').addEventListener('click', () => go(4));
+
+  drawPresets();
+  drawKinds();
+  applyKinds();
+  go(0);
+})();
+</script>
