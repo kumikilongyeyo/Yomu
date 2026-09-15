@@ -1,0 +1,79 @@
+name: Beast Live Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/beast-live-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: native-kagane
+            target: https://kagane.to
+          - label: adaptive-mangapill
+            target: https://mangapill.com
+          - label: adaptive-mangareader
+            target: https://mangareader.mobi
+          - label: ecosystem-mangadex
+            target: https://mangadex.org
+    steps:
+      - name: Resolve source with live Beast
+        env:
+          LABEL: ${{ matrix.label }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          response=$(curl --fail-with-body --silent --show-error --max-time 70 \
+            -X POST 'https://yomu.yomuread.workers.dev/api/fabric/resolve' \
+            -H 'content-type: application/json' \
+            --data "$(jq -nc --arg url "$TARGET" '{url:$url}')")
+
+          printf '%s' "$response" > /tmp/beast-response.json
+
+          jq -e . /tmp/beast-response.json >/dev/null
+          echo "=== $LABEL ==="
+          jq '{
+            ok,
+            ready,
+            route,
+            confidence,
+            score,
+            message,
+            runtime,
+            adapter: (.adapter | if . then {id,name,runtime,engine,score} else null end),
+            probe: (.probe | if . then {
+              strategy,
+              catalogCount,
+              chapterCount,
+              pages,
+              sampleTitle,
+              failureSummary,
+              attemptCount: ((.attempts // []) | length),
+              attempts: ((.attempts // []) | map({strategy,stage,ok,count,failureKind,error}) | .[:20])
+            } else null end),
+            federation: (.federation | if . then {
+              implementations,
+              storesChecked,
+              storesHealthy,
+              directoriesChecked,
+              directoriesHealthy,
+              runtimeBrokerConfigured,
+              best: (.best | if . then {ecosystem,store,name,baseUrl,runtimeHint,hasCloudflare} else null end)
+            } else null end),
+            evidenceCount: ((.evidence // []) | length)
+          }' /tmp/beast-response.json
+
+          # This is a diagnostic smoke test: a source may legitimately be not-ready.
+          # Fail only if Beast itself is unreachable or returns malformed JSON.
+          jq -e '(.ok == true) and (has("ready")) and (has("route"))' /tmp/beast-response.json >/dev/null
