@@ -1,16 +1,17 @@
 {
   // One Worker serves both the app's files and its fetching.
   //
-  // v5 routes through index-v5.ts, a thin Source Fabric wrapper around the
-  // existing Worker. All legacy routes still delegate to worker/index.ts.
+  // v7.2 routes through index-v7.ts, which exposes Beast Adaptive as the
+  // production Source Fabric surface while keeping the proven older wrappers
+  // underneath as compatibility and rollback floors.
   //
-  // `run_worker_first` is required so /sources reaches index-v5.ts before
-  // Static Assets serves the SPA shell. That lets v5 inject the Source Fabric
-  // command center into the real Sources screen on desktop and mobile.
+  // `run_worker_first` is required so /sources reaches index-v7.ts before
+  // Static Assets serves the SPA shell. That lets v7.2 inject the live Source
+  // Fabric version badge into the real Sources screen on desktop and mobile.
   //
   // Deploy with: npx wrangler deploy
   "name": "yomu",
-  "main": "worker/index-v5.ts",
+  "main": "worker/index-v7.ts",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist-app",
