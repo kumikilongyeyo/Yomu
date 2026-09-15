@@ -1,6 +1,6 @@
 import legacy, { type Env } from './index';
 import { fabricSourceCards, handleFabric } from './source-fabric';
-import { handleKaganeV52 } from './kagane-v52';
+import { handleKaganeV53 } from './kagane-v53';
 
 /**
  * Source Fabric wrapper.
@@ -23,6 +23,9 @@ async function withSourcesCommandCenter(request: Request, env: Env, url: URL): P
   if (!html.includes('/source-fabric-layout.js')) {
     tags.push('<script src="/source-fabric-layout.js" defer></script>');
   }
+  if (!html.includes('/source-fabric-diagnostics.js')) {
+    tags.push('<script src="/source-fabric-diagnostics.js" defer></script>');
+  }
   if (tags.length) {
     const injected = tags.join('');
     html = html.includes('</body>') ? html.replace('</body>', `${injected}</body>`) : html + injected;
@@ -40,7 +43,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/fabric/source/kagane/')) {
-      return handleKaganeV52(request, url);
+      return handleKaganeV53(request, url);
     }
 
     if (url.pathname.startsWith('/api/fabric/')) {
