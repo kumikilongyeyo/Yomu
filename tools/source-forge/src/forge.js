@@ -59,7 +59,7 @@ function computeConfidence({ series, chapters, samplePages, strategies }) {
 
 export async function forgeAdapter(seriesUrl, options={}) {
   const identity = inferSourceIdentity(seriesUrl);
-  const source = await loadPage(seriesUrl, { scroll:true, timeout: options.timeout || 20000 });
+  const source = await loadPage(seriesUrl, { scroll:true, timeout: options.timeout || 20000, mode:options.accessMode || 'auto' });
   const seriesStrategies = detectSeriesStrategies(source.html, source.finalUrl);
   const chapterStrategies = detectChapterStrategies(source.html, source.finalUrl);
   const bestChapter = chapterStrategies[0];
@@ -69,7 +69,7 @@ export async function forgeAdapter(seriesUrl, options={}) {
   const sampleDetections = [];
   for (const ch of sampleChapters) {
     try {
-      const page = await loadPage(ch.url, { scroll:true, timeout: options.timeout || 20000 });
+      const page = await loadPage(ch.url, { scroll:true, timeout: options.timeout || 20000, mode:options.accessMode || 'auto' });
       const candidates = detectPageStrategies(page.html, page.finalUrl);
       sampleDetections.push({ chapter:ch, finalUrl:page.finalUrl, html:page.html, candidates, network:page.network });
     } catch (error) {
