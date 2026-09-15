@@ -1,5 +1,6 @@
 import legacy, { type Env } from './index';
 import { fabricSourceCards, handleFabric } from './source-fabric';
+import { handleKaganeV52 } from './kagane-v52';
 
 /**
  * Source Fabric wrapper.
@@ -37,6 +38,10 @@ async function withSourcesCommandCenter(request: Request, env: Env, url: URL): P
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/api/fabric/source/kagane/')) {
+      return handleKaganeV52(request, url);
+    }
 
     if (url.pathname.startsWith('/api/fabric/')) {
       return handleFabric(request, env, url);
