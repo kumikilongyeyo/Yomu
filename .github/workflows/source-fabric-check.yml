@@ -12,6 +12,8 @@ on:
       - 'dist-app/source-import.js'
       - 'dist-app/source-fabric-panel.js'
       - 'dist-app/source-fabric-bulk.js'
+      - 'dist-app/source-pack-json.js'
+      - 'dist-app/source-packs/**'
       - 'dist-app/source-fabric-layout.js'
       - 'dist-app/source-fabric-diagnostics.js'
       - 'dist-app/source-fabric-discover.js'
@@ -42,9 +44,13 @@ jobs:
           node --check dist-app/source-import.js
           node --check dist-app/source-fabric-panel.js
           node --check dist-app/source-fabric-bulk.js
+          node --check dist-app/source-pack-json.js
           node --check dist-app/source-fabric-layout.js
           node --check dist-app/source-fabric-diagnostics.js
           node --check dist-app/source-fabric-discover.js
           node --check dist-app/source-auto-switch.js
+      - name: Validate source packs
+        run: |
+          node -e "const fs=require('fs');const p='dist-app/source-packs/community.json';const x=JSON.parse(fs.readFileSync(p,'utf8'));if(x.schema!=='yomu.source-pack/1'||!Array.isArray(x.sources)||!x.sources.length)throw new Error('Invalid Yomu source pack');console.log(x.name+': '+x.sources.length+' sources')"
       - name: Bundle Worker
         run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
