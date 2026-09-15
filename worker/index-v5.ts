@@ -39,6 +39,7 @@ async function withSourcesCommandCenter(request: Request, env: Env): Promise<Res
     '/source-fabric-bulk.js',
     '/source-pack-json.js',
     '/source-pack-live.js',
+    '/community-pack-compact.js',
     '/source-fabric-layout.js',
     '/source-fabric-diagnostics.js',
   ]);
