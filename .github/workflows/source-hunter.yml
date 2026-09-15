@@ -1,0 +1,72 @@
+name: Source Hunter v2
+
+on:
+  schedule:
+    # Daily candidate rotation. A source only passes the freshness gate when
+    # visible chapter activity is within the configured five-day window.
+    - cron: '37 1 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/source-forge/src/hunter.js'
+      - '.github/workflows/source-hunter.yml'
+  pull_request:
+    paths:
+      - 'tools/source-forge/**'
+      - '.github/workflows/source-hunter.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Source Forge dependencies
+        run: npm --prefix tools/source-forge install --no-audit --no-fund
+      - name: Syntax check
+        run: npm --prefix tools/source-forge run check
+      - name: Unit tests
+        run: npm --prefix tools/source-forge test
+
+  hunt:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Source Forge dependencies
+        run: npm --prefix tools/source-forge install --no-audit --no-fund
+      - name: Install Chromium for live gauntlet
+        run: |
+          cd tools/source-forge
+          npx playwright install --with-deps chromium
+      - name: Hunt unseen GitHub source candidates
+        run: npm --prefix tools/source-forge run hunter -- --max 8 --fresh-days 5 --out hunter-output
+      - name: Publish Hunter summary
+        if: always()
+        run: |
+          if [ -f hunter-output/summary.md ]; then
+            cat hunter-output/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Hunter did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload Hunter report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yomu-hunter-report
+          path: hunter-output/
+          if-no-files-found: warn
+          retention-days: 14
