@@ -36,6 +36,7 @@ async function withPageScripts(request: Request, env: Env, scripts: string[]): P
 async function withSourcesCommandCenter(request: Request, env: Env): Promise<Response> {
   return withPageScripts(request, env, [
     '/source-fabric-panel.js',
+    '/source-fabric-bulk.js',
     '/source-fabric-layout.js',
     '/source-fabric-diagnostics.js',
   ]);
