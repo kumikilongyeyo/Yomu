@@ -9,6 +9,7 @@ on:
       - 'worker/**'
       - 'dist-app/add-sources.html'
       - 'dist-app/source-import.js'
+      - 'dist-app/source-fabric-panel.js'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -18,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  typecheck:
+  check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,4 +29,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
+      - name: Typecheck Worker
+        run: npm run typecheck
+      - name: Check browser scripts
+        run: |
+          node --check dist-app/source-import.js
+          node --check dist-app/source-fabric-panel.js
+      - name: Bundle Worker
+        run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
