@@ -11,17 +11,16 @@ import { handleFederatedResolve, handleStoreFederation } from './store-federatio
  * maintained Aidoku/Mihon/Mangayomi implementations before Yomu falls back to
  * generic remote probing. The UI stays paste -> Add -> read.
  */
-async function withSourcesCommandCenter(request: Request, env: Env, url: URL): Promise<Response> {
+async function withPageScripts(request: Request, env: Env, scripts: string[]): Promise<Response> {
   const response = await legacy.fetch(request, env);
   if (!response.ok || request.method !== 'GET') return response;
   const type = response.headers.get('content-type') ?? '';
   if (!type.includes('text/html')) return response;
 
   let html = await response.text();
-  const tags: string[] = [];
-  if (!html.includes('/source-fabric-panel.js')) tags.push('<script src="/source-fabric-panel.js" defer></script>');
-  if (!html.includes('/source-fabric-layout.js')) tags.push('<script src="/source-fabric-layout.js" defer></script>');
-  if (!html.includes('/source-fabric-diagnostics.js')) tags.push('<script src="/source-fabric-diagnostics.js" defer></script>');
+  const tags = scripts
+    .filter((script) => !html.includes(script))
+    .map((script) => `<script src="${script}" defer></script>`);
   if (tags.length) {
     const injected = tags.join('');
     html = html.includes('</body>') ? html.replace('</body>', `${injected}</body>`) : html + injected;
@@ -32,6 +31,18 @@ async function withSourcesCommandCenter(request: Request, env: Env, url: URL): P
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
   return new Response(html, { status: response.status, headers });
+}
+
+async function withSourcesCommandCenter(request: Request, env: Env): Promise<Response> {
+  return withPageScripts(request, env, [
+    '/source-fabric-panel.js',
+    '/source-fabric-layout.js',
+    '/source-fabric-diagnostics.js',
+  ]);
+}
+
+async function withExpandedDiscover(request: Request, env: Env): Promise<Response> {
+  return withPageScripts(request, env, ['/source-fabric-discover.js']);
 }
 
 async function proxyRuntime(request: Request, env: Env, url: URL): Promise<Response> {
@@ -74,7 +85,7 @@ async function proxyRuntime(request: Request, env: Env, url: URL): Promise<Respo
   target.search = url.search;
   const headers = new Headers();
   headers.set('accept', request.headers.get('accept') || 'application/json');
-  headers.set('user-agent', 'Yomu-Source-Fabric/7.3');
+  headers.set('user-agent', 'Yomu-Source-Fabric/7.4');
   const token = String(row.SOURCE_RUNTIME_TOKEN ?? '').trim();
   if (token) headers.set('authorization', `Bearer ${token}`);
 
@@ -135,7 +146,8 @@ export default {
       return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
     }
 
-    if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') return withSourcesCommandCenter(request, env, url);
+    if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') return withSourcesCommandCenter(request, env);
+    if (url.pathname === '/discover' || url.pathname === '/discover/' || url.pathname === '/discover.html') return withExpandedDiscover(request, env);
     return legacy.fetch(request, env);
   },
 };
