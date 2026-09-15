@@ -14,7 +14,10 @@ import { loadRegistry } from './extensions/registry';
 import type { LoadedExtension, RegistrySnapshot } from './extensions/registry';
 import { descriptorAllowsImage, seriesIdForChapter } from './extensions/runtime';
 import { allHealth, getHealth } from './extensions/health';
-import { createMangadexProvider, mangadexProvider } from './providers/mangadex';
+import {
+  createMangadexProvider, mangadexProvider,
+  mangadexTags, mangadexTagId, mangadexByTag,
+} from './providers/mangadex';
 import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from './providers/suwayomi';
 import { DEFAULT_RANK, chapterLedger, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
@@ -331,6 +334,49 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
    * Cached for an hour at the edge: an author's bibliography is not news, and
    * this is called once per series page view.
    */
+  /* The genres Discover offers, and the titles behind one of them.
+   *
+   * MangaDex only, and the response says so: it is the one source here that
+   * carries tags, and a tile that quietly returned a text search would look
+   * right and be wrong. A name MangaDex does not know is a 404 rather than an
+   * empty list, so the page can tell "no such genre" from "nothing today". */
+  if (url.pathname === '/api/catalog/tags') {
+    try {
+      const tags = await mangadexTags();
+      return json({ source: 'mangadex', tags }, 200, 'public, max-age=86400');
+    } catch (error: any) {
+      return json({ error: error?.message ?? 'Could not reach MangaDex.' }, 502);
+    }
+  }
+
+  if (url.pathname === '/api/catalog/tag') {
+    const name = url.searchParams.get('name')?.trim() ?? '';
+    if (!name) return json({ error: 'Need a genre name.' }, 400);
+    const adult = url.searchParams.get('adult') === '1';
+    const page = Number(url.searchParams.get('page') ?? '1') || 1;
+    try {
+      const tagId = await mangadexTagId(name);
+      if (!tagId) return json({ error: `MangaDex has no genre called "${name}".` }, 404);
+      const result = await mangadexByTag(tagId, page, adult);
+      // The same row shape the listings emit, providers included: the tiles
+      // rank by provider and a row without one throws rather than renders.
+      return json(
+        {
+          source: 'mangadex',
+          tag: name,
+          series: result.series.map((entry) => ({
+            ...relayed(origin, entry),
+            providers: [{ id: 'mangadex', name: 'MangaDex', kind: 'native', seriesId: entry.id }],
+          })),
+        },
+        200,
+        'public, max-age=1800',
+      );
+    } catch (error: any) {
+      return json({ error: error?.message ?? 'Could not reach MangaDex.' }, 502);
+    }
+  }
+
   if (url.pathname === '/api/catalog/related') {
     const id = url.searchParams.get('id') ?? '';
     const source = url.searchParams.get('source') ?? '';

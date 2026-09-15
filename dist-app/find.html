@@ -120,6 +120,33 @@
       .foot a,.adult{min-height:44px}
     }
     @media(prefers-reduced-motion:reduce){.tile{transition:none}}
+  
+    /* browse by genre, and the charts */
+    .genres { margin-top: 26px; }
+    .genres h2 { margin: 0 0 12px; font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+    .genre-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+    .genre-tile {
+      border: 1px solid var(--line); background: var(--surface); color: var(--text);
+      border-radius: 999px; padding: 9px 15px; min-height: 40px; cursor: pointer;
+      font: 600 13px/1 var(--uiFont); transition: background .18s, border-color .18s;
+    }
+    .genre-tile:hover { background: var(--raised); border-color: var(--accentLine); }
+    .genre-tile:active { transform: scale(.97); }
+    .genre-note { margin: 11px 2px 0; font-size: 12px; color: var(--faint); line-height: 1.5; }
+
+    .charts { display: flex; gap: 6px; margin: 30px 0 14px; }
+    .charts button {
+      border: 1px solid var(--line); background: none; color: var(--dim);
+      border-radius: 999px; padding: 8px 16px; min-height: 40px; cursor: pointer;
+      font: 700 13px/1 var(--uiFont);
+    }
+    .charts button[aria-selected='true'] {
+      background: var(--accentSoft); border-color: var(--accentLine); color: var(--accent);
+    }
+    .charts.hidden, .genres.hidden { display: none; }
+    /* The chart heading is the tab now. */
+    .charts:not(.hidden) ~ .feed > h2 { display: none; }
+
   </style>
 <link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"></head>
 <body>
@@ -140,6 +167,12 @@
     <p class="lede">Search by English, or by a romanised Japanese, Korean or Chinese name —
       “Kimetsu no Yaiba” finds Demon Slayer wherever it is carried.</p>
     <section id="history" class="hidden"></section>
+    <section id="genres" class="genres hidden">
+      <h2>Browse by genre</h2>
+      <div class="genre-tiles" id="genre-tiles"></div>
+      <p class="genre-note">Genres come from MangaDex, the one source here that files titles by tag.</p>
+    </section>
+    <div class="charts hidden" id="charts" role="tablist" aria-label="Charts"></div>
     <section id="feed-popular" class="feed hidden"></section>
     <section id="feed-latest" class="feed hidden"></section>
   </div>
@@ -459,6 +492,105 @@
   const escapeHtml = (s) =>
     String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
+  /* --- browse ------------------------------------------------------------ */
+
+  const ADULT_KEY = 'yomu.v1.adult';
+  const adultQs = () => {
+    try { return localStorage.getItem(ADULT_KEY) === 'on' ? '&adult=1' : ''; } catch { return ''; }
+  };
+
+  /**
+   * Genres, which are not search terms.
+   *
+   * Asking any source for "Isekai" returns the titles with Isekai in the name
+   * -- 103 of them -- rather than the isekai titles. Only MangaDex files by
+   * tag, so these tiles go to /api/catalog/tag, and the note under them says
+   * where the answers come from rather than implying every source was asked.
+   */
+  async function renderGenres() {
+    const box = $('genre-tiles');
+    if (!box) return;
+    try {
+      const payload = await (await fetch('/api/catalog/tags', { signal: AbortSignal.timeout(20000) })).json();
+      const genres = (payload.tags || [])
+        .filter((tag) => tag.group === 'genre')
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (!genres.length) return;
+
+      box.textContent = '';
+      for (const genre of genres) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'genre-tile';
+        tile.textContent = genre.name;
+        tile.addEventListener('click', () => browseGenre(genre.name));
+        box.append(tile);
+      }
+      $('genres').classList.remove('hidden');
+    } catch {
+      // A genre list that will not load simply is not offered.
+    }
+  }
+
+  async function browseGenre(name) {
+    const have = enabledSourceIds();
+    const results = $('results');
+    const meta = $('meta');
+    $('suggest').classList.add('hidden');
+    meta.textContent = 'Loading ' + name + '\u2026';
+    results.textContent = '';
+    try {
+      const url = '/api/catalog/tag?name=' + encodeURIComponent(name) + adultQs();
+      const response = await fetch(url, { signal: AbortSignal.timeout(25000) });
+      const payload = await response.json();
+      if (!response.ok) {
+        meta.textContent = payload.error || ('Could not load ' + name + '.');
+        return;
+      }
+      const entries = payload.series || [];
+      if (!entries.length) {
+        meta.textContent = 'Nothing in ' + name + ' right now.';
+        return;
+      }
+      meta.textContent = entries.length + ' in ' + name + ' \u00b7 from MangaDex';
+      for (const entry of entries) results.append(buildTile(entry, have));
+    } catch {
+      meta.textContent = 'Could not reach MangaDex.';
+    }
+  }
+
+  /** The two feeds as charts, one at a time, rather than stacked. */
+  function renderCharts() {
+    const bar = $('charts');
+    if (!bar) return;
+    const tabs = [
+      { id: 'feed-popular', label: 'Popular' },
+      { id: 'feed-latest', label: 'New' },
+    ];
+    // Only offer the switch for feeds that actually loaded.
+    const live = tabs.filter((tab) => $(tab.id) && !$(tab.id).classList.contains('hidden'));
+    if (live.length < 2) return;
+
+    bar.textContent = '';
+    const show = (id) => {
+      for (const tab of live) $(tab.id).classList.toggle('hidden', tab.id !== id);
+      for (const button of bar.children) {
+        button.setAttribute('aria-selected', String(button.dataset.feed === id));
+      }
+    };
+    for (const tab of live) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.role = 'tab';
+      button.dataset.feed = tab.id;
+      button.textContent = tab.label;
+      button.addEventListener('click', () => show(tab.id));
+      bar.append(button);
+    }
+    bar.classList.remove('hidden');
+    show(live[0].id);
+  }
+
   /* --- searching --------------------------------------------------------- */
 
   let inFlight = null;
@@ -526,7 +658,9 @@
   await learnCapabilities();
   renderHistory();
   const initial = new URLSearchParams(location.search).get('q') ?? '';
-  if (!initial) renderFeeds();
+  // The charts only make sense once the feeds have answered, so they are
+  // built after, and only if both actually loaded.
+  if (!initial) { renderGenres(); renderFeeds().then(renderCharts); }
   if (initial) { $('q').value = initial; search(initial); }
   else if (matchMedia('(min-width: 768px)').matches) $('q').focus();
 })();

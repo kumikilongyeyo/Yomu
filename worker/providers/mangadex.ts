@@ -86,6 +86,50 @@ const RATINGS_ADULT = RATINGS_SAFE + '&contentRating[]=erotica&contentRating[]=p
 const listQs = (adult: boolean) =>
   `includes[]=cover_art&includes[]=author&limit=32${adult ? RATINGS_ADULT : RATINGS_SAFE}`;
 
+/**
+ * Browsing by genre, which the catalog otherwise cannot do.
+ *
+ * A genre is not a search term: asking any source for "Isekai" returns the
+ * titles with Isekai in the name, not the isekai titles -- 103 of the former
+ * on this catalogue, which is why the Discover tiles could not simply run a
+ * search. MangaDex is the only source here with real tags, and it addresses
+ * them by uuid, so the names have to be resolved first.
+ *
+ * The tag list is fixed in practice -- about eighty entries that change maybe
+ * once a year -- so it is fetched once per isolate and kept.
+ */
+let tagIndex: Map<string, string> | null = null;
+
+export async function mangadexTags(): Promise<Array<{ id: string; name: string; group: string }>> {
+  const data = await md('/manga/tag');
+  const rows = (data.data ?? []).map((tag: any) => ({
+    id: String(tag.id),
+    name: String(tag.attributes?.name?.en ?? ''),
+    group: String(tag.attributes?.group ?? ''),
+  })).filter((tag: any) => tag.id && tag.name);
+  tagIndex = new Map(rows.map((tag: any) => [tag.name.toLowerCase(), tag.id]));
+  return rows;
+}
+
+/** A tag uuid for a name, or null when MangaDex has no such tag. */
+export async function mangadexTagId(name: string): Promise<string | null> {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  if (!tagIndex) await mangadexTags();
+  return tagIndex?.get(key) ?? null;
+}
+
+export async function mangadexByTag(
+  tagId: string, page = 1, adult = false,
+): Promise<SearchResult> {
+  const data = await md(
+    `/manga?${listQs(adult)}&offset=${(page - 1) * 32}`
+    + `&includedTags[]=${encodeURIComponent(tagId)}&order[followedCount]=desc`,
+  );
+  const series = (data.data ?? []).map(toSummary);
+  return { series, hasNextPage: series.length > 0 };
+}
+
 export function createMangadexProvider(adult = false): YomuExtension {
   const LIST_QS = listQs(adult);
   const provider: YomuExtension = {
