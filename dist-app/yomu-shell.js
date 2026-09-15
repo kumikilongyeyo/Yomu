@@ -2223,185 +2223,202 @@
    * Long chapter lists
    *
    * Martial Peak has 3,844 chapters and the series screen renders every one
-   * of them: five buttons and a cover thumbnail per row, 65,000 nodes, and a
-   * scroll container 415,224 pixels tall. Measured on a desktop it scrolled
-   * at 42fps with a 34ms 95th-percentile frame. A phone is several times
-   * worse, which is where it was reported.
+   * of them: five buttons and a cover thumbnail per row, 64,000 nodes, a
+   * scroll container 415,000 pixels tall. On a desktop that is merely
+   * wasteful. On a phone it is the whole experience.
    *
-   * Rows far from the viewport are skipped with `content-visibility: hidden`,
-   * each holding the height it was last rendered at, so the row keeps its box
-   * -- nothing jumps, no scroll position drifts -- while the browser skips
-   * both painting *and* laying out the seventeen nodes inside it. Measured
-   * across the whole list: 972 pixels of drift in 415,221, a quarter of a
-   * pixel a row.
+   * Two earlier attempts, both measured, both aimed at the wrong thing:
    *
-   * It was `visibility: hidden` first. That skips the painting and keeps the
-   * layout, which fixed the frame rate and did not fix the lag, because
-   * painting was not the expensive part. With every row still in layout, one
-   * reflow of this list measured 88ms on an idle desktop and 414ms on a busy
-   * one -- and a page being scrolled on a phone reflows constantly, the URL
-   * bar collapsing being a viewport resize all by itself. Skipping the
-   * contents takes the same measurement to 13ms and 45ms: six to nine times
-   * cheaper, on the operation that was actually stalling.
+   * `visibility: hidden` skips the painting and keeps the layout. It took
+   * the frame rate to 60 and did not help, because painting was not the
+   * cost -- one reflow of this list still measured 88ms idle and 414ms
+   * loaded, and a page being scrolled reflows constantly.
    *
-   * `content-visibility: auto` was measured too and is worse than either
-   * (41fps against 60) -- at this row count its own intersection tracking
-   * costs more than it saves -- and `display: none` collapses 415,224 pixels
-   * of scroll to 54,232.
+   * `content-visibility: hidden` skips laying out a row's contents too, and
+   * took the same reflow to 12ms. Better, and still not enough on a phone --
+   * every row keeps a box, and Safari only understood the property at all
+   * from version 18, so an older iPhone got nothing from it whatsoever.
    *
-   * Written inline on the rows rather than through one nth-child rule. The
-   * rule is a single write but re-matches every row in the list, and lands
-   * as a 50ms hitch each time the window moves; a few hundred inline writes
-   * recalculate only themselves and land as nothing. Measured after: 60fps,
-   * worst frame 17.6ms, list height unchanged at 415,306 pixels.
+   * So: `display: none`, which every browser has always understood and which
+   * takes the row out of the layout tree completely. The height it would
+   * have occupied is held by two spacers, one above the window and one
+   * below, sized from heights measured while the rows were standing on their
+   * own. Nothing is removed from the DOM -- React owns these nodes and would
+   * not survive finding them gone -- but nothing outside the window is laid
+   * out, painted, or measured either.
    *
-   * The cost is that a hidden row is invisible to find-in-page and to a
-   * screen reader until it is scrolled near. Against a list of 3,844 rows
-   * that no browser can search comfortably anyway, that is the cheaper loss.
+   * With positions no longer readable from skipped rows, they are computed
+   * instead, from the same measurements the spacers are built from. That
+   * makes the window arithmetic rather than DOM reads: one rect per
+   * placement instead of two dozen, and the positions cannot disagree with
+   * the layout because they are what produced it.
+   *
+   * The cost is that a skipped row is invisible to find-in-page and to a
+   * screen reader until it is scrolled near, which is the reason the jump
+   * field next to the Chapters heading searches the chapter numbers rather
+   * than the page.
    * ------------------------------------------------------------------ */
 
-  /** Under this a list costs little enough that the bookkeeping is waste.
-   *  Set at 600 first, which left a 500-chapter series -- 8,500 nodes and
-   *  55,000 pixels of scroll -- carrying the whole cost on a phone for no
-   *  reason. A window is cheap; the threshold does not need to be brave. */
+  /** Under this a list costs little enough that the bookkeeping is waste. */
   const LONG_LIST = 250;
-  /** Pixels kept painted past each edge of the viewport. */
-  const LIST_MARGIN = 25000;
+  /** Pixels kept rendered past each edge of the viewport. */
+  const LIST_MARGIN = 4000;
   /** How far the viewport must travel before the window is worth moving. */
-  const LIST_STEP = 12000;
+  const LIST_STEP = 1500;
+  /** The list must hold one height this long before anything is skipped. */
+  const LIST_SETTLE = 500;
+  /** ...and no longer than this, however restless it turns out to be. */
+  const LIST_PATIENCE = 6000;
 
   const windowedLists = new Set();
-
-  function showRow(row) {
-    if (!row.style.contentVisibility) return;
-    row.style.contentVisibility = '';
-    row.style.containIntrinsicSize = '';
-  }
 
   function releaseList(state) {
     removeEventListener('scroll', state.onScroll, true);
     removeEventListener('resize', state.onResize);
-    for (const row of state.rows) showRow(row);
+    for (const row of state.rows) row.style.display = '';
+    state.padTop?.remove();
+    state.padEnd?.remove();
     windowedLists.delete(state);
   }
 
   /**
-   * Which rows are near enough the viewport to be worth painting.
+   * Heights, and the running total they add up to.
    *
-   * Everything here is in viewport coordinates, read from the rows
-   * themselves. Two earlier versions got this wrong by working in the
-   * scroller's coordinates instead. The first cached every row's offsetTop
-   * once and searched the array -- and was wrong by six hundred rows halfway
-   * down, because the measurement ran before the rows had reached their
-   * final height, making the whole cache a systematic underestimate that
-   * grew with distance. The second read live positions but identified the
-   * scrolling ancestor at mount, when the list was still short enough that
-   * nothing looked scrollable yet, and then read a scroll offset that was
-   * always zero. A rect is already relative to the viewport and cannot be
-   * stale or attributed to the wrong element, so there is nothing left to
-   * get wrong.
-   *
-   * Hidden rows keep their boxes, so every row's position is readable
-   * whether or not it is painted, and all the reads happen before any write.
+   * Read only from rows that are standing on their own; a skipped row has no
+   * box to report. An earlier version measured whatever was in front of it
+   * and shipped a list 52,256 pixels short of itself, every skipped row
+   * holding 14.6px less than it owed, so everything below the window sat in
+   * the wrong place.
    */
+  function measureList(state) {
+    const { rows } = state;
+    const gap = parseFloat(getComputedStyle(state.list).rowGap) || 0;
+    const heights = new Array(rows.length);
+    for (let i = 0; i < rows.length; i++) {
+      heights[i] = rows[i].style.display === 'none' ? (state.heights?.[i] ?? 0)
+        : rows[i].getBoundingClientRect().height;
+    }
+    const offsets = new Array(rows.length + 1);
+    offsets[0] = 0;
+    for (let i = 0; i < rows.length; i++) offsets[i + 1] = offsets[i] + heights[i] + gap;
+
+    state.gap = gap;
+    state.heights = heights;
+    state.offsets = offsets;
+    state.natural = state.list.getBoundingClientRect().height;
+    state.measured = heights.every((h) => h > 0);
+  }
+
+  function spacer(state, which) {
+    const key = which === 'top' ? 'padTop' : 'padEnd';
+    let pad = state[key];
+    if (!pad || !pad.isConnected) {
+      pad = document.createElement('div');
+      pad.className = 'yomu-list-pad';
+      pad.setAttribute('aria-hidden', 'true');
+      pad.style.gridColumn = '1 / -1';
+      pad.style.pointerEvents = 'none';
+      state[key] = pad;
+    }
+    const first = state.list.firstElementChild;
+    if (which === 'top' && first !== pad) state.list.prepend(pad);
+    if (which === 'end' && state.list.lastElementChild !== pad) state.list.append(pad);
+    return pad;
+  }
+
   function placeWindow(state) {
     const { rows } = state;
 
-    /* The early exit reads nothing. It used to answer "has the window moved
-     * far enough" with a getBoundingClientRect, which is a forced layout of
-     * a 415,000 pixel list -- and this runs from the document observer as
-     * well as from scrolling, so that was a 100ms stall several times a
-     * scroll. The scroll handler already knows how far the page has gone. */
+    // Reads nothing: the scroll handler already knows how far the page went.
     if (state.placedAt !== null && Math.abs(state.top - state.placedAt) < LIST_STEP) return;
 
-    const positionOf = (i) => rows[i].getBoundingClientRect().top;
-    const search = (wanted) => {
+    /* Nothing is skipped until the list has stopped growing.
+     *
+     * These rows gain a row of release chips shortly after they first
+     * render, and each one is about 15px taller afterwards. Measure before
+     * that and every skipped row is holding 15px less than it owes -- the
+     * list came out 59,903 pixels short, and the rows above the window would
+     * grow under the reader as they arrived. A skipped row never gains its
+     * chips, so the mistake is permanent once it is made and no amount of
+     * re-checking finds it: the sum agrees with itself perfectly, and is
+     * wrong. The only cure is to look later. */
+    if (!state.measured) {
+      const now = performance.now();
+      const tall = state.list.getBoundingClientRect().height;
+      if (tall !== state.lastTall) {
+        state.lastTall = tall;
+        state.stableAt = now;
+      }
+      // Give up waiting eventually: a list that never settles still deserves
+      // a window, and a slightly wrong one beats none at all.
+      if (now - state.stableAt < LIST_SETTLE && now - state.firstSeen < LIST_PATIENCE) {
+        if (!state.settleTimer) {
+          state.settleTimer = setTimeout(() => {
+            state.settleTimer = null;
+            state.placedAt = null;
+            placeWindow(state);
+          }, LIST_SETTLE + 60);
+        }
+        return;
+      }
+      measureList(state);
+    }
+    const { offsets, gap } = state;
+    if (!offsets) return;
+
+    // The only measurement a placement needs.
+    const listTop = state.list.getBoundingClientRect().top;
+    const want = (edge) => {
+      // First row whose bottom is past `edge`, in viewport coordinates.
       let low = 0;
       let high = rows.length - 1;
       while (low < high) {
         const middle = (low + high) >> 1;
-        if (positionOf(middle) < wanted) low = middle + 1; else high = middle;
+        if (listTop + offsets[middle + 1] < edge) low = middle + 1; else high = middle;
       }
       return low;
     };
-    const lo = search(-LIST_MARGIN);
-    const hi = search(innerHeight + LIST_MARGIN);
+    const lo = want(-LIST_MARGIN);
+    const hi = want(innerHeight + LIST_MARGIN);
+    if (lo === state.lo && hi === state.hi) { state.placedAt = state.top; return; }
 
-    /* A skipped row has to be told how tall to stand, and by then it cannot
-       be asked -- the answer would be whatever it was last told. So heights
-       are taken while the rows are still laying themselves out: every row
-       once, and the window's own rows on every placement, which is what
-       keeps the record honest as the page settles. */
-    if (!state.heights) {
-      state.heights = new Array(rows.length).fill(0);
-      // contain-intrinsic-size names the content box; the rows carry a border.
-      const style = getComputedStyle(rows[0]);
-      state.chrome = (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0)
-        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-    }
-    for (let i = lo; i <= hi; i++) {
-      if (!rows[i].style.contentVisibility) state.heights[i] = rows[i].getBoundingClientRect().height;
-    }
-    /* The sweep runs while nothing is skipped yet, so every number in it is
-       a height the row was actually standing at. Measuring a row that is
-       already skipped reads back the height it was told to hold, which is
-       how a list ends up 52,000 pixels short of itself. */
-    if (!state.measured) {
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].style.contentVisibility) continue;
-        state.heights[i] = rows[i].getBoundingClientRect().height;
-      }
-      state.natural = state.list.getBoundingClientRect().height;
-      state.measured = true;
-    }
-
-    // Reads are done; everything below writes.
     for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      if (i >= lo && i <= hi) { showRow(row); continue; }
-      if (row.style.contentVisibility) continue;
-      // No measured height means the row has never been laid out. Leaving it
-      // alone costs one row of work; guessing costs a hole in the list.
-      if (!state.heights[i]) continue;
-      /* `auto` rather than a bare size: it tells the browser to reserve the
-         height it last actually rendered this row at, and to fall back on
-         the number below only for one it has never laid out. That is what
-         makes a stale measurement harmless -- pinning a plain height instead
-         shipped a list 52,000 pixels short, because the first measurement
-         ran before the titles had wrapped. */
-      row.style.containIntrinsicSize =
-        'auto ' + Math.max(0, state.heights[i] - state.chrome).toFixed(2) + 'px';
-      row.style.contentVisibility = 'hidden';
+      const shown = i >= lo && i <= hi;
+      const value = shown ? '' : 'none';
+      if (rows[i].style.display !== value) rows[i].style.display = value;
     }
 
-    /* And then check the arithmetic against the list's own height, taken
-       while every row was standing on its own. Skipped rows hold remembered
-       heights, and if those were remembered wrong the list changes length --
-       the one failure here a reader would feel, because everything below the
-       window moves under them. A pixel a row is the tolerance; past that the
-       whole list is let go and measured again, later, when whatever was
-       still arriving has arrived. */
-    /* One corrective pass before settling. The search above ran on the
-       positions as they stood before anything was skipped, and skipping moves
-       them -- by a fraction of a pixel a row, which is a dozen rows by the
-       bottom of a list this long, and that was enough to leave blank rows in
-       the viewport after a jump. This pass only reveals: hiding again can
-       wait for the next placement, a hole in front of the reader cannot. */
-    const lo2 = search(-LIST_MARGIN);
-    const hi2 = search(innerHeight + LIST_MARGIN);
-    for (let i = lo2; i <= hi2; i++) showRow(rows[i]);
+    /* The gap goes with the row: a grid lays one between each pair of items
+       it can see, so the ones it can no longer see take theirs with them. */
+    const above = offsets[lo];
+    const below = offsets[rows.length] - offsets[hi + 1];
+    spacer(state, 'top').style.height = Math.max(0, above - gap).toFixed(2) + 'px';
+    spacer(state, 'end').style.height = Math.max(0, below - gap).toFixed(2) + 'px';
 
-    const tallAfter = state.list.getBoundingClientRect().height;
-    if (Math.abs(tallAfter - state.natural) > rows.length && state.retries < 3) {
-      state.retries++;
-      for (const row of rows) showRow(row);
-      state.heights = null;
-      state.measured = false;
-      state.placedAt = null;
-      setTimeout(() => placeWindow(state), 900);
-      return;
-    }
+    state.lo = lo;
+    state.hi = hi;
     state.placedAt = state.top;
+
+    /* Check the arithmetic against the height the list had when every row
+       was standing on its own. If the two disagree, everything below the
+       window is sitting in the wrong place -- the one failure here a reader
+       would feel. A pixel a row is the tolerance; past that the list is let
+       go and measured again, later, when whatever was still arriving has
+       arrived. */
+    if (state.retries < 3) {
+      const now = state.list.getBoundingClientRect().height;
+      if (Math.abs(now - state.natural) > rows.length) {
+        state.retries++;
+        for (const row of rows) row.style.display = '';
+        state.padTop?.remove();
+        state.padEnd?.remove();
+        state.measured = false;
+        state.lo = -1;
+        state.hi = -1;
+        state.placedAt = null;
+        setTimeout(() => placeWindow(state), 900);
+      }
+    }
   }
 
   function windowLongLists() {
@@ -2410,7 +2427,7 @@
     }
 
     for (const list of document.querySelectorAll('.chapter-list')) {
-      const rows = [...list.children];
+      const rows = [...list.children].filter((row) => !row.classList.contains('yomu-list-pad'));
       let state = null;
       for (const known of windowedLists) if (known.list === list) state = known;
 
@@ -2428,13 +2445,15 @@
 
       state = {
         list, rows, top: 0, placedAt: null, ticking: false,
-        heights: null, measured: false, natural: 0, chrome: 0, retries: 0,
-        onScroll: null, onResize: null,
+        heights: null, offsets: null, gap: 0, natural: 0, measured: false,
+        lo: -1, hi: -1, retries: 0, padTop: null, padEnd: null,
+        firstSeen: performance.now(), lastTall: -1, stableAt: performance.now(),
+        settleTimer: null, onScroll: null, onResize: null,
       };
       state.onScroll = (event) => {
-        // Whatever scrolled tells us it scrolled, and how far. Identifying
-        // the scrolling ancestor up front was guessed wrong once already --
-        // at mount the list is still short and nothing looks scrollable yet.
+        // Whatever scrolled says so, and says how far. Identifying the
+        // scrolling ancestor up front was guessed wrong once already -- at
+        // mount the list is short and nothing looks scrollable yet.
         const node = event.target === document || event.target === window
           ? document.scrollingElement
           : event.target;
@@ -2448,9 +2467,15 @@
         /* A different width is different heights. Every row is let go first,
            so the next pass measures what they are rather than what they were
            told to be. */
-        for (const row of state.rows) showRow(row);
-        state.heights = null;
+        for (const row of state.rows) row.style.display = '';
+        state.padTop?.remove();
+        state.padEnd?.remove();
         state.measured = false;
+        state.lastTall = -1;
+        state.stableAt = performance.now();
+        state.firstSeen = performance.now();
+        state.lo = -1;
+        state.hi = -1;
         state.placedAt = null;
         placeWindow(state);
       };
