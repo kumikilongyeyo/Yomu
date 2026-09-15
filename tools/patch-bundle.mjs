@@ -351,6 +351,10 @@ const ASSETS = [
   { file: 'yomu-ledger.js', tag: '<script src="/yomu-ledger.js" defer></scr' + 'ipt>' },
 ];
 
+// /start is the first-run flow and must not carry the shell: the shell is
+// what redirects to /start, and a page that redirects to itself is a loop.
+const SKIP_ASSETS = new Set(['start.html']);
+
 for (const { file: assetFile } of ASSETS) {
   if (fs.existsSync(path.join(PAGES_DIR, assetFile))) continue;
   console.error(`\nMissing ${path.join(PAGES_DIR, assetFile)} — nothing to link.`);
@@ -358,7 +362,7 @@ for (const { file: assetFile } of ASSETS) {
 }
 
 if (!failed) {
-  for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html'))) {
+  for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html') && !SKIP_ASSETS.has(f))) {
     const pagePath = path.join(PAGES_DIR, page);
     let html = fs.readFileSync(pagePath, 'utf8');
 

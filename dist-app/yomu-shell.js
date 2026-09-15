@@ -47,6 +47,49 @@
     root.style.setProperty('--accentLine', accent[0] + '66');
   })();
 
+  /* ------------------------------------------------------------------ *
+   * First run
+   *
+   * A brand new install lands on a home page with nothing on it, which is a
+   * bad first thirty seconds and the whole reason /start exists. This is the
+   * redirect, and it is deliberately strict in the other direction: the
+   * failure worth avoiding is not "somebody missed the setup flow", it is
+   * "somebody who set this up months ago gets marched through it again".
+   *
+   * So every one of these has to be true. Any single sign of prior use --
+   * a saved title, a position, a paired device, a circle, a source they
+   * turned on themselves -- means they are not new and this never fires.
+   *
+   * Runs before the sidebar is built, and only on Home, so no other screen
+   * can be interrupted by it.
+   * ------------------------------------------------------------------ */
+  (() => {
+    const at = location.pathname;
+    if (at !== '/' && at !== '/index.html') return;
+
+    const read = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
+    if (read('yomu.v1.setupDone')) return;
+
+    let collection = null;
+    try { collection = JSON.parse(read('yomu.v1.collection') || 'null'); } catch {}
+    const library = Array.isArray(collection?.library) ? collection.library : [];
+    if (library.length) return;
+    if (read('yomu.v1.sync') || read('yomu.v1.circle') || read('yomu.v1.reading')) return;
+
+    // A source the app did not ship on by default is somebody's own choice.
+    const DEFAULTS = new Set(['mangadex', 'internet-archive']);
+    const sources = Array.isArray(collection?.sources) ? collection.sources : [];
+    if (sources.some((s) => s && !DEFAULTS.has(String(s.id)))) return;
+
+    let anyProgress = false;
+    try {
+      anyProgress = Object.keys(localStorage).some((k) => k.startsWith('yomu.v1.resume.'));
+    } catch {}
+    if (anyProgress) return;
+
+    location.replace('/start');
+  })();
+
   const ID = 'yomu-sidebar';
 
   const ITEMS = [

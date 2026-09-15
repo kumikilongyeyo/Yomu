@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0c131b" />
+  <title>Yomu · Getting set up</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    /* The app's tokens carry most of this; these are the shapes the setup
+       flow needs and no screen else does. The easing is the one macOS uses
+       for everything that is not a gesture. */
+    :root { --ease: cubic-bezier(.32, .72, 0, 1); }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      padding: 0 max(16px, env(safe-area-inset-left)) calc(40px + env(safe-area-inset-bottom));
+      background: var(--bg, #0c131b);
+      color: var(--text, #f4f6fa);
+      font-family: var(--uiFont, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
+    }
+    main { width: min(620px, 100%); margin: 0 auto; }
+
+    .top { padding: 26px 0 4px; }
+    .track { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+    .track i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 2px; transition: width .5s var(--ease); }
+    .crumbs { display: flex; gap: 8px; margin-top: 12px; font-size: 11px; color: var(--faint); letter-spacing: .04em; }
+    .crumbs b { color: var(--accent); font-weight: 600; }
+
+    h1 { margin: 22px 0 6px; font-size: 25px; font-weight: 700; letter-spacing: -.018em; line-height: 1.14; }
+    .blurb { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--muted); max-width: 52ch; }
+
+    .pane[hidden] { display: none; }
+
+    /* presets */
+    .presets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    @media (max-width: 380px) { .presets { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    .preset {
+      position: relative; cursor: pointer; text-align: center; color: var(--text);
+      padding: 15px 8px 12px; border-radius: 14px;
+      border: 1px solid var(--line); background: var(--surface); font: inherit;
+      transition: background .24s var(--ease), border-color .24s var(--ease), transform .12s ease-out;
+    }
+    .preset:active { transform: scale(.97); }
+    .preset[aria-checked="true"] { background: var(--m-fill-hi, #ffffff14); }
+    .preset .face {
+      width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 9px;
+      display: grid; place-items: center; font-size: 19px; font-weight: 600;
+      transition: transform .3s var(--ease);
+    }
+    .preset[aria-checked="true"] .face { transform: scale(1.06); }
+    .preset b { display: block; font-size: 13px; font-weight: 600; }
+    .preset small { display: block; margin-top: 1px; font-size: 11px; color: var(--faint); }
+    .preset .dot { position: absolute; top: 9px; right: 9px; width: 8px; height: 8px; border-radius: 50%; opacity: 0; transition: opacity .24s var(--ease); }
+    .preset[aria-checked="true"] .dot { opacity: 1; }
+
+    .field {
+      width: 100%; margin-top: 12px; padding: 12px 13px; border-radius: 12px;
+      border: 1px solid var(--line); background: var(--raised); color: var(--text);
+      font: 400 16px/1.3 inherit;   /* 16px or iOS zooms the page on focus */
+    }
+    .field:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    #customWrap[hidden] { display: none; }
+
+    .gtitle {
+      margin: 22px 2px 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--faint);
+      display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    }
+    .gtitle b { font-weight: 600; color: var(--muted); letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+    .swatches { display: flex; gap: 10px; flex-wrap: wrap; padding: 13px; }
+    .tone { width: 32px; height: 32px; border-radius: 50%; padding: 0; cursor: pointer; border: 2px solid transparent; box-shadow: inset 0 0 0 1.5px #0000002e; transition: transform .2s var(--ease), border-color .2s var(--ease); }
+    .tone:active { transform: scale(.92); }
+    .tone[aria-checked="true"] { border-color: var(--text); }
+
+    .card { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; overflow: hidden; }
+
+    /* kinds */
+    .kinds { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .kind {
+      position: relative; text-align: left; cursor: pointer; color: var(--text);
+      padding: 14px; border-radius: 14px; border: 1px solid var(--line);
+      background: var(--surface); font: inherit;
+      transition: background .24s var(--ease), border-color .24s var(--ease), transform .12s ease-out;
+    }
+    .kind:active { transform: scale(.985); }
+    .kind[aria-checked="true"] { background: var(--accentSoft); border-color: var(--accentLine); }
+    .kind b { display: block; font-size: 15px; font-weight: 600; }
+    .kind small { display: block; margin-top: 2px; font-size: 12px; color: var(--faint); }
+    .kind .tick {
+      position: absolute; top: 12px; right: 12px; width: 20px; height: 20px;
+      border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center;
+      font-size: 11px; color: transparent;
+      transition: background .24s var(--ease), border-color .24s var(--ease), color .24s var(--ease);
+    }
+    .kind[aria-checked="true"] .tick { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+
+    /* tally */
+    .tally {
+      display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+      padding: 13px 15px; border-radius: 14px; margin-bottom: 14px;
+      background: var(--accentSoft); border: 1px solid var(--accentLine);
+    }
+    .tally b { font: 600 25px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .tally span { font-size: 12.5px; color: var(--muted); }
+
+    /* rows */
+    .row { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-top: 1px solid var(--line); }
+    .row:first-child { border-top: 0; }
+    .row .rc { flex: 1; min-width: 0; }
+    .row strong { display: block; font-size: 14px; font-weight: 500; }
+    .row small { display: block; margin-top: 1px; font-size: 12px; color: var(--faint); line-height: 1.35; }
+    .row .val { flex: none; font: 500 12.5px/1 ui-monospace, Menlo, monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .row.dim { opacity: .58; }
+
+    .sw { position: relative; flex: none; width: 50px; height: 30px; padding: 0; border: 0; border-radius: 999px; cursor: pointer; background: var(--m-fill-hi, #ffffff14); transition: background .3s var(--ease); }
+    .sw::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px;
+      border-radius: 50%; background: #fff; box-shadow: 0 3px 7px #0000003d;
+      transition: transform .34s var(--ease), width .2s var(--ease);
+    }
+    .sw[aria-checked="true"] { background: var(--accent); }
+    .sw[aria-checked="true"]::after { transform: translateX(20px); }
+    .sw:active::after { width: 30px; }
+    .sw[aria-checked="true"]:active::after { transform: translateX(16px); }
+
+    .state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }
+    .state i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+
+    .acts { display: flex; gap: 10px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+    .acts .grow { flex: 1; }
+    .btn {
+      appearance: none; border: 0; cursor: pointer; font: 600 14px/1 inherit;
+      padding: 13px 20px; border-radius: 12px; background: var(--accent); color: var(--accentText);
+      transition: transform .12s ease-out, opacity .2s var(--ease); text-decoration: none; display: inline-block;
+    }
+    .btn:active { transform: scale(.975); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn.quiet { background: var(--m-fill-hi, #ffffff14); color: var(--muted); }
+    .btn.plain { background: transparent; color: var(--faint); padding-inline: 6px; }
+
+    .done { text-align: center; padding: 22px 6px 6px; }
+    .done .mark { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 16px; background: #46d39a; color: #06281c; display: grid; place-items: center; font-size: 28px; font-weight: 700; }
+
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="track"><i id="track"></i></div>
+    <div class="crumbs"><b id="crumbNow">Step 1</b><span id="crumbOf">of 3</span></div>
+  </div>
+
+  <!-- 1 · who -->
+  <section class="pane" id="pane-0">
+    <h1>Pick a reader</h1>
+    <p class="blurb">A name and a colour in one tap. Only ever seen by a reading circle, if you join one — and you can change it later.</p>
+    <div class="presets" id="presets" role="radiogroup" aria-label="Reader profile"></div>
+    <div id="customWrap" hidden>
+      <input class="field" id="name" placeholder="Type a name" autocomplete="off" aria-label="Your name" maxlength="32" />
+    </div>
+    <p class="gtitle">Or a different colour</p>
+    <div class="card"><div class="swatches" id="tones" role="radiogroup" aria-label="Accent colour"></div></div>
+    <div class="acts">
+      <button class="btn" type="button" data-go="1">Continue</button>
+      <button class="btn plain" type="button" data-go="1">Skip this</button>
+    </div>
+  </section>
+
+  <!-- 2 · what -->
+  <section class="pane" id="pane-1" hidden>
+    <h1>What do you read?</h1>
+    <p class="blurb">Pick as many as you like. It only decides which sources start switched on — you can change any of them next.</p>
+    <div class="kinds" id="kinds" role="group" aria-label="What you read"></div>
+    <div class="acts">
+      <button class="btn plain" type="button" data-go="0">Back</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="toSources" data-go="2">Continue</button>
+    </div>
+  </section>
+
+  <!-- 3 · sources -->
+  <section class="pane" id="pane-2" hidden>
+    <h1>Where should they come from?</h1>
+    <p class="blurb">Switched on to match what you picked. All free, nothing to sign up for — you need at least one.</p>
+
+    <div class="tally"><b id="tallyNum">0</b><span id="tallyText">titles</span></div>
+
+    <p class="gtitle">Ready to go <b id="onCount">0 on</b></p>
+    <div class="card" id="sourceList"></div>
+
+    <p class="gtitle">Add more later</p>
+    <div class="card" id="extraList"></div>
+
+    <div class="acts">
+      <button class="btn plain" type="button" data-go="1">Back</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="finish">Finish</button>
+    </div>
+  </section>
+
+  <!-- done -->
+  <section class="pane" id="pane-3" hidden>
+    <div class="done">
+      <div class="mark" aria-hidden="true">&#10003;</div>
+      <h1 style="margin-bottom:8px">Your shelves are full</h1>
+      <p class="blurb" style="margin-inline:auto" id="doneLine">Ready when you are.</p>
+      <div class="acts" style="justify-content:center">
+        <a class="btn" href="/" id="go">Start reading</a>
+      </div>
+      <p class="blurb" style="margin:16px auto 0;font-size:12.5px">Add more any time in Settings → Sources, where Source Fabric can read almost any site you paste into it.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/**
+ * First run.
+ *
+ * Shown once, to somebody who has nothing: no library, no reading history,
+ * no sync code. The redirect that sends them here lives in yomu-shell.js and
+ * is deliberately strict, because the failure worth avoiding is trapping an
+ * existing reader in a setup flow they finished months ago.
+ *
+ * What it writes is the app's own storage in the app's own shapes -- the
+ * collection's `sources` array, yomu.v1.accent, the circle's name. Nothing
+ * here is a private format that only this page understands.
+ *
+ * Two rules from design/SETTINGS-HANDOFF.md are load-bearing:
+ *
+ *   The profile is skippable and the sources step is not. The whole reason
+ *   this flow exists is that a new install otherwise lands on an empty home
+ *   page, so Finish stays disabled until a source is on.
+ *
+ *   Counts are measured or absent. MangaDex publishes a total per original
+ *   language and is therefore the only source contributing a number; the
+ *   tally carries a + because everything else pages without ever saying how
+ *   deep it goes.
+ */
+(() => {
+  'use strict';
+
+  const COLLECTION = 'yomu.v1.collection';
+  const ACCENT = 'yomu.v1.accent';
+  const CIRCLE = 'yomu.v1.circle';
+  const DONE = 'yomu.v1.setupDone';
+  const SINCE = 'yomu.v1.since';
+
+  const readJSON = (k, f) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? f; } catch { return f; } };
+  const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => n.toLocaleString('en-US');
+
+  /* Measured off MangaDex's API, one query per original language, on
+     2026-09-15. It is the only source that publishes a catalogue size. */
+  const KINDS = [
+    { id: 'manga',   name: 'Manga',    note: 'Japanese · right-to-left pages',    count: 75579 },
+    { id: 'manhwa',  name: 'Manhwa',   note: 'Korean · usually colour, vertical', count: 8809 },
+    { id: 'manhua',  name: 'Manhua',   note: 'Chinese · usually colour',          count: 6378 },
+    { id: 'webtoon', name: 'Webtoons', note: 'Vertical scroll, one long strip',   count: null },
+  ];
+
+  const ORIGIN = location.origin;
+  const ext = (id, label) => ({
+    id: 'yomuext-' + id, label,
+    category: 'Yomu Extensions', kind: 'api',
+    url: ORIGIN + '/api/ext/source/' + id + '/',
+  });
+
+  const SOURCES = [
+    { ...{ id: 'mangadex', label: 'MangaDex', category: 'Built in', kind: 'mangadex', url: 'https://api.mangadex.org' },
+      note: 'The one source that publishes a catalogue size', kinds: ['manga', 'manhwa', 'manhua'], on: false },
+    { ...ext('weebcentral', 'Weeb Central'), note: 'Still returning results on page 60', kinds: ['manga', 'manhwa', 'manhua'], on: false },
+    { ...ext('flamecomics', 'Flame Comics'), note: 'Manhwa', kinds: ['manhwa'], on: false },
+    { ...ext('asura', 'Asura Scans'),        note: 'Manhwa', kinds: ['manhwa'], on: false },
+    { ...ext('webtoons', 'Webtoons.com'),    note: 'Originals and canvas', kinds: ['webtoon'], on: false },
+    { ...ext('namicomi', 'NamiComi'),        note: 'Manga and webtoons', kinds: ['manga', 'webtoon'], on: false },
+  ];
+
+  const PRESETS = [
+    { id: 'reader',   name: 'Reader',   mark: 'R', hex: '#ffc45f', ink: '#18212a', tone: '' },
+    { id: 'nightowl', name: 'Nightowl', mark: 'N', hex: '#d3a2ff', ink: '#231133', tone: 'violet' },
+    { id: 'margin',   name: 'Margin',   mark: 'M', hex: '#9db8ff', ink: '#111a2e', tone: 'blue' },
+    { id: 'bookmark', name: 'Bookmark', mark: 'B', hex: '#7fd6b0', ink: '#0d241c', tone: 'green' },
+    { id: 'inkwell',  name: 'Inkwell',  mark: 'I', hex: '#ff968c', ink: '#2c1110', tone: 'coral' },
+    { id: 'custom',   name: 'Your own', mark: '+', hex: '#8fa0b4', ink: '#0c131b', tone: '', custom: true },
+  ];
+
+  /* The same five the accent setting on Your Yomu writes, same ids, so the
+     two screens cannot disagree about what "violet" means. */
+  const TONES = [
+    { id: '',       hex: '#ffc45f', ink: '#18212a' },
+    { id: 'blue',   hex: '#9db8ff', ink: '#111a2e' },
+    { id: 'green',  hex: '#7fd6b0', ink: '#0d241c' },
+    { id: 'coral',  hex: '#ff968c', ink: '#2c1110' },
+    { id: 'violet', hex: '#d3a2ff', ink: '#231133' },
+  ];
+
+  const TITLES = ['Pick a reader', 'What do you read?', 'Where should they come from?', 'All set'];
+
+  let step = 0;
+  let name = '';
+  let profile = null;
+  let toneId = '';
+  const picked = new Set(['manga', 'manhwa']);
+
+  function paintAccent(hex, ink) {
+    const root = document.documentElement;
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--accentText', ink);
+    root.style.setProperty('--accentSoft', hex + '1f');
+    root.style.setProperty('--accentLine', hex + '66');
+  }
+
+  /* ---- presets --------------------------------------------------------- */
+  function drawPresets() {
+    const box = $('presets');
+    box.textContent = '';
+    PRESETS.forEach((pre) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(profile === pre));
+
+      const dot = document.createElement('span');
+      dot.className = 'dot'; dot.style.background = pre.hex; dot.setAttribute('aria-hidden', 'true');
+
+      const face = document.createElement('span');
+      face.className = 'face';
+      face.style.background = pre.hex;
+      face.style.color = pre.ink;
+      face.textContent = pre.custom
+        ? (profile === pre && name ? [...name][0].toUpperCase() : pre.mark)
+        : pre.mark;
+
+      const strong = document.createElement('b');
+      strong.textContent = pre.custom && name && profile === pre ? name : pre.name;
+      const small = document.createElement('small');
+      small.textContent = pre.custom ? 'Type a name' : 'and its colour';
+
+      b.append(dot, face, strong, small);
+      b.addEventListener('click', () => {
+        profile = pre;
+        if (!pre.custom) name = pre.name;
+        toneId = pre.tone;
+        paintAccent(pre.hex, pre.ink);
+        $('customWrap').hidden = !pre.custom;
+        drawPresets();
+        drawTones();
+        if (pre.custom) $('name').focus();
+      });
+      box.append(b);
+    });
+  }
+
+  function drawTones() {
+    const box = $('tones');
+    box.textContent = '';
+    TONES.forEach((t) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tone'; b.style.background = t.hex;
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-label', t.id || 'amber');
+      b.setAttribute('aria-checked', String(t.id === toneId));
+      b.addEventListener('click', () => {
+        toneId = t.id;
+        paintAccent(t.hex, t.ink);
+        drawTones();
+        drawPresets();
+      });
+      box.append(b);
+    });
+  }
+
+  $('name').addEventListener('input', (e) => {
+    name = e.target.value.trim().slice(0, 32);
+    drawPresets();
+  });
+
+  /* ---- kinds ----------------------------------------------------------- */
+  function drawKinds() {
+    const box = $('kinds');
+    box.textContent = '';
+    KINDS.forEach((k) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'kind';
+      b.setAttribute('role', 'checkbox');
+      b.setAttribute('aria-checked', String(picked.has(k.id)));
+      const tick = document.createElement('span');
+      tick.className = 'tick'; tick.textContent = '✓'; tick.setAttribute('aria-hidden', 'true');
+      const strong = document.createElement('b'); strong.textContent = k.name;
+      const small = document.createElement('small');
+      small.textContent = k.count ? fmt(k.count) + ' on MangaDex alone' : k.note;
+      b.append(tick, strong, small);
+      b.addEventListener('click', () => {
+        if (picked.has(k.id)) picked.delete(k.id); else picked.add(k.id);
+        b.setAttribute('aria-checked', String(picked.has(k.id)));
+        applyKinds();
+      });
+      box.append(b);
+    });
+  }
+
+  function applyKinds() {
+    SOURCES.forEach((s) => { s.on = s.kinds.some((k) => picked.has(k)); });
+    $('toSources').disabled = picked.size === 0;
+    drawSources();
+    tally();
+  }
+
+  /* ---- sources --------------------------------------------------------- */
+  function drawSources() {
+    const list = $('sourceList');
+    list.textContent = '';
+    SOURCES.forEach((src) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const rc = document.createElement('div');
+      rc.className = 'rc';
+      const strong = document.createElement('strong'); strong.textContent = src.label;
+      const small = document.createElement('small'); small.textContent = src.note;
+      rc.append(strong, small);
+
+      const val = document.createElement('span');
+      val.className = 'val';
+      if (src.id === 'mangadex') {
+        const mine = KINDS.filter((k) => picked.has(k.id)).reduce((n, k) => n + (k.count || 0), 0);
+        val.textContent = mine ? fmt(mine) : '—';
+        val.title = 'Titles MangaDex holds in the kinds you picked';
+      } else {
+        val.textContent = '—';
+        val.title = 'This source publishes no total';
+      }
+
+      const sw = document.createElement('button');
+      sw.type = 'button'; sw.className = 'sw';
+      sw.setAttribute('role', 'switch');
+      sw.setAttribute('aria-checked', String(src.on));
+      sw.setAttribute('aria-label', src.label);
+      sw.addEventListener('click', () => {
+        src.on = !src.on;
+        sw.setAttribute('aria-checked', String(src.on));
+        tally();
+      });
+
+      row.append(rc, val, sw);
+      list.append(row);
+    });
+
+    /* Source Fabric is named here on purpose. It is the thing that adds a
+       source this list has never heard of, and burying it is the one
+       instruction the handoff calls out by name. */
+    const extra = $('extraList');
+    extra.textContent = '';
+    [
+      { label: 'Source Fabric', note: 'Paste any site and Yomu will try to read it', href: '/sources' },
+      { label: 'Mihon bridge', note: 'Opens 8–12 more sources from your own server', href: '/suwayomi-setup.html' },
+      { label: 'Comick', note: 'Finds titles but serves no chapters, by design', state: 'Discovery only' },
+    ].forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'row' + (item.state ? ' dim' : '');
+      const rc = document.createElement('div');
+      rc.className = 'rc';
+      const strong = document.createElement('strong'); strong.textContent = item.label;
+      const small = document.createElement('small'); small.textContent = item.note;
+      rc.append(strong, small);
+      row.append(rc);
+      if (item.state) {
+        const s = document.createElement('span');
+        s.className = 'state';
+        s.append(document.createElement('i'), document.createTextNode(item.state));
+        row.append(s);
+      } else {
+        const a = document.createElement('a');
+        a.className = 'btn quiet';
+        a.style.padding = '9px 14px';
+        a.href = item.href;
+        a.textContent = 'Open';
+        row.append(a);
+      }
+      extra.append(row);
+    });
+  }
+
+  function tally() {
+    const on = SOURCES.filter((s) => s.on);
+    const mdOn = SOURCES.find((s) => s.id === 'mangadex').on;
+    const counted = mdOn
+      ? KINDS.filter((k) => picked.has(k.id)).reduce((sum, k) => sum + (k.count || 0), 0)
+      : 0;
+    const uncounted = on.filter((s) => s.id !== 'mangadex').length;
+
+    $('tallyNum').textContent = counted ? fmt(counted) + '+' : String(on.length);
+    $('tallyText').textContent = !on.length
+      ? 'nothing on yet — pick at least one'
+      : counted
+        ? (uncounted
+            ? 'titles counted on MangaDex, plus ' + uncounted + ' source' + (uncounted === 1 ? '' : 's') + ' that publish no total'
+            : 'titles counted on MangaDex')
+        : 'source' + (on.length === 1 ? '' : 's') + ' on — none of them publishes a total';
+
+    $('onCount').textContent = on.length + ' on';
+    $('finish').disabled = on.length === 0;
+    $('doneLine').textContent = counted
+      ? fmt(counted) + '+ titles across ' + on.length + ' sources, waiting on your home page.'
+      : on.length + ' source' + (on.length === 1 ? '' : 's') + ' ready.';
+  }
+
+  /* ---- steps ----------------------------------------------------------- */
+  function go(next) {
+    step = next;
+    [0, 1, 2, 3].forEach((i) => { $('pane-' + i).hidden = i !== step; });
+    document.title = 'Yomu · ' + TITLES[step];
+    $('track').style.width = Math.round((step / 3) * 100) + '%';
+    $('crumbNow').textContent = step < 3 ? 'Step ' + (step + 1) : 'Done';
+    $('crumbOf').textContent = step < 3 ? 'of 3' : '';
+    scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('[data-go]').forEach((b) =>
+    b.addEventListener('click', () => go(Number(b.dataset.go))));
+
+  /* ---- writing it down --------------------------------------------------- */
+  $('finish').addEventListener('click', () => {
+    const on = SOURCES.filter((s) => s.on);
+    if (!on.length) return;
+
+    // The collection's own shape. Anything already there is kept and simply
+    // switched on or off, so re-running setup never destroys a source that
+    // was added by hand.
+    const collection = readJSON(COLLECTION, null) || { revision: 0, sources: [], library: [], progress: {} };
+    const existing = Array.isArray(collection.sources) ? collection.sources : [];
+    const wanted = new Map(on.map((s) => [s.id, s]));
+
+    const merged = existing.map((s) =>
+      wanted.has(s.id) ? { ...s, enabled: true } : s);
+    for (const [id, src] of wanted) {
+      if (merged.some((s) => s.id === id)) continue;
+      merged.push({ id, label: src.label, category: src.category, kind: src.kind, url: src.url, enabled: true });
+    }
+
+    writeJSON(COLLECTION, { ...collection, revision: Number(collection.revision || 0) + 1, sources: merged });
+
+    if (toneId) { try { localStorage.setItem(ACCENT, toneId); } catch {} }
+    if (name) writeJSON(CIRCLE, { ...(readJSON(CIRCLE, {}) || {}), name });
+    if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
+    try { localStorage.setItem(DONE, '1'); } catch {}
+
+    go(3);
+  });
+
+  // Marked done on the way out too. Somebody who reaches this page and leaves
+  // through the back button has still seen it, and showing it again on the
+  // next launch would be the flow nagging.
+  addEventListener('pagehide', () => { try { localStorage.setItem(DONE, '1'); } catch {} });
+
+  /* ---- boot -------------------------------------------------------------- */
+  const saved = localStorage.getItem(ACCENT) || '';
+  const savedTone = TONES.find((t) => t.id === saved);
+  if (savedTone) { toneId = savedTone.id; paintAccent(savedTone.hex, savedTone.ink); }
+
+  drawPresets();
+  drawTones();
+  drawKinds();
+  applyKinds();
+  go(0);
+})();
+</script>
+</body>
+</html>
