@@ -246,7 +246,7 @@
     const link = document.createElement('a');
     link.id = 'yomu-you-row';
     link.className = 'settings-row';
-    link.href = '/you.html';
+    link.href = '/you';
     const copy = document.createElement('div');
     copy.className = 'settings-row__copy';
     const strong = document.createElement('strong');
