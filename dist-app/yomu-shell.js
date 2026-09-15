@@ -489,8 +489,6 @@
           if (now.has(name)) now.delete(name); else now.add(name);
           rememberOpen(now);
           foldSettingsGroups();
-    mountBridge();
-    mountFullscreen();
         });
       }
       // Written only when it would actually change. Setting textContent
@@ -914,6 +912,8 @@
     mountContinue();
     explainIconButtons();
     foldSettingsGroups();
+    mountBridge();
+    mountFullscreen();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
