@@ -285,9 +285,11 @@
 
   <!-- 1 · welcome -->
   <section class="pane" id="pane-0">
-    <div class="ob-hero" aria-hidden="true">
-      <svg viewBox="0 0 195 168" class="ob-mark"><polygon points="8.00,12.75 79.00,47.02 79.00,155.25 8.00,120.98" fill="currentColor" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/><polygon points="116.00,47.02 187.00,12.75 187.00,120.98 116.00,155.25" fill="currentColor" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/></svg>
-    </div>
+    <!-- The mark with a page turning through it, rather than a still one. It
+         is the same twelve-frame loader the whole app uses, so the first thing
+         you ever see of Yomu is the thing it shows you whenever it is
+         thinking. Sprite and cadence come from yomu-skin.css. -->
+    <div class="ob-hero"><span class="yomu-loader" style="--s:96px" role="img" aria-label="Yomu"></span></div>
     <h1>Welcome to Yomu</h1>
     <p class="blurb">A reading room for everything your sources carry. Four short steps and one that matters.</p>
     <div class="acts">
