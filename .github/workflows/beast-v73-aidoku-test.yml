@@ -1,0 +1,88 @@
+name: Beast v7.3 Aidoku runtime gauntlet
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/aidoku/**'
+      - 'worker/beast-intelligence.ts'
+      - 'worker/index-v7.ts'
+      - '.github/workflows/beast-v73-aidoku-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  aidoku-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native runtime build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libssl-dev libfontconfig1-dev libfreetype6-dev ca-certificates
+      - name: Build real Aidoku WASM runtime
+        run: cargo build --manifest-path runtime/aidoku/Cargo.toml
+      - name: Start runtime
+        env:
+          PORT: 8091
+          RUST_LOG: info
+        run: |
+          ./runtime/aidoku/target/debug/yomu-aidoku-runtime > /tmp/aidoku-runtime.log 2>&1 &
+          echo $! > /tmp/aidoku-runtime.pid
+          for i in {1..40}; do
+            if curl --fail --silent http://127.0.0.1:8091/healthz > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/aidoku-runtime.log
+          exit 1
+      - name: Resolve official MangaDex Aidoku package
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            https://raw.githubusercontent.com/Aidoku-Community/sources/gh-pages/index.min.json \
+            > /tmp/aidoku-index.json
+
+          jq -e '.sources[] | select(.id == "multi.mangadex")' /tmp/aidoku-index.json > /tmp/mangadex-source.json
+          jq '{id,name,version,downloadURL,baseURL,languages,contentRating}' /tmp/mangadex-source.json
+
+          jq -n --slurpfile src /tmp/mangadex-source.json '{
+            targetUrl: $src[0].baseURL,
+            implementations: [{
+              ecosystem: "aidoku",
+              store: "Aidoku Community",
+              storeId: "aidoku-community",
+              name: $src[0].name,
+              id: $src[0].id,
+              version: ($src[0].version|tostring),
+              baseUrl: $src[0].baseURL,
+              artifact: $src[0].downloadURL,
+              language: (($src[0].languages // ["en"])|join(",")),
+              runtimeHint: "aidoku-wasm",
+              contentRating: ($src[0].contentRating // 0)
+            }]
+          }' > /tmp/resolve.json
+
+          status=$(curl --silent --show-error --max-time 70 \
+            -o /tmp/resolve-response.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:8091/v1/resolve \
+            -H 'content-type: application/json' \
+            --data-binary @/tmp/resolve.json)
+
+          echo "HTTP $status"
+          jq . /tmp/resolve-response.json || cat /tmp/resolve-response.json
+          echo '--- runtime log ---'
+          tail -n 160 /tmp/aidoku-runtime.log || true
+
+          # This is intentionally strict: executable federation is only real if
+          # a maintained .aix package survives the full reader gauntlet.
+          test "$status" = "200"
+          jq -e '(.ready == true) and (.runtime == "aidoku-wasm") and (.adapter != null) and (.probe.pages > 0)' /tmp/resolve-response.json >/dev/null
+      - name: Stop runtime
+        if: always()
+        run: |
+          if [ -f /tmp/aidoku-runtime.pid ]; then kill "$(cat /tmp/aidoku-runtime.pid)" 2>/dev/null || true; fi
