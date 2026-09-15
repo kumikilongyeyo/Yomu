@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import { testCandidate } from './hunter.js';
-import { probeTapasPublicFree } from './source-intel.js';
 
 const candidates = [
   {
@@ -49,24 +48,23 @@ const config = { freshDays: 5, timeout: 18000, maxProbes: 12 };
 const results = [];
 for (const candidate of candidates) {
   console.log(`Testing ${candidate.name} — ${candidate.url}`);
-  const result = candidate.host === 'tapas.io'
-    ? await probeTapasPublicFree(config)
-    : await testCandidate(candidate, config);
+  const result = await testCandidate(candidate, config);
   result.countsTowardGoal = candidate.countsTowardGoal;
   result.promotionTags = candidate.promotionTags;
   result.evidence = result.evidence || candidate.evidence;
   results.push(result);
-  console.log(`${result.status} ${result.score}/100 — ${(result.reasons || []).join('; ')}`);
+  console.log(`${result.status} ${result.score}/100 [${result.strategy || 'unknown'}] — ${(result.reasons || []).join('; ')}`);
 }
 
 const adultManhuaPass = results.filter(x => x.status === 'PASS' && x.countsTowardGoal);
 const tapas = results.find(x => x.host === 'tapas.io') || null;
 const generatedAt = new Date().toISOString();
 const report = {
-  schema: 'yomu.hunter-targeted-report/3',
+  schema: 'yomu.hunter-targeted-report/4',
   target: 'two adult-capable manhua sources plus Tapas public/free reader',
   generatedAt,
   freshDays: 5,
+  adaptiveStrategies: true,
   requestedAdultManhuaPasses: 2,
   adultManhuaPassCount: adultManhuaPass.length,
   tapasStatus: tapas?.status || 'NOT_TESTED',
@@ -76,7 +74,7 @@ const pack = {
   schema: 'yomu.source-pack/1',
   id: 'yomu-hunter-adult-manhua-candidates',
   name: 'Yomu Hunter Adult Manhua Candidates',
-  version: 3,
+  version: 4,
   updatedAt: generatedAt,
   sources: adultManhuaPass.slice(0, 2).map(row => ({
     url: row.url,
@@ -89,7 +87,7 @@ await fs.writeFile('hunter-adult-manhua-output/report.json', JSON.stringify(repo
 await fs.writeFile('hunter-adult-manhua-output/candidate-pack.json', JSON.stringify(pack, null, 2) + '\n');
 await fs.writeFile(
   'hunter-adult-manhua-output/summary.md',
-  `# Adult/manhua + Tapas Hunter test\n\nAdult/manhua goal: ${adultManhuaPass.length}/2 PASS\nTapas: ${tapas?.status || 'NOT_TESTED'}${tapas ? ` (${tapas.score}/100)` : ''}\n\n${results.map(r => `- ${r.status} — ${r.name}: ${r.score}/100 — ${(r.reasons || []).join('; ')}`).join('\n')}\n`
+  `# Adult/manhua + Tapas adaptive Hunter test\n\nAdult/manhua goal: ${adultManhuaPass.length}/2 PASS\nTapas: ${tapas?.status || 'NOT_TESTED'}${tapas ? ` (${tapas.score}/100, ${tapas.strategy || 'unknown'})` : ''}\n\n${results.map(r => `- ${r.status} — ${r.name}: ${r.score}/100 [${r.strategy || 'unknown'}] — ${(r.reasons || []).join('; ')}`).join('\n')}\n`
 );
 
 process.exit(0);
