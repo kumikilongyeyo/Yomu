@@ -1,0 +1,31 @@
+name: Source Fabric check
+
+on:
+  push:
+    branches:
+      - forge-v5-source-fabric
+  pull_request:
+    paths:
+      - 'worker/**'
+      - 'dist-app/add-sources.html'
+      - 'dist-app/source-import.js'
+      - 'wrangler.jsonc'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
