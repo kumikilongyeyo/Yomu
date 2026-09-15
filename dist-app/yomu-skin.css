@@ -194,16 +194,20 @@
   --dim:           var(--au-dim);
   --faint:         var(--au-faint);
 
-  --accent:        var(--au-accent);
-  --accentText:    var(--au-onaccent);
-  --accentSoft:    var(--au-accsoft);
-  --accentLine:    var(--au-accline);
-  --selection:     var(--au-accent);
-  --selectionText: var(--au-onaccent);
-  --selectionSoft: var(--au-accsoft);
-  --selectionLine: var(--au-accline);
-  --cta:           var(--au-accent);
-  --ctaText:       var(--au-onaccent);
+  /* A reader who picked a tone has it written onto <html> as a pair, one per
+     ground -- see yomu-shell.js. Unset means no tone was chosen, and the kit's
+     own accent comes through. Nothing writes --accent directly any more, so
+     the stylesheet stays in charge of which ground gets which value. */
+  --accent:        var(--ua-d, var(--au-accent));
+  --accentText:    var(--ua-d-ink, var(--au-onaccent));
+  --accentSoft:    var(--ua-d-soft, var(--au-accsoft));
+  --accentLine:    var(--ua-d-line, var(--au-accline));
+  --selection:     var(--accent);
+  --selectionText: var(--accentText);
+  --selectionSoft: var(--accentSoft);
+  --selectionLine: var(--accentLine);
+  --cta:           var(--accent);
+  --ctaText:       var(--accentText);
 
   --warn:          var(--au-warn);
   --warnSoft:      var(--au-warnsoft);
@@ -264,16 +268,16 @@
   --dim:           var(--pa-dim);
   --faint:         var(--pa-faint);
 
-  --accent:        var(--pa-accent);
-  --accentText:    var(--pa-onaccent);
-  --accentSoft:    var(--pa-accsoft);
-  --accentLine:    var(--pa-accline);
-  --selection:     var(--pa-accent);
-  --selectionText: var(--pa-onaccent);
-  --selectionSoft: var(--pa-accsoft);
-  --selectionLine: var(--pa-accline);
-  --cta:           var(--pa-accent);
-  --ctaText:       var(--pa-onaccent);
+  --accent:        var(--ua-l, var(--pa-accent));
+  --accentText:    var(--ua-l-ink, var(--pa-onaccent));
+  --accentSoft:    var(--ua-l-soft, var(--pa-accsoft));
+  --accentLine:    var(--ua-l-line, var(--pa-accline));
+  --selection:     var(--accent);
+  --selectionText: var(--accentText);
+  --selectionSoft: var(--accentSoft);
+  --selectionLine: var(--accentLine);
+  --cta:           var(--accent);
+  --ctaText:       var(--accentText);
 
   --warn:          var(--pa-warn);
   --warnSoft:      var(--pa-warnsoft);
@@ -332,16 +336,16 @@
     --dim:           var(--pa-dim);
     --faint:         var(--pa-faint);
 
-    --accent:        var(--pa-accent);
-    --accentText:    var(--pa-onaccent);
-    --accentSoft:    var(--pa-accsoft);
-    --accentLine:    var(--pa-accline);
-    --selection:     var(--pa-accent);
-    --selectionText: var(--pa-onaccent);
-    --selectionSoft: var(--pa-accsoft);
-    --selectionLine: var(--pa-accline);
-    --cta:           var(--pa-accent);
-    --ctaText:       var(--pa-onaccent);
+    --accent:        var(--ua-l, var(--pa-accent));
+    --accentText:    var(--ua-l-ink, var(--pa-onaccent));
+    --accentSoft:    var(--ua-l-soft, var(--pa-accsoft));
+    --accentLine:    var(--ua-l-line, var(--pa-accline));
+    --selection:     var(--accent);
+    --selectionText: var(--accentText);
+    --selectionSoft: var(--accentSoft);
+    --selectionLine: var(--accentLine);
+    --cta:           var(--accent);
+    --ctaText:       var(--accentText);
 
     --warn:          var(--pa-warn);
     --warnSoft:      var(--pa-warnsoft);

@@ -30,21 +30,41 @@
    * /you.html is the screen that chooses it.
    * ------------------------------------------------------------------ */
   (() => {
+    /* Each tone is a pair, because one hex cannot serve both grounds: the
+       Aurora values are pale with dark ink on top, which on Paper's #f5f2ec
+       all but disappears. The Paper column is the same hue moved to the
+       weight the kit's own accent carries there -- #b8791c reads 3.25:1 on
+       that ground, and every tone below is within 0.02 of it, so a chosen
+       tone sits in the family rather than shouting past it.
+
+       Both are written, and the stylesheet picks by ground. Writing --accent
+       itself is what used to pin one value across both modes. */
     const ACCENTS = {
-      blue:   ['#9db8ff', '#111a2e'],
-      green:  ['#7fd6b0', '#0d241c'],
-      coral:  ['#ff968c', '#2c1110'],
-      violet: ['#d3a2ff', '#231133'],
+      //         Aurora                  Paper
+      blue:   [['#9db8ff', '#111a2e'], ['#5681f1', '#fff8ec']],
+      green:  [['#7fd6b0', '#0d241c'], ['#179960', '#fff8ec']],
+      coral:  [['#ff968c', '#2c1110'], ['#ef4d3e', '#fff8ec']],
+      violet: [['#d3a2ff', '#231133'], ['#ae61f2', '#fff8ec']],
     };
+    const PROPS = ['--ua-d', '--ua-d-ink', '--ua-d-soft', '--ua-d-line',
+                   '--ua-l', '--ua-l-ink', '--ua-l-soft', '--ua-l-line'];
     let chosen = '';
     try { chosen = localStorage.getItem('yomu.v1.accent') || ''; } catch {}
-    const accent = ACCENTS[chosen];
-    if (!accent) return;                       // amber is the stylesheet's own
     const root = document.documentElement;
-    root.style.setProperty('--accent', accent[0]);
-    root.style.setProperty('--accentText', accent[1]);
-    root.style.setProperty('--accentSoft', accent[0] + '1f');
-    root.style.setProperty('--accentLine', accent[0] + '66');
+    const tone = ACCENTS[chosen];
+    if (!tone) {                               // the kit's amber, per ground
+      PROPS.forEach((prop) => root.style.removeProperty(prop));
+      return;
+    }
+    const [[dark, darkInk], [light, lightInk]] = tone;
+    root.style.setProperty('--ua-d', dark);
+    root.style.setProperty('--ua-d-ink', darkInk);
+    root.style.setProperty('--ua-d-soft', dark + '1f');
+    root.style.setProperty('--ua-d-line', dark + '66');
+    root.style.setProperty('--ua-l', light);
+    root.style.setProperty('--ua-l-ink', lightInk);
+    root.style.setProperty('--ua-l-soft', light + '1f');
+    root.style.setProperty('--ua-l-line', light + '66');
   })();
 
   /* ------------------------------------------------------------------ *

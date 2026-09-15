@@ -367,12 +367,17 @@
 
   /* The same five the accent setting on Your Yomu writes, same ids, so the
      two screens cannot disagree about what "violet" means. */
+  /* hex/ink are the Aurora values -- they are also what the swatch shows.
+     lhex/link are the same hue at the weight the kit's accent carries on
+     Paper, because one value cannot be legible on both grounds. The default
+     row carries neither: it clears the properties and lets the stylesheet
+     supply the kit's amber, which is already a pair. */
   const TONES = [
-    { id: '',       hex: '#ffc45f', ink: '#18212a' },
-    { id: 'blue',   hex: '#9db8ff', ink: '#111a2e' },
-    { id: 'green',  hex: '#7fd6b0', ink: '#0d241c' },
-    { id: 'coral',  hex: '#ff968c', ink: '#2c1110' },
-    { id: 'violet', hex: '#d3a2ff', ink: '#231133' },
+    { id: '',       hex: '#e9b45c', ink: '#1b1305' },
+    { id: 'blue',   hex: '#9db8ff', ink: '#111a2e', lhex: '#5681f1', link: '#fff8ec' },
+    { id: 'green',  hex: '#7fd6b0', ink: '#0d241c', lhex: '#179960', link: '#fff8ec' },
+    { id: 'coral',  hex: '#ff968c', ink: '#2c1110', lhex: '#ef4d3e', link: '#fff8ec' },
+    { id: 'violet', hex: '#d3a2ff', ink: '#231133', lhex: '#ae61f2', link: '#fff8ec' },
   ];
 
   const TITLES = ['Pick a reader', 'What do you read?', 'Where should they come from?', 'All set'];
@@ -391,18 +396,26 @@
      stylesheet decide per mode. yomu-shell.js already works this way on every
      other page ("amber is the stylesheet's own"); this brings /start in line.
      A tone the reader actually picked is still theirs, and still wins. */
-  const ACCENT_PROPS = ['--accent', '--accentText', '--accentSoft', '--accentLine'];
+  const ACCENT_PROPS = ['--ua-d', '--ua-d-ink', '--ua-d-soft', '--ua-d-line',
+                        '--ua-l', '--ua-l-ink', '--ua-l-soft', '--ua-l-line'];
 
-  function paintAccent(hex, ink, isDefault) {
+  /* Writes the pair, never --accent itself: an inline --accent beats every
+     stylesheet and would pin one hex across both grounds. Unset means the
+     kit's own accent, which the stylesheet already carries per mode. */
+  function paintAccent(tone, isDefault) {
     const root = document.documentElement;
-    if (isDefault) {
+    if (isDefault || !tone.lhex) {
       ACCENT_PROPS.forEach((prop) => root.style.removeProperty(prop));
       return;
     }
-    root.style.setProperty('--accent', hex);
-    root.style.setProperty('--accentText', ink);
-    root.style.setProperty('--accentSoft', hex + '1f');
-    root.style.setProperty('--accentLine', hex + '66');
+    root.style.setProperty('--ua-d', tone.hex);
+    root.style.setProperty('--ua-d-ink', tone.ink);
+    root.style.setProperty('--ua-d-soft', tone.hex + '1f');
+    root.style.setProperty('--ua-d-line', tone.hex + '66');
+    root.style.setProperty('--ua-l', tone.lhex);
+    root.style.setProperty('--ua-l-ink', tone.link);
+    root.style.setProperty('--ua-l-soft', tone.lhex + '1f');
+    root.style.setProperty('--ua-l-line', tone.lhex + '66');
   }
 
   /* ---- presets --------------------------------------------------------- */
@@ -438,7 +451,7 @@
         profile = pre;
         if (!pre.custom) name = pre.name;
         toneId = pre.tone;
-        paintAccent(pre.hex, pre.ink, !pre.tone);
+        paintAccent(TONES.find((t) => t.id === pre.tone) || TONES[0], !pre.tone);
         $('customWrap').hidden = !pre.custom;
         drawPresets();
         drawTones();
@@ -459,7 +472,7 @@
       b.setAttribute('aria-checked', String(t.id === toneId));
       b.addEventListener('click', () => {
         toneId = t.id;
-        paintAccent(t.hex, t.ink, !t.id);
+        paintAccent(t, !t.id);
         drawTones();
         drawPresets();
       });
@@ -779,7 +792,7 @@
   /* ---- boot -------------------------------------------------------------- */
   const saved = localStorage.getItem(ACCENT) || '';
   const savedTone = TONES.find((t) => t.id === saved);
-  if (savedTone) { toneId = savedTone.id; paintAccent(savedTone.hex, savedTone.ink, !savedTone.id); }
+  if (savedTone) { toneId = savedTone.id; paintAccent(savedTone, !savedTone.id); }
 
   drawPresets();
   drawTones();
