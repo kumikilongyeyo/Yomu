@@ -19,6 +19,7 @@ import {
 } from './providers/suwayomi';
 import { handleCatalog, handleExtensions } from './routes-extensions';
 import { handleSync } from './routes-sync';
+import { handleCircle } from './routes-circle';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -364,6 +365,7 @@ export default {
     if (url.pathname.startsWith('/api/catalog/')) return handleCatalog(request, env, url);
     if (url.pathname.startsWith('/api/suwayomi/')) return handleSuwayomi(request, env, url);
     if (url.pathname.startsWith('/api/sync/')) return handleSync(request, env, url);
+    if (url.pathname.startsWith('/api/circle/')) return handleCircle(request, env, url);
     return handleLegacyProxy(request, url);
   },
 };
