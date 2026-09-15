@@ -132,15 +132,19 @@ const EDITS = [
       'Y() shows them and re-arms the hide; this exposes a variant that shows ' +
       'them and cancels it, so the shell can hold the bar open at the end of a ' +
       'chapter until you do something.',
+    // Anchored through the effect that follows, so the patched text no longer
+    // matches -- see the guard below for why that matters.
     from:
       'const X=(0,e.useRef)(null),Y=(0,e.useCallback)(()=>{F(!0),' +
-      'X.current&&clearTimeout(X.current),X.current=setTimeout(()=>F(!1),j)},[]);',
+      'X.current&&clearTimeout(X.current),X.current=setTimeout(()=>F(!1),j)},[]);' +
+      '(0,e.useEffect)(()=>(Y(),',
     to:
       'const X=(0,e.useRef)(null),Y=(0,e.useCallback)(()=>{F(!0),' +
       'X.current&&clearTimeout(X.current),X.current=setTimeout(()=>F(!1),j)},[]);' +
       '(0,e.useEffect)(()=>{globalThis.__yomuHoldChrome=()=>{' +
       'X.current&&clearTimeout(X.current),F(!0)};' +
-      'return()=>{delete globalThis.__yomuHoldChrome}});',
+      'return()=>{delete globalThis.__yomuHoldChrome}});' +
+      '(0,e.useEffect)(()=>(Y(),',
   },
 
   /* --- home — app/index.web.tsx --------------------------------------- */
@@ -281,6 +285,21 @@ const file = path.join(BUNDLE_DIR, entries[0]);
 let source = fs.readFileSync(file, 'utf8');
 
 const occurrences = (haystack, needle) => haystack.split(needle).length - 1;
+
+/* An edit whose replacement still contains its own anchor can never be seen as
+ * applied: `from` is found again afterwards, so --check reports NOT APPLIED and
+ * a second run applies it a second time. That has happened three times in this
+ * file -- once it would have added a duplicate refresh button on every run --
+ * and it is entirely mechanical to catch, so it is caught here rather than
+ * remembered. Extend `from` through whatever follows it until this passes. */
+for (const edit of EDITS) {
+  if (!edit.to.includes(edit.from)) continue;
+  console.error(`UNSAFE EDIT  ${edit.name}`);
+  console.error('             its replacement still contains its own anchor, so it');
+  console.error('             would re-apply on every run. Extend `from` through the');
+  console.error('             text that follows it.');
+  process.exit(1);
+}
 
 let changed = 0;
 let bundleChanged = 0;
