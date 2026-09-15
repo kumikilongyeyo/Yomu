@@ -9,23 +9,47 @@ const normalizeHost=input=>{
 const sameHost=(a,b)=>{a=normalizeHost(a);b=normalizeHost(b);return a===b||a.endsWith(`.${b}`)||b.endsWith(`.${a}`)};
 
 async function getJson(url){
-  const r=await fetch(url,{headers:{Accept:'application/json','User-Agent':'Yomu-Source-Forge/4'},signal:AbortSignal.timeout(15000)});
+  const r=await fetch(url,{headers:{Accept:'application/json','User-Agent':'Yomu-Source-Forge/4.1'},signal:AbortSignal.timeout(30000)});
   if(!r.ok) throw new Error(`Source intelligence registry returned HTTP ${r.status}`);
   return r.json();
 }
 async function registries(){
   if(Date.now()-cache.at<TTL && cache.keiyoushi && cache.aidoku) return cache;
   const [keiyoushi,aidoku]=await Promise.allSettled([getJson(KEIYO_INDEX),getJson(AIDOKU_INDEX)]);
-  cache={at:Date.now(),keiyoushi:keiyoushi.status==='fulfilled'?keiyoushi.value:[],aidoku:aidoku.status==='fulfilled'?aidoku.value:{sources:[]}};
+  cache={
+    at:Date.now(),
+    keiyoushi:keiyoushi.status==='fulfilled'?keiyoushi.value:null,
+    aidoku:aidoku.status==='fulfilled'?aidoku.value:null,
+  };
   return cache;
+}
+
+function keiyoushiExtensions(index){
+  if(Array.isArray(index)) return index;
+  if(Array.isArray(index?.extensionList?.extensions)) return index.extensionList.extensions;
+  if(Array.isArray(index?.extensions)) return index.extensions;
+  return [];
 }
 
 function findKeiyoushi(index,host){
   const out=[];
-  for(const ext of Array.isArray(index)?index:[]){
+  for(const ext of keiyoushiExtensions(index)){
     for(const src of ext.sources||[]){
-      if(!src?.baseUrl || !sameHost(src.baseUrl,host)) continue;
-      out.push({ecosystem:'mihon',repo:'keiyoushi/extensions',name:src.name||ext.name,pkg:ext.pkg,lang:src.lang||ext.lang,version:ext.version,apk:ext.apk,baseUrl:src.baseUrl,sourceId:String(src.id||''),installedVia:'suwayomi'});
+      const home=src?.homeUrl||src?.baseUrl||src?.url;
+      if(!home || !sameHost(home,host)) continue;
+      out.push({
+        ecosystem:'mihon',
+        repo:'keiyoushi/extensions',
+        name:src.name||ext.name,
+        pkg:ext.packageName||ext.pkg,
+        lang:src.language||src.lang||ext.lang,
+        version:ext.versionName||ext.version,
+        apk:ext.resources?.apkUrl||ext.apk,
+        baseUrl:home,
+        sourceId:String(src.id||''),
+        contentWarning:ext.contentWarning||null,
+        installedVia:'suwayomi'
+      });
     }
   }
   return out;
@@ -50,6 +74,7 @@ export async function inspectSourceIntelligence(inputUrl){
     confidence,
     evidence,
     preferred:mihon[0]||aidoku[0]||null,
+    registries:{keiyoushi:!!r.keiyoushi,aidoku:!!r.aidoku},
     reason:mihon.length
       ?'A maintained Mihon/Keiyoushi implementation exists. Prefer installing it through Suwayomi so Yomu gets a real executable source instead of guessing selectors.'
       :aidoku.length
