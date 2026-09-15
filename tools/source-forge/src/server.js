@@ -3,64 +3,114 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { forgeSource } from './source-forge.js';
-import { loadPage, inspectHtml } from './runtime.js';
+import {
+  loadPage, inspectHtml,
+  assistedSessionInfo, openAssistedSession, verifyAssistedSession, clearAssistedSession
+} from './runtime.js';
 import { generateYomuDescriptor } from './yomu-descriptor.js';
 import { installIntoProject, projectInfo } from './project-installer.js';
 import { githubConfig, publishExtension } from './github-publisher.js';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const app=express();
+const port=Number(process.env.PORT||8790);
 app.disable('x-powered-by');
 app.use(express.json({limit:'3mb'}));
-app.use(express.static(path.resolve(here,'../public'),{extensions:['html']}));
 
-// Local companion UI may be opened from a deployed Yomu tab. We allow only
-// normal browser origins, never credentials, and the Forge itself still blocks
-// private-network target URLs unless ALLOW_PRIVATE_SITES=1 was explicitly set.
+const configuredOrigins=String(process.env.YOMU_ALLOWED_ORIGINS||'https://yomu.yomuread.workers.dev')
+  .split(',').map(x=>x.trim()).filter(Boolean);
+const originAllowed=origin=>{
+  if(!origin) return true;
+  if(configuredOrigins.includes(origin)) return true;
+  try{
+    const u=new URL(origin);
+    return (u.hostname==='localhost'||u.hostname==='127.0.0.1') && /^https?:$/.test(u.protocol);
+  }catch{return false}
+};
+
+// The public Yomu UI can talk to the local Forge agent, but only from the
+// configured Yomu origin(s) or loopback development origins. JSON requests
+// preflight, so unrelated websites cannot silently drive local install/publish.
 app.use((req,res,next)=>{
   const origin=req.headers.origin;
-  if(origin && /^https?:\/\//i.test(origin)) res.setHeader('Access-Control-Allow-Origin',origin);
+  if(origin && originAllowed(origin)) res.setHeader('Access-Control-Allow-Origin',origin);
   res.setHeader('Vary','Origin');
   res.setHeader('Access-Control-Allow-Headers','content-type');
   res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
-  if(req.method==='OPTIONS') return res.sendStatus(204);
+  if(String(req.headers['access-control-request-private-network']||'').toLowerCase()==='true') {
+    res.setHeader('Access-Control-Allow-Private-Network','true');
+  }
+  if(req.method==='OPTIONS') return originAllowed(origin) ? res.sendStatus(204) : res.sendStatus(403);
+  if(origin && !originAllowed(origin) && req.path.startsWith('/api/')) return res.status(403).json({error:'Origin not allowed by local Source Forge'});
   next();
 });
+
+app.use(express.static(path.resolve(here,'../public'),{extensions:['html']}));
 
 const forgeInput=z.object({
   url:z.string().url().refine(v=>/^https?:\/\//i.test(v),'Only http/https URLs are supported'),
   name:z.string().trim().min(1).max(80).optional(),
   id:z.string().trim().min(2).max(49).optional(),
   category:z.enum(['manga','manhwa','manhua','webtoon','comic','adult']).optional(),
-  language:z.string().trim().min(2).max(16).optional()
+  language:z.string().trim().min(2).max(16).optional(),
+  accessMode:z.enum(['auto','headless','assisted']).optional()
 });
+const urlInput=forgeInput.pick({url:true});
 
 const safeJson=(res,body,status=200)=>res.status(status).type('application/json').send(JSON.stringify(body));
 
 app.get('/api/config',async(_req,res)=>{
   try{
     const project=await projectInfo();
-    safeJson(res,{project:{root:project.root,standalone:project.standalone},github:githubConfig(),port:Number(process.env.PORT||8790)});
+    safeJson(res,{project:{root:project.root,standalone:project.standalone},github:githubConfig(),port,allowedOrigins:configuredOrigins});
   }catch(e){safeJson(res,{error:e.message},500)}
 });
 
 app.post('/api/inspect',async(req,res)=>{
   try{
-    const input=forgeInput.pick({url:true}).parse(req.body);
+    const input=urlInput.parse(req.body);
     const page=await loadPage(input.url,{scroll:true});
-    safeJson(res,{finalUrl:page.finalUrl,status:page.status,inspect:inspectHtml(page.html,page.finalUrl),network:page.network});
-  }catch(e){safeJson(res,{error:e.message},400)}
+    safeJson(res,{finalUrl:page.finalUrl,status:page.status,accessMode:page.accessMode,inspect:inspectHtml(page.html,page.finalUrl),network:page.network});
+  }catch(e){safeJson(res,{error:e.message,code:e.code||null,status:e.status||null},400)}
+});
+
+app.get('/api/access/status',async(req,res)=>{
+  try{
+    const input=urlInput.parse({url:String(req.query.url||'')});
+    safeJson(res,await assistedSessionInfo(input.url));
+  }catch(e){safeJson(res,{error:e.message,code:e.code||null},400)}
+});
+
+app.post('/api/access/assist',async(req,res)=>{
+  try{
+    const input=urlInput.parse(req.body);
+    safeJson(res,await openAssistedSession(input.url));
+  }catch(e){safeJson(res,{error:e.message,code:e.code||null},400)}
+});
+
+app.post('/api/access/verify',async(req,res)=>{
+  try{
+    const input=urlInput.parse(req.body);
+    safeJson(res,await verifyAssistedSession(input.url));
+  }catch(e){safeJson(res,{error:e.message,code:e.code||null,status:e.status||null},400)}
+});
+
+app.post('/api/access/clear',async(req,res)=>{
+  try{
+    const input=urlInput.parse(req.body);
+    safeJson(res,await clearAssistedSession(input.url));
+  }catch(e){safeJson(res,{error:e.message,code:e.code||null},400)}
 });
 
 app.post('/api/source/prepare',async(req,res)=>{
   try{
     const input=forgeInput.parse(req.body);
-    const forged=await forgeSource(input.url,{name:input.name,id:input.id});
+    const forged=await forgeSource(input.url,{name:input.name,id:input.id,accessMode:input.accessMode||'auto'});
     const yomu=generateYomuDescriptor(forged,{name:input.name,id:input.id,category:input.category,language:input.language});
     safeJson(res,{...forged,yomu});
   }catch(e){
     console.error(e);
-    safeJson(res,{error:e.message,code:e.code||null},400);
+    safeJson(res,{error:e.message,code:e.code||null,status:e.status||null},400);
   }
 });
 
@@ -82,8 +132,6 @@ app.post('/api/yomu/publish',async(req,res)=>{
     if(!descriptor?.id||!indexEntry?.id) throw new Error('Missing generated Yomu descriptor');
     const score=Number(validation?.combinedScore??validation?.score??0);
     if(score<88 && !req.body?.force) throw new Error(`Publish blocked at ${score}/100. STRONG (88+) is required unless force=true.`);
-    // Install first so the local project and remote extension repository are the
-    // exact same version and index snapshot.
     const installed=await installIntoProject(descriptor,indexEntry,{syncStandalone:true});
     const published=await publishExtension(installed.descriptor,installed.index);
     let refresh=null;
@@ -98,7 +146,6 @@ app.post('/api/yomu/publish',async(req,res)=>{
   }catch(e){safeJson(res,{error:e.message},400)}
 });
 
-app.get('/api/health',(_req,res)=>safeJson(res,{ok:true,service:'yomu-source-forge',version:3}));
+app.get('/api/health',(_req,res)=>safeJson(res,{ok:true,service:'yomu-source-forge',version:'3.1',assistedAccess:true,smartCatalog:true}));
 
-const port=Number(process.env.PORT||8790);
-app.listen(port,'127.0.0.1',()=>console.log(`Yomu Source Forge v3: http://localhost:${port}`));
+app.listen(port,'127.0.0.1',()=>console.log(`Yomu Source Forge v3.1: http://localhost:${port}`));
