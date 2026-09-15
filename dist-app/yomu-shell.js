@@ -682,11 +682,23 @@
   function atChapterEnd() {
     const scroller = document.querySelector('[data-testid="reader-scroll"]');
     if (!scroller) return false;
-    const room = scroller.scrollHeight - scroller.clientHeight;
-    // Nothing to scroll means the whole chapter is already on screen. That is
-    // still having seen it, but only once the pages are actually laid out.
-    if (room <= 0) return scroller.scrollHeight > 0;
-    return scroller.scrollTop >= room - 24;
+
+    // Measured against the foot of the last page, not the foot of the scroll
+    // container. Anything mounted below the pages -- the circle's chapter
+    // thread is the first thing to do it -- makes the container taller than
+    // the chapter, and marking read at the container's end would mean
+    // scrolling past the comments to finish a chapter you had already read.
+    const pages = scroller.querySelectorAll('[data-page-index]');
+    const last = pages[pages.length - 1];
+    const end = last
+      ? (parseFloat(last.style.top) || 0) + (parseFloat(last.style.height) || 0)
+      : scroller.scrollHeight;
+
+    const seen = scroller.scrollTop + scroller.clientHeight;
+    // A chapter shorter than the screen has no scrolling to do and is already
+    // read -- but only once it has actually been laid out.
+    if (end <= 0) return false;
+    return seen >= end - 24;
   }
 
   function trackReader() {

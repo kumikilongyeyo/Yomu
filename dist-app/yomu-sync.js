@@ -597,10 +597,17 @@
       group.className = 'settings-group glass';
       group.id = GROUP_ID;
     }
-    // Checked as a pair against the anchor, not merely as adjacent to each
-    // other, so a group inserted before its neighbour had mounted corrects
-    // itself on a later tick instead of staying where it landed.
-    if (label.nextElementSibling !== group || anchor.previousElementSibling !== group) {
+    // Placed once, relative to Storage; after that only the label-to-group
+    // pairing is re-asserted.
+    //
+    // Not "the group must sit immediately before Storage": the Circle group
+    // mounts itself just after this one, which would make that test fail
+    // forever. Each pass would move this pair back, displacing Circle, which
+    // would move itself back, displacing this -- both running from mutation
+    // observers, so the two would rewrite the screen at frame rate and lock
+    // the tab. React re-parents these groups, so the pairing check is what
+    // recovers from that; where the pair sits is settled on arrival.
+    if (!group.isConnected || label.nextElementSibling !== group) {
       anchor.before(label, group);
       renderGroup();
     }
