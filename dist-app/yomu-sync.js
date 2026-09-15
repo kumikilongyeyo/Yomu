@@ -135,13 +135,33 @@
 
       const record = Object.values(index).find((r) => r && r.seriesId === seriesId) || {};
       const read = readJSON(RESUME_PREFIX + seriesId + '.read', []);
+
+      /* The chapter and its number have to come from the same place.
+       *
+       * They were taken from two: the id from the app's resume anchor, the
+       * number off the reading index's label. Those are written by different
+       * code at different moments -- the anchor is debounced by two seconds --
+       * so a push made just after turning the page carried chapter 1's id with
+       * chapter 2's number. The merge then compared the wrong number, and a
+       * device restoring from it got a card that said Chapter 2 and opened
+       * chapter 1.
+       *
+       * The index wins when it has a chapter, because everything in it was
+       * written in one go and cannot disagree with itself. The anchor is the
+       * fallback, and then the number is simply unknown rather than guessed. */
+      const fromIndex = record.chapterId
+        ? {
+            chapterId: record.chapterId,
+            chapterNumber: chapterNumberOf(record.chapterLabel),
+            page: Number(record.page) || undefined,
+            pages: Number(record.pages) || undefined,
+          }
+        : { chapterId: anchor.chapterId };
+
       out.push({
         seriesId,
         sourceId: record.sourceId,
-        chapterId: anchor.chapterId,
-        chapterNumber: chapterNumberOf(record.chapterLabel),
-        page: Number(record.page) || undefined,
-        pages: Number(record.pages) || undefined,
+        ...fromIndex,
         read: Array.isArray(read) ? read : [],
         updatedAt: Number(anchor.updatedAtLocal) || Date.now(),
       });

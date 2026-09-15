@@ -1068,6 +1068,97 @@
 
 
   /* ------------------------------------------------------------------ *
+   * Continue reading, on the title itself
+   *
+   * The series page could tell you a title had 231 chapters and that you had
+   * read some of them, and then leave you to find your place in the list. The
+   * app's own "Play chapter N" button is the resume, but it says a number
+   * without saying what the number means -- on a title you last opened weeks
+   * ago, "Play chapter 41" and "start from the beginning" look alike.
+   *
+   * This says where you are, how far through the title that is, and how far
+   * through the chapter, and it is the same stored record the Home row and
+   * sync already use -- so it survives quitting, and it is already on your
+   * other devices.
+   * ------------------------------------------------------------------ */
+
+  const RESUME_ID = 'yomu-series-resume';
+
+  /** "231 chapters" out of the app's own facts line. */
+  function chapterTotal() {
+    const match = /(\d[\d,]*)\s+chapters?/i.exec(
+      document.querySelector('.series-facts')?.textContent || '');
+    if (match) return Number(match[1].replace(/,/g, ''));
+    const rows = document.querySelectorAll('.chapter-line[data-chn]').length;
+    return rows || null;
+  }
+
+  function mountSeriesResume() {
+    const context = seriesPageContext();
+    if (!context) { document.documentElement.removeAttribute('data-yomu-resume'); return; }
+    const line = document.querySelector('.section-line');
+    if (!line) return;
+
+    const record = readingIndex()[titleKey(context.sourceId, context.seriesId)];
+    const existing = document.getElementById(RESUME_ID);
+
+    /* The app's own "Play chapter N" is the same action, and it was giving a
+     * different answer -- it read chapter 1 on a title this card knew was on
+     * chapter 2, because its resume only sees what the current screen loaded.
+     * Two buttons doing one job and disagreeing about it is worse than either
+     * alone, so the accurate one speaks and the other stands down. Marked on
+     * <html> rather than removed, so it comes back the moment there is no
+     * position to resume. */
+    document.documentElement.toggleAttribute(
+      'data-yomu-resume', !!(record && record.chapterId));
+
+    if (!record || !record.chapterId) { existing?.remove(); return; }
+
+    const pages = Number(record.pages) || 0;
+    const page = Number(record.page) || 0;
+    const percent = pages > 0 ? Math.min(100, Math.round(page / pages * 100)) : null;
+    const total = chapterTotal();
+    const label = (record.chapterLabel || '').replace(/^chapter\s*/i, '') || '?';
+
+    const detail = [
+      total ? `Chapter ${label} of ${total}` : `Chapter ${label}`,
+      percent == null ? null : `${percent}% through it`,
+    ].filter(Boolean).join(' · ');
+
+    const signature = record.chapterId + '|' + detail;
+    if (existing && existing.dataset.sig === signature) return;
+
+    const card = document.createElement('a');
+    card.id = RESUME_ID;
+    card.dataset.sig = signature;
+    card.className = 'yomu-resume';
+    card.href = '/read/' + encodeURIComponent(record.chapterId)
+      + '?source=' + encodeURIComponent(record.sourceId);
+
+    const glyph = document.createElement('i');
+    glyph.setAttribute('aria-hidden', 'true');
+
+    const copy = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = 'Continue reading';
+    const small = document.createElement('small');
+    small.textContent = detail;
+    copy.append(strong, small);
+
+    if (percent != null) {
+      const bar = document.createElement('progress');
+      bar.max = 100;
+      bar.value = percent;
+      copy.append(bar);
+    }
+
+    card.append(glyph, copy);
+    if (existing) existing.replaceWith(card);
+    else line.before(card);
+  }
+
+
+  /* ------------------------------------------------------------------ *
    * Progress on a title you meet again
    *
    * "I cannot see my progress when I search for it again" is the same gap as
@@ -1768,6 +1859,7 @@
     tagCompleted();
     badgeProgress();
     trackSeriesPage();
+    mountSeriesResume();
     trackReader();
     mountContinue();
     explainIconButtons();
