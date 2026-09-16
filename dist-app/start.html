@@ -592,6 +592,20 @@
   const SINCE = 'yomu.v1.since';
 
   const readJSON = (k, f) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? f; } catch { return f; } };
+
+  /* Ask the browser to keep this, the moment there is something to keep.
+   *
+   * yomu-shell.js asks too, but it only runs on the app's own screens, so the
+   * earliest it could ask was the first home load after setup -- and
+   * everything written here was evictable until then. Setup finishing is the
+   * first instant this origin has anything worth keeping, and it is also the
+   * strongest signal of use a new install will give the browser, which is
+   * what the answer is decided on. No prompt, and nothing waits on it. */
+  function keepThis() {
+    const store = navigator.storage;
+    if (!store || typeof store.persist !== 'function' || typeof store.persisted !== 'function') return;
+    store.persisted().then((already) => (already ? null : store.persist())).catch(() => {});
+  }
   const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => n.toLocaleString('en-US');
@@ -1646,6 +1660,7 @@
 
     try { localStorage.setItem(DONE, '1'); } catch {}
     if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
+    keepThis();
 
     /* The name and the face travel with the library now, so a device signing
        in is not meeting you for the first time. Written before the greeting
@@ -1750,6 +1765,7 @@
     if (avatarId) writeJSON(AVATAR_KEY, { kind: 'preset', id: avatarId });
     if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
     try { localStorage.setItem(DONE, '1'); } catch {}
+    keepThis();
 
     go(6);
     showReel([...wanted.values()]);
@@ -1831,6 +1847,7 @@
      launch, for somebody who has already said they do not want it. */
   $('toPreview').addEventListener('click', () => {
     try { localStorage.setItem(DONE, '1'); } catch {}
+    keepThis();
   });
 
   /* ---- boot -------------------------------------------------------------- */
