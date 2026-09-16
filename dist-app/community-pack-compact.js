@@ -46,12 +46,14 @@
     let handledFinal = false;
 
     const syncLabel = () => {
-      if (pack.dataset.communityPack === '1') {
-        run.textContent = 'Test & add new sources';
-      } else {
-        run.textContent = 'Test & add source pack';
-        handledFinal = false;
-      }
+      const community = pack.dataset.communityPack === '1';
+      const want = community ? 'Test & add new sources' : 'Test & add source pack';
+      // Guarded: this runs from an observer watching pack's own subtree, and
+      // .sp-run is inside it. Assigning textContent replaces the node's child
+      // even when the string is identical, so an unguarded write is a fresh
+      // childList mutation that re-fires this callback -- forever.
+      if (run.textContent !== want) run.textContent = want;
+      if (!community) handledFinal = false;
     };
 
     document.addEventListener('click', (event) => {
