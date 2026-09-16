@@ -5,13 +5,13 @@ import {
 } from './source-fabric-v6';
 
 /**
- * Yomu Source Fabric v7.2 — Beast Adaptive public surface.
+ * Yomu Source Fabric v7.3 — Beast Adaptive public surface.
  *
- * v6 remains the proven adaptive engine underneath. v7.2 makes the generation
- * explicit at the public API boundary, keeps the UI/version contract stable,
- * and leaves the v6 implementation available as a rollback floor.
+ * v6 remains the proven adaptive engine underneath. v7.3 keeps that rollback
+ * floor while exposing the newer maintained-name federation and smart Source
+ * Pack input flow at the public API/UI boundary.
  */
-const VERSION = '7.2';
+const VERSION = '7.3';
 const GENERATION = 'Beast Adaptive';
 
 export { fabricSourceCards };
@@ -44,6 +44,8 @@ export async function handleFabric(request: Request, env: Env, url: URL): Promis
       capabilities: {
         adaptiveFallbacks: true,
         federation: true,
+        maintainedNameResolution: true,
+        smartSourcePackInputs: true,
         remoteRuntime: true,
         diagnostics: true,
         liveSmoke: true,
