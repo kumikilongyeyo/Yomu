@@ -133,9 +133,18 @@ async function fetchText(url: string, timeout = 8_000): Promise<string> {
 }
 
 function parseBuild(text: string) {
+  const stringVars = new Map<string, string>();
+  for (const match of text.matchAll(/\b(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*["'](https?:\/\/[^"']+)["']/g)) {
+    stringVars.set(match[1], match[2]);
+  }
+
+  const literalBaseUrl = text.match(/\bbaseUrl\s*=\s*["'](https?:\/\/[^"']+)["']/)?.[1];
+  const variableName = text.match(/\bbaseUrl\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\b/)?.[1];
+  const variableBaseUrl = variableName ? stringVars.get(variableName) : undefined;
+
   return {
     name: text.match(/\bname\s*=\s*["']([^"']+)["']/)?.[1] || '',
-    baseUrl: normalizeBaseUrl(text.match(/\bbaseUrl\s*=\s*["'](https?:\/\/[^"']+)["']/)?.[1]),
+    baseUrl: normalizeBaseUrl(literalBaseUrl || variableBaseUrl),
     language: text.match(/\blang\s*=\s*["']([^"']+)["']/)?.[1] || undefined,
     theme: text.match(/\btheme\s*=\s*["']([^"']+)["']/)?.[1] || undefined,
     version: Number(text.match(/\bversionCode\s*=\s*(\d+)/)?.[1] || 1),
