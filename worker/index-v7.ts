@@ -5,10 +5,10 @@ import { handleFederatedResolve } from './store-federation';
 import { handleStoreNameSearch } from './store-name-resolver';
 
 /**
- * Yomu production entrypoint v7.2.
+ * Yomu production entrypoint v7.3.
  *
  * Keep the proven v5 wrapper as the compatibility floor, but route the public
- * Source Fabric API through the Beast Adaptive v7.2 surface. This avoids a risky
+ * Source Fabric API through the Beast Adaptive v7.3 surface. This avoids a risky
  * rewrite while making the deployed entrypoint, API status, and Sources UI all
  * report the generation that is actually running.
  */
@@ -26,7 +26,7 @@ async function injectV7Ui(response: Response): Promise<Response> {
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-entrypoint', 'v7.2');
+  headers.set('x-yomu-entrypoint', 'v7.3');
   return new Response(html, { status: response.status, headers });
 }
 
@@ -47,7 +47,7 @@ async function normalizeFederationResponse(response: Response): Promise<Response
 
   payload.fabric = {
     ...(payload.fabric ?? {}),
-    version: '7.2',
+    version: '7.3',
     generation: 'Beast Adaptive',
   };
 
@@ -55,8 +55,8 @@ async function normalizeFederationResponse(response: Response): Promise<Response
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('content-type', 'application/json; charset=utf-8');
-  headers.set('x-yomu-entrypoint', 'v7.2');
-  headers.set('x-yomu-source-fabric', '7.2');
+  headers.set('x-yomu-entrypoint', 'v7.3');
+  headers.set('x-yomu-source-fabric', '7.3');
   return new Response(JSON.stringify(payload), { status: response.status, headers });
 }
 
