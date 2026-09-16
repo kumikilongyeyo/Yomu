@@ -2,9 +2,9 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 5,
+  "version": 6,
   "updatedAt": "2026-09-16",
-  "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it.",
+  "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it. Browser-only discoveries are not promoted into this installable pack.",
   "sources": [
     {
       "url": "https://mangaball.net/",
@@ -81,26 +81,6 @@
     {
       "url": "https://1manga.co/",
       "tags": ["manga", "older-titles", "general", "mirror"]
-    },
-    {
-      "url": "https://globalcomix.com/",
-      "tags": ["western-comics", "marvel", "dc", "indie", "graphic-novels", "official"]
-    },
-    {
-      "url": "https://comicfury.com/",
-      "tags": ["western-comics", "webcomics", "indie", "creator-owned", "official"]
-    },
-    {
-      "url": "https://tapas.io/",
-      "tags": ["western-comics", "webcomics", "indie", "creator-owned", "official"]
-    },
-    {
-      "url": "https://comicskingdom.com/",
-      "tags": ["western-comics", "comic-strips", "classic", "daily", "official"]
-    },
-    {
-      "url": "https://www.izneo.com/",
-      "tags": ["western-comics", "dc", "marvel", "graphic-novels", "european-comics", "official", "account-may-be-required"]
     }
   ]
 }
