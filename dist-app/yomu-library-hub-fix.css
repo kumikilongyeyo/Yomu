@@ -1,0 +1,67 @@
+/* Library Hub v2.1 safety layer.
+ * Hard bounds for generated shell primitives so browser/Safari defaults cannot
+ * inflate inline SVGs or let controls escape their containers.
+ */
+.yhub-appbar,
+.yhub-appbar *,
+.yhub-mobile-nav,
+.yhub-mobile-nav *,
+.yhub-reader-top,
+.yhub-reader-top *,
+.yhub-reader-panel,
+.yhub-reader-panel *,
+.yhub-deck,
+.yhub-deck *,
+.yhub-sheet,
+.yhub-sheet *,
+.yhub-home,
+.yhub-home * { box-sizing:border-box; }
+
+/* Never let a functional icon inherit browser-default 300x150 SVG sizing.
+   Brand marks are intentionally excluded because yomu-skin owns them. */
+.yhub-appbar svg:not(.ymark),
+.yhub-mobile-nav svg:not(.ymark),
+.yhub-reader-top svg:not(.ymark),
+.yhub-reader-panel svg:not(.ymark),
+.yhub-deck svg:not(.ymark),
+.yhub-sheet svg:not(.ymark),
+.yhub-home svg:not(.ymark) {
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
+  max-width:18px !important;
+  max-height:18px !important;
+  flex:0 0 18px !important;
+  display:block !important;
+  overflow:visible !important;
+}
+
+.yhub-search { overflow:hidden; }
+.yhub-search > svg { flex:0 0 18px !important; }
+.yhub-search > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.yhub-appbar { overflow:hidden; }
+.yhub-nav { flex:none; min-width:0; }
+.yhub-nav a,.yhub-nav button { white-space:nowrap; }
+.yhub-brand { min-width:88px; overflow:hidden; }
+.yhub-brand .yomu-lockup { max-width:98px; }
+
+/* The inline reader icon shares a button with text. Keep it horizontal rather
+   than allowing global button/svg rules to turn it into a giant square. */
+.yhub-reader-top [data-reader-open] { display:flex !important; align-items:center !important; justify-content:center !important; gap:6px !important; padding:0 11px !important; }
+
+/* Defensive width guards for all branch-owned panels. */
+.yhub-welcome,.yhub-status-card,.yhub-mini,.yhub-tool { min-width:0; }
+.yhub-welcome h1,.yhub-welcome p,.yhub-status-card small,.yhub-tool span { overflow-wrap:anywhere; }
+
+@media (max-width:767px) {
+  .yhub-appbar { overflow:visible; }
+  .yhub-search { min-width:0; }
+  .yhub-brand { min-width:72px; }
+  .yhub-mobile-nav svg:not(.ymark) {
+    width:19px !important; height:19px !important;
+    min-width:19px !important; min-height:19px !important;
+    max-width:19px !important; max-height:19px !important;
+    flex-basis:19px !important;
+  }
+}
