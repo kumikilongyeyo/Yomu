@@ -1,0 +1,17 @@
+{
+  // Isolated UI preview. Deliberately a different Worker name from production.
+  // Sync KV is omitted so trying the redesign cannot write production library
+  // pairing state. Source/runtime reads still use the same public services.
+  "name": "yomu-library-hub-preview",
+  "main": "worker/index-v7.ts",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist-app",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
+  "vars": {
+    "SOURCE_RUNTIME_URL": "https://yomu-source-runtime.hatchable.site/api"
+  }
+}
