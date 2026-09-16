@@ -2,7 +2,7 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 6,
+  "version": 7,
   "updatedAt": "2026-09-16",
   "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it. Browser-only discoveries are not promoted into this installable pack.",
   "sources": [
@@ -81,6 +81,38 @@
     {
       "url": "https://1manga.co/",
       "tags": ["manga", "older-titles", "general", "mirror"]
+    },
+    {
+      "url": "https://comicfury.com/",
+      "tags": ["western-comics", "webcomics", "creator-owned", "official", "github-recipe"]
+    },
+    {
+      "url": "https://hiveworkscomics.com/",
+      "tags": ["western-comics", "webcomics", "creator-owned", "official", "github-recipe"]
+    },
+    {
+      "url": "https://killsixbilliondemons.com/",
+      "tags": ["western-comics", "webcomic", "creator-owned", "official", "github-recipe"]
+    },
+    {
+      "url": "https://www.peppercarrot.com/",
+      "tags": ["western-comics", "webcomic", "open-source", "official", "multi-language", "github-recipe"]
+    },
+    {
+      "url": "https://wp.comicskingdom.com/",
+      "tags": ["western-comics", "comic-strips", "classic", "official", "github-recipe"]
+    },
+    {
+      "url": "https://globalcomix.com/",
+      "tags": ["western-comics", "graphic-novels", "indie", "official", "mixed-access", "github-recipe"]
+    },
+    {
+      "url": "https://www.webtoons.com/",
+      "tags": ["webtoon", "western-comics", "official", "multi-language", "github-recipe"]
+    },
+    {
+      "url": "https://tapas.io/",
+      "tags": ["webtoon", "western-comics", "indie", "official", "mixed-access", "github-recipe"]
     }
   ]
 }
