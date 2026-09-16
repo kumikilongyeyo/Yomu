@@ -1,0 +1,63 @@
+name: Preview Library Hub UI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/yomu-library-hub-v1
+    paths:
+      - 'dist-app/**'
+      - 'worker/**'
+      - 'wrangler.library-hub-preview.jsonc'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/library-hub-preview.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yomu-library-hub-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Worker
+        run: npm run typecheck
+      - name: Normalize Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN_RAW" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo '::error::Cloudflare preview credentials are not configured.'
+            exit 1
+          fi
+          token=$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" \
+            | tr -d '\r\n' \
+            | sed -E 's/^[[:space:]]*[Bb][Ee][Aa][Rr][Ee][Rr][[:space:]]+//; s/^[[:space:]]+//; s/[[:space:]]+$//; s/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
+          if [ -z "$token" ]; then
+            echo '::error::Cloudflare API token is empty after normalization.'
+            exit 1
+          fi
+          printf 'CLOUDFLARE_API_TOKEN=%s\n' "$token" >> "$GITHUB_ENV"
+          printf 'CLOUDFLARE_ACCOUNT_ID=%s\n' "$CLOUDFLARE_ACCOUNT_ID" >> "$GITHUB_ENV"
+      - name: Deploy isolated preview
+        run: npx wrangler deploy --config wrangler.library-hub-preview.jsonc
+      - name: Verify preview shell
+        run: |
+          url='https://yomu-library-hub-preview.yomuread.workers.dev/'
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 "$url" > /tmp/yomu-preview.html
+          grep -q 'yomu-library-hub.css' /tmp/yomu-preview.html
+          grep -q 'yomu-library-hub.js' /tmp/yomu-preview.html
+          echo "Preview: $url"
