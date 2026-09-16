@@ -2,6 +2,7 @@ import v5 from './index-v5';
 import type { Env } from './index';
 import { handleFabric } from './source-fabric-v7';
 import { handleFederatedResolve } from './store-federation';
+import { handleStoreNameSearch } from './store-name-resolver';
 
 /**
  * Yomu production entrypoint v7.2.
@@ -62,6 +63,12 @@ async function normalizeFederationResponse(response: Response): Promise<Response
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // Beast-owned name lookup: lets Source Pack accept maintained extension
+    // names like "Read Comics Online" without pretending they are hostnames.
+    if (url.pathname === '/api/fabric/stores/search') {
+      return handleStoreNameSearch(request, env, url);
+    }
 
     // Specialist/runtime/store routes remain owned by the compatibility layer.
     if (url.pathname.startsWith('/api/fabric/source/kagane/') ||
