@@ -30,6 +30,8 @@ const STORES = [
   },
 ] as const;
 
+type StoreDefinition = (typeof STORES)[number];
+
 type Candidate = {
   storeId: string;
   storeName: string;
@@ -97,7 +99,7 @@ async function fetchJson(url: string): Promise<any> {
   return response.json();
 }
 
-function parseStore(store: typeof STORES[number], document: any, query: string): Candidate[] {
+function parseStore(store: StoreDefinition, document: any, query: string): Candidate[] {
   const rows = Array.isArray(document)
     ? document
     : Array.isArray(document?.extensions)
