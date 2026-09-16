@@ -135,6 +135,8 @@
     }
     .genre-tile:hover { background: var(--raised); border-color: var(--accentLine); }
     .genre-tile:active { transform: scale(.97); }
+    .genre-tiles:not(.is-open) .genre-tile--extra { display: none; }
+    .genre-tile--more { border-style: dashed; color: var(--muted); font-weight: 600; }
     .genre-note { margin: 11px 2px 0; font-size: 12px; color: var(--faint); line-height: 1.5; }
 
     .charts { display: flex; gap: 6px; margin: 30px 0 14px; }
@@ -510,6 +512,10 @@
    * tag, so these tiles go to /api/catalog/tag, and the note under them says
    * where the answers come from rather than implying every source was asked.
    */
+  /** What people come to a genre list for, ahead of what the alphabet offers. */
+  const GENRES_FIRST = ['Action', 'Romance', 'Fantasy', 'Comedy', 'Drama', 'Isekai', 'Horror', 'Slice of Life'];
+  const GENRES_SHOWN = 8;
+
   async function renderGenres() {
     const box = $('genre-tiles');
     if (!box) return;
@@ -520,15 +526,46 @@
         .sort((a, b) => a.name.localeCompare(b.name));
       if (!genres.length) return;
 
+      /* Twenty-five pills in a wrapped row is seven rows of them on a phone,
+         and alphabetical order makes the first eight arbitrary -- Boys' Love
+         and Crime ahead of Romance and Fantasy. So the ones people actually
+         come here to browse lead, the rest follow in their own order behind a
+         count, and the section is a section again rather than a wall. */
+      const lead = GENRES_FIRST.filter((name) => genres.some((g) => g.name === name));
+      const rest = genres.map((g) => g.name).filter((name) => !lead.includes(name));
+      const ordered = [...lead, ...rest];
+
       box.textContent = '';
-      for (const genre of genres) {
+      box.classList.remove('is-open');
+      ordered.forEach((name, index) => {
         const tile = document.createElement('button');
         tile.type = 'button';
-        tile.className = 'genre-tile';
-        tile.textContent = genre.name;
-        tile.addEventListener('click', () => browseGenre(genre.name));
+        tile.className = 'genre-tile' + (index >= GENRES_SHOWN ? ' genre-tile--extra' : '');
+        tile.textContent = name;
+        tile.addEventListener('click', () => browseGenre(name));
         box.append(tile);
+      });
+
+      // One hidden genre behind a control that exists to hide one genre is
+      // worse than the genre.
+      const hidden = ordered.length - GENRES_SHOWN;
+      if (hidden >= 2) {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'genre-tile genre-tile--more';
+        let open = false;
+        const label = () => (open ? 'Fewer' : '+' + hidden + ' more');
+        more.textContent = label();
+        more.setAttribute('aria-expanded', 'false');
+        more.addEventListener('click', () => {
+          open = !open;
+          box.classList.toggle('is-open', open);
+          more.textContent = label();
+          more.setAttribute('aria-expanded', String(open));
+        });
+        box.append(more);
       }
+
       $('genres').classList.remove('hidden');
     } catch {
       // A genre list that will not load simply is not offered.
