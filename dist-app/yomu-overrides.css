@@ -1180,6 +1180,91 @@
 .yomu-ch__state[data-kind='now']  { color: var(--accent); background: var(--accentSoft); }
 .yomu-ch__state[data-kind='read'] { color: var(--good, #5fc79b); background: #5fc79b1f; }
 
+/* The row's own progress, as a shape rather than a word.
+   Full width along the foot, inside the button's radius, so a scroll down the
+   sheet reads as a column of how-far-through rather than a column of pills. */
+.rd-chapters button { position: relative; overflow: hidden; }
+.yomu-ch__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--line);
+  opacity: .5;
+}
+.yomu-ch__bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: calc(var(--p, 0) * 1%);
+  background: var(--muted);
+  transition: width .32s cubic-bezier(.23, 1, .32, 1);
+}
+.yomu-ch__bar[data-kind='now']::after  { background: var(--accent); }
+.yomu-ch__bar[data-kind='read']::after { background: var(--good, #5fc79b); }
+/* A row with nothing behind it does not need a track at all. */
+.yomu-ch__bar:not([data-kind='now']):not([data-kind='read']) { opacity: .22; }
+
+/* ------------------------------------------------------------------ *
+ * Find a chapter, from inside the reader
+ *
+ * Sticky, because the list it filters is the reason it exists: on a sheet
+ * 1,193 rows deep, a field that scrolls away with the heading is a field you
+ * have to scroll back up to reach. The sheet is glass, so the field carries
+ * its own ground rather than letting rows slide visibly under it.
+ * ------------------------------------------------------------------ */
+/* Title, close and field travel together, pinned to the top of a sheet that
+   scrolls for a thousand rows. The negative margins take the block out to the
+   sheet's own edges so nothing shows down either side of it. */
+.rd-sheet__head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  flex-wrap: wrap;
+  margin: -16px -16px 12px;
+  padding: 14px 16px 12px;
+  /* --surface is a glass token inside the reader -- rgba(255,255,255,.055) --
+     so painting the pinned block with it left the rows legible straight
+     through. The ground is the sheet's own background colour, read off the
+     sheet in yomu-shell.js so it is right in both themes, stacked three times
+     because that colour is itself only 72% opaque: .72 -> .978, which is
+     solid to the eye without hard-coding a colour for either theme. */
+  background-color: var(--yomu-sheetGround, var(--surface));
+  background-image:
+    linear-gradient(var(--yomu-sheetGround, transparent), var(--yomu-sheetGround, transparent)),
+    linear-gradient(var(--yomu-sheetGround, transparent), var(--yomu-sheetGround, transparent));
+  border-bottom: 1px solid var(--line);
+}
+.rd-sheet__head h2 { flex: 1 1 auto; }
+
+#yomu-rd-jump {
+  flex: 1 0 100%;
+  order: 3;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0 0;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--raised);
+  color: var(--text);
+  font: 400 16px/1.2 inherit;      /* 16px or iOS zooms the sheet on focus */
+  -webkit-appearance: none;
+  appearance: none;
+}
+#yomu-rd-jump::placeholder { color: var(--faint); }
+#yomu-rd-jump:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* Nothing matched: say so on the field rather than leaving an empty sheet. */
+#yomu-rd-jump[data-empty] {
+  border-color: var(--warn, #e0684f);
+  color: var(--warn, #e0684f);
+}
+
 /* ------------------------------------------------------------------ *
  * Progress on a cover tile
  *

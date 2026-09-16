@@ -1124,6 +1124,23 @@
         : done.has(chapterId) ? '✓' : '';
       const kind = current ? 'now' : done.has(chapterId) ? 'read' : '';
 
+      /* The pill says where you are in a word; the bar says it in a shape,
+         which is the part you can read while scrolling past. Drawn on every
+         row, empty ones included, so the list has one baseline to scan
+         rather than a mark that appears and disappears. */
+      const percent = current ? (here == null ? 0 : here) : done.has(chapterId) ? 100 : 0;
+      let bar = button.querySelector('.yomu-ch__bar');
+      if (!bar) {
+        bar = document.createElement('i');
+        bar.className = 'yomu-ch__bar';
+        bar.setAttribute('aria-hidden', 'true');
+        button.append(bar);
+      }
+      if (bar.style.getPropertyValue('--p') !== String(percent)) {
+        bar.style.setProperty('--p', String(percent));
+      }
+      if (bar.getAttribute('data-kind') !== kind) bar.setAttribute('data-kind', kind);
+
       let mark = button.querySelector('.yomu-ch__state');
       if (!state) { mark?.remove(); continue; }
       if (!mark) {
@@ -2554,7 +2571,12 @@
       const row = rows[i];
       let match;
       if (numeric) {
-        const n = row.getAttribute('data-chn');
+        /* The series list numbers the row; the reader sheet numbers the
+           button inside it. Same question either way: which chapter is this. */
+        const n = row.getAttribute('data-chn')
+          ?? row.getAttribute('data-n')
+          ?? row.firstElementChild?.getAttribute('data-n')
+          ?? null;
         // Exact first, then "starts with", so 12 finds 12 before 120.
         match = n === query || (n != null && String(n).startsWith(query));
       } else {
@@ -2577,15 +2599,20 @@
     for (const known of windowedLists) if (known.list === list) state = known;
     // A list too short to window still gets to be searched.
     if (!state) {
-      state = {
-        list,
-        rows: [...list.children].filter((row) => !row.classList.contains('yomu-list-pad')),
-        text: null, filter: '', hits: 0, padTop: null, padEnd: null, loose: true,
-      };
-      looseFilters.set(list, state);
+      const rows = [...list.children].filter((row) => !row.classList.contains('yomu-list-pad'));
+      const cached = looseFilters.get(list);
+      /* Reuse it while the list is the same list. This was rebuilt on every
+         keystroke, and rebuilding drops state.text -- so every letter typed
+         re-read textContent off all 1,193 rows of a long chapter sheet. */
+      if (cached && cached.rows.length === rows.length && cached.rows[0] === rows[0]) {
+        state = cached;
+      } else {
+        state = { list, rows, text: null, filter: '', hits: 0, padTop: null, padEnd: null, loose: true };
+        looseFilters.set(list, state);
+      }
     }
+    const field = fieldFor(list);
     state.filter = query;
-    const field = document.getElementById(JUMP_ID);
 
     if (!query) {
       for (const row of state.rows) row.style.display = '';
@@ -2602,6 +2629,99 @@
 
   /** Filter state for lists short enough that no window was built for them. */
   const looseFilters = new WeakMap();
+
+  /** Two lists can be filtered; each has its own field. */
+  function fieldFor(list) {
+    return document.getElementById(
+      list && list.classList.contains('rd-chapters') ? RD_JUMP_ID : JUMP_ID);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Finding a chapter from inside the reader
+   *
+   * The series page has had a chapter filter for a while. The reader's own
+   * Chapters sheet did not, and it is the one that needs it most: it opens
+   * over what you are reading, on a list that is 1,193 rows long for One
+   * Piece, and the only way to reach chapter 400 was to scroll to it.
+   *
+   * Same filter as the series page, so a number means the same thing in both
+   * places -- exact match first, then starts-with, so 12 finds 12 before 120.
+   * ------------------------------------------------------------------ */
+  const RD_JUMP_ID = 'yomu-rd-jump';
+  /** Below this you can just look. */
+  const RD_JUMP_MIN = 12;
+
+  function mountReaderJump() {
+    const sheet = document.querySelector('.rd-sheet');
+    const list = sheet && sheet.querySelector('.rd-chapters');
+    const head = sheet && sheet.querySelector('.rd-sheet__head');
+    const existing = document.getElementById(RD_JUMP_ID);
+    if (!sheet || !list || !head) { existing?.remove(); return; }
+    if (list.children.length < RD_JUMP_MIN) { existing?.remove(); return; }
+    // Already where it belongs. Re-placing it every pass would steal focus
+    // mid-word, because moving an input in the DOM blurs it.
+    if (existing && existing.parentElement === head) return;
+
+    const field = existing || document.createElement('input');
+    field.id = RD_JUMP_ID;
+    field.type = 'search';
+    field.inputMode = 'numeric';
+    field.autocomplete = 'off';
+    field.placeholder = 'Chapter number or name\u2026';
+    field.setAttribute('aria-label', 'Find a chapter');
+
+    if (!field.dataset.wired) {
+      field.dataset.wired = '1';
+      const run = () => {
+        const target = document.querySelector('.rd-chapters');
+        if (!target) return;
+        const query = field.value.trim().toLowerCase();
+        setFilter(target, query);
+
+        /* The filter matches exact-then-starts-with, but it does not reorder
+           -- and the sheet is sorted newest first, so typing 12 leaves 129 at
+           the top and chapter 12 nine rows below the fold. Bring the exact
+           one into view instead of reordering, which would fight the sort. */
+        if (!/^[0-9]+(\.[0-9]+)?$/.test(query)) return;
+        for (const row of target.children) {
+          if (row.style.display === 'none') continue;
+          const button = row.matches('[data-n]') ? row : row.querySelector('[data-n]');
+          if (button && button.getAttribute('data-n') === query) {
+            row.scrollIntoView({ block: 'nearest' });
+            return;
+          }
+        }
+      };
+      field.addEventListener('input', run);
+      // A search input's own clear button fires `search`, not `input`.
+      field.addEventListener('search', run);
+      /* Escape in a search field clears the search. The reader also closes
+         the sheet on Escape, which would throw away the list you were
+         narrowing -- so the first Escape clears and stops there. */
+      field.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !field.value) return;
+        event.stopPropagation();
+        field.value = '';
+        run();
+      });
+    }
+
+    /* Into the heading rather than under it, so the title, the close button
+       and the field are one block -- and that block is what the stylesheet
+       pins to the top of the sheet. A field pinned on its own had rows
+       sliding visibly under it and left the close button to scroll away. */
+    head.append(field);
+
+    /* The pinned block needs a ground the rows cannot be read through, and
+       the only honest one is the sheet's own. Every surface token in the
+       reader is a translucent glass value, so this is read rather than
+       guessed -- and read here rather than written in the stylesheet,
+       because the right answer differs between Paper and Aurora. */
+    const ground = getComputedStyle(sheet).backgroundColor;
+    if (ground && !/^rgba?\([^)]*,\s*0\s*\)$/.test(ground)) {
+      head.style.setProperty('--yomu-sheetGround', ground);
+    }
+  }
 
   function mountChapterJump() {
     const list = document.querySelector('.chapter-list');
@@ -3355,6 +3475,7 @@
     trackSeriesPage();
     mountSeriesResume();
     mountChapterJump();
+    mountReaderJump();
     foldSourceSwitch();
     mountKin();
     windowLongLists();
