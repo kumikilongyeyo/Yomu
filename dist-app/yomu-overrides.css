@@ -1214,29 +1214,39 @@
  * have to scroll back up to reach. The sheet is glass, so the field carries
  * its own ground rather than letting rows slide visibly under it.
  * ------------------------------------------------------------------ */
-/* Title, close and field travel together, pinned to the top of a sheet that
-   scrolls for a thousand rows. The negative margins take the block out to the
-   sheet's own edges so nothing shows down either side of it. */
-.rd-sheet__head {
-  position: sticky;
-  top: 0;
-  z-index: 4;
+/* Title, close and field stay put while the chapters scroll under nothing at
+   all: the sheet stops being the scroller and the list becomes it.
+
+   The first two attempts both pinned the heading over a scrolling sheet, and
+   a pinned thing needs a ground. Opaque enough to hide the rows read as a
+   black slab with a hard edge under it; translucent enough to match the glass
+   let the rows show through it. There is no ground that is both, because the
+   sheet's own appearance is the manga page blurred, which changes per page.
+
+   So there is no second surface. The sheet is a flex column that does not
+   scroll, the heading is a fixed row on the sheet's own glass, and only the
+   list scrolls -- starting below the heading, so nothing ever passes behind
+   it. Nothing to tint, nothing to blur, no seam and no line.
+
+   Scoped with :has() because Auto and Settings are .rd-sheet too and scroll
+   their own way. */
+.rd-sheet:has(.rd-chapters) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rd-sheet:has(.rd-chapters) .rd-sheet__head {
+  flex: none;
   flex-wrap: wrap;
-  margin: -16px -16px 12px;
-  padding: 14px 16px 12px;
-  /* --surface is a glass token inside the reader -- rgba(255,255,255,.055) --
-     so painting the pinned block with it left the rows legible straight
-     through. The ground is the sheet's own background colour, read off the
-     sheet in yomu-shell.js so it is right in both themes, stacked three times
-     because that colour is itself only 72% opaque: .72 -> .978, which is
-     solid to the eye without hard-coding a colour for either theme. */
-  background-color: var(--yomu-sheetGround, var(--surface));
-  background-image:
-    linear-gradient(var(--yomu-sheetGround, transparent), var(--yomu-sheetGround, transparent)),
-    linear-gradient(var(--yomu-sheetGround, transparent), var(--yomu-sheetGround, transparent));
-  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
 }
 .rd-sheet__head h2 { flex: 1 1 auto; }
+.rd-sheet:has(.rd-chapters) .rd-chapters {
+  flex: 1 1 auto;
+  min-height: 0;                  /* or a flex child refuses to scroll */
+  overflow-y: auto;
+  overscroll-behavior: contain;   /* the page behind does not scroll with it */
+}
 
 #yomu-rd-jump {
   flex: 1 0 100%;
@@ -1329,6 +1339,144 @@
 }
 .genre-row::-webkit-scrollbar { display: none; }
 .genre-chip { flex: none; }
+
+/* ------------------------------------------------------------------ *
+ * The genre row, folded into one control
+ *
+ * The scrolling row above was the first pass at nine chips; this replaces it
+ * with a trigger that says what is filtering and a list that is only open
+ * while you are choosing.
+ *
+ * The row is hidden only while the control is actually in front of it. If
+ * foldGenreRow does not run, or runs and bails because there are too few
+ * tags to be worth a menu, this selector does not match and the chips are
+ * there exactly as before -- the fold cannot fail closed.
+ * ------------------------------------------------------------------ */
+#yomu-genre + .genre-row { display: none; }
+
+.yomu-genre {
+  position: relative;
+  display: inline-block;
+  margin: 0 0 12px;
+}
+.yomu-genre__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--m-fill, var(--raised));
+  color: var(--muted);
+  font: 500 12.5px/1 var(--uiFont, inherit);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.yomu-genre.is-set .yomu-genre__trigger {
+  border-color: var(--accentLine, var(--accent));
+  background: var(--accentSoft);
+  color: var(--accent);
+}
+.yomu-genre__caret {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .2s cubic-bezier(.32, .72, 0, 1);
+}
+.yomu-genre.is-open .yomu-genre__caret { transform: translateY(1px) rotate(-135deg); }
+
+.yomu-genre__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 190px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  /* --surface is a lift, not a ground: rgba(255,255,255,.055), which over a
+     grid of covers is a window rather than a menu. The page background is the
+     opaque one, and surface on top of it is how every other raised thing in
+     the app is composed -- so this is the same colour the design system
+     already means by "surface", made solid. */
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--surface), var(--surface));
+  box-shadow: 0 18px 44px #0000003d;
+  /* Not display:none, so it can be animated out as well as in. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity .16s ease, transform .18s cubic-bezier(.23, 1, .32, 1), visibility .18s;
+}
+.yomu-genre.is-open .yomu-genre__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.yomu-genre__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--text);
+  font: 500 13px/1.2 inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.yomu-genre__option[aria-selected='true'] { color: var(--accent); }
+/* The tick keeps its space when it is not shown, so the labels stay aligned. */
+.yomu-genre__option::before {
+  content: '\2713';
+  width: 12px;
+  flex: none;
+  font-size: 11px;
+  color: transparent;
+}
+.yomu-genre__option[aria-selected='true']::before { color: var(--accent); }
+.yomu-genre__option--more {
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 9px 9px;
+  padding-top: 11px;
+  color: var(--muted);
+}
+.yomu-genre__option--more::before { content: none; }
+@media (hover: hover) and (pointer: fine) {
+  .yomu-genre__option:hover { background: var(--raised); }
+  .yomu-genre__trigger:hover { border-color: var(--muted); }
+}
+
+/* ------------------------------------------------------------------ *
+ * The pack's line on the search screen
+ * ------------------------------------------------------------------ */
+.yomu-greetline {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  transition: opacity .24s ease, transform .24s cubic-bezier(.23, 1, .32, 1);
+}
+/* Out and back, rather than a cut: the line is decoration, and a hard swap
+   in the corner of the eye reads as a glitch. */
+.yomu-greetline.is-out {
+  opacity: 0;
+  transform: translateY(-3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .yomu-greetline { transition: none; }
+  .yomu-greetline.is-out { opacity: 1; transform: none; }
+  .yomu-genre__menu { transition: none; }
+  .yomu-genre__caret { transition: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .yomu-imm-note,

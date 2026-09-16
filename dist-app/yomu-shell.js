@@ -2712,15 +2712,224 @@
        sliding visibly under it and left the close button to scroll away. */
     head.append(field);
 
-    /* The pinned block needs a ground the rows cannot be read through, and
-       the only honest one is the sheet's own. Every surface token in the
-       reader is a translucent glass value, so this is read rather than
-       guessed -- and read here rather than written in the stylesheet,
-       because the right answer differs between Paper and Aurora. */
-    const ground = getComputedStyle(sheet).backgroundColor;
-    if (ground && !/^rgba?\([^)]*,\s*0\s*\)$/.test(ground)) {
-      head.style.setProperty('--yomu-sheetGround', ground);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * The genre row, as one control
+   *
+   * Nine chips in a scrolling row is still nine chips: it stopped claiming
+   * five rows of height, but it never stopped being a wall of tags you have
+   * to read left to right to find out what is in it. One trigger says what is
+   * filtering right now, and the list is only there while you are choosing.
+   *
+   * The chips themselves stay in the DOM and keep doing the work -- React
+   * owns them and their handlers, so an option here clicks the real chip
+   * rather than reimplementing the filter. The stylesheet hides the row only
+   * while this control is actually sitting in front of it, so if any of this
+   * fails to mount the chips are simply there, as before.
+   * ------------------------------------------------------------------ */
+  const GENRE_ID = 'yomu-genre';
+  /** Fewer than this and a row reads faster than a menu. */
+  const GENRE_MIN = 5;
+
+  function genreLabel(chips) {
+    const on = chips.filter((c) => c.getAttribute('aria-pressed') === 'true');
+    if (!on.length) return 'All genres';
+    if (on.length === 1) return on[0].textContent.trim();
+    return on.length + ' genres';
+  }
+
+  function closeGenre() {
+    const box = document.getElementById(GENRE_ID);
+    if (!box) return;
+    box.classList.remove('is-open');
+    box.querySelector('.yomu-genre__trigger')?.setAttribute('aria-expanded', 'false');
+  }
+
+  let genreWired = false;
+  function wireGenreOnce() {
+    if (genreWired) return;
+    genreWired = true;
+    // One listener for the life of the page rather than one per rebuild.
+    document.addEventListener('click', (event) => {
+      const box = document.getElementById(GENRE_ID);
+      if (box && !box.contains(event.target)) closeGenre();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeGenre();
+    });
+  }
+
+  function foldGenreRow() {
+    const row = document.querySelector('.genre-row');
+    const existing = document.getElementById(GENRE_ID);
+    if (!row) { existing?.remove(); return; }
+
+    const chips = [...row.querySelectorAll('.genre-chip')];
+    // "More tags..." is an action, not a filter: it has no pressed state.
+    const filters = chips.filter((c) => c.hasAttribute('aria-pressed'));
+    const more = chips.find((c) => !c.hasAttribute('aria-pressed'));
+    if (filters.length < GENRE_MIN) { existing?.remove(); return; }
+
+    wireGenreOnce();
+
+    let box = existing;
+    if (!box) {
+      box = document.createElement('div');
+      box.id = GENRE_ID;
+      box.className = 'yomu-genre';
+
+      const trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'yomu-genre__trigger';
+      trigger.setAttribute('aria-haspopup', 'listbox');
+      trigger.setAttribute('aria-expanded', 'false');
+      const label = document.createElement('span');
+      label.className = 'yomu-genre__label';
+      const caret = document.createElement('i');
+      caret.className = 'yomu-genre__caret';
+      caret.setAttribute('aria-hidden', 'true');
+      trigger.append(label, caret);
+      trigger.addEventListener('click', () => {
+        const open = box.classList.toggle('is-open');
+        trigger.setAttribute('aria-expanded', String(open));
+      });
+
+      const menu = document.createElement('div');
+      menu.className = 'yomu-genre__menu';
+      menu.setAttribute('role', 'listbox');
+
+      box.append(trigger, menu);
     }
+
+    // Outside the row, because the row scrolls horizontally and would clip
+    // an open menu at its own edge.
+    if (box.nextElementSibling !== row) row.before(box);
+
+    const menu = box.querySelector('.yomu-genre__menu');
+    const want = filters.map((c) => c.textContent.trim());
+    const have = [...menu.querySelectorAll('[role="option"]')].map((o) => o.dataset.genre || '');
+    const same = have.length === want.length && have.every((name, i) => name === want[i]);
+
+    if (!same) {
+      // Rebuilt only when the tags themselves change, so choosing one does
+      // not tear the menu down under the pointer that is still on it.
+      menu.textContent = '';
+      filters.forEach((chip, i) => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'yomu-genre__option';
+        option.setAttribute('role', 'option');
+        option.dataset.genre = want[i];
+        option.textContent = want[i];
+        option.addEventListener('click', () => {
+          // The chip is the control; this is a second way to press it.
+          const live = [...document.querySelectorAll('.genre-row .genre-chip')]
+            .find((c) => c.textContent.trim() === option.dataset.genre);
+          live?.click();
+          closeGenre();
+        });
+        menu.append(option);
+      });
+      if (more) {
+        const extra = document.createElement('button');
+        extra.type = 'button';
+        extra.className = 'yomu-genre__option yomu-genre__option--more';
+        extra.textContent = more.textContent.trim();
+        extra.addEventListener('click', () => {
+          [...document.querySelectorAll('.genre-row .genre-chip')]
+            .find((c) => !c.hasAttribute('aria-pressed'))?.click();
+          closeGenre();
+        });
+        menu.append(extra);
+      }
+    }
+
+    // State is re-read every pass rather than tracked, because the chips are
+    // the truth and they can be pressed from somewhere other than this menu.
+    filters.forEach((chip) => {
+      const name = chip.textContent.trim();
+      const on = chip.getAttribute('aria-pressed') === 'true';
+      const option = menu.querySelector('[data-genre="' + CSS.escape(name) + '"]');
+      if (option && option.getAttribute('aria-selected') !== String(on)) {
+        option.setAttribute('aria-selected', String(on));
+      }
+    });
+
+    const label = box.querySelector('.yomu-genre__label');
+    const next = genreLabel(filters);
+    if (label.textContent !== next) label.textContent = next;
+    box.classList.toggle('is-set', filters.some((c) => c.getAttribute('aria-pressed') === 'true'));
+  }
+
+  /* ------------------------------------------------------------------ *
+   * A line of the pack on the search screen
+   *
+   * Home opens with a greeting and Search opened with nothing but its own
+   * name. The pack is already loaded on this page -- a thousand lines, gated
+   * by time of day and by what you actually read -- so the screen you land on
+   * to go looking for something can say something too.
+   *
+   * It rotates, which home's does not: home is a place you pass through and
+   * search is a place you sit in with a keyboard, so one line held for the
+   * whole visit would be the same joke for a minute and a half.
+   * ------------------------------------------------------------------ */
+  const SEARCH_GREET_ID = 'yomu-search-greet';
+  const SEARCH_GREET_EVERY = 7000;
+  let searchGreetTimer = null;
+
+  /** A line from the pack that is not the one already on screen. */
+  function anotherGreeting(avoid) {
+    const all = packLines().concat(greetingLines().slice(1));
+    if (!all.length) return clockLine();
+    for (let i = 0; i < 8; i++) {
+      const pick = all[Math.floor(Math.random() * all.length)];
+      if (pick !== avoid) return pick;
+    }
+    return all[0];
+  }
+
+  function stopSearchGreeting() {
+    if (!searchGreetTimer) return;
+    clearInterval(searchGreetTimer);
+    searchGreetTimer = null;
+  }
+
+  function mountSearchGreeting() {
+    const heading = document.querySelector('.page-heading');
+    const existing = document.getElementById(SEARCH_GREET_ID);
+    const here = /^\/search\/?$/.test(location.pathname);
+
+    if (!here || !heading) {
+      existing?.remove();
+      stopSearchGreeting();
+      return;
+    }
+    if (existing && existing.parentElement === heading) return;
+
+    const line = existing || document.createElement('p');
+    line.id = SEARCH_GREET_ID;
+    line.className = 'yomu-greetline';
+    if (!line.textContent) line.textContent = anotherGreeting('');
+    heading.append(line);
+
+    stopSearchGreeting();
+    // Reduced motion gets one line and keeps it. Text that swaps itself out
+    // is movement, and it is movement in the corner of your eye while you
+    // are trying to type.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    searchGreetTimer = setInterval(() => {
+      const el = document.getElementById(SEARCH_GREET_ID);
+      if (!el) { stopSearchGreeting(); return; }
+      const next = anotherGreeting(el.textContent);
+      el.classList.add('is-out');
+      setTimeout(() => {
+        if (!el.isConnected) return;
+        el.textContent = next;
+        el.classList.remove('is-out');
+      }, 240);
+    }, SEARCH_GREET_EVERY);
   }
 
   function mountChapterJump() {
@@ -3476,6 +3685,8 @@
     mountSeriesResume();
     mountChapterJump();
     mountReaderJump();
+    foldGenreRow();
+    mountSearchGreeting();
     foldSourceSwitch();
     mountKin();
     windowLongLists();
