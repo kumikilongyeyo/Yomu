@@ -5,14 +5,14 @@ import {
 } from './source-fabric-v6';
 
 /**
- * Yomu Source Fabric v7.3 — Beast Adaptive public surface.
+ * Yomu Source Fabric v7.4 — Recipe Adaptive public surface.
  *
- * v6 remains the proven adaptive engine underneath. v7.3 keeps that rollback
- * floor while exposing the newer maintained-name federation and smart Source
- * Pack input flow at the public API/UI boundary.
+ * v6 remains the proven adaptive engine underneath. v7.4 adds maintained
+ * source-recipe compilation and family classification before browser fallback,
+ * while preserving federation, name resolution and the v6 rollback floor.
  */
-const VERSION = '7.3';
-const GENERATION = 'Beast Adaptive';
+const VERSION = '7.4';
+const GENERATION = 'Recipe Adaptive';
 
 export { fabricSourceCards };
 
@@ -40,12 +40,16 @@ export async function handleFabric(request: Request, env: Env, url: URL): Promis
       generation: GENERATION,
       core: { engine: 'adaptive-v6', version: payload.version ?? '6.0' },
       entrypoint: 'index-v7',
-      engines: [...new Set([...(Array.isArray(payload.engines) ? payload.engines : []), 'store-federation', 'aidoku-wasm'])],
+      engines: [...new Set([...(Array.isArray(payload.engines) ? payload.engines : []), 'recipe-adaptive', 'store-federation', 'aidoku-wasm'])],
       capabilities: {
         adaptiveFallbacks: true,
         federation: true,
         maintainedNameResolution: true,
         smartSourcePackInputs: true,
+        maintainedRecipeCompilation: true,
+        recipeFamilyClassification: true,
+        workerRecipeGauntlet: true,
+        browserDependencyDetection: true,
         remoteRuntime: true,
         diagnostics: true,
         liveSmoke: true,
