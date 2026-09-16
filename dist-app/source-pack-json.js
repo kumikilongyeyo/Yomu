@@ -150,11 +150,35 @@
     return matches.find((extension) => String(extension.runtime || '').startsWith('fabric-')) || matches[0];
   }
 
+  function sourceMatchesUrl(source, url) {
+    if (!source || source.enabled === false) return false;
+    let host = '';
+    try { host = new URL(url).hostname.toLowerCase().replace(/^www\./, ''); } catch { return false; }
+    const stem = host.split('.')[0].replace(/[^a-z0-9]/g, '');
+    const compactHost = host.replace(/[^a-z0-9]/g, '');
+    const haystack = [
+      source.id,
+      source.label,
+      source.name,
+      source.url,
+      source.api,
+      source.runtime,
+      source.engine,
+    ].filter(Boolean).map((value) => String(value).toLowerCase());
+
+    return haystack.some((value) => {
+      if (value.includes(host)) return true;
+      const compact = value.replace(/[^a-z0-9]/g, '');
+      if (compactHost.length >= 6 && compact.includes(compactHost)) return true;
+      return stem.length >= 5 && compact.includes(stem);
+    });
+  }
+
   async function communityDelta(parsed) {
     const seen = readSeenOrigins();
     const collection = readCollection();
-    const enabledIds = new Set(collection.sources
-      .filter((source) => source && source.enabled !== false)
+    const enabledSources = collection.sources.filter((source) => source && source.enabled !== false);
+    const enabledIds = new Set(enabledSources
       .map((source) => String(source.id || ''))
       .filter(Boolean));
 
@@ -162,16 +186,23 @@
     try { extensions = await registry(); } catch {}
 
     const fresh = [];
+    const knownUrls = [];
     let known = 0;
     for (const url of parsed.urls) {
       const extension = extensionForUrl(url, extensions);
       const id = extension?.id ? 'yomuext-' + extension.id : '';
-      const alreadyInstalled = !!id && enabledIds.has(id);
+      const alreadyInstalled = (!!id && enabledIds.has(id)) || enabledSources.some((source) => sourceMatchesUrl(source, url));
       const alreadyAddedThroughPack = seen.has(originKey(url));
-      if (alreadyInstalled || alreadyAddedThroughPack) known += 1;
-      else fresh.push(url);
+      if (alreadyInstalled || alreadyAddedThroughPack) {
+        known += 1;
+        knownUrls.push(url);
+      } else {
+        fresh.push(url);
+      }
     }
-    return { fresh, known, basis: 'installed+added' };
+
+    if (knownUrls.length) saveAddedOrigins(knownUrls, parsed.version || '');
+    return { fresh, known, knownUrls, basis: 'installed+added+fingerprint' };
   }
 
   function mount() {
@@ -227,6 +258,7 @@
         const delta = await communityDelta(parsed);
         paintBadge(delta.fresh.length);
         if (delta.fresh.length) status.textContent = `${delta.fresh.length} new Community Pack source${delta.fresh.length === 1 ? '' : 's'} available.`;
+        else status.textContent = 'Community Pack is up to date.';
         return { parsed, delta };
       } catch {
         paintBadge(0);
@@ -299,6 +331,10 @@
       const urls = Array.isArray(event?.detail?.urls) ? event.detail.urls : [];
       if (urls.length) saveAddedOrigins(urls, event?.detail?.version || pack.dataset.communityVersion || '');
       refreshCommunityBadge();
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === COLLECTION_KEY) refreshCommunityBadge();
     });
 
     refreshCommunityBadge();
