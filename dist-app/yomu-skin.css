@@ -478,6 +478,12 @@ h1, h2 {
 }
 .yword span {
   display: inline-block;
+}
+/* Only while something is in flight. Running it forever makes the header
+   restless and tells you nothing; running it while the app is fetching turns
+   the wordmark into the loading indicator it already looks like. The root
+   carries data-busy, set from yomu-shell.js when a spinner is on screen. */
+:root[data-busy='1'] .yword span {
   animation: yletter 1.1s ease-in-out infinite;
   animation-delay: calc(var(--i) * .085s);
 }
@@ -543,7 +549,8 @@ h1, h2 {
 @media (prefers-reduced-motion: reduce) {
   .spin,
   .yomu-loader,
-  .yword span {
+  .yword span,
+  :root[data-busy='1'] .yword span {
     animation: none;
   }
 }

@@ -2771,6 +2771,21 @@
     return lockup;
   }
 
+  /* .spin is the app's only spinner -- twelve call sites in the bundle -- so
+     its presence anywhere is a good enough answer to "is something loading".
+     The lockup itself holds no loader, so this cannot see its own effect.
+
+     Guarded, on principle: this runs off a MutationObserver, and an
+     unconditional write is how the Community Pack panel froze the page. The
+     observer watches childList only, so an attribute write would not re-enter
+     it today -- but that is a property of the observer, not of this function,
+     and the next person to add attributes: true should not have to find out. */
+  function markBusy() {
+    const want = document.querySelector('.spin, .yomu-loader') ? '1' : '0';
+    const root = document.documentElement;
+    if (root.dataset.busy !== want) root.dataset.busy = want;
+  }
+
   function brandLockup() {
     for (const logo of document.querySelectorAll('svg.yomu-logo')) {
       const prev = logo.previousElementSibling;
@@ -3321,6 +3336,7 @@
 
   const pass = () => {
     brandLockup();
+    markBusy();
     mountGreeting();
     gateFabric();
     tagCompleted();
