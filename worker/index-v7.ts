@@ -37,6 +37,40 @@ async function injectV7Ui(response: Response): Promise<Response> {
   return new Response(html, { status: response.status, headers });
 }
 
+/**
+ * Library Hub v1 is deliberately one reversible HTML hook.
+ *
+ * The CSS and JS are isolated under yomu-library-hub.* and every class they
+ * own is yhub-prefixed. No exported Expo page, source adapter, Hunter file or
+ * compiled bundle is patched to make the redesign appear. Removing this
+ * function call and the two assets restores the previous UI in one commit.
+ */
+async function injectLibraryHubUi(request: Request, response: Response): Promise<Response> {
+  if (!response.ok || request.method !== 'GET') return response;
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('text/html')) return response;
+
+  let html = await response.text();
+  const css = '/yomu-library-hub.css';
+  const script = '/yomu-library-hub.js';
+
+  if (!html.includes(css)) {
+    const tag = `<link rel="stylesheet" href="${css}">`;
+    html = html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : tag + html;
+  }
+  if (!html.includes(script)) {
+    const tag = `<script src="${script}" defer></script>`;
+    html = html.includes('</body>') ? html.replace('</body>', `${tag}</body>`) : html + tag;
+  }
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('cache-control', 'no-store, max-age=0');
+  headers.set('x-yomu-ui', 'library-hub-v1');
+  return new Response(html, { status: response.status, headers });
+}
+
 async function normalizeFederationResponse(response: Response): Promise<Response> {
   const type = response.headers.get('content-type') ?? '';
   if (!type.includes('application/json')) return response;
@@ -147,9 +181,9 @@ export default {
     }
 
     if (request.method === 'GET' && (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html')) {
-      return injectV7Ui(await v5.fetch(request, env));
+      return injectLibraryHubUi(request, await injectV7Ui(await v5.fetch(request, env)));
     }
 
-    return v5.fetch(request, env);
+    return injectLibraryHubUi(request, await v5.fetch(request, env));
   },
 };
