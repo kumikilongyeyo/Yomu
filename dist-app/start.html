@@ -250,6 +250,57 @@
        pane already played. */
     .row.late { animation: rise .3s var(--out) both; }
 
+    /* already have Yomu */
+    .plainlink { color: var(--muted); }
+    .ways { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    @media (max-width: 460px) { .ways { grid-template-columns: 1fr; } }
+    .way {
+      display: grid; justify-items: start; gap: 4px; text-align: left; cursor: pointer;
+      padding: 15px 15px 14px; border-radius: 14px; border: 1px solid var(--line);
+      background: var(--surface); color: var(--text); font: inherit;
+      transition: background .24s var(--ease), border-color .24s var(--ease), transform .12s ease-out;
+    }
+    .way:active { transform: scale(.985); }
+    .way[aria-pressed="true"] { background: var(--accentSoft); border-color: var(--accentLine); }
+    .way__art { width: 26px; height: 26px; margin-bottom: 5px; color: var(--accent); }
+    .way__art svg { width: 100%; height: 100%; display: block; }
+    .way b { font-size: 14.5px; font-weight: 600; }
+    .way small { font-size: 12px; color: var(--faint); line-height: 1.35; }
+
+    #loginPanel { margin-top: 14px; }
+    #loginPanel[hidden] { display: none; }
+    .pairfield { display: flex; gap: 8px; align-items: stretch; }
+    .pairfield .field {
+      margin-top: 0; flex: 1; min-width: 0;
+      font: 500 16px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .pairfield .btn { flex: none; white-space: nowrap; }
+
+    /* The viewfinder. Square, because a QR is, and because a rectangle asks
+       people to aim at the wrong part of it. */
+    .scanner {
+      position: relative; width: 100%; max-width: 320px; margin: 0 auto;
+      aspect-ratio: 1; border-radius: 16px; overflow: hidden;
+      background: #0b0f14; border: 1px solid var(--line);
+    }
+    .scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* Corners rather than a full frame: it says where to aim without hiding
+       the thing being aimed at. */
+    .scanner::after {
+      content: ''; position: absolute; inset: 16%;
+      border-radius: 10px;
+      background:
+        linear-gradient(var(--accent), var(--accent)) 0 0 / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 0 0 / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 0 / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 0 / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 0 100% / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 0 100% / 2px 22px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 100% / 22px 2px no-repeat,
+        linear-gradient(var(--accent), var(--accent)) 100% 100% / 2px 22px no-repeat;
+    }
+
     .done { text-align: center; padding: 22px 6px 6px; }
     .done .mark { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 16px; background: #46d39a; color: #06281c; display: grid; place-items: center; font-size: 28px; font-weight: 700; }
 
@@ -317,7 +368,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-overrides.css"><link rel="stylesheet" href="/yomu-skin.css"></head>
 <body>
 <main>
-  <div class="top">
+  <div class="top" id="top">
     <div class="track"><i id="track"></i></div>
     <div class="crumbs"><b id="crumbNow">Step 1</b><span id="crumbOf">of 5</span></div>
   </div>
@@ -333,8 +384,9 @@
     <p class="blurb">A reading room for everything your sources carry. A few short steps and one that matters.</p>
     <div class="acts">
       <button class="btn" type="button" data-go="1">Get started</button>
-      <a class="btn plain" href="/">Preview without setting up</a>
+      <button class="btn quiet" type="button" id="toLogin">I already have Yomu</button>
     </div>
+    <p class="blurb" style="margin:14px auto 0;font-size:12.5px"><a class="plainlink" href="/">Or look around without setting anything up</a></p>
   </section>
 
   <!-- 2 · who -->
@@ -430,11 +482,57 @@
     </div>
   </section>
 
+  <!-- aside · already have Yomu --------------------------------------------
+       Not a step. It is the other answer to the first screen, so it carries no
+       number, no progress and no place in the track: somebody signing in is
+       not 1/6 of the way through setting up, they are done the moment it
+       lands. -->
+  <section class="pane" id="pane-login" hidden>
+    <h1>Welcome back</h1>
+    <p class="blurb">Sign in from a device that already has your library. Your titles, your place in them and the sources you turned on all come with you.</p>
+
+    <div class="ways">
+      <button class="way" type="button" id="wayQr">
+        <span class="way__art" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/></svg>
+        </span>
+        <b>Scan the QR</b>
+        <small>Settings → Devices → Pair a device, on your other one</small>
+      </button>
+      <button class="way" type="button" id="wayCode">
+        <span class="way__art" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 11h.01M11 11h.01M15 11h.01M7 15h10"/></svg>
+        </span>
+        <b>Type your code</b>
+        <small>The YOMU- code on that same screen</small>
+      </button>
+    </div>
+
+    <div id="loginPanel" hidden></div>
+    <p class="blurb" id="loginNote" hidden style="color:var(--warn);margin-top:12px"></p>
+
+    <div class="acts">
+      <button class="btn plain" type="button" id="loginBack">Back</button>
+    </div>
+  </section>
+
+  <!-- aside · the wait ------------------------------------------------------
+       The code is spent and the library is on its way. The mark turns its own
+       page while it does, which is the loader the whole app uses, so the one
+       screen you see once looks like the rest of it. -->
+  <section class="pane" id="pane-sync" hidden>
+    <div class="done">
+      <div class="ob-hero"><span class="yomu-loader" style="--s:88px" role="img" aria-label="Yomu"></span></div>
+      <h1 style="margin-bottom:8px">Bringing it over</h1>
+      <p class="blurb" style="margin-inline:auto" id="syncLine">Finding your library…</p>
+    </div>
+  </section>
+
   <!-- done -->
   <section class="pane" id="pane-6" hidden>
     <div class="done">
-      <div class="mark" aria-hidden="true">&#10003;</div>
-      <h1 style="margin-bottom:8px">Your shelves are full</h1>
+      <div class="mark" id="doneMark" aria-hidden="true">&#10003;</div>
+      <h1 style="margin-bottom:8px" id="doneTitle">Your shelves are full</h1>
       <p class="blurb" style="margin-inline:auto" id="doneLine">Ready when you are.</p>
       <div class="reelMask" id="reelMask" hidden><div class="reel" id="reel"></div></div>
       <div class="acts" style="justify-content:center">
@@ -799,6 +897,12 @@
        from the left, so the flow has a direction you can feel. */
     const back = next < step;
     step = next;
+    // Coming back from "I already have Yomu" has to put the numbered flow and
+    // its progress bar back, whichever step it lands on.
+    stopScanner();
+    $('pane-login').hidden = true;
+    $('pane-sync').hidden = true;
+    $('top').hidden = false;
     [0, 1, 2, 3, 4, 5, 6].forEach((i) => { $('pane-' + i).hidden = i !== step; });
     const pane = $('pane-' + step);
     pane.classList.toggle('back', back);
@@ -1214,6 +1318,349 @@
 
   $('fabricGo').addEventListener('click', tryFabric);
   $('fabricUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); tryFabric(); } });
+
+  /* ---- already have Yomu ------------------------------------------------- *
+   *
+   * Setup exists for somebody with nothing. Somebody with a library on another
+   * device has the opposite problem, and walking them through five steps to
+   * pick sources they already chose is the wrong flow -- so the first screen
+   * offers the other door, and this is what is behind it.
+   *
+   * Two ways in, and they are two different credentials:
+   *
+   *   The code    is the library's own, permanent, shown on every paired
+   *               device. POST /api/sync/join.
+   *   The QR      carries a pairing code: one use, ten minutes, and it is in
+   *               the URL fragment so it never reaches a log.
+   *               POST /api/sync/redeem.
+   *
+   * The scanner is here rather than leaving it to the phone's camera on
+   * purpose. A QR read by the Camera app opens Safari, and on iOS a Home
+   * Screen app has storage Safari cannot reach -- so that pairs the browser
+   * and leaves the installed app knowing nothing, which looks exactly like
+   * failure. Scanning inside the app pairs the app.
+   * ------------------------------------------------------------------------ */
+
+  const SYNC = 'yomu.v1.sync';
+  const JSQR = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+
+  const deviceName = () => {
+    const ua = navigator.userAgent || '';
+    if (/iPhone/.test(ua)) return 'iPhone';
+    if (/iPad/.test(ua)) return 'iPad';
+    if (/Android/.test(ua)) return 'Android phone';
+    if (/Macintosh/.test(ua)) return 'Mac';
+    if (/Windows/.test(ua)) return 'Windows PC';
+    return 'A device';
+  };
+
+  async function syncApi(route, payload) {
+    const r = await fetch('/api/sync/' + route, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload || {}),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'That did not work.');
+    return data;
+  }
+
+  /* ---- what to call somebody --------------------------------------------- *
+   *
+   * The same evidence the greeting pack uses, and the same crudeness on
+   * purpose: Yomu stores no genre metadata anywhere, and asking a server what
+   * somebody reads is the one thing it promises not to do. So the shelf's
+   * titles are read for keywords, and the honorific is whichever genre wins.
+   *
+   * No match means the name, which is the safe direction -- "High Venerable"
+   * to somebody whose shelf is all romance is a joke landing on the wrong
+   * person.
+   * ------------------------------------------------------------------------ */
+  const LEX = {
+    c: /(cultivat|martial|immortal|daoist|murim|heavenly|nano machine|sword|apotheosis|demon|sect)/i,
+    s: /(solo leveling|system|s-rank|hunter|dungeon|player|status|awaken|skill|leveling)/i,
+    t: /(tower|climb)/i,
+    r: /(regress|return|reincarnat|second life|rewind)/i,
+  };
+  const HONOURS = {
+    c: ['High Venerable', 'Fellow Daoist', 'Senior'],
+    s: ['Hunter', 'System user'],
+    t: ['Tower climber'],
+    r: ['Regressor'],
+  };
+
+  function honorific(titles) {
+    const score = { c: 0, s: 0, t: 0, r: 0 };
+    for (const title of titles) {
+      for (const key in LEX) if (LEX[key].test(String(title || ''))) score[key]++;
+    }
+    let best = '', top = 0;
+    for (const key in score) if (score[key] > top) { top = score[key]; best = key; }
+    // One title is a coincidence. Two is a shelf.
+    if (!best || top < 2) return '';
+    const pool = HONOURS[best];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /* ---- panes that are not steps ------------------------------------------ */
+  function showAside(id) {
+    [0, 1, 2, 3, 4, 5, 6].forEach((i) => { $('pane-' + i).hidden = true; });
+    ['pane-login', 'pane-sync'].forEach((name) => { $(name).hidden = name !== id; });
+    // No number, so no track and no crumb claiming to be one.
+    $('top').hidden = !!id;
+    if (!id) return;
+    const pane = $(id);
+    pane.style.animation = 'none';
+    void pane.offsetWidth;
+    pane.style.animation = '';
+    scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  $('toLogin').addEventListener('click', () => {
+    document.title = 'Yomu · Welcome back';
+    showAside('pane-login');
+  });
+  $('loginBack').addEventListener('click', () => {
+    stopScanner();
+    $('loginPanel').hidden = true;
+    $('loginNote').hidden = true;
+    document.querySelectorAll('.way').forEach((w) => w.setAttribute('aria-pressed', 'false'));
+    showAside('');
+    go(0);
+  });
+
+  const loginFail = (message) => {
+    const note = $('loginNote');
+    note.textContent = message;
+    note.hidden = false;
+  };
+
+  function pickWay(which) {
+    stopScanner();
+    $('loginNote').hidden = true;
+    $('wayQr').setAttribute('aria-pressed', String(which === 'qr'));
+    $('wayCode').setAttribute('aria-pressed', String(which === 'code'));
+    const panel = $('loginPanel');
+    panel.textContent = '';
+    panel.hidden = false;
+    if (which === 'code') renderCodeEntry(panel); else renderScanner(panel);
+  }
+  $('wayQr').addEventListener('click', () => pickWay('qr'));
+  $('wayCode').addEventListener('click', () => pickWay('code'));
+
+  function renderCodeEntry(panel) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pairfield';
+    const field = document.createElement('input');
+    field.className = 'field';
+    field.placeholder = 'YOMU-XXXXX-XXXXX';
+    field.autocapitalize = 'characters';
+    field.autocomplete = 'off';
+    field.spellcheck = false;
+    field.setAttribute('aria-label', 'Your Yomu code');
+    const go2 = document.createElement('button');
+    go2.type = 'button';
+    go2.className = 'btn';
+    go2.textContent = 'Sign in';
+
+    const submit = async () => {
+      const code = field.value.trim();
+      if (!code) { loginFail('Type the code from your other device first.'); return; }
+      go2.disabled = true;
+      field.disabled = true;
+      try {
+        await signIn(() => syncApi('join', { code, deviceName: deviceName() }));
+      } catch (error) {
+        go2.disabled = false;
+        field.disabled = false;
+        showAside('pane-login');
+        loginFail(error.message || 'That code did not work.');
+      }
+    };
+    go2.addEventListener('click', submit);
+    field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+
+    wrap.append(field, go2);
+    panel.append(wrap);
+    field.focus();
+  }
+
+  /* ---- the scanner -------------------------------------------------------- */
+  let stream = null;
+  let scanning = false;
+
+  function stopScanner() {
+    scanning = false;
+    if (!stream) return;
+    for (const track of stream.getTracks()) track.stop();
+    stream = null;
+  }
+
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    if (window.jsQR) return resolve();
+    const tag = document.createElement('script');
+    tag.src = src;
+    tag.onload = resolve;
+    tag.onerror = () => reject(new Error('The scanner did not load.'));
+    document.head.append(tag);
+  });
+
+  async function renderScanner(panel) {
+    const box = document.createElement('div');
+    box.className = 'scanner';
+    const video = document.createElement('video');
+    video.playsInline = true;
+    video.muted = true;
+    box.append(video);
+    panel.append(box);
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }, audio: false,
+      });
+    } catch {
+      // pickWay clears the note, so the reason is written after it and not
+      // before: the other order hands somebody a silent fallback.
+      pickWay('code');
+      loginFail('Yomu could not open the camera. Use the code instead — it is on the same screen as the QR.');
+      return;
+    }
+
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+
+    /* BarcodeDetector where it exists, jsQR where it does not. Safari has no
+       BarcodeDetector, and Safari is the browser an iPhone is holding. */
+    let detector = null;
+    if ('BarcodeDetector' in window) {
+      try { detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch {}
+    }
+    if (!detector) {
+      try { await loadScript(JSQR); }
+      catch (error) { stopScanner(); pickWay('code'); loginFail(error.message); return; }
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    scanning = true;
+
+    const read = async () => {
+      if (!scanning || !stream) return;
+      let found = '';
+      try {
+        if (detector) {
+          const hits = await detector.detect(video);
+          if (hits && hits.length) found = hits[0].rawValue || '';
+        } else if (video.videoWidth) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const hit = window.jsQR(frame.data, frame.width, frame.height);
+          if (hit) found = hit.data || '';
+        }
+      } catch {}
+
+      if (found) {
+        const pairing = pairingCodeIn(found);
+        if (pairing) {
+          stopScanner();
+          try {
+            await signIn(() => syncApi('redeem', { pairingCode: pairing, deviceName: deviceName() }));
+          } catch (error) {
+            showAside('pane-login');
+            pickWay('code');
+            loginFail(error.message || 'That code has been used or has expired. Show a fresh one.');
+          }
+          return;
+        }
+      }
+      requestAnimationFrame(read);
+    };
+    requestAnimationFrame(read);
+  }
+
+  /** A Yomu pairing QR is origin + '/join#<code>'. Anything else is not ours. */
+  function pairingCodeIn(text) {
+    const raw = String(text || '').trim();
+    try {
+      const url = new URL(raw);
+      if (!/\/join\/?$/.test(url.pathname)) return '';
+      return decodeURIComponent((url.hash || '').replace(/^#/, '')).trim();
+    } catch { return ''; }
+  }
+
+  /* ---- landing it --------------------------------------------------------- */
+  async function signIn(call) {
+    showAside('pane-sync');
+    const doc = await call();
+
+    $('syncLine').textContent = 'Putting your shelves back…';
+
+    // Paired. The app's own sync picks it up from here and keeps it current.
+    writeJSON(SYNC, { code: doc.code, deviceId: doc.deviceId, addedAt: {}, seen: [], removed: [] });
+
+    /* Signing in happens on a device with nothing on it, so this takes what
+       came back rather than merging. If there is already a library here --
+       somebody who set up first and signed in second -- it is left alone and
+       yomu-sync.js does the real merge on the next pull, which knows the
+       tombstone rules this page has no business reimplementing. */
+    const local = readJSON(COLLECTION, null) || { revision: 0, sources: [], library: [], progress: {} };
+    const localLibrary = Array.isArray(local.library) ? local.library : [];
+    const incoming = Array.isArray(doc.library) ? doc.library : [];
+
+    if (!localLibrary.length && incoming.length) {
+      const sources = Array.isArray(local.sources) ? [...local.sources] : [];
+      const known = new Set(sources.map((x) => String(x.id)));
+      for (const row of (doc.sources || [])) {
+        if (!row || !row.id) continue;
+        if (known.has(String(row.id))) {
+          const at = sources.findIndex((x) => String(x.id) === String(row.id));
+          sources[at] = { ...sources[at], enabled: true };
+          continue;
+        }
+        // A url that will not resolve takes the Sources screen down on every
+        // paired device, so a row without a usable one is dropped.
+        let url = String(row.url || '');
+        if (url.startsWith('/')) url = ORIGIN + url;
+        if (!/^https?:\/\//i.test(url)) continue;
+        const next = { id: row.id, enabled: true, url };
+        for (const field of ['label', 'category', 'kind']) if (row[field]) next[field] = row[field];
+        sources.push(next);
+      }
+      writeJSON(COLLECTION, {
+        ...local,
+        revision: Number(local.revision || 0) + 1,
+        sources,
+        library: incoming.map(({ at, addedAt, ...rest }) => rest),
+      });
+    }
+
+    try { localStorage.setItem(DONE, '1'); } catch {}
+    if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
+
+    const titles = incoming.map((x) => x && x.title).filter(Boolean);
+    const called = honorific(titles);
+    const known = readJSON(CIRCLE, null);
+    const name = (known && typeof known.name === 'string' && known.name.trim()) || '';
+
+    // Long enough that the loader reads as work rather than a flash, short
+    // enough that it is not theatre. The request has usually already landed.
+    await new Promise((done) => setTimeout(done, 900));
+
+    showAside('');
+    $('pane-6').hidden = false;
+    $('top').hidden = true;
+    document.title = 'Yomu · Welcome back';
+    $('doneMark').textContent = '✓';
+    $('doneTitle').textContent = called
+      ? 'Welcome back, ' + called
+      : (name ? 'Welcome back, ' + name : 'Welcome back');
+    $('doneLine').textContent = incoming.length
+      ? fmt(incoming.length) + ' title' + (incoming.length === 1 ? '' : 's') + ' and where you were in them, back on this device.'
+      : 'This device is paired. Anything you save will be on your others too.';
+    showReel((doc.sources || []).filter((x) => x && String(x.id).startsWith('yomuext-')));
+  }
 
   /* ---- writing it down --------------------------------------------------- */
   $('finish').addEventListener('click', () => {
