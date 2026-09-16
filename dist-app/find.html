@@ -135,8 +135,43 @@
     }
     .genre-tile:hover { background: var(--raised); border-color: var(--accentLine); }
     .genre-tile:active { transform: scale(.97); }
-    .genre-tiles:not(.is-open) .genre-tile--extra { display: none; }
-    .genre-tile--more { border-style: dashed; color: var(--muted); font-weight: 600; }
+    .genre-tiles { flex-wrap: nowrap; }
+    .genre-tile--more {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-style: dashed; color: var(--muted); font-weight: 600; white-space: nowrap;
+    }
+    .genre-more { position: relative; display: inline-block; }
+    .genre-caret {
+      width: 6px; height: 6px; flex: none;
+      border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+      transform: translateY(-2px) rotate(45deg);
+      transition: transform .2s cubic-bezier(.32,.72,0,1);
+    }
+    .genre-more.is-open .genre-caret { transform: translateY(1px) rotate(-135deg); }
+    .genre-menu {
+      position: absolute; z-index: 30; top: calc(100% + 6px); right: 0;
+      min-width: 180px; max-height: 320px; overflow-y: auto; padding: 6px;
+      border: 1px solid var(--line); border-radius: 14px;
+      /* --surface is a lift, not a ground: on its own the menu is a window
+         onto the cover grid underneath. The page background is the opaque
+         one, with surface layered over it the way every raised thing here
+         is composed. */
+      background-color: var(--bg);
+      background-image: linear-gradient(var(--surface), var(--surface));
+      box-shadow: 0 18px 44px #0000003d;
+      opacity: 0; visibility: hidden; transform: translateY(-4px);
+      transition: opacity .16s ease, transform .18s cubic-bezier(.23,1,.32,1), visibility .18s;
+    }
+    .genre-more.is-open .genre-menu { opacity: 1; visibility: visible; transform: none; }
+    .genre-option {
+      display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 9px;
+      background: none; color: var(--text); font: 500 13px/1.2 var(--uiFont);
+      text-align: left; cursor: pointer;
+    }
+    .genre-option:hover { background: var(--raised); }
+    @media (prefers-reduced-motion: reduce) {
+      .genre-menu, .genre-caret { transition: none; }
+    }
     .genre-note { margin: 11px 2px 0; font-size: 12px; color: var(--faint); line-height: 1.5; }
 
     .charts { display: flex; gap: 6px; margin: 30px 0 14px; }
@@ -513,8 +548,8 @@
    * where the answers come from rather than implying every source was asked.
    */
   /** What people come to a genre list for, ahead of what the alphabet offers. */
-  const GENRES_FIRST = ['Action', 'Romance', 'Fantasy', 'Comedy', 'Drama', 'Isekai', 'Horror', 'Slice of Life'];
-  const GENRES_SHOWN = 8;
+  const GENRES_FIRST = ['Action', 'Romance', 'Fantasy'];
+  const GENRES_SHOWN = 3;
 
   async function renderGenres() {
     const box = $('genre-tiles');
@@ -536,40 +571,85 @@
       const ordered = [...lead, ...rest];
 
       box.textContent = '';
-      box.classList.remove('is-open');
-      ordered.forEach((name, index) => {
+
+      // Three shortcuts and a menu, on one line. Expanding in place was still
+      // three rows of pills once it opened, which is the same wall arriving
+      // a tap later.
+      for (const name of ordered.slice(0, GENRES_SHOWN)) {
         const tile = document.createElement('button');
         tile.type = 'button';
-        tile.className = 'genre-tile' + (index >= GENRES_SHOWN ? ' genre-tile--extra' : '');
+        tile.className = 'genre-tile';
         tile.textContent = name;
         tile.addEventListener('click', () => browseGenre(name));
         box.append(tile);
-      });
-
-      // One hidden genre behind a control that exists to hide one genre is
-      // worse than the genre.
-      const hidden = ordered.length - GENRES_SHOWN;
-      if (hidden >= 2) {
-        const more = document.createElement('button');
-        more.type = 'button';
-        more.className = 'genre-tile genre-tile--more';
-        let open = false;
-        const label = () => (open ? 'Fewer' : '+' + hidden + ' more');
-        more.textContent = label();
-        more.setAttribute('aria-expanded', 'false');
-        more.addEventListener('click', () => {
-          open = !open;
-          box.classList.toggle('is-open', open);
-          more.textContent = label();
-          more.setAttribute('aria-expanded', String(open));
-        });
-        box.append(more);
       }
+
+      const others = ordered.slice(GENRES_SHOWN);
+      // One genre behind a menu that exists to hold one genre is worse than
+      // the genre.
+      if (others.length >= 2) box.append(genreMenu(others));
 
       $('genres').classList.remove('hidden');
     } catch {
       // A genre list that will not load simply is not offered.
     }
+  }
+
+  /**
+   * The rest of the genres, as a menu rather than more pills.
+   *
+   * Closes on a click anywhere outside it and on Escape, both bound to the
+   * document once per menu built -- this runs once on load, so there is no
+   * accumulation to clean up.
+   */
+  function genreMenu(names) {
+    const wrap = document.createElement('span');
+    wrap.className = 'genre-more';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'genre-tile genre-tile--more';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.append(
+      document.createTextNode(names.length + ' more'),
+      Object.assign(document.createElement('i'), { className: 'genre-caret' }),
+    );
+
+    const menu = document.createElement('div');
+    menu.className = 'genre-menu';
+    menu.setAttribute('role', 'listbox');
+
+    const close = () => {
+      wrap.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    trigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const open = wrap.classList.toggle('is-open');
+      trigger.setAttribute('aria-expanded', String(open));
+    });
+
+    for (const name of names) {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'genre-option';
+      option.setAttribute('role', 'option');
+      option.textContent = name;
+      option.addEventListener('click', () => { close(); browseGenre(name); });
+      menu.append(option);
+    }
+
+    document.addEventListener('click', (event) => {
+      if (!wrap.contains(event.target)) close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') close();
+    });
+
+    wrap.append(trigger, menu);
+    return wrap;
   }
 
   async function browseGenre(name) {
