@@ -3089,12 +3089,85 @@
   const GREET_ID = 'yomu-greet';
   const AVATAR_KEY = 'yomu.v1.avatar';
 
-  function greeting() {
+  function clockLine() {
     const hour = new Date().getHours();
     if (hour < 5) return 'Still up';
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
+  }
+
+  /* ------------------------------------------------------------------ *
+   * What the greeting says
+   *
+   * The clock is the floor: it always has something to say, to somebody who
+   * has read nothing. Above it are lines drawn from what is already on the
+   * device -- what you last opened, how far in you are, how long ago. No
+   * request, no new storage, and nothing leaves the browser.
+   *
+   * Picked once per load rather than per render, so it does not change while
+   * you are looking at it. A page load is the session.
+   *
+   * Deliberately not here: a line about the *content* of what you read. The
+   * kind of thing worth greeting somebody with -- the panel everybody
+   * screenshots -- is not in any metadata Yomu can reach, and inventing it
+   * from a model would mean sending a reading history off the device, which
+   * is the one thing Your Yomu promises it does not do. That belongs in a
+   * greeting pack: see greetingPack() below.
+   * ------------------------------------------------------------------ */
+
+  const DAY = 86400000;
+
+  /** Lines a pack would supply, keyed by series id. None yet. */
+  function greetingPack() {
+    /* Shape, for when one exists -- the same JSON-from-a-URL habit the source
+       packs already use, loaded into localStorage under yomu.v1.greetings:
+         { "<seriesId>": { lines: ["..."], tone: "light" | "heavy" } }
+       A miss falls through to the lines below, so a pack only ever has to
+       cover the titles somebody cared enough to write for. */
+    return readJSON('yomu.v1.greetings', null);
+  }
+
+  function greetingLines() {
+    const lines = [clockLine()];
+
+    const recent = continueItems().sort((a, b) => (b.at || 0) - (a.at || 0))[0];
+    if (!recent || !recent.title) return lines;
+
+    const title = recent.title.length > 28 ? recent.title.slice(0, 27) + '\u2026' : recent.title;
+
+    const pack = greetingPack();
+    const packed = pack && pack[recent.seriesId];
+    if (packed && Array.isArray(packed.lines) && packed.lines.length) {
+      lines.push(...packed.lines.filter((l) => typeof l === 'string' && l.trim()));
+    }
+
+    // How long since you put it down. Only worth saying once it has been a
+    // while -- "0 days since" is not an observation.
+    const days = recent.at ? Math.floor((Date.now() - recent.at) / DAY) : null;
+    if (days === 1) lines.push('Yesterday you left ' + title);
+    else if (days >= 2 && days <= 60) lines.push(days + ' days since ' + title);
+
+    // Where you are in it.
+    if (typeof recent.percent === 'number') {
+      if (recent.percent >= 90) lines.push('Nearly through ' + title);
+      else if (recent.percent <= 10) lines.push('Just started ' + title);
+      else lines.push(title + ', ' + recent.percent + '% in');
+    }
+
+    if (recent.chapterLabel) lines.push(recent.chapterLabel + ' of ' + title + ' is open');
+
+    return lines;
+  }
+
+  // One pick, held for the life of the page.
+  let greetingChoice = null;
+  function greeting() {
+    if (greetingChoice === null) {
+      const lines = greetingLines();
+      greetingChoice = lines[Math.floor(Math.random() * lines.length)] || clockLine();
+    }
+    return greetingChoice;
   }
 
   function readerName() {
