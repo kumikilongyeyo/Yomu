@@ -1,13 +1,13 @@
 {
   "name": "Yomu",
   "short_name": "Yomu",
-  "description": "A reader.",
+  "description": "A reading room for everything your sources carry.",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "any",
-  "background_color": "#080d14",
-  "theme_color": "#080d14",
+  "background_color": "#f5f2ec",
+  "theme_color": "#f5f2ec",
   "icons": [
     {
       "src": "/icon-192.png",
