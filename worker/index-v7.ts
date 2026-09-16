@@ -38,12 +38,9 @@ async function injectV7Ui(response: Response): Promise<Response> {
 }
 
 /**
- * Library Hub v1 is deliberately one reversible HTML hook.
- *
- * The CSS and JS are isolated under yomu-library-hub.* and every class they
- * own is yhub-prefixed. No exported Expo page, source adapter, Hunter file or
- * compiled bundle is patched to make the redesign appear. Removing this
- * function call and the two assets restores the previous UI in one commit.
+ * Library Hub is deliberately one reversible HTML hook.
+ * The CSS/JS stay isolated and yhub-prefixed, so removing this hook restores
+ * the production UI without touching Hunter, Source Fabric or the app bundle.
  */
 async function injectLibraryHubUi(request: Request, response: Response): Promise<Response> {
   if (!response.ok || request.method !== 'GET') return response;
@@ -51,8 +48,10 @@ async function injectLibraryHubUi(request: Request, response: Response): Promise
   if (!type.includes('text/html')) return response;
 
   let html = await response.text();
-  const css = '/yomu-library-hub.css';
-  const script = '/yomu-library-hub.js';
+  // Versioned URLs prevent Safari/PWA/browser caches from silently serving the
+  // first exploratory shell after the branch has moved on.
+  const css = '/yomu-library-hub.css?v=2';
+  const script = '/yomu-library-hub.js?v=2';
 
   if (!html.includes(css)) {
     const tag = `<link rel="stylesheet" href="${css}">`;
@@ -66,8 +65,8 @@ async function injectLibraryHubUi(request: Request, response: Response): Promise
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
-  headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-ui', 'library-hub-v1');
+  headers.set('cache-control', 'no-store, max-age=0, must-revalidate');
+  headers.set('x-yomu-ui', 'library-hub-v2');
   return new Response(html, { status: response.status, headers });
 }
 
@@ -105,9 +104,6 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // Maintained-name lookup accepts human extension names and, in v7.5,
-    // falls back directly to the Keiyoushi source repository when indexes omit
-    // the source URL.
     if (url.pathname === '/api/fabric/stores/search') {
       return handleStoreNameSearch(request, env, url);
     }
@@ -136,7 +132,6 @@ export default {
       return handleRecipeRuntime(request, env, url);
     }
 
-    // Specialist/runtime/store routes remain owned by the compatibility layer.
     if (url.pathname.startsWith('/api/fabric/source/kagane/') ||
         url.pathname.startsWith('/api/fabric/runtime/') ||
         url.pathname.startsWith('/api/fabric/stores/')) {
@@ -166,9 +161,6 @@ export default {
         federated,
       );
 
-      // v7.5 is deliberately outermost: a successful Worker/native adapter
-      // wins immediately; otherwise the remote runtime gets one final chance to
-      // execute the maintained recipe with real browser CSS selectors.
       return normalizeFederationResponse(await upgradeWithRemoteRecipe(
         bodyText,
         env,
