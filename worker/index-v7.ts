@@ -48,13 +48,18 @@ async function injectLibraryHubUi(request: Request, response: Response): Promise
   if (!type.includes('text/html')) return response;
 
   let html = await response.text();
-  // Versioned URLs prevent Safari/PWA/browser caches from silently serving the
-  // first exploratory shell after the branch has moved on.
-  const css = '/yomu-library-hub.css?v=2';
-  const script = '/yomu-library-hub.js?v=2';
+  // v3 forces Safari/PWA/browser caches to fetch the corrected shell after
+  // the v2 icon-sizing regression rather than reusing stale assets.
+  const css = '/yomu-library-hub.css?v=3';
+  const safetyCss = '/yomu-library-hub-fix.css?v=3';
+  const script = '/yomu-library-hub.js?v=3';
 
   if (!html.includes(css)) {
     const tag = `<link rel="stylesheet" href="${css}">`;
+    html = html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : tag + html;
+  }
+  if (!html.includes(safetyCss)) {
+    const tag = `<link rel="stylesheet" href="${safetyCss}">`;
     html = html.includes('</head>') ? html.replace('</head>', `${tag}</head>`) : tag + html;
   }
   if (!html.includes(script)) {
@@ -66,7 +71,7 @@ async function injectLibraryHubUi(request: Request, response: Response): Promise
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0, must-revalidate');
-  headers.set('x-yomu-ui', 'library-hub-v2');
+  headers.set('x-yomu-ui', 'library-hub-v2.1');
   return new Response(html, { status: response.status, headers });
 }
 
