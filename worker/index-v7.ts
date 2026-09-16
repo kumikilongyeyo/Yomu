@@ -3,14 +3,19 @@ import type { Env } from './index';
 import { handleFabric } from './source-fabric-v7';
 import { handleFederatedResolve } from './store-federation';
 import { handleStoreNameSearch } from './store-name-resolver';
+import {
+  handleRecipeAwareResolve,
+  handleRecipeRuntime,
+  recipeStatus,
+} from './recipe-adaptive';
 
 /**
- * Yomu production entrypoint v7.3.
+ * Yomu production entrypoint v7.4 — Recipe Adaptive.
  *
- * Keep the proven v5 wrapper as the compatibility floor, but route the public
- * Source Fabric API through the Beast Adaptive v7.3 surface. This avoids a risky
- * rewrite while making the deployed entrypoint, API status, and Sources UI all
- * report the generation that is actually running.
+ * v6 remains the adaptive rollback floor. v7.4 adds a maintained-recipe layer
+ * before browser fallback: Keiyoushi source recipes are classified, compiled
+ * into bounded Worker-native hints, gauntleted, and exposed only when Yomu can
+ * prove catalog -> issues/chapters -> reader pages.
  */
 async function injectV7Ui(response: Response): Promise<Response> {
   if (!response.ok) return response;
@@ -26,7 +31,7 @@ async function injectV7Ui(response: Response): Promise<Response> {
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-entrypoint', 'v7.3');
+  headers.set('x-yomu-entrypoint', 'v7.4');
   return new Response(html, { status: response.status, headers });
 }
 
@@ -38,8 +43,8 @@ async function normalizeFederationResponse(response: Response): Promise<Response
 
   if (payload.route === 'store-federation' && payload.federation?.runtimeBrokerConfigured) {
     payload.message = payload.federation?.best?.name
-      ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.`
-      : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet. Beast Adaptive will keep using safe Worker fallbacks when available.';
+      ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet. Recipe Adaptive will keep using safe Worker fallbacks when available.`
+      : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet. Recipe Adaptive will keep using safe Worker fallbacks when available.';
     payload.runtimeBroker = 'connected-source-not-ready';
   } else if (payload.route === 'store-federation') {
     payload.runtimeBroker = 'not-configured';
@@ -47,16 +52,16 @@ async function normalizeFederationResponse(response: Response): Promise<Response
 
   payload.fabric = {
     ...(payload.fabric ?? {}),
-    version: '7.3',
-    generation: 'Beast Adaptive',
+    version: '7.4',
+    generation: 'Recipe Adaptive',
   };
 
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('content-type', 'application/json; charset=utf-8');
-  headers.set('x-yomu-entrypoint', 'v7.3');
-  headers.set('x-yomu-source-fabric', '7.3');
+  headers.set('x-yomu-entrypoint', 'v7.4');
+  headers.set('x-yomu-source-fabric', '7.4');
   return new Response(JSON.stringify(payload), { status: response.status, headers });
 }
 
@@ -64,10 +69,26 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // Beast-owned name lookup: lets Source Pack accept maintained extension
-    // names like "Read Comics Online" without pretending they are hostnames.
+    // Maintained-name lookup lets Source Pack accept names such as
+    // "Read Comics Online" without pretending those names are hostnames.
     if (url.pathname === '/api/fabric/stores/search') {
       return handleStoreNameSearch(request, env, url);
+    }
+
+    if (url.pathname === '/api/fabric/recipes/status') {
+      if (request.method !== 'GET') {
+        return new Response(JSON.stringify({ error: 'Use GET.' }), {
+          status: 405,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, ...recipeStatus() }), {
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+      });
+    }
+
+    if (url.pathname.startsWith('/api/fabric/recipe/')) {
+      return handleRecipeRuntime(request, env, url);
     }
 
     // Specialist/runtime/store routes remain owned by the compatibility layer.
@@ -85,11 +106,19 @@ export default {
         headers: request.headers,
         body: bodyText,
       });
-      return normalizeFederationResponse(await handleFederatedResolve(
+
+      const federated = handleFederatedResolve(
         bodyText,
         env,
         url,
         handleFabric(fabricRequest, env, url),
+      );
+
+      return normalizeFederationResponse(await handleRecipeAwareResolve(
+        bodyText,
+        env,
+        url,
+        federated,
       ));
     }
 
