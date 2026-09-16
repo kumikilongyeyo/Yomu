@@ -2,7 +2,7 @@
   'use strict';
   if (!location.pathname.startsWith('/sources')) return;
 
-  const FALLBACK = '7.2';
+  const FALLBACK = '7.3';
   const MAX_SMART_INPUTS = 25;
   let label = `Source Fabric · v${FALLBACK} · Beast Adaptive`;
 
