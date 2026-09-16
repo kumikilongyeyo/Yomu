@@ -57,7 +57,13 @@ jobs:
       - name: Verify preview shell
         run: |
           url='https://yomu-library-hub-preview.yomuread.workers.dev/'
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 "$url" > /tmp/yomu-preview.html
+          # A brand-new Workers deployment can return a transient 404 for a few
+          # seconds while the workers.dev hostname catches up. Retry HTTP errors,
+          # not only connection failures, so a successful deploy does not leave
+          # the branch with a false red check.
+          curl --fail --silent --show-error \
+            --retry 10 --retry-all-errors --retry-delay 3 \
+            "$url" > /tmp/yomu-preview.html
           grep -q 'yomu-library-hub.css' /tmp/yomu-preview.html
           grep -q 'yomu-library-hub.js' /tmp/yomu-preview.html
           echo "Preview: $url"
