@@ -1,0 +1,213 @@
+/* Yomu Library Hub v1
+ * Branch-only UI layer. Everything is prefixed with yhub- so the experiment
+ * can be removed without unwinding the app's existing styles.
+ */
+
+:root {
+  --yhub-radius: 18px;
+  --yhub-radius-lg: 26px;
+  --yhub-shadow: 0 24px 70px #02070d26;
+  --yhub-reader-gap: 0px;
+}
+
+html.yhub-ui body { scroll-padding-bottom: 100px; }
+
+/* --- opening / brand -------------------------------------------------- */
+.yhub-splash {
+  position: fixed; inset: 0; z-index: 10000;
+  display: grid; place-items: center;
+  background: var(--bg); color: var(--text);
+  transition: opacity .28s ease, visibility .28s ease;
+}
+.yhub-splash.is-out { opacity: 0; visibility: hidden; pointer-events: none; }
+.yhub-splash__inner { display: grid; justify-items: center; gap: 16px; text-align: center; }
+.yhub-splash .yomu-lockup { transform: scale(1.45); transform-origin: center; }
+.yhub-splash__line { color: var(--muted); font-size: 13px; letter-spacing: .01em; }
+.yhub-splash .yomu-loader { --s: 28px; margin-top: 2px; }
+
+/* --- home ------------------------------------------------------------- */
+.yhub-home {
+  margin: 4px 0 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr);
+  gap: 14px;
+}
+.yhub-welcome,
+.yhub-status-card,
+.yhub-power {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 91%, transparent);
+  box-shadow: 0 1px 0 #ffffff08 inset;
+}
+.yhub-welcome {
+  position: relative; overflow: hidden;
+  min-height: 252px; border-radius: var(--yhub-radius-lg); padding: 28px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.yhub-welcome::after {
+  content: ''; position: absolute; width: 320px; height: 320px;
+  right: -90px; top: -160px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, var(--accentSoft), transparent 68%);
+}
+.yhub-kicker { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.yhub-welcome h1 { margin: 9px 0 7px; max-width: 820px; font-size: clamp(30px, 4.5vw, 58px); line-height: .98; letter-spacing: -.045em; }
+.yhub-welcome p { max-width: 62ch; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.yhub-welcome__actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 19px; }
+.yhub-btn {
+  min-height: 42px; border: 1px solid var(--line); border-radius: 12px;
+  padding: 0 14px; background: var(--raised); color: var(--text); font: inherit;
+  font-weight: 650; cursor: pointer;
+}
+.yhub-btn.primary { background: var(--accent); border-color: transparent; color: var(--accentText); }
+.yhub-btn.ghost { background: transparent; }
+.yhub-side { display: grid; gap: 14px; }
+.yhub-status-card { border-radius: var(--yhub-radius); padding: 17px; }
+.yhub-status-card b { display: block; margin-top: 6px; font-size: 18px; }
+.yhub-status-card small { display: block; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+.yhub-status-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.yhub-dot { width: 8px; height: 8px; border-radius: 50%; background: #65c993; box-shadow: 0 0 0 4px #65c99318; }
+
+.yhub-power { border-radius: var(--yhub-radius); margin: 24px 0 30px; padding: 16px; }
+.yhub-power__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.yhub-power__head h2 { margin: 0; font-size: 18px; }
+.yhub-power__head p { margin: 0; color: var(--muted); font-size: 11px; }
+.yhub-power__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.yhub-tool {
+  min-height: 86px; text-decoration: none; color: var(--text);
+  border: 1px solid var(--line); border-radius: 14px; padding: 13px;
+  background: var(--raised); display: flex; flex-direction: column; justify-content: space-between;
+}
+.yhub-tool:hover { border-color: var(--accentLine); }
+.yhub-tool b { font-size: 13px; }
+.yhub-tool span { color: var(--muted); font-size: 10.5px; line-height: 1.35; }
+
+/* --- profile ---------------------------------------------------------- */
+.yhub-profile-trigger {
+  position: fixed; z-index: 66; right: 18px; top: calc(16px + env(safe-area-inset-top));
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
+  padding: 0; overflow: hidden; background: var(--raised); box-shadow: 0 10px 30px #0002;
+  cursor: pointer;
+}
+.yhub-profile-trigger img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.yhub-backdrop { position: fixed; inset: 0; z-index: 180; background: #02070da8; backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+.yhub-backdrop.is-open { opacity: 1; pointer-events: auto; }
+.yhub-sheet {
+  position: fixed; z-index: 181; left: 50%; bottom: 18px; width: min(620px, calc(100% - 28px));
+  max-height: min(780px, calc(100dvh - 36px)); overflow: auto;
+  transform: translate(-50%, calc(100% + 40px)); opacity: 0;
+  border: 1px solid var(--line); border-radius: 24px; padding: 18px;
+  background: var(--bg); color: var(--text); box-shadow: var(--yhub-shadow);
+  transition: transform .32s cubic-bezier(.32,.72,0,1), opacity .2s ease;
+}
+.yhub-sheet.is-open { transform: translate(-50%, 0); opacity: 1; }
+.yhub-sheet__head { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+.yhub-sheet__head img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.yhub-sheet__head h2 { margin: 0; font-size: 19px; }
+.yhub-sheet__head p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+.yhub-close { margin-left: auto; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--raised); color: var(--text); font-size: 22px; }
+.yhub-group { padding: 14px 0; border-top: 1px solid var(--line); }
+.yhub-label { display: block; margin-bottom: 9px; color: var(--faint); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.yhub-input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--raised); color: var(--text); font: inherit; font-size: 16px; }
+.yhub-avatars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.yhub-avatar { aspect-ratio: 1; padding: 3px; border-radius: 50%; border: 2px solid transparent; background: transparent; }
+.yhub-avatar[aria-pressed='true'] { border-color: var(--accent); }
+.yhub-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.yhub-options { display: flex; gap: 7px; flex-wrap: wrap; }
+.yhub-option { border: 1px solid var(--line); background: var(--raised); color: var(--muted); border-radius: 999px; min-height: 38px; padding: 0 12px; }
+.yhub-option[aria-pressed='true'] { color: var(--accentText); border-color: transparent; background: var(--accent); }
+.yhub-note { margin-top: 8px; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+
+/* --- reader deck ------------------------------------------------------ */
+.yhub-reader-trigger {
+  position: fixed; z-index: 120; right: calc(16px + env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom));
+  min-height: 44px; padding: 0 14px; border: 1px solid #ffffff24; border-radius: 999px;
+  background: #0b0e13d9; color: #f5f6f8; backdrop-filter: blur(14px); box-shadow: 0 12px 36px #0008;
+  display: flex; align-items: center; gap: 8px; font-weight: 700;
+}
+.yhub-reader-trigger svg { width: 18px; height: 18px; color: var(--accent); }
+.yhub-reader-panel {
+  position: fixed; z-index: 170; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom));
+  width: min(590px, calc(100% - 20px)); max-height: min(72dvh, 670px); overflow: auto;
+  transform: translate(-50%, calc(100% + 30px)); opacity: 0;
+  border: 1px solid #ffffff1d; border-radius: 24px; padding: 14px;
+  color: #f5f6f8; background: #0b0e13f2; backdrop-filter: blur(20px); box-shadow: 0 24px 70px #000a;
+  transition: transform .32s cubic-bezier(.32,.72,0,1), opacity .2s ease;
+}
+.yhub-reader-panel.is-open { transform: translate(-50%,0); opacity: 1; }
+.yhub-reader-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.yhub-reader-head b { font-size: 14px; }
+.yhub-reader-head small { display:block; color:#ffffff8e; margin-top:2px; font-size:10px; }
+.yhub-reader-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.yhub-reader-preset { min-height:58px; border:1px solid #ffffff16; border-radius:13px; background:#ffffff0b; color:#ffffffa8; }
+.yhub-reader-preset[aria-pressed='true'] { background:var(--accent); color:var(--accentText); border-color:transparent; }
+.yhub-reader-preset b { display:block; font-size:12px; }
+.yhub-reader-preset span { display:block; font-size:9px; margin-top:3px; opacity:.8; }
+.yhub-reader-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-top:9px; }
+.yhub-reader-control { min-height:58px; border:1px solid #ffffff16; border-radius:12px; background:#ffffff09; color:#f5f6f8; font-size:10px; padding:8px 5px; }
+.yhub-reader-control b { display:block; font-size:15px; margin-bottom:4px; }
+.yhub-reader-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 3px 2px; font-size:11px; color:#ffffffbd; }
+.yhub-toggle { width:42px; height:24px; padding:3px; border:0; border-radius:999px; background:#ffffff24; }
+.yhub-toggle::after { content:''; display:block; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .2s ease; }
+.yhub-toggle[aria-pressed='true'] { background:var(--accent); }
+.yhub-toggle[aria-pressed='true']::after { transform:translateX(18px); }
+.yhub-reader-advanced { margin-top:10px; padding-top:10px; border-top:1px solid #ffffff13; display:none; }
+.yhub-reader-panel.is-advanced .yhub-reader-advanced { display:block; }
+.yhub-range { width:100%; accent-color:var(--accent); }
+
+/* Reader preferences are intentionally CSS-safe. The JS also emits an event
+   for the compiled reader to consume when/if that bridge is wired later. */
+html[data-yhub-reader-bg='paper'] body:has(.reader-root),
+html[data-yhub-reader-bg='paper'] .reader-root { background:#eee9df !important; }
+html[data-yhub-reader-bg='gray'] body:has(.reader-root),
+html[data-yhub-reader-bg='gray'] .reader-root { background:#24272c !important; }
+html[data-yhub-reader-bg='black'] body:has(.reader-root),
+html[data-yhub-reader-bg='black'] .reader-root { background:#000 !important; }
+html[data-yhub-reader] .reader-page,
+html[data-yhub-reader] .reader-page-wrap { margin-bottom: var(--yhub-reader-gap) !important; }
+
+/* --- onboarding polish, preserving its logic ------------------------- */
+body.yhub-start .ob-hero { padding-top: 22px; }
+body.yhub-start .ob-hero .yhub-onboard-lockup { margin-top: 12px; transform: scale(1.08); }
+body.yhub-start .pane { max-width: 620px; width: 100%; margin-inline: auto; }
+
+/* --- responsive ------------------------------------------------------ */
+@media (max-width: 1100px) {
+  .yhub-power__grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 767px) {
+  .yhub-home { grid-template-columns: 1fr; margin-top: 0; }
+  .yhub-welcome { min-height: 210px; padding: 20px; border-radius: 20px; }
+  .yhub-welcome h1 { font-size: 34px; }
+  .yhub-side { grid-template-columns: 1fr 1fr; }
+  .yhub-status-card { padding: 13px; }
+  .yhub-power { padding: 13px; margin-top: 20px; }
+  .yhub-power__grid { display:flex; overflow-x:auto; margin-right:-13px; padding-right:13px; scroll-snap-type:x mandatory; }
+  .yhub-tool { min-width: 172px; scroll-snap-align:start; }
+  .yhub-profile-trigger { top: calc(11px + env(safe-area-inset-top)); right: 12px; width: 38px; height: 38px; }
+  .yhub-sheet { width:100%; max-height:88dvh; bottom:0; border-radius:24px 24px 0 0; padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
+  .yhub-avatars { gap:5px; }
+  .yhub-reader-grid { grid-template-columns:repeat(5,1fr); }
+  .yhub-reader-control { font-size:9px; padding-inline:3px; }
+}
+
+/* A short landscape phone has no room for a bottom sheet. It becomes a
+   right-side tool rail and leaves the artwork wide. */
+@media (max-height: 560px) and (orientation: landscape) {
+  .yhub-reader-trigger { right:calc(12px + env(safe-area-inset-right)); bottom:12px; }
+  .yhub-reader-panel {
+    left:auto; right:calc(8px + env(safe-area-inset-right)); top:calc(8px + env(safe-area-inset-top)); bottom:8px;
+    width:min(330px, 44vw); max-height:none; transform:translateX(calc(100% + 30px)); border-radius:18px;
+  }
+  .yhub-reader-panel.is-open { transform:translateX(0); }
+  .yhub-reader-presets { grid-template-columns:1fr; }
+  .yhub-reader-preset { min-height:42px; text-align:left; padding:0 10px; }
+  .yhub-reader-preset span { display:inline; margin-left:5px; }
+  .yhub-reader-grid { grid-template-columns:repeat(2,1fr); }
+  .yhub-reader-control { min-height:44px; }
+  .yhub-reader-head { position:sticky; top:-14px; padding:14px 0 8px; margin-top:-14px; background:#0b0e13f2; z-index:2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yhub-splash, .yhub-sheet, .yhub-reader-panel { transition:none; }
+}
