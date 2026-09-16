@@ -2,6 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <script>
+  /* Get out of the way if this is not a first run.
+   *
+   * /start only ever wrote the "setup happened" flag; nothing here read it.
+   * So landing on this URL showed the flow to anybody, including somebody
+   * fully signed in -- they would skip it and find their library exactly
+   * where they left it, which is the tell.
+   *
+   * Landing here is easier than it sounds. iOS bookmarks the page you were
+   * looking at when you tapped Add to Home Screen, so an icon added while
+   * this screen was open opens this screen on every launch, for good. The
+   * redirect on / is careful about who it sends here; this end was not
+   * careful about who it accepted.
+   *
+   * Same evidence the redirect uses: the flag, a library, or a pairing. In
+   * <head> and before anything paints, so there is no flash of onboarding on
+   * the way past. #redo re-runs it on purpose, which is also how to test it.
+   */
+  (() => {
+    if (location.hash === '#redo' || location.search.includes('redo')) return;
+    try {
+      const done = localStorage.getItem('yomu.v1.setupDone');
+      const paired = localStorage.getItem('yomu.v1.sync');
+      let titles = 0;
+      const raw = localStorage.getItem('yomu.v1.collection');
+      if (raw) {
+        const c = JSON.parse(raw);
+        titles = Array.isArray(c && c.library) ? c.library.length : 0;
+      }
+      if (done || paired || titles) location.replace('/');
+    } catch {}
+  })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
