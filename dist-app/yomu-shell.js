@@ -3160,12 +3160,91 @@
     return lines;
   }
 
+  /* ------------------------------------------------------------------ *
+   * The pack, and who is allowed to hear which line
+   *
+   * yomu-greetings.js carries a thousand lines, each stamped with a tone, a
+   * time of day, and -- where it leans on a genre -- a gate. The gate is the
+   * point: "Junior, you dare?" is a good morning to somebody three hundred
+   * chapters into a cultivation manhwa and gibberish to somebody reading
+   * Romance is Crazy. 707 of the lines name no genre at all and go to
+   * everybody; the other 293 wait until the shelf says they will land.
+   *
+   * Evidence is thin on purpose. Yomu stores no genre metadata -- not on the
+   * library entry, not in the reading index -- and asking a server what
+   * somebody reads is the one thing this app promises it does not do. So the
+   * titles are all there is, read for keywords. That is crude, and it fails
+   * in the safe direction: no match means the genre-free pool is the whole
+   * pool, which is exactly what a romance shelf should be getting.
+   * ------------------------------------------------------------------ */
+
+  const TITLE_LEX = {
+    c: /(cultivat|martial|immortal|daoist|murim|heavenly|nano machine|sword|apotheosis|demon|sect)/i,
+    s: /(solo leveling|system|s-rank|hunter|dungeon|player|status|awaken|skill|leveling)/i,
+    t: /(tower|climb)/i,
+    r: /(regress|return|reincarnat|second life|rewind)/i,
+  };
+
+  /** Which genre gates the shelf opens. */
+  function readerGenres() {
+    const found = new Set();
+    const titles = library().map((t) => t && t.title)
+      .concat(continueItems().map((t) => t.title))
+      .filter(Boolean);
+    for (const title of titles) {
+      for (const key in TITLE_LEX) if (TITLE_LEX[key].test(title)) found.add(key);
+    }
+    return found;
+  }
+
+  function timeBucket() {
+    const hour = new Date().getHours();
+    if (hour < 5) return 'l';
+    if (hour < 12) return 'm';
+    if (hour < 18) return 'a';
+    if (hour < 22) return 'e';
+    return 'l';
+  }
+
+  function packLines() {
+    const pack = window.YOMU_GREETINGS;
+    if (!pack || !Array.isArray(pack.lines)) return [];
+    const now = timeBucket();
+    const genres = readerGenres();
+    // Nothing read yet means nothing known, so nothing is assumed: the pack's
+    // own note asks for neutral on a cold start, and a sarcastic line does
+    // land badly on somebody's first morning.
+    const cold = !continueItems().length;
+    const out = [];
+    for (const row of pack.lines) {
+      const text = row[0], tone = row[1], time = row[2], gate = row[3];
+      if (time !== now) continue;
+      if (cold && tone !== 'n' && tone !== 'f') continue;
+      if (gate) {
+        let ok = true;
+        for (const g of gate) if (!genres.has(g)) { ok = false; break; }
+        if (!ok) continue;
+      }
+      out.push(text);
+    }
+    return out;
+  }
+
   // One pick, held for the life of the page.
   let greetingChoice = null;
   function greeting() {
     if (greetingChoice === null) {
-      const lines = greetingLines();
-      greetingChoice = lines[Math.floor(Math.random() * lines.length)] || clockLine();
+      // greetingLines()[0] is the clock, which the pack already says better.
+      const personal = greetingLines().slice(1);
+      const pack = packLines();
+      const pick = (a) => a[Math.floor(Math.random() * a.length)];
+      // The pack has the voice, the personal lines have the memory. Roughly
+      // one greeting in three remembers what you were reading -- often enough
+      // to feel seen, rare enough that it is not a progress readout.
+      let choice = null;
+      if (personal.length && (!pack.length || Math.random() < 0.34)) choice = pick(personal);
+      else if (pack.length) choice = pick(pack);
+      greetingChoice = choice || clockLine();
     }
     return greetingChoice;
   }
@@ -3266,9 +3345,39 @@
     mountImmersiveToggle();
   };
 
+  /* ------------------------------------------------------------------ *
+   * Why pass() waits for a frame
+   *
+   * This file is deferred ahead of the Expo bundle, so it runs first and its
+   * observer is watching by the time React starts hydrating the prerendered
+   * markup. Everything pass() decorates -- .g-app, the masthead, the dock --
+   * is inside #root, which is React's tree. Firing pass() straight from the
+   * observer therefore rewrites nodes React is in the middle of adopting,
+   * and React gives up on the whole tree: minified error #418, "the server
+   * rendered HTML didn't match the client".
+   *
+   * On most pages that is invisible. React recovers by discarding the server
+   * markup and rendering everything client-side, and the only trace is the
+   * error itself. /sources is the page where it shows: its list starts life
+   * as the prerendered "Loading your sources..." box, and when hydration
+   * dies before the effect that replaces it ever runs, the box is what stays
+   * on screen. That was the spinner that never stopped -- nothing to do with
+   * Source Fabric, which had not begun its own work yet.
+   *
+   * A frame is all it takes. Hydration finishes inside its own task, so a
+   * pass deferred to the next animation frame always lands after it, and a
+   * burst of mutations collapses into one call instead of one per node.
+   * ------------------------------------------------------------------ */
+  let passQueued = false;
+  const schedulePass = () => {
+    if (passQueued) return;
+    passQueued = true;
+    requestAnimationFrame(() => { passQueued = false; pass(); });
+  };
+
   const mount = () => {
     if (!document.getElementById(ID)) document.body.append(build());
-    pass();
+    schedulePass();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
@@ -3276,7 +3385,7 @@
 
   // The grid mounts as results arrive, so new tiles need tagging as they land.
   // Cheap: tagCompleted only looks at tiles it has not already marked.
-  new MutationObserver(pass).observe(document.documentElement, {
+  new MutationObserver(schedulePass).observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
