@@ -3285,7 +3285,18 @@
     const existing = document.getElementById(GREET_ID);
 
     if (!masthead || !onHome()) {
-      if (existing) { existing.remove(); document.documentElement.removeAttribute('data-yomu-greet'); }
+      /* Clearing the flag was conditional on the node, and the node is the
+         part that does not survive. React rebuilds the masthead on a route
+         change, so by the time this runs on /library the greeting is already
+         gone and `existing` is null -- which skipped the removeAttribute and
+         left data-yomu-greet='on' set for the rest of the session. The
+         stylesheet hides .yomu-lockup and .yomu-logo off that flag, so the
+         wordmark disappeared from every screen except home, with nothing
+         standing in for it. Hard-loading the same URL looked fine, which is
+         what made it read as a dark-mode bug rather than a navigation one.
+         The flag is cleared whether or not there is a node left to remove. */
+      if (existing) existing.remove();
+      document.documentElement.removeAttribute('data-yomu-greet');
       return;
     }
 

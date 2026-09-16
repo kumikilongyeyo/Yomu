@@ -180,6 +180,37 @@
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Copy that sits on artwork
+ *
+ * The hero and the tile both moved their copy on top of the picture, over a
+ * dark gradient. What neither did was say what colour that copy is, so it
+ * kept taking the theme's ink -- and once Paper became the default, every
+ * tile title on the home grid turned #1e1b16 over a cover's own dark foot
+ * and simply vanished. The ground under this text is dark in both themes,
+ * so the text is light in both themes. It is not a theme colour; it is the
+ * colour that works on a photograph.
+ *
+ * The shadow is for the other half of the problem: a cover that is bright
+ * right where the title lands. The gradient carries most of it, and this
+ * carries the rest.
+ * ------------------------------------------------------------------ */
+.tile-card__title,
+.hero__title {
+  color: #fff;
+  text-shadow: 0 1px 3px #0b131bb3;
+}
+.tile-card__source,
+.tile-card__chapter,
+.hero__line {
+  color: #ffffffd1;
+  text-shadow: 0 1px 2px #0b131b99;
+}
+.hero__kicker {
+  color: #ffffffbd;
+  text-shadow: 0 1px 2px #0b131b99;
+}
+
 /* The tile becomes the cover, with everything laid over it. */
 .tile-card {
   position: relative;
@@ -256,6 +287,38 @@
 @media (max-width: 767px) {
   /* "Keep a 44px interactive hit target on mobile." */
   .tile-card__save { width: 44px; height: 44px; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Library: the shelf grid
+ *
+ * .shelf-grid lays out four equal columns, and then nothing filled them.
+ * .title-card is a <button>, so it kept the user agent's inline-block and
+ * shrank to fit its own contents -- which is the title text. "Solo Leveling"
+ * got a 100px cover and "That Time I Got Reincarnated as a Slime" got the
+ * full 229px, side by side in one row, each with its title at a different
+ * height. That is the ragged line the library reads as.
+ *
+ * Filling the column is the whole fix. The cover then takes 2:3 rather than
+ * the compiled 3/4, so a shelf and the home grid show the same shape of
+ * cover and background-size: cover stops cropping the art to a letterbox.
+ * ------------------------------------------------------------------ */
+.shelf-grid .title-card {
+  display: block;
+  width: 100%;
+}
+.shelf-grid .title-art {
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+}
+/* Equal columns only help if the rows line up too: the tile fills its cell
+   and the copy sits under a cover of the same height in every one. */
+.shelf-grid .tile {
+  display: flex;
+  flex-direction: column;
+}
+.shelf-grid .title-info {
+  padding-top: 10px;
 }
 
 /* ------------------------------------------------------------------ *

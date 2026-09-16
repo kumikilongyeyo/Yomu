@@ -190,13 +190,18 @@
     .row .val { flex: none; font: 500 12.5px/1 ui-monospace, Menlo, monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
     .row.dim { opacity: .58; }
 
-    .sw { position: relative; flex: none; width: 50px; height: 30px; padding: 0; border: 0; border-radius: 999px; cursor: pointer; background: var(--m-fill-hi, #ffffff14); transition: background .3s var(--ease); }
+    /* The off state is a track you can see. --m-fill-hi is white at 8% and is
+       not defined on this page anyway, so on Paper the switch was a white
+       knob floating on a white card with nothing to say it was a control.
+       --raised is the token that is light-grey on Paper and lifted on Aurora,
+       which is what an unfilled track wants in both. */
+    .sw { position: relative; flex: none; width: 50px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; background: var(--raised); transition: background .3s var(--ease), border-color .3s var(--ease); }
     .sw::after {
       content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px;
       border-radius: 50%; background: #fff; box-shadow: 0 3px 7px #0000003d;
       transition: transform .34s var(--ease), width .2s var(--ease);
     }
-    .sw[aria-checked="true"] { background: var(--accent); }
+    .sw[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
     .sw[aria-checked="true"]::after { transform: translateX(20px); }
     .sw:active::after { width: 30px; }
     .sw[aria-checked="true"]:active::after { transform: translateX(16px); }
@@ -213,8 +218,30 @@
     }
     .btn:active { transform: scale(.975); }
     .btn:disabled { opacity: .4; cursor: not-allowed; }
-    .btn.quiet { background: var(--m-fill-hi, #ffffff14); color: var(--muted); }
+    .btn.quiet { background: var(--raised); color: var(--text); border: 1px solid var(--line); }
     .btn.plain { background: transparent; color: var(--faint); padding-inline: 6px; }
+
+    /* almost done */
+    .paste { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
+    .paste .field { flex: 1; min-width: 0; margin-top: 0; }
+    .paste .btn { flex: none; white-space: nowrap; }
+
+    /* A card that is holding a sentence rather than rows. */
+    .pad { padding: 14px 15px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+    .pad b { display: block; margin-bottom: 3px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .pad code { font: 500 12px/1 ui-monospace, Menlo, monospace; color: var(--text); }
+
+    /* The state dot on a row carries a colour rather than just a label, so a
+       list of ten reads at a glance. Amber is working, not failed. */
+    .state.ok i   { background: #46d39a; }
+    .state.bad i  { background: var(--warn, #e0684f); }
+    .state.work i { background: var(--accent); animation: pulse 1.1s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+
+    /* Rows that arrive after the pane did -- the pack, the bridge, a tested
+       URL -- fade in where they land instead of re-running the stagger the
+       pane already played. */
+    .row.late { animation: rise .3s var(--out) both; }
 
     .done { text-align: center; padding: 22px 6px 6px; }
     .done .mark { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 16px; background: #46d39a; color: #06281c; display: grid; place-items: center; font-size: 28px; font-weight: 700; }
@@ -273,6 +300,7 @@
     @media (prefers-reduced-motion: reduce) {
       * { transition-duration: .01ms !important; }
       .pane, .preset, .kind, .row, .mark { animation: none; opacity: 1; transform: none; }
+      .state.work i { animation: none; }
       .tally.bump { animation: none; }
       .lane, .reelMask:not([hidden]) { animation: none; }
       .cta::after { animation: none; display: none; }
@@ -295,7 +323,7 @@
          thinking. Sprite and cadence come from yomu-skin.css. -->
     <div class="ob-hero"><span class="yomu-loader" style="--s:96px" role="img" aria-label="Yomu"></span></div>
     <h1>Welcome to <span class="yword ob-word" aria-hidden="true"><span style="--i:0">Y</span><span style="--i:1">o</span><span style="--i:2">m</span><span style="--i:3">u</span></span><span class="sr">Yomu</span></h1>
-    <p class="blurb">A reading room for everything your sources carry. Four short steps and one that matters.</p>
+    <p class="blurb">A reading room for everything your sources carry. A few short steps and one that matters.</p>
     <div class="acts">
       <button class="btn" type="button" data-go="1">Get started</button>
       <a class="btn plain" href="/">Preview without setting up</a>
@@ -351,19 +379,52 @@
     <p class="gtitle">Ready to go <b id="onCount">0 on</b></p>
     <div class="card" id="sourceList"></div>
 
-    <p class="gtitle">Add more later</p>
-    <div class="card" id="extraList"></div>
-
     <p class="blurb" id="finishNote" hidden style="color:var(--warn)">Turn at least one source on — Yomu has nothing to read without one.</p>
     <div class="acts">
       <button class="btn plain" type="button" data-go="3">Back</button>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="toExtras" data-go="5">Continue</button>
+    </div>
+  </section>
+
+  <!-- 6 · almost done: the pack and the bridge, inside the flow
+       ------------------------------------------------------------------
+       Both of these used to be an "Open" link on the step before, pointing
+       at /sources and /suwayomi-setup.html in a new tab. Neither of those
+       pages knows it was opened from setup, so neither has a way back --
+       you added a source and then sat on a page with no Done and no
+       onboarding to return to. The flow simply ended there.
+
+       So they are here instead, as the last step rather than a detour, and
+       nothing they collect is written until Finish. Everything on this
+       screen is optional; the sources that are not optional were the step
+       before. -->
+  <section class="pane" id="pane-5" hidden>
+    <h1>Almost done</h1>
+    <p class="blurb">Just this and you are good to go. Two more places to read from, both optional — Finish works whether you add any of them or not.</p>
+
+    <p class="gtitle">Community Pack <b id="packState">Loading…</b></p>
+    <div class="card" id="packList"></div>
+
+    <p class="blurb" style="margin:12px 2px 0;font-size:12.5px">Reading somewhere that is not on the list? Paste the address and Source Fabric will try to build a reader for it.</p>
+    <div class="paste">
+      <input class="field" id="fabricUrl" placeholder="example.com" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" aria-label="Site address" />
+      <button class="btn quiet" type="button" id="fabricGo">Try it</button>
+    </div>
+    <div class="card" id="fabricList" hidden style="margin-top:10px"></div>
+
+    <p class="gtitle">Mihon bridge <b id="bridgeState">Checking…</b></p>
+    <div class="card" id="bridgeCard"></div>
+
+    <div class="acts">
+      <button class="btn plain" type="button" data-go="4">Back</button>
       <span class="grow"></span>
       <button class="btn" type="button" id="finish">Finish</button>
     </div>
   </section>
 
   <!-- done -->
-  <section class="pane" id="pane-5" hidden>
+  <section class="pane" id="pane-6" hidden>
     <div class="done">
       <div class="mark" aria-hidden="true">&#10003;</div>
       <h1 style="margin-bottom:8px">Your shelves are full</h1>
@@ -403,6 +464,13 @@
  */
 (() => {
   'use strict';
+
+  /* Paper unless this device already said otherwise, which is what every
+     other page outside the app shell does. Onboarding is usually somebody's
+     first screen and has no choice to honour -- but /start is reachable
+     again afterwards, and coming back to a white flash after picking Aurora
+     is the app forgetting something it was told. */
+  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}
 
   const COLLECTION = 'yomu.v1.collection';
   const ACCENT = 'yomu.v1.accent';
@@ -485,7 +553,8 @@
   ];
 
   const TITLES = ['Welcome', 'Pick a reader', 'What should we call you?',
-                  'What do you want to see first?', 'Add your first source', 'All set'];
+                  'What do you want to see first?', 'Add your first source',
+                  'Almost done', 'All set'];
 
   let step = 0;
   let name = '';
@@ -651,43 +720,6 @@
       list.append(row);
     });
 
-    /* Source Fabric is named here on purpose. It is the thing that adds a
-       source this list has never heard of, and burying it is the one
-       instruction the handoff calls out by name. */
-    const extra = $('extraList');
-    extra.textContent = '';
-    [
-      { label: 'Source Fabric', note: 'Paste any site and Yomu will try to read it', href: '/sources' },
-      { label: 'Mihon bridge', note: 'Opens 8–12 more sources from your own server', href: '/suwayomi-setup.html' },
-      { label: 'Comick', note: 'Finds titles but serves no chapters, by design', state: 'Discovery only' },
-    ].forEach((item) => {
-      const row = document.createElement('div');
-      row.className = 'row' + (item.state ? ' dim' : '');
-      const rc = document.createElement('div');
-      rc.className = 'rc';
-      const strong = document.createElement('strong'); strong.textContent = item.label;
-      const small = document.createElement('small'); small.textContent = item.note;
-      rc.append(strong, small);
-      row.append(rc);
-      if (item.state) {
-        const s = document.createElement('span');
-        s.className = 'state';
-        s.append(document.createElement('i'), document.createTextNode(item.state));
-        row.append(s);
-      } else {
-        const a = document.createElement('a');
-        a.className = 'btn quiet';
-        a.style.padding = '9px 14px';
-        a.href = item.href;
-        // A new tab, because setup is not saved until Finish: following this
-        // in place threw the flow away and left you back at step one.
-        a.target = '_blank';
-        a.rel = 'noopener';
-        a.textContent = 'Open';
-        row.append(a);
-      }
-      extra.append(row);
-    });
   }
 
   /* The number rolls to its new value instead of cutting.
@@ -744,7 +776,9 @@
         : 'source' + (on.length === 1 ? '' : 's') + ' on — none of them publishes a total';
 
     $('onCount').textContent = on.length + ' on';
-    $('finish').disabled = on.length === 0;
+    // The gate the handoff asks for, moved onto Continue: the sources step is
+    // still the one you cannot leave empty, it is just no longer the last one.
+    $('toExtras').disabled = on.length === 0;
     // A disabled button with no reason beside it reads as a broken one.
     $('finishNote').hidden = on.length > 0;
     $('doneLine').textContent = counted
@@ -758,16 +792,22 @@
        from the left, so the flow has a direction you can feel. */
     const back = next < step;
     step = next;
-    [0, 1, 2, 3, 4, 5].forEach((i) => { $('pane-' + i).hidden = i !== step; });
+    [0, 1, 2, 3, 4, 5, 6].forEach((i) => { $('pane-' + i).hidden = i !== step; });
     const pane = $('pane-' + step);
     pane.classList.toggle('back', back);
     pane.style.animation = 'none';
     void pane.offsetWidth;
     pane.style.animation = '';
     document.title = 'Yomu · ' + TITLES[step];
-    $('track').style.width = Math.round((step / 5) * 100) + '%';
-    $('crumbNow').textContent = step < 5 ? 'Step ' + (step + 1) : 'Done';
-    $('crumbOf').textContent = step < 5 ? 'of 5' : '';
+    $('track').style.width = Math.round((step / 6) * 100) + '%';
+    $('crumbNow').textContent = step < 6 ? 'Step ' + (step + 1) : 'Done';
+    $('crumbOf').textContent = step < 6 ? 'of 6' : '';
+
+    /* Both lists are a network call, and both are fetched on arrival rather
+       than at boot: somebody who finishes on the sources step never needed
+       either of them, and warming them at boot would spend a phone's first
+       two requests on a screen half of people will skip. Once only. */
+    if (step === 5) { loadPack(); loadBridge(); }
 
     /* The count lives on this pane, and boot ran its roll behind `hidden`,
        so arriving here meant meeting a number that was simply already there.
@@ -789,28 +829,424 @@
   document.querySelectorAll('[data-go]').forEach((b) =>
     b.addEventListener('click', () => go(Number(b.dataset.go))));
 
+  /* ---- almost done: the pack and the bridge ------------------------------ *
+   *
+   * Nothing on this step writes anything. Every switch here stages a source
+   * object in one of three maps, and Finish -- the same Finish that was
+   * already the only writer -- merges them with the picks from the step
+   * before into a single revision. That is what makes Back harmless and what
+   * makes leaving halfway through leave nothing behind.
+   *
+   * It is also why the two things that used to be "Open" links can live here
+   * at all: /sources and /suwayomi-setup.html each write on their own, in
+   * their own tab, with no idea a setup flow is waiting for them.
+   * ------------------------------------------------------------------------ */
+
+  const packOn = new Map();     // yomuext-*  -> source, from the registry
+  const fabricOn = new Map();   // yomuext-*  -> source, from a pasted address
+  const bridgeOn = new Map();   // family     -> source, from the bridge
+
+  const adultOK = () => { try { return localStorage.getItem('yomu.v1.adult') === 'on'; } catch { return false; } };
+  const sentence = (list) => list.map((x, i) => (i ? String(x).toLowerCase() : String(x)[0].toUpperCase() + String(x).slice(1))).join(', ');
+
+  /* A card holding a sentence rather than rows -- every state where there is
+     nothing to switch on still says why, because a card that is simply empty
+     reads as a screen that failed to load. */
+  function pad(title, body) {
+    const box = document.createElement('div');
+    box.className = 'pad';
+    const b = document.createElement('b');
+    b.textContent = title;
+    box.append(b, document.createTextNode(body));
+    return box;
+  }
+
+  function rowOf(label, note, late) {
+    const row = document.createElement('div');
+    row.className = 'row' + (late ? ' late' : '');
+    const rc = document.createElement('div');
+    rc.className = 'rc';
+    const strong = document.createElement('strong'); strong.textContent = label;
+    const small = document.createElement('small'); small.textContent = note;
+    rc.append(strong, small);
+    row.append(rc);
+    return row;
+  }
+
+  function switchOf(label, on, toggled) {
+    const sw = document.createElement('button');
+    sw.type = 'button';
+    sw.className = 'sw';
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-checked', String(on));
+    sw.setAttribute('aria-label', label);
+    sw.addEventListener('click', () => {
+      const next = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', String(next));
+      toggled(next);
+    });
+    return sw;
+  }
+
+  function stateOf(text, kind) {
+    const el = document.createElement('span');
+    el.className = 'state' + (kind ? ' ' + kind : '');
+    el.append(document.createElement('i'), document.createTextNode(text));
+    return el;
+  }
+
+  /* ---- the community pack ------------------------------------------------ *
+   *
+   * Read off /api/ext/sources rather than written out again here. The step
+   * before carries six by hand because it has to say something specific
+   * about each one; this asks the registry what else exists and offers the
+   * difference, so an extension added to the repo next week turns up in
+   * onboarding without this file being touched.
+   * ------------------------------------------------------------------------ */
+  let packDone = false;
+  async function loadPack() {
+    if (packDone) return;
+    packDone = true;
+
+    const box = $('packList');
+    const state = $('packState');
+
+    let list = [];
+    let failed = false;
+    try {
+      const r = await fetch('/api/ext/sources', { cache: 'no-store' });
+      const d = r.ok ? await r.json() : null;
+      list = d && Array.isArray(d.extensions) ? d.extensions : [];
+    } catch { failed = true; }
+
+    box.textContent = '';
+
+    if (failed) {
+      state.textContent = '';
+      box.append(pad('Could not reach the pack',
+        'The list of extra sources did not load. It is not needed to finish — Settings → Sources has the same list whenever you want it.'));
+      return;
+    }
+
+    const already = new Set(SOURCES.map((x) => x.id));
+    const rows = list
+      .filter((e) => e && e.id && e.name)
+      .filter((e) => !already.has('yomuext-' + e.id))
+      .filter((e) => adultOK() || !e.nsfw);
+
+    if (!rows.length) {
+      state.textContent = '';
+      box.append(pad('Nothing new right now',
+        'The pack currently holds the same sources the last step offered. Anything added to it later shows up here.'));
+      return;
+    }
+
+    state.textContent = rows.length + ' more';
+
+    rows.forEach((e, i) => {
+      const caps = e.capabilities || {};
+      // Finding a title it cannot then open is the one failure worth naming
+      // on the row rather than discovering three taps later.
+      const readable = !!(caps.chapters && caps.pages);
+      const note = readable
+        ? sentence(e.content || []) || 'Comics'
+        : 'Finds titles, serves no chapters';
+
+      const row = rowOf(e.name, note, true);
+      row.style.setProperty('--i', String(i));
+
+      if (!readable) {
+        row.classList.add('dim');
+        row.append(stateOf('Discovery only'));
+      } else {
+        const id = 'yomuext-' + e.id;
+        let api = String(e.api || '').trim();
+        if (!api) api = ORIGIN + '/api/ext/source/' + encodeURIComponent(e.id) + '/';
+        else if (api.startsWith('/')) api = ORIGIN + api;
+        if (!api.endsWith('/')) api += '/';
+
+        const src = {
+          id,
+          label: e.name,
+          category: e.runtime ? 'Source Fabric' : 'Yomu Extensions',
+          kind: 'api',
+          url: api,
+          ...(e.runtime ? { runtime: e.runtime } : {}),
+          ...(e.engine ? { engine: e.engine } : {}),
+        };
+        row.append(switchOf(e.name, false, (on) => {
+          if (on) packOn.set(id, src); else packOn.delete(id);
+        }));
+      }
+      box.append(row);
+    });
+  }
+
+  /* ---- a pasted address -------------------------------------------------- *
+   *
+   * The same two calls /sources makes: resolve builds an adapter, then the
+   * adapter's own catalogue is read once to prove it returns titles. A source
+   * that resolves but serves nothing is worse than no source, because it
+   * fails later, on a screen that is supposed to be a library.
+   * ------------------------------------------------------------------------ */
+  function cleanUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) throw new Error('Type an address first.');
+    let u;
+    try { u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'https://' + raw); }
+    catch { throw new Error('That does not look like a web address.'); }
+    if (!/^https?:$/.test(u.protocol) || u.username || u.password) throw new Error('Use a normal http or https address.');
+    /* URL is forgiving about hosts -- "not a url at all" parses, with the
+       spaces percent-encoded -- and the resolver then spends a round trip
+       saying so. A hostname is letters, digits, dots and dashes, and has a
+       dot in it. Everything else is answered here, immediately. */
+    if (!/^[a-z0-9.-]+$/i.test(u.hostname) || !u.hostname.includes('.')) {
+      throw new Error('That does not look like a web address.');
+    }
+    u.hash = '';
+    return u.toString();
+  }
+
+  async function tryFabric() {
+    const input = $('fabricUrl');
+    const go = $('fabricGo');
+    const box = $('fabricList');
+
+    let target;
+    try { target = cleanUrl(input.value); }
+    catch (err) {
+      box.hidden = false;
+      box.textContent = '';
+      box.append(pad('That is not an address', err.message));
+      return;
+    }
+
+    const host = new URL(target).hostname.replace(/^www\./, '');
+    box.hidden = false;
+    box.textContent = '';
+    const row = rowOf(host, 'Looking for a reader…', true);
+    const state = stateOf('Working', 'work');
+    row.append(state);
+    box.append(row);
+
+    go.disabled = true;
+    input.disabled = true;
+
+    let badge = state;
+    const say = (note, text, kind) => {
+      row.querySelector('small').textContent = note;
+      const next = stateOf(text, kind);
+      badge.replaceWith(next);
+      badge = next;
+    };
+
+    try {
+      const r = await fetch('/api/fabric/resolve', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: target }),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(45000),
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(out.error || ('The server answered ' + r.status + '.'));
+      if (!out.ready || !out.adapter) throw new Error(String(out.message || 'Yomu could not prove a complete reader path.'));
+
+      const ext = out.adapter;
+      if (!adultOK() && (ext.nsfw || (ext.content || []).some((x) => String(x).toLowerCase() === 'adult'))) {
+        say('Hidden by your 18+ setting', 'Hidden', 'bad');
+        return;
+      }
+
+      let api = String(ext.api || '').trim();
+      if (!api) api = ORIGIN + '/api/ext/source/' + encodeURIComponent(ext.id) + '/';
+      else if (api.startsWith('/')) api = ORIGIN + api;
+      if (!api.endsWith('/')) api += '/';
+
+      row.querySelector('small').textContent = (ext.name || host) + ' · checking its catalogue…';
+      const probe = await fetch(api + 'series', { cache: 'no-store', signal: AbortSignal.timeout(25000) });
+      const body = probe.ok ? await probe.json().catch(() => null) : null;
+      if (!body || !Array.isArray(body.series) || !body.series.length) {
+        throw new Error('The reader built, but the site returned no titles.');
+      }
+
+      const id = 'yomuext-' + ext.id;
+      fabricOn.set(id, {
+        id,
+        label: ext.name || host,
+        category: 'Source Fabric',
+        kind: 'api',
+        url: api,
+        ...(ext.runtime ? { runtime: ext.runtime } : {}),
+        ...(ext.engine ? { engine: ext.engine } : {}),
+      });
+
+      row.querySelector('strong').textContent = ext.name || host;
+      say(body.series.length + ' titles read · on at Finish', 'Ready', 'ok');
+      input.value = '';
+    } catch (err) {
+      const msg = err && err.name === 'TimeoutError'
+        ? 'The site took too long to answer.'
+        : (err && err.message) || 'That did not work.';
+      say(msg, /browser|challenge|cloudflare/i.test(msg) ? 'Needs a browser' : 'No reader', 'bad');
+    } finally {
+      go.disabled = false;
+      input.disabled = false;
+    }
+  }
+
+  /* ---- the Mihon bridge -------------------------------------------------- *
+   *
+   * Suwayomi lists one row per extension and language -- ninety-odd of them,
+   * forty of which are one source in forty languages. Collapsed to the family
+   * and shown in English, which is what the setup page does and the only
+   * shape that fits on a setup step.
+   * ------------------------------------------------------------------------ */
+  let bridgeDone = false;
+  async function loadBridge() {
+    if (bridgeDone) return;
+    bridgeDone = true;
+
+    const card = $('bridgeCard');
+    const state = $('bridgeState');
+    card.textContent = '';
+
+    /* The body is the answer even when the status line is not: a bridge that
+       is configured and not responding comes back 502 with exactly the shape
+       this needs. Reading it only on r.ok reported that as "not set up",
+       which is the one thing it definitely is not. */
+    let status = null;
+    try {
+      const r = await fetch('/api/suwayomi/status', { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+      status = await r.json().catch(() => null);
+    } catch {}
+
+    const server = status && (status.server || (Array.isArray(status.servers) ? status.servers[0] : ''));
+
+    if (!status || !status.configured) {
+      state.textContent = 'Not set up';
+      card.append(pad('No bridge on this Yomu',
+        'A bridge is a Mihon or Suwayomi server of your own, which Yomu reads the way it reads anything else. There is nothing to do here until one is connected, and the sources you already picked work without it.'));
+      return;
+    }
+
+    if (!status.reachable) {
+      state.textContent = 'Offline';
+      card.append(pad('Set up, but not answering',
+        (server ? server + ' is configured and is not responding. ' : 'The server is configured and is not responding. ')
+        + 'Settings → Sources can pick this up again once it is running. Nothing here is holding up Finish.'));
+      return;
+    }
+
+    let sources = [];
+    try {
+      const r = await fetch('/api/suwayomi/sources', { cache: 'no-store', signal: AbortSignal.timeout(25000) });
+      const d = r.ok ? await r.json() : null;
+      if (d && d.error) throw new Error(d.error);
+      sources = (d && Array.isArray(d.sources)) ? d.sources : [];
+    } catch {
+      state.textContent = 'Offline';
+      card.append(pad('Connected, but the list failed',
+        'The bridge answered and then its source list did not. Settings → Sources will try again whenever you are ready.'));
+      return;
+    }
+
+    const familyOf = (x) => String(x.displayName || x.name || ('Source ' + x.id)).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const normalise = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
+    // MIXED only means the source carries a range of ratings; treating it as
+    // adult is what used to hide Weeb Central and Comick, which are the whole
+    // reason somebody runs a bridge.
+    const isAdult = (x) => /nsfw|adult|explicit|porn/i.test(String(x.contentWarning || ''));
+
+    const byFamily = new Map();
+    for (const x of sources) {
+      if (String(x.id) === '0') continue;       // the server's own disk
+      const key = familyOf(x);
+      let f = byFamily.get(key);
+      if (!f) { f = { family: key, variants: [], adult: false }; byFamily.set(key, f); }
+      f.variants.push({ id: String(x.id), lang: String(x.lang || '??') });
+      f.adult = f.adult || isAdult(x);
+    }
+
+    const mine = new Set(SOURCES.map((x) => x.label).map(normalise));
+    const families = [...byFamily.values()]
+      .filter((f) => adultOK() || !f.adult)
+      .filter((f) => f.variants.some((v) => v.lang === 'en'))
+      // Something already on the list above would be a second copy of a
+      // source that is already working, which is not what this is for.
+      .filter((f) => !mine.has(normalise(f.family)))
+      .sort((a, b) => a.family.localeCompare(b.family));
+
+    if (!families.length) {
+      state.textContent = 'Connected';
+      card.append(pad('Nothing to add',
+        'The bridge is answering, and everything it carries in English is already on your list.'));
+      return;
+    }
+
+    state.textContent = families.length + ' available';
+
+    families.forEach((f, i) => {
+      const en = f.variants.find((v) => v.lang === 'en');
+      const langs = f.variants.length > 1 ? f.variants.length + ' languages, English here' : 'English';
+      const row = rowOf(f.family, 'From your server · ' + langs, true);
+      row.style.setProperty('--i', String(i));
+      row.append(switchOf(f.family, false, (on) => {
+        if (!on) { bridgeOn.delete(f.family); return; }
+        bridgeOn.set(f.family, {
+          id: 'mihon-' + en.id,
+          label: f.family,
+          category: 'Mihon / Suwayomi',
+          kind: 'api',
+          url: ORIGIN + '/api/suwayomi/source/' + encodeURIComponent(en.id) + '/',
+        });
+      }));
+      card.append(row);
+    });
+  }
+
+  $('fabricGo').addEventListener('click', tryFabric);
+  $('fabricUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); tryFabric(); } });
+
   /* ---- writing it down --------------------------------------------------- */
   $('finish').addEventListener('click', () => {
     const on = SOURCES.filter((s) => s.on);
-    // Cannot happen while the button is disabled, but a stuck screen with no
+    // Cannot happen while Continue is gated, but a stuck screen with no
     // reason given is the worst way to find out otherwise.
-    if (!on.length) { $('finishNote').hidden = false; return; }
+    if (!on.length) { go(4); $('finishNote').hidden = false; return; }
+
+    /* One write, four sources of truth: the six on the step before, the pack,
+       anything Source Fabric built from a pasted address, and the bridge.
+       Later entries win on id collision, which only matters if the registry
+       and a pasted URL resolve to the same extension -- and then the pasted
+       one is the one that was just proven to return titles. */
+    const wanted = new Map();
+    for (const src of on) wanted.set(src.id, src);
+    for (const [id, src] of packOn) wanted.set(id, src);
+    for (const [id, src] of fabricOn) wanted.set(id, src);
+    for (const src of bridgeOn.values()) wanted.set(src.id, src);
 
     // The collection's own shape. Anything already there is kept and simply
     // switched on or off, so re-running setup never destroys a source that
     // was added by hand.
     const collection = readJSON(COLLECTION, null) || { revision: 0, sources: [], library: [], progress: {} };
     const existing = Array.isArray(collection.sources) ? collection.sources : [];
-    const wanted = new Map(on.map((s) => [s.id, s]));
 
     const merged = existing.map((s) =>
-      wanted.has(s.id) ? { ...s, enabled: true } : s);
+      wanted.has(s.id) ? { ...s, ...wanted.get(s.id), enabled: true } : s);
     for (const [id, src] of wanted) {
       if (merged.some((s) => s.id === id)) continue;
-      merged.push({ id, label: src.label, category: src.category, kind: src.kind, url: src.url, enabled: true });
+      merged.push({ ...src, id, enabled: true });
     }
 
     writeJSON(COLLECTION, { ...collection, revision: Number(collection.revision || 0) + 1, sources: merged });
+
+    // tally() wrote this line off the sources step alone, before the pack and
+    // the bridge had a say. Say what was actually switched on.
+    const total = wanted.size;
+    const extra = total - on.length;
+    $('doneLine').textContent = total + ' source' + (total === 1 ? '' : 's') + ' ready'
+      + (extra ? ', ' + extra + ' of them added on the last step' : '') + '.';
 
     if (toneId) { try { localStorage.setItem(ACCENT, toneId); } catch {} }
     if (name) writeJSON(CIRCLE, { ...(readJSON(CIRCLE, {}) || {}), name });
@@ -820,8 +1256,8 @@
     if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
     try { localStorage.setItem(DONE, '1'); } catch {}
 
-    go(5);
-    showReel(on);
+    go(6);
+    showReel([...wanted.values()]);
   });
 
   /**
