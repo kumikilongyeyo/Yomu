@@ -8,14 +8,16 @@ import {
   handleRecipeRuntime,
   recipeStatus,
 } from './recipe-adaptive';
+import { upgradeWithRemoteRecipe } from './recipe-runtime-broker-v75';
 
 /**
- * Yomu production entrypoint v7.4 — Recipe Adaptive.
+ * Yomu production entrypoint v7.5 — Recipe Engine.
  *
- * v6 remains the adaptive rollback floor. v7.4 adds a maintained-recipe layer
- * before browser fallback: Keiyoushi source recipes are classified, compiled
- * into bounded Worker-native hints, gauntleted, and exposed only when Yomu can
- * prove catalog -> issues/chapters -> reader pages.
+ * v6 remains the adaptive rollback floor and v7.4 remains the Worker-native
+ * recipe compiler. v7.5 adds the missing execution tier: maintained recipes
+ * can be compiled and gauntleted through Yomu Source Runtime when Cloudflare
+ * egress cannot execute the site directly. Upstream recipes that explicitly
+ * require WebView/browser state are reported as Browser instead of Skipped.
  */
 async function injectV7Ui(response: Response): Promise<Response> {
   if (!response.ok) return response;
@@ -31,7 +33,7 @@ async function injectV7Ui(response: Response): Promise<Response> {
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-entrypoint', 'v7.4');
+  headers.set('x-yomu-entrypoint', 'v7.5');
   return new Response(html, { status: response.status, headers });
 }
 
@@ -43,25 +45,25 @@ async function normalizeFederationResponse(response: Response): Promise<Response
 
   if (payload.route === 'store-federation' && payload.federation?.runtimeBrokerConfigured) {
     payload.message = payload.federation?.best?.name
-      ? `${payload.federation.best.name} has a maintained implementation and the remote runtime broker is connected, but that implementation did not pass the full reader gauntlet. Recipe Adaptive will keep using safe Worker fallbacks when available.`
-      : 'The remote runtime broker is connected, but no federated implementation passed the full reader gauntlet. Recipe Adaptive will keep using safe Worker fallbacks when available.';
-    payload.runtimeBroker = 'connected-source-not-ready';
+      ? `${payload.federation.best.name} has a maintained implementation. Recipe Engine will try the Worker first and the remote compiled-recipe runtime when the Worker cannot execute it.`
+      : 'The remote compiled-recipe runtime is connected; Recipe Engine will use it when Worker execution is not sufficient.';
+    payload.runtimeBroker = 'connected';
   } else if (payload.route === 'store-federation') {
     payload.runtimeBroker = 'not-configured';
   }
 
   payload.fabric = {
     ...(payload.fabric ?? {}),
-    version: '7.4',
-    generation: 'Recipe Adaptive',
+    version: '7.5',
+    generation: 'Recipe Engine',
   };
 
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('content-type', 'application/json; charset=utf-8');
-  headers.set('x-yomu-entrypoint', 'v7.4');
-  headers.set('x-yomu-source-fabric', '7.4');
+  headers.set('x-yomu-entrypoint', 'v7.5');
+  headers.set('x-yomu-source-fabric', '7.5');
   return new Response(JSON.stringify(payload), { status: response.status, headers });
 }
 
@@ -69,8 +71,9 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // Maintained-name lookup lets Source Pack accept names such as
-    // "Read Comics Online" without pretending those names are hostnames.
+    // Maintained-name lookup accepts human extension names and, in v7.5,
+    // falls back directly to the Keiyoushi source repository when indexes omit
+    // the source URL.
     if (url.pathname === '/api/fabric/stores/search') {
       return handleStoreNameSearch(request, env, url);
     }
@@ -82,7 +85,15 @@ export default {
           headers: { 'content-type': 'application/json; charset=utf-8' },
         });
       }
-      return new Response(JSON.stringify({ ok: true, ...recipeStatus() }), {
+      return new Response(JSON.stringify({
+        ok: true,
+        ...recipeStatus(),
+        publicVersion: '7.5',
+        generation: 'Recipe Engine',
+        sourceRepositoryFallback: true,
+        remoteCompiledRecipeRuntime: true,
+        browserOutcomeDetection: true,
+      }), {
         headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
       });
     }
@@ -114,11 +125,20 @@ export default {
         handleFabric(fabricRequest, env, url),
       );
 
-      return normalizeFederationResponse(await handleRecipeAwareResolve(
+      const workerRecipe = handleRecipeAwareResolve(
         bodyText,
         env,
         url,
         federated,
+      );
+
+      // v7.5 is deliberately outermost: a successful Worker/native adapter
+      // wins immediately; otherwise the remote runtime gets one final chance to
+      // execute the maintained recipe with real browser CSS selectors.
+      return normalizeFederationResponse(await upgradeWithRemoteRecipe(
+        bodyText,
+        env,
+        workerRecipe,
       ));
     }
 
