@@ -2,9 +2,9 @@
   'use strict';
   if (!location.pathname.startsWith('/sources')) return;
 
-  const FALLBACK = '7.4';
+  const FALLBACK = '7.5';
   const MAX_SMART_INPUTS = 25;
-  let label = `Source Fabric · v${FALLBACK} · Recipe Adaptive`;
+  let label = `Source Fabric · v${FALLBACK} · Recipe Engine`;
 
   function apply() {
     const kicker = document.querySelector('#yomu-source-fabric-command .sf-kicker');
