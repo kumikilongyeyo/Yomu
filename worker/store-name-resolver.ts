@@ -3,6 +3,26 @@ import type { Env } from './index';
 const UA = 'Mozilla/5.0 (compatible; Yomu-Store-Name-Resolver/7.5; +https://yomu.yomuread.workers.dev)';
 const KEIYOUSHI_SOURCE_ROOT = 'https://raw.githubusercontent.com/keiyoushi/extensions-source/main/src';
 
+// Keiyoushi folder slugs are not always the compact display name. Keep this
+// deliberately small and structural: it only bridges maintained source names
+// to their upstream GitHub recipe folder. The recipe itself still decides the
+// real base URL and Yomu still runs the full reader gauntlet before enabling it.
+const SOURCE_REPO_ALIASES: Record<string, string[]> = {
+  readallcomics: ['readallcomicscom'],
+  hiveworks: ['hiveworks'],
+  hiveworkscomics: ['hiveworks'],
+  tapas: ['tapastic'],
+  tapastic: ['tapastic'],
+  webtoon: ['webtoons'],
+  webtoons: ['webtoons'],
+  webtoonscom: ['webtoons'],
+  comicfury: ['comicfury'],
+  comicskingdom: ['comicskingdom'],
+  globalcomix: ['globalcomix'],
+  killsixbilliondemons: ['killsixbilliondemons'],
+  peppercarrot: ['peppercarrot'],
+};
+
 const STORES = [
   {
     id: 'mihon-keiyoushi',
@@ -165,12 +185,16 @@ function parseStore(store: StoreDefinition, document: any, query: string): Candi
 
 function directSlugs(query: string): string[] {
   const q = compact(query);
-  const rows = [q];
+  const rows = [q, ...(SOURCE_REPO_ALIASES[q] || [])];
   if (q.endsWith('s')) rows.push(q.slice(0, -1));
   else rows.push(`${q}s`);
   if (q.endsWith('comics')) rows.push(q.replace(/comics$/, 'comic'));
   if (q.endsWith('comic')) rows.push(`${q}s`);
-  return [...new Set(rows.filter((x) => x.length >= 3))].slice(0, 5);
+
+  // Source folders sometimes keep the TLD in their slug (readallcomicscom,
+  // bato.to-style names, etc.). These guesses are cheap raw-GitHub 404 probes.
+  rows.push(`${q}com`, `${q}net`, `${q}org`, `${q}io`);
+  return [...new Set(rows.filter((x) => x.length >= 3))].slice(0, 12);
 }
 
 async function directKeiyoushiCandidates(query: string): Promise<Candidate[]> {
