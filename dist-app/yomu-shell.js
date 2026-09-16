@@ -68,6 +68,46 @@
   })();
 
   /* ------------------------------------------------------------------ *
+   * Ask the browser to keep this
+   *
+   * Every durable thing Yomu owns -- the library, where you are in it, your
+   * name, the fact that you have been set up at all -- is localStorage, and
+   * localStorage is evictable by default. Safari clears script-writable
+   * storage for an origin it has not seen in a while, and an installed web
+   * app gets swept the same way when the device is short of room.
+   *
+   * When that happens nothing looks broken. The first-run check below reads
+   * an empty jar, correctly concludes this is a new install, and marches
+   * somebody who set Yomu up months ago through setup again. That is the
+   * exact failure it was written to avoid, arriving through the one door it
+   * cannot see.
+   *
+   * navigator.storage.persist() is the ask that stops it. There is no prompt
+   * in Safari or Chrome -- the answer is decided on how much the browser
+   * thinks this origin is used -- so it costs nothing to ask on every load
+   * until the answer is yes, and asking is worth more once there is
+   * something here to lose, which is also when engagement heuristics are
+   * most likely to grant it.
+   * ------------------------------------------------------------------ */
+  (() => {
+    const store = navigator.storage;
+    if (!store || typeof store.persist !== 'function' || typeof store.persisted !== 'function') return;
+
+    let worthKeeping = false;
+    try {
+      const collection = JSON.parse(localStorage.getItem('yomu.v1.collection') || 'null');
+      worthKeeping = !!localStorage.getItem('yomu.v1.setupDone')
+        || !!localStorage.getItem('yomu.v1.sync')
+        || (Array.isArray(collection?.library) && collection.library.length > 0);
+    } catch { return; }
+    if (!worthKeeping) return;
+
+    store.persisted()
+      .then((already) => (already ? null : store.persist()))
+      .catch(() => {});
+  })();
+
+  /* ------------------------------------------------------------------ *
    * First run
    *
    * A brand new install lands on a home page with nothing on it, which is a

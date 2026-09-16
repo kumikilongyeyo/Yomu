@@ -394,7 +394,7 @@
       <button class="btn" type="button" data-go="1">Get started</button>
       <button class="btn quiet" type="button" id="toLogin">I already have Yomu</button>
     </div>
-    <p class="blurb" style="margin:14px auto 0;font-size:12.5px"><a class="plainlink" href="/">Or look around without setting anything up</a></p>
+    <p class="blurb" style="margin:14px auto 0;font-size:12.5px"><a class="plainlink" id="toPreview" href="/">Or look around without setting anything up</a></p>
   </section>
 
   <!-- 2 · who -->
@@ -1824,6 +1824,14 @@
   // through the back button has still seen it, and showing it again on the
   // next launch would be the flow nagging.
   addEventListener('pagehide', () => { try { localStorage.setItem(DONE, '1'); } catch {} });
+
+  /* And written on the click as well, not only on the way out. pagehide is
+     not guaranteed on iOS -- a Home Screen app killed from the switcher can
+     skip it -- and the cost of missing it is the whole flow again on the next
+     launch, for somebody who has already said they do not want it. */
+  $('toPreview').addEventListener('click', () => {
+    try { localStorage.setItem(DONE, '1'); } catch {}
+  });
 
   /* ---- boot -------------------------------------------------------------- */
   const saved = localStorage.getItem(ACCENT) || '';
