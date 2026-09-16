@@ -70,6 +70,28 @@ export interface DeviceEntry {
 }
 
 /**
+ * Who the reader is, as far as the greeting needs to know.
+ *
+ * The name and nothing else identifying: pairing restored somebody's shelf
+ * and their place in it and then called them "Reader", which is the one part
+ * of the app that is supposed to know them.
+ *
+ * `avatar` is a preset id -- one of the five illustrated readers -- and never
+ * a photo. Your Yomu tells people in as many words that a photo of their own
+ * "stays on this device ... never uploaded to Yomu or shared with your
+ * circle", and a promise printed on the screen is not something a sync
+ * feature gets to quietly revise. A photo is downscaled to a 256px data URL
+ * and would be the largest thing in this document by an order of magnitude
+ * anyway.
+ */
+export interface ProfileEntry {
+  name?: string;
+  /** A preset avatar id, e.g. "04_undead_knight_reader". Never a photo. */
+  avatar?: string;
+  updatedAt: number;
+}
+
+/**
  * Enough to rebuild a source row on a device that has never seen it.
  *
  * An id alone is not enough, which is the trap: a fresh install's source list
@@ -107,6 +129,8 @@ export interface SyncDoc {
   devices: Record<string, DeviceEntry>;
   /** Opt-in, and off unless a device says otherwise. */
   searchHistory?: string[];
+  /** Last writer wins, by its own clock. One name per library. */
+  profile?: ProfileEntry;
 }
 
 /** What a client sends up. Every field optional: a device that has not loaded
@@ -117,6 +141,7 @@ export interface SyncPatch {
   progress?: ProgressEntry[];
   sources?: SourceEntry[];
   searchHistory?: string[];
+  profile?: ProfileEntry;
   /** Turning the setting off: drop what is stored rather than just stopping.
    *  An opt-in that leaves the old data behind was never really opt-in. */
   forgetSearchHistory?: boolean;
@@ -346,6 +371,49 @@ export function mergeSources(
 }
 
 /** Apply one device's patch to the document. Returns a new document. */
+/**
+ * Newest clock wins, per field.
+ *
+ * Per field rather than wholesale because the two are set in different places
+ * and a device can legitimately know one and not the other: a client that
+ * sends only a name must not blank an avatar another device chose. An absent
+ * field in the newer patch leaves the older value standing; an empty string
+ * is how you clear one on purpose.
+ */
+export function mergeProfile(
+  a: ProfileEntry | undefined,
+  b: ProfileEntry | undefined,
+  now: number,
+): ProfileEntry | undefined {
+  if (!b) return a;
+  const next: ProfileEntry = { updatedAt: Number(b.updatedAt) || now };
+  const older = a && (Number(a.updatedAt) || 0) > next.updatedAt ? b : a;
+  const newer = older === a ? b : a;
+
+  /* Validation happens while choosing, not after it. Rejecting the newer
+     value and then stopping would drop the field entirely -- so a client that
+     sent a photo where a preset belongs would not merely fail to set one, it
+     would delete the preset already there. Fall through to the older value
+     instead. An empty string still passes, because clearing on purpose is a
+     thing somebody is allowed to do. */
+  const pick = (field: 'name' | 'avatar', ok: (value: string) => boolean) => {
+    for (const source of [newer, older]) {
+      const value = source && source[field];
+      if (typeof value === 'string' && ok(value)) return value;
+    }
+    return undefined;
+  };
+
+  const name = pick('name', () => true);
+  // A preset id, not a data URL: anything else is somebody's photo taking a
+  // route it was promised it would not take.
+  const avatar = pick('avatar', (value) => /^[a-z0-9_-]{0,64}$/i.test(value));
+  if (typeof name === 'string') next.name = name.slice(0, 40);
+  if (typeof avatar === 'string') next.avatar = avatar;
+  next.updatedAt = Math.max(Number(a?.updatedAt) || 0, Number(b.updatedAt) || now);
+  return next;
+}
+
 export function applyPatch(doc: SyncDoc, patch: SyncPatch, now: number): SyncDoc {
   const removed = mergeRemovals(doc.removed, patch.removed, now);
   const library = mergeLibrary(doc.library, patch.library, removed, now);
@@ -366,6 +434,7 @@ export function applyPatch(doc: SyncDoc, patch: SyncPatch, now: number): SyncDoc
     removed,
     progress,
     sources: mergeSources(doc.sources, patch.sources, now),
+    ...(patch.profile ? { profile: mergeProfile(doc.profile, patch.profile, now) } : {}),
     // Absent means "this device is not sharing", which must not erase what
     // another device shares -- so only an explicit forget clears it.
     ...(patch.forgetSearchHistory

@@ -301,6 +301,14 @@
         linear-gradient(var(--accent), var(--accent)) 100% 100% / 2px 22px no-repeat;
     }
 
+    /* The honorific, when the name is already saying who you are. */
+    .aka {
+      display: inline-block; vertical-align: middle; margin-left: 8px;
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--accentSoft); color: var(--accent);
+      font-size: 12.5px; font-weight: 600; letter-spacing: .01em;
+    }
+
     .done { text-align: center; padding: 22px 6px 6px; }
     .done .mark { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 16px; background: #46d39a; color: #06281c; display: grid; place-items: center; font-size: 28px; font-weight: 700; }
 
@@ -1639,6 +1647,31 @@
     try { localStorage.setItem(DONE, '1'); } catch {}
     if (!localStorage.getItem(SINCE)) { try { localStorage.setItem(SINCE, String(Date.now())); } catch {} }
 
+    /* The name and the face travel with the library now, so a device signing
+       in is not meeting you for the first time. Written before the greeting
+       is composed, and stamped into the sync state so the next push does not
+       immediately send them back as if this device had just decided them. */
+    const profile = doc.profile || null;
+    if (profile && typeof profile.name === 'string' && profile.name.trim()) {
+      writeJSON(CIRCLE, { ...(readJSON(CIRCLE, {}) || {}), name: profile.name.trim() });
+    }
+    if (profile && typeof profile.avatar === 'string' && profile.avatar) {
+      writeJSON(AVATAR_KEY, { kind: 'preset', id: profile.avatar });
+    }
+    if (profile && profile.updatedAt) {
+      /* profileSig as well as profileAt: yomu-sync.js only pushes a profile
+         when it differs from the last one acknowledged, and an unset
+         signature reads as "never sent". Without this, the first push after
+         signing in re-announces the name it just received, with a newer
+         clock, as though this device had decided it. */
+      const sync = readJSON(SYNC, {}) || {};
+      writeJSON(SYNC, {
+        ...sync,
+        profileAt: Number(profile.updatedAt) || 0,
+        profileSig: String(profile.name || '') + '\u0000' + String(profile.avatar || ''),
+      });
+    }
+
     const titles = incoming.map((x) => x && x.title).filter(Boolean);
     const called = honorific(titles);
     const known = readJSON(CIRCLE, null);
@@ -1653,9 +1686,17 @@
     $('top').hidden = true;
     document.title = 'Yomu · Welcome back';
     $('doneMark').textContent = '✓';
-    $('doneTitle').textContent = called
-      ? 'Welcome back, ' + called
-      : (name ? 'Welcome back, ' + name : 'Welcome back');
+    /* The name is yours and the honorific is a guess at a genre, so the name
+       leads when there is one and the guess rides along behind it. */
+    $('doneTitle').textContent = name
+      ? 'Welcome back, ' + name
+      : (called ? 'Welcome back, ' + called : 'Welcome back');
+    if (name && called) {
+      const aka = document.createElement('span');
+      aka.className = 'aka';
+      aka.textContent = called;
+      $('doneTitle').append(document.createTextNode(' '), aka);
+    }
     $('doneLine').textContent = incoming.length
       ? fmt(incoming.length) + ' title' + (incoming.length === 1 ? '' : 's') + ' and where you were in them, back on this device.'
       : 'This device is paired. Anything you save will be on your others too.';

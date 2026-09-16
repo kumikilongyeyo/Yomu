@@ -46,6 +46,8 @@
   const HISTORY_KEY = 'yomu.v1.searchHistory';
   const HISTORY_MAX = 8;
   const READING_KEY = 'yomu.v1.reading';
+  const CIRCLE_KEY = 'yomu.v1.circle';
+  const AVATAR_KEY = 'yomu.v1.avatar';
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
 
   /** Never less than this between writes. KV's budget is a thousand a day. */
@@ -211,7 +213,79 @@
     return pending;
   }
 
+  /* --- who the reader is -------------------------------------------------- *
+   *
+   * Pairing restored somebody's shelf and their place in it and then greeted
+   * them as "Reader", which is the one part of the app that is supposed to
+   * know them. The name travels now.
+   *
+   * The avatar travels only when it is one of the five presets. Your Yomu
+   * tells people in as many words that a photo of their own "stays on this
+   * device ... never uploaded to Yomu or shared with your circle", and a
+   * promise printed on a screen is not something a sync feature gets to
+   * quietly revise. It is also a 256px data URL, which would be the largest
+   * thing in the document by an order of magnitude.
+   * ------------------------------------------------------------------------ */
+  function localProfile() {
+    const circle = readJSON(CIRCLE_KEY, null);
+    const name = circle && typeof circle.name === 'string' ? circle.name.trim() : '';
+    const saved = readJSON(AVATAR_KEY, null);
+    const avatar = saved && saved.kind === 'preset' && saved.id ? String(saved.id) : '';
+    return { name, avatar };
+  }
+
+  const profileSig = (p) => p.name + '\u0000' + p.avatar;
+
+  /** Null when there is nothing to say, or nothing has changed since the last
+   *  acknowledged push -- a name is not worth a KV write a minute. */
+  function profilePatch() {
+    const mine = localProfile();
+    if (!mine.name && !mine.avatar) return null;
+    if (state().profileSig === profileSig(mine)) return null;
+    return { name: mine.name, avatar: mine.avatar, updatedAt: Date.now() };
+  }
+
+  /**
+   * Take a newer name or avatar from another device.
+   *
+   * Not folded into applyDoc's structural flag: a name changing does not mean
+   * the library did, and "Your library changed on another device" over a
+   * renamed greeting would be a lie. The masthead re-reads the name every
+   * pass anyway, so it lands without a reload.
+   */
+  function applyProfile(doc) {
+    const incoming = doc && doc.profile;
+    if (!incoming) return;
+    const at = Number(incoming.updatedAt) || 0;
+    if (at <= (Number(state().profileAt) || 0)) return;
+
+    const mine = localProfile();
+    let changed = false;
+
+    if (typeof incoming.name === 'string' && incoming.name && incoming.name !== mine.name) {
+      writeJSON(CIRCLE_KEY, { ...(readJSON(CIRCLE_KEY, {}) || {}), name: incoming.name });
+      changed = true;
+    }
+
+    if (typeof incoming.avatar === 'string' && incoming.avatar && incoming.avatar !== mine.avatar) {
+      const saved = readJSON(AVATAR_KEY, null);
+      // A photo here outranks a preset from elsewhere. The photo never syncs,
+      // so the other device cannot know there is one to replace -- and
+      // replacing it would be this feature destroying the thing it promised
+      // not to touch.
+      if (!(saved && saved.kind === 'photo')) {
+        writeJSON(AVATAR_KEY, { kind: 'preset', id: incoming.avatar });
+        changed = true;
+      }
+    }
+
+    // Stamped even when nothing changed, so an already-matching profile is not
+    // re-examined on every pull.
+    setState({ profileAt: at, ...(changed ? { profileSig: profileSig(localProfile()) } : {}) });
+  }
+
   function buildPatch() {
+    const profile = profilePatch();
     const c = collection();
     const library = libraryOf(c);
     const stamps = stampLibrary(library);
@@ -229,6 +303,7 @@
         .filter((s) => s && s.enabled && s.id)
         .map((s) => ({ id: s.id, label: s.label, category: s.category, kind: s.kind, url: s.url })),
       progress: progressPatch(),
+      ...(profile ? { profile } : {}),
       ...(sharingSearches()
         ? { searchHistory: readJSON(HISTORY_KEY, []) || [] }
         // Sent once on the way out, so turning the setting off removes what is
@@ -422,7 +497,11 @@
       // noticing it and pushing it loses the delete.
       const stillPending = (state().removed || []).filter((k) => !patch.removed.includes(k));
       setState({ lastPush: Date.now(), removed: stillPending,
+        ...(patch.profile
+          ? { profileSig: profileSig(localProfile()), profileAt: patch.profile.updatedAt }
+          : {}),
         ...(patch.forgetSearchHistory ? { forgetSearches: false } : {}) });
+      applyProfile(doc);
       if (applyDoc(doc)) announce();
       renderGroup();
     } catch (error) {
@@ -446,6 +525,7 @@
     if (!linked()) return;
     try {
       const doc = await api('pull', { code: state().code });
+      applyProfile(doc);
       if (applyDoc(doc)) announce();
       renderGroup();
     } catch { /* offline is the normal case, not an error worth saying */ }
@@ -785,6 +865,7 @@
         const doc = await api('join', { code: field.value, deviceName: deviceName() });
         setState({ code: doc.code, deviceId: doc.deviceId, addedAt: {}, seen: [], removed: [], error: null });
         devices = doc.devices || [];
+        applyProfile(doc);
         applyDoc(doc);
         closeSheet();
         renderGroup();
@@ -876,6 +957,7 @@
   // Read by /join.html, which finishes a redeem and then hands over.
   globalThis.__yomuSyncAdopt = (doc, deviceId) => {
     setState({ code: doc.code, deviceId, addedAt: {}, seen: [], removed: [], error: null });
+    applyProfile(doc);
     applyDoc(doc);
   };
 })();
