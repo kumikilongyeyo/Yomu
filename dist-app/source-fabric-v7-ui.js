@@ -2,9 +2,9 @@
   'use strict';
   if (!location.pathname.startsWith('/sources')) return;
 
-  const FALLBACK = '7.3';
+  const FALLBACK = '7.4';
   const MAX_SMART_INPUTS = 25;
-  let label = `Source Fabric · v${FALLBACK} · Beast Adaptive`;
+  let label = `Source Fabric · v${FALLBACK} · Recipe Adaptive`;
 
   function apply() {
     const kicker = document.querySelector('#yomu-source-fabric-command .sf-kicker');
@@ -117,11 +117,13 @@
         if (row.resolvedBy !== 'url') namesResolved += 1;
       }
 
+      const originalInput = textarea.value;
       textarea.value = urls.join('\n');
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
       run.disabled = false;
 
       if (!urls.length) {
+        textarea.value = originalInput;
         if (summary) summary.textContent = `No maintained source names could be resolved. ${unresolved.join(', ')}`;
         return;
       }
@@ -132,9 +134,16 @@
           : `${namesResolved} maintained source name${namesResolved === 1 ? '' : 's'} resolved · testing real site URLs…`;
       }
 
-      // Re-enter the original Source Pack runner with canonical URLs only.
+      // The old bulk runner still consumes canonical URLs. Feed those to it
+      // synchronously, then restore what the user actually pasted so the UI
+      // does not appear to mutate their source names.
       run.dataset.yomuSmartBypass = '1';
-      try { run.click(); } finally { delete run.dataset.yomuSmartBypass; }
+      try {
+        run.click();
+        textarea.value = originalInput;
+      } finally {
+        delete run.dataset.yomuSmartBypass;
+      }
     }, true);
 
     return true;
