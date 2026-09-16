@@ -1,6 +1,7 @@
 import type { Env } from './index';
 
-const UA = 'Mozilla/5.0 (compatible; Yomu-Store-Name-Resolver/7.3; +https://yomu.yomuread.workers.dev)';
+const UA = 'Mozilla/5.0 (compatible; Yomu-Store-Name-Resolver/7.5; +https://yomu.yomuread.workers.dev)';
+const KEIYOUSHI_SOURCE_ROOT = 'https://raw.githubusercontent.com/keiyoushi/extensions-source/main/src';
 
 const STORES = [
   {
@@ -8,7 +9,7 @@ const STORES = [
     name: 'Keiyoushi',
     ecosystem: 'mihon',
     url: 'https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json',
-    sourceRoot: 'https://raw.githubusercontent.com/keiyoushi/extensions-source/main/src',
+    sourceRoot: KEIYOUSHI_SOURCE_ROOT,
   },
   {
     id: 'mihon-yuzono',
@@ -44,6 +45,9 @@ type Candidate = {
   artifact?: string;
   score: number;
   sourceRoot?: string;
+  theme?: string;
+  version?: number;
+  discoveredBy?: string;
 };
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
@@ -99,6 +103,25 @@ async function fetchJson(url: string): Promise<any> {
   return response.json();
 }
 
+async function fetchText(url: string, timeout = 8_000): Promise<string> {
+  const response = await fetch(url, {
+    headers: { accept: 'text/plain,*/*;q=0.5', 'user-agent': UA },
+    signal: AbortSignal.timeout(timeout),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.text();
+}
+
+function parseBuild(text: string) {
+  return {
+    name: text.match(/\bname\s*=\s*["']([^"']+)["']/)?.[1] || '',
+    baseUrl: normalizeBaseUrl(text.match(/\bbaseUrl\s*=\s*["'](https?:\/\/[^"']+)["']/)?.[1]),
+    language: text.match(/\blang\s*=\s*["']([^"']+)["']/)?.[1] || undefined,
+    theme: text.match(/\btheme\s*=\s*["']([^"']+)["']/)?.[1] || undefined,
+    version: Number(text.match(/\bversionCode\s*=\s*(\d+)/)?.[1] || 1),
+  };
+}
+
 function parseStore(store: StoreDefinition, document: any, query: string): Candidate[] {
   const rows = Array.isArray(document)
     ? document
@@ -133,9 +156,55 @@ function parseStore(store: StoreDefinition, document: any, query: string): Candi
         artifact,
         score,
         sourceRoot: 'sourceRoot' in store ? store.sourceRoot : undefined,
+        discoveredBy: 'store-index',
       });
     }
   }
+  return out;
+}
+
+function directSlugs(query: string): string[] {
+  const q = compact(query);
+  const rows = [q];
+  if (q.endsWith('s')) rows.push(q.slice(0, -1));
+  else rows.push(`${q}s`);
+  if (q.endsWith('comics')) rows.push(q.replace(/comics$/, 'comic'));
+  if (q.endsWith('comic')) rows.push(`${q}s`);
+  return [...new Set(rows.filter((x) => x.length >= 3))].slice(0, 5);
+}
+
+async function directKeiyoushiCandidates(query: string): Promise<Candidate[]> {
+  const out: Candidate[] = [];
+  const tasks: Promise<void>[] = [];
+  for (const slug of directSlugs(query)) {
+    for (const lang of ['en', 'all']) {
+      tasks.push((async () => {
+        try {
+          const buildText = await fetchText(`${KEIYOUSHI_SOURCE_ROOT}/${encodeURIComponent(lang)}/${encodeURIComponent(slug)}/build.gradle.kts`, 6_000);
+          const build = parseBuild(buildText);
+          if (!build.name || !build.baseUrl) return;
+          const score = scoreName(query, [build.name, slug]);
+          if (score < 520) return;
+          out.push({
+            storeId: 'mihon-keiyoushi',
+            storeName: 'Keiyoushi',
+            ecosystem: 'mihon',
+            name: build.name,
+            id: slug,
+            package: `keiyoushi.${lang}.${slug}`,
+            language: build.language || lang,
+            baseUrl: build.baseUrl,
+            score: Math.max(score, 990),
+            sourceRoot: KEIYOUSHI_SOURCE_ROOT,
+            theme: build.theme,
+            version: build.version,
+            discoveredBy: 'source-repository',
+          });
+        } catch {}
+      })());
+    }
+  }
+  await Promise.all(tasks);
   return out;
 }
 
@@ -148,18 +217,30 @@ async function deriveKeiyoushiBaseUrl(candidate: Candidate): Promise<string | un
   for (const slug of slugs) {
     const url = `${candidate.sourceRoot}/${encodeURIComponent(lang)}/${encodeURIComponent(slug)}/build.gradle.kts`;
     try {
-      const response = await fetch(url, {
-        headers: { accept: 'text/plain', 'user-agent': UA },
-        signal: AbortSignal.timeout(8_000),
-      });
-      if (!response.ok) continue;
-      const text = await response.text();
-      const match = text.match(/baseUrl\s*=\s*["'](https?:\/\/[^"']+)["']/i);
-      const resolved = normalizeBaseUrl(match?.[1]);
-      if (resolved) return resolved;
+      const text = await fetchText(url);
+      const build = parseBuild(text);
+      if (build.baseUrl) return build.baseUrl;
     } catch {}
   }
   return undefined;
+}
+
+function publicCandidate(row: Candidate) {
+  return {
+    storeId: row.storeId,
+    storeName: row.storeName,
+    ecosystem: row.ecosystem,
+    name: row.name,
+    id: row.id,
+    package: row.package,
+    language: row.language,
+    baseUrl: row.baseUrl,
+    artifact: row.artifact,
+    score: row.score,
+    theme: row.theme,
+    version: row.version,
+    discoveredBy: row.discoveredBy,
+  };
 }
 
 export async function handleStoreNameSearch(request: Request, _env: Env, url: URL): Promise<Response> {
@@ -167,12 +248,15 @@ export async function handleStoreNameSearch(request: Request, _env: Env, url: UR
   const query = String(url.searchParams.get('q') ?? '').trim();
   if (!query) return json({ error: 'Missing q.' }, 400);
 
-  const settled = await Promise.allSettled(STORES.map(async (store) => ({
-    store,
-    rows: parseStore(store, await fetchJson(store.url), query),
-  })));
+  const [settled, direct] = await Promise.all([
+    Promise.allSettled(STORES.map(async (store) => ({
+      store,
+      rows: parseStore(store, await fetchJson(store.url), query),
+    }))),
+    directKeiyoushiCandidates(query),
+  ]);
 
-  const candidates: Candidate[] = [];
+  const candidates: Candidate[] = [...direct];
   let storesHealthy = 0;
   for (const result of settled) {
     if (result.status !== 'fulfilled') continue;
@@ -183,42 +267,29 @@ export async function handleStoreNameSearch(request: Request, _env: Env, url: UR
   candidates.sort((a, b) => b.score - a.score || Number(Boolean(b.baseUrl)) - Number(Boolean(a.baseUrl)) || a.name.localeCompare(b.name));
 
   const enriched: Candidate[] = [];
-  for (const candidate of candidates.slice(0, 8)) {
+  for (const candidate of candidates.slice(0, 12)) {
     const baseUrl = await deriveKeiyoushiBaseUrl(candidate);
     enriched.push({ ...candidate, baseUrl });
   }
-  enriched.sort((a, b) => b.score - a.score || Number(Boolean(b.baseUrl)) - Number(Boolean(a.baseUrl)));
 
-  const best = enriched.find((row) => row.baseUrl) ?? enriched[0];
+  const seen = new Set<string>();
+  const unique = enriched.filter((row) => {
+    const key = `${row.storeId}|${compact(row.name)}|${row.baseUrl ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  unique.sort((a, b) => b.score - a.score || Number(Boolean(b.baseUrl)) - Number(Boolean(a.baseUrl)));
+
+  const best = unique.find((row) => row.baseUrl) ?? unique[0];
   return json({
     ok: true,
     query,
     storesChecked: STORES.length,
     storesHealthy,
-    found: enriched.length,
-    best: best ? {
-      storeId: best.storeId,
-      storeName: best.storeName,
-      ecosystem: best.ecosystem,
-      name: best.name,
-      id: best.id,
-      package: best.package,
-      language: best.language,
-      baseUrl: best.baseUrl,
-      artifact: best.artifact,
-      score: best.score,
-    } : null,
-    matches: enriched.slice(0, 8).map((row) => ({
-      storeId: row.storeId,
-      storeName: row.storeName,
-      ecosystem: row.ecosystem,
-      name: row.name,
-      id: row.id,
-      package: row.package,
-      language: row.language,
-      baseUrl: row.baseUrl,
-      artifact: row.artifact,
-      score: row.score,
-    })),
+    sourceRepositoryFallback: direct.length > 0,
+    found: unique.length,
+    best: best ? publicCandidate(best) : null,
+    matches: unique.slice(0, 8).map(publicCandidate),
   });
 }
