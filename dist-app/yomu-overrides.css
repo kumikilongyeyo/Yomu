@@ -1127,6 +1127,41 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Reading: one ground, not a page in a box
+ *
+ * Every page is wrapped by the bundle in a div carrying an inline
+ * `background: rgb(21,22,26)`, and that sits inside a scroll container on
+ * `rgb(11,11,14)`. Two near-blacks that do not match, so the wrapper draws a
+ * rectangle around the artwork -- a vessel with a visible edge down both
+ * sides of the page, and a thin one top and bottom between pages. It reads
+ * as a frame because it is one.
+ *
+ * The wrapper has no reason to be painted at all: the page covers it, and
+ * where the page does not reach, the scroll container is already there. Made
+ * transparent, there is exactly one continuous ground behind the whole
+ * chapter and nothing to cut against.
+ *
+ * :has(> img) keeps this to page wrappers, and !important because the colour
+ * is inline on the element -- it is the bundle's own style, not a rule.
+ * ------------------------------------------------------------------ */
+[data-testid='reader-scroll'] div:has(> img) {
+  background: transparent !important;
+}
+/* Full bleed was tried here and reverted, so nobody tries it twice: the
+   900px cap is load-bearing. The reader precomputes each row's height from
+   it -- 900 x 1145/784 = 1314, exactly the height the wrapper gets -- and the
+   image carries an inline `height: 100%; object-fit: contain`. Widen the
+   column and the box stays 1314 tall while the artwork needs 1496, so
+   `contain` letterboxes it and you get the same bars back, now with the
+   scroll positions wrong as well. */
+
+/* Pages butt together rather than leaving the ground between them on a
+   fractional device pixel: the image is the block, with nothing around it. */
+[data-testid='reader-scroll'] img {
+  vertical-align: top;
+}
+
+/* ------------------------------------------------------------------ *
  * Chapters sheet
  *
  * The sheet listed a number and a name, so every row looked like every other
