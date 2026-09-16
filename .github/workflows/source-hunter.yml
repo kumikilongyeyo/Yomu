@@ -10,6 +10,7 @@ on:
       - main
     paths:
       - 'tools/source-forge/src/hunter.js'
+      - 'tools/source-forge/src/github-recipe-hunter.js'
       - 'tools/source-forge/src/availability-policy.js'
       - 'tools/source-forge/tests/availability-policy.test.js'
       - '.github/workflows/source-hunter.yml'
@@ -36,6 +37,7 @@ jobs:
         run: |
           npm --prefix tools/source-forge run check
           node --check tools/source-forge/src/availability-policy.js
+          node --check tools/source-forge/src/github-recipe-hunter.js
       - name: Unit tests
         run: npm --prefix tools/source-forge test
 
@@ -43,7 +45,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,23 +57,37 @@ jobs:
         run: |
           cd tools/source-forge
           npx playwright install --with-deps chromium
-      - name: Hunt unseen GitHub source candidates
+      - name: Hunt unseen community candidates
         run: npm --prefix tools/source-forge run hunter -- --max 8 --fresh-days 5 --out hunter-output
       - name: Apply availability-first promotion policy
         run: node tools/source-forge/src/availability-policy.js --report hunter-output/report.json --pack hunter-output/candidate-pack.json --summary hunter-output/summary.md
-      - name: Publish Hunter summary
+      - name: Hunt maintained GitHub source recipes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/source-forge/src/github-recipe-hunter.js --max 6 --fetch-budget 40 --fresh-days 5 --out hunter-github-output
+      - name: Apply availability policy to GitHub recipe candidates
+        run: node tools/source-forge/src/availability-policy.js --report hunter-github-output/report.json --pack hunter-github-output/candidate-pack.json --summary hunter-github-output/summary.md
+      - name: Publish Hunter summaries
         if: always()
         run: |
           if [ -f hunter-output/summary.md ]; then
             cat hunter-output/summary.md >> "$GITHUB_STEP_SUMMARY"
           else
-            echo 'Hunter did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Community Hunter did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Upload Hunter report
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f hunter-github-output/summary.md ]; then
+            cat hunter-github-output/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'GitHub Recipe Hunter did not produce a summary.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload Hunter reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: yomu-hunter-report
-          path: hunter-output/
+          path: |
+            hunter-output/
+            hunter-github-output/
           if-no-files-found: warn
           retention-days: 14
