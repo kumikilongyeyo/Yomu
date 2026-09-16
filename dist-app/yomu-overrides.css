@@ -1491,6 +1491,33 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * The tag row on a title
+ *
+ * Hidden off the count button, which is the one element in this row that is
+ * not React's -- so the state cannot be wiped by a re-render, and if the
+ * button is not there the badges are all simply visible, as before.
+ * ------------------------------------------------------------------ */
+.tag-row:has(> .yomu-tagmore:not(.is-open)) > .g-badge:nth-child(n+4) {
+  display: none;
+}
+.yomu-tagmore {
+  /* The badge's own shape: it belongs to the row, not on top of it. */
+  padding: 4px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--faint);
+  font: 600 11px/1.5 inherit;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.yomu-tagmore.is-open { border-style: solid; }
+@media (hover: hover) and (pointer: fine) {
+  .yomu-tagmore:hover { color: var(--text); border-color: var(--muted); }
+}
+
+/* ------------------------------------------------------------------ *
  * The pack's line on the search screen
  * ------------------------------------------------------------------ */
 .yomu-greetline {

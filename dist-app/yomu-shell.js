@@ -2863,6 +2863,65 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * The tag row on a title, folded to its first three
+   *
+   * Open a title and its genres are a wrapped row of badges -- six for One
+   * Piece, fifteen or more for anything MangaDex carries in full -- sitting
+   * between the cover and the description, which is the part you came to
+   * read. It is the same clutter as the genre chips on home.
+   *
+   * Not the same control, though. Those chips are filters and a menu is a
+   * fine place to press one; these are labels, and a menu would be hiding
+   * information behind a click that does nothing when you get there. So the
+   * row keeps its first three and gains a +N that opens the rest in place.
+   *
+   * Nothing is written onto the badges. React owns them, and a class put on
+   * one goes with its next render; the count button is mine, so the
+   * stylesheet hides the overflow off `:has(> .yomu-tagmore:not(.is-open))`
+   * and the state lives on an element that survives.
+   * ------------------------------------------------------------------ */
+  const TAGMORE = 'yomu-tagmore';
+  /** Three reads as "what kind of thing is this"; ten reads as a list. */
+  const TAGS_SHOWN = 3;
+  let tagsOpen = false;
+
+  function foldTagRow() {
+    const row = document.querySelector('.tag-row');
+    if (!row) return;
+
+    const badges = [...row.children].filter((n) => !n.classList.contains(TAGMORE));
+    const hidden = badges.length - TAGS_SHOWN;
+    const button = row.querySelector('.' + TAGMORE);
+
+    // One badge behind a control that exists to hide one badge is worse than
+    // the badge.
+    if (hidden < 2) { button?.remove(); return; }
+
+    const label = tagsOpen ? 'Fewer' : '+' + hidden;
+
+    if (button) {
+      if (button.textContent !== label) button.textContent = label;
+      button.classList.toggle('is-open', tagsOpen);
+      if (button.parentElement === row && button === row.lastElementChild) return;
+      row.append(button);
+      return;
+    }
+
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = TAGMORE + (tagsOpen ? ' is-open' : '');
+    next.textContent = label;
+    next.setAttribute('aria-expanded', String(tagsOpen));
+    next.addEventListener('click', () => {
+      tagsOpen = !tagsOpen;
+      next.classList.toggle('is-open', tagsOpen);
+      next.setAttribute('aria-expanded', String(tagsOpen));
+      next.textContent = tagsOpen ? 'Fewer' : '+' + hidden;
+    });
+    row.append(next);
+  }
+
+  /* ------------------------------------------------------------------ *
    * A line of the pack on the search screen
    *
    * Home opens with a greeting and Search opened with nothing but its own
@@ -3686,6 +3745,7 @@
     mountChapterJump();
     mountReaderJump();
     foldGenreRow();
+    foldTagRow();
     mountSearchGreeting();
     foldSourceSwitch();
     mountKin();
