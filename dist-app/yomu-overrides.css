@@ -397,13 +397,15 @@
     -webkit-backdrop-filter: blur(20px);
   }
 
+  /* No wordmark background here. yomu-shell.js builds the lockup into this box
+     and yomu-skin.css lays it out; a wordmark painted underneath it is a second
+     Yomu overlapping the first. The light-mode rule that used to sit below this
+     one carried (0,3,0) specificity, which skin.css cancels at (0,1,0) with
+     .yomu-sidebar__brand { background: none } -- so it never won, and the
+     doubling showed in light mode only. */
   .yomu-sidebar__brand {
     height: 34px;
     margin: 0 10px 24px;
-    background: url('/brand/yomu-wordmark-ivory.svg') left center / contain no-repeat;
-  }
-  :root[data-mode='light'] .yomu-sidebar__brand {
-    background-image: url('/brand/yomu-wordmark-ink.svg');
   }
 
   .yomu-sidebar__item {
