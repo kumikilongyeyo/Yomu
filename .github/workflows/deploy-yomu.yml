@@ -35,6 +35,23 @@ jobs:
         run: npm ci
       - name: Typecheck Worker
         run: npm run typecheck
+      - name: Inject chapter source finder into exported HTML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          tag = '<script src="/source-auto-switch.js" defer></script>'
+          changed = 0
+          for path in Path('dist-app').rglob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              if tag in text:
+                  continue
+              if '</head>' not in text:
+                  continue
+              path.write_text(text.replace('</head>', tag + '</head>', 1), encoding='utf-8')
+              changed += 1
+          print(f'Injected source finder into {changed} HTML files.')
+          PY
       # Accept either a raw Cloudflare token or a secret pasted as
       # "Bearer <token>". The latter used to become "Bearer Bearer <token>"
       # here and Cloudflare rejected it as Authorization header code 6111.
@@ -81,5 +98,8 @@ jobs:
         run: |
           curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/sources > /tmp/yomu-sources.html
           grep -q 'community-pack-compact.js' /tmp/yomu-sources.html
+          grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-compact.js > /tmp/community-pack-compact.js
           grep -q 'Community Pack source' /tmp/community-pack-compact.js
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-auto-switch.js > /tmp/source-auto-switch.js
+          grep -q 'Find another source' /tmp/source-auto-switch.js
