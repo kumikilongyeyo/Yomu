@@ -25,10 +25,18 @@
       if (!top) return;
       const inner = innerButton();
       const count = inner?.dataset?.new ?? '0';
-      top.dataset.new = count;
-      top.textContent = String(inner?.textContent || 'Community pack').trim() || 'Community pack';
-      top.title = inner?.title || 'Load and test new sources from the Yomu Community Pack';
-      top.disabled = !!inner?.disabled;
+      const text = String(inner?.textContent || 'Community pack').trim() || 'Community pack';
+      const title = inner?.title || 'Load and test new sources from the Yomu Community Pack';
+      const disabled = !!inner?.disabled;
+      // Write only what changed. Setting textContent or data-new to the value
+      // it already has still records a mutation, the observer below is
+      // watching for exactly those, and sync() is what it calls -- so an
+      // unconditional write here spun the page at microtask speed and Chrome
+      // reported /sources as unresponsive.
+      if (top.dataset.new !== count) top.dataset.new = count;
+      if (top.textContent !== text) top.textContent = text;
+      if (top.title !== title) top.title = title;
+      if (top.disabled !== disabled) top.disabled = disabled;
     });
   }
 
