@@ -23,6 +23,7 @@ import { handleSync } from './routes-sync';
 import { handleCircle } from './routes-circle';
 import { handleShelf } from './routes-shelf';
 import { handleTitle } from './title';
+import { withSeriesMeta } from './series-meta';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -376,6 +377,15 @@ export default {
        -- see worker/title.ts. Above the asset handoff because there is no
        file by that name and the SPA fallback would otherwise swallow it. */
     if (url.pathname.startsWith('/title/')) return handleTitle(request, env, url);
+
+    /* A series page gets its own title, description, cover and canonical link
+       written into the shell (worker/series-meta.ts). Bounded by a deadline
+       and cached at the edge; every failure path returns the shell untouched,
+       so the worst case is exactly what was served before. */
+    if (url.pathname.startsWith('/series/') && request.method === 'GET') {
+      return withSeriesMeta(await env.ASSETS.fetch(request), request, env, url);
+    }
+
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);
