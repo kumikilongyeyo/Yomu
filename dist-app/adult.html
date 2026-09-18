@@ -152,7 +152,6 @@
   const BLUR_KEY = 'yomu.v1.adultBlur';
   const ADULT_TITLES_KEY = 'yomu.v1.adultTitles';
 
-  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}
 
   const $ = (id) => document.getElementById(id);
   const on = () => { try { return localStorage.getItem(ADULT_KEY) === 'on'; } catch { return false; } };

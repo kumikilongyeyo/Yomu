@@ -783,6 +783,33 @@ if (!failed) {
           to:   `<meta name="theme-color" content="#f5f2ec"${close}`,
         })),
       ),
+      /* One owner for the mode.
+       *
+       * Six hand-written pages each re-read `yomu.appearance` and wrote
+       * data-mode themselves, from a script at the bottom of the body. That
+       * was necessary when nothing else set it, and it is not *wrong* today:
+       * it writes the same value the prepaint bootstrap already wrote, so
+       * removing it changes no pixel. It goes because it is a second writer
+       * of a value that now has an owner.
+       *
+       * The cost of leaving it is the next change to what a mode means. The
+       * bootstrap also resolves the skin, color-scheme and browser tint from
+       * the same read; these lines know about none of that, and the next
+       * person to add something to the mode has six other places to remember.
+       * That is the shape the audit is pointing at -- not a bug today, a
+       * standing invitation to one.
+       */
+      {
+        name: 'drop per-page theme re-interpretation',
+        from: "    try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}\n",
+        to: '',
+      },
+      {
+        name: 'drop per-page theme re-interpretation (indented)',
+        from: "  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}\n",
+        to: '',
+      },
+
       /* Pinch zoom, given back.
        *
        * Expo exports `maximum-scale=1, user-scalable=no`, which is the single

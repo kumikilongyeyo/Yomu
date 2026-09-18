@@ -100,7 +100,6 @@
   'use strict';
 
   /* Paper when nothing is stored, as find.html and the app itself default. */
-  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}
 
   const $ = (id) => document.getElementById(id);
   const params = new URLSearchParams(location.search);
