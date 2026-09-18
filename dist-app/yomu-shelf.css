@@ -25,10 +25,13 @@
  * A square with the 256px painting inside and a tier chip on the corner.
  * Locked is the same painting, greyed: what you would get, not a hole. */
 
-.yba { position: relative; display: inline-block; line-height: 0; flex: none; }
+.yba { position: relative; display: inline-block; line-height: 0; flex: none; border-radius: 12px; }
 .yba img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 3px 5px rgba(60, 48, 30, .22)); }
 :root[data-mode='dark'] .yba img { filter: drop-shadow(0 3px 7px rgba(0, 0, 0, .5)); }
-.yba.is-locked img { filter: grayscale(1) opacity(.42); }
+/* Locked, as the art kit prescribes: the same picture, desaturated and
+   dimmed under a parchment wash. No second set of grey files. */
+.yba.is-locked img { filter: grayscale(.88) saturate(.35) brightness(1.05); opacity: .42; }
+.yba.is-locked::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(245, 240, 231, .14); pointer-events: none; }
 .yba__tier {
   position: absolute; right: -4px; bottom: -2px;
   min-width: 18px; height: 18px; padding: 0 5px;

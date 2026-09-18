@@ -168,7 +168,24 @@
    */
   const ART_BASE = '/brand/badges/';
   const ART_MIN = 40;
+
+  /* The nineteen milestone badges have casual-game art of their own
+     (yomu-badges-casual-v2), one picture each with the progression drawn
+     into the art -- Week of Pages, Month of Pages and Hundred Days are three
+     flames, not one flame on three plates -- so these carry no tier chip.
+     256px WebP, under 20 KB each. */
+  const MILESTONE_ART = {
+    'page-turner': '01-page-turner', 'well-sourced': '02-well-sourced', 'stage-fledgling': '03-fledgling',
+    'book-goblin': '04-book-goblin', century: '05-century', 'shelf-bender': '06-shelf-bender',
+    'tome-eater': '07-tome-eater', 'living-library': '08-living-library', finisher: '09-finisher',
+    closer: '10-closer', 'three-shores': '11-three-shores', 'stage-companion': '12-companion',
+    'stage-familiar': '13-familiar', 'stage-sage': '14-sage', 'bingo-line': '15-bingo',
+    'bingo-card': '16-full-card', 'streak-week': '17-week-of-pages', 'streak-month': '18-month-of-pages',
+    'streak-hundred': '19-hundred-days',
+  };
+
   const artFor = (slug) => {
+    if (MILESTONE_ART[slug]) return ART_BASE + 'milestones/' + MILESTONE_ART[slug] + '.webp';
     const fam = family(slug);
     return fam && ['manga', 'manhwa', 'manhua'].includes(fam.cat) ? ART_BASE + fam.cat + '_' + slug + '.png' : '';
   };
@@ -188,10 +205,14 @@
     img.loading = 'lazy';
     img.decoding = 'async';
     wrap.append(img);
-    const chip = document.createElement('i');
-    chip.className = 'yba__tier';
-    chip.textContent = ROMAN[parts.tier - 1];
-    wrap.append(chip);
+    /* Family badges climb five tiers on one picture, so the tier rides on a
+       chip. A milestone badge is its own picture and needs none. */
+    if (!parts.milestone) {
+      const chip = document.createElement('i');
+      chip.className = 'yba__tier';
+      chip.textContent = ROMAN[parts.tier - 1];
+      wrap.append(chip);
+    }
     return wrap;
   }
 
@@ -201,7 +222,7 @@
     if (!parts || !family(parts.slug) || !window.YomuBadges) return null;
     const o = opts || {};
     const size = Number(o.size) || 0;
-    if (o.art !== false && !parts.milestone && o.variant !== 'micro' && size >= ART_MIN && artFor(parts.slug)) {
+    if (o.art !== false && o.variant !== 'micro' && size >= ART_MIN && artFor(parts.slug)) {
       return artEl(parts, o);
     }
     return window.YomuBadges.el(parts.slug, parts.tier, o);
@@ -457,7 +478,7 @@
 
   if (typeof window !== 'undefined') window.YomuShelf = api;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { MILESTONE_FAMILIES, parse, ROMAN };
+    module.exports = { MILESTONE_FAMILIES, MILESTONE_ART, parse, ROMAN };
   }
 
   if (browser) {

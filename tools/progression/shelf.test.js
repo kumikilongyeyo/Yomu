@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const { MILESTONES, TIER_XP } = await import('../../dist-app/yomu-progress.js');
-const { MILESTONE_FAMILIES, parse } = await import('../../dist-app/yomu-shelf.js');
+const { MILESTONE_FAMILIES, MILESTONE_ART, parse } = await import('../../dist-app/yomu-shelf.js');
 const { STICKERS, TONES, svg } = await import('../../dist-app/yomu-stickers.js');
 
 test('every badge the roadmap pays is a registered milestone family', () => {
@@ -81,3 +81,14 @@ test('every affinity family has its painted badge shipped at 256px', () => {
 });
 function await_import_rules() { return rulesModule; }
 const rulesModule = await import('../../dist-app/yomu-progress.js');
+
+test('every milestone badge has its casual-game art shipped as a 256px WebP', () => {
+  const dir = new URL('../../dist-app/brand/badges/milestones/', import.meta.url);
+  for (const slug of Object.keys(MILESTONE_FAMILIES)) {
+    assert.ok(MILESTONE_ART[slug], slug + ' is mapped to art');
+    const file = new URL(MILESTONE_ART[slug] + '.webp', dir);
+    assert.ok(fs.existsSync(file), slug + ' art exists');
+    assert.ok(fs.statSync(file).size < 40000, slug + ' art is small');
+  }
+  assert.equal(Object.keys(MILESTONE_ART).length, 19);
+});
