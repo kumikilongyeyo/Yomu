@@ -5,7 +5,16 @@
  * expects -- a localStorage, a window, an event target -- and loads the real
  * file rather than a copy of its logic. A test against a reimplementation
  * would pass while the shipped file was broken.
+ *
+ * The zone is pinned. The store buckets reading by the reader's *local* day
+ * now, not by UTC, so any test that counts days is answering a question about
+ * a timezone -- and left to the machine's own, this file would pass in a UTC
+ * CI runner and fail on a laptop in Manila, or the reverse. +08:00 is pinned
+ * because that is the audience the audit is written for; set before any Date
+ * is constructed, which is why it is the first statement in the file.
  */
+process.env.TZ = 'Asia/Manila';
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -602,7 +611,12 @@ test('chapters are attributed to the month they turned up in, per series', async
   let sept = api.monthly('2026-09');
   assert.equal(sept.chapters, 6);
   assert.deepEqual(plain(sept.series), [{ seriesId: 'ext-a:one', chapters: 5 }, { seriesId: 'ext-a:two', chapters: 1 }]);
-  assert.equal(sept.days, 1);
+  /* Two, not one. The six reads run from 12:00 to 22:00 UTC, which in the
+     pinned +08:00 zone is 20:00 on the 20th through 06:00 on the 21st -- two
+     of the reader's own days, either side of the 04:00 boundary. It read as
+     one day only while the store bucketed by UTC, which is the bug this
+     number used to encode. */
+  assert.equal(sept.days, 2);
 
   // October: three more of `two`. September stays as it was.
   clock.now = Date.UTC(2026, 9, 3, 12);
