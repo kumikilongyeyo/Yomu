@@ -249,7 +249,17 @@
     place(panel, root);
   }
 
-  /* --- boot ---------------------------------------------------------------- */
+  /* --- boot ---------------------------------------------------------------- *
+   *
+   * The chat kept its transcript in localStorage. The feature is gone, so the
+   * transcript is somebody's typing sitting on their device for a panel that
+   * no longer opens -- cleared once, on the load that first lacks it.
+   */
+
+  if (browser) {
+    try { localStorage.removeItem('yomu.v1.mori.history'); } catch {}
+  }
+
 
   /* Returning true claims the tap. The pet keeps its own fallback for the
      case where this file is absent. */

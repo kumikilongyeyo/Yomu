@@ -98,6 +98,14 @@
 }
 .ysh-badge:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: 2px; }
 
+.ysh-cat {
+  margin: 16px 2px 8px;
+  font: 800 10.5px/1.4 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--faint, #a89e8c);
+}
+.ysh-grid--families { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.ysh-grid--families .ysh-badge .yba { width: 64px; height: 64px; }
 .ysh-note {
   margin: 10px 2px 0;
   font: 400 11.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));

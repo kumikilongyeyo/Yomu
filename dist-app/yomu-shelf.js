@@ -334,7 +334,7 @@
     const state = window.YomuProgress.get();
     const equippedId = state.equippedBadgeId || '';
 
-    const rows = [...milestoneRows(state), ...affinityRows(state)];
+    const rows = milestoneRows(state);
     const earned = rows.filter((r) => r.earned);
     const locked = rows.filter((r) => !r.earned);
     /* An adopted badge -- chosen on another device -- is equipped without
@@ -374,6 +374,44 @@
       ? `${earned.length} earned. Locked ones say how to get them.`
       : 'Badges come from the mileage road and from what you read. Ten chapters is the first.');
     host.append(small);
+
+    /* The thirty painted families, all of them, by category. Locked is the
+       same painting greyed: what reading that genre gets you, on show from
+       the first day rather than appearing only once earned. Tiers come from
+       chapters read in the family (10, 40, 100, 250, 500). */
+    const tiers = window.YomuProgress.tierXp ? window.YomuProgress.tierXp() : [10, 40, 100, 250, 500];
+    const best = new Map();
+    for (const id of state.earnedBadgeIds) {
+      const parts = parse(id);
+      if (!parts || parts.milestone) continue;
+      if (!best.has(parts.slug) || best.get(parts.slug) < parts.tier) best.set(parts.slug, parts.tier);
+    }
+    const label = { manhwa: 'Manhwa', manga: 'Manga', manhua: 'Manhua' };
+    for (const cat of ['manhwa', 'manga', 'manhua']) {
+      const fams = window.YomuBadges.list(cat);
+      if (!fams.length) continue;
+      const head = document.createElement('p');
+      head.className = 'ysh-cat';
+      head.textContent = label[cat] + ' families';
+      host.append(head);
+      const grid = document.createElement('div');
+      grid.className = 'ysh-grid ysh-grid--families';
+      const ordered = fams.slice().sort((a, b) => (best.get(b.slug) || 0) - (best.get(a.slug) || 0) || (state.affinity?.[b.slug] || 0) - (state.affinity?.[a.slug] || 0));
+      for (const fam of ordered) {
+        const tier = best.get(fam.slug) || 0;
+        const count = Math.floor(state.affinity?.[fam.slug] || 0);
+        const next = tiers[tier];
+        const how = tier
+          ? `${fam.theme} · ${count} chapters` + (next ? ` · ${Math.max(0, next - count)} more for Tier ${ROMAN[tier]}` : ' · top tier')
+          : `${fam.theme} · ${count} of ${tiers[0]} chapters for Tier I`;
+        grid.append(badgeButton({ id: fam.slug + ':' + Math.max(1, tier), slug: fam.slug, tier: Math.max(1, tier), earned: tier > 0, kind: 'family', how }, equippedId));
+      }
+      host.append(grid);
+    }
+    const famNote = document.createElement('p');
+    famNote.className = 'ysh-note';
+    famNote.textContent = 'A family badge is chapters read in that genre: Tier I at 10, then 40, 100, 250 and 500. The genre comes from what AniList knows about each title.';
+    host.append(famNote);
   }
 
   /* --- the sticker shelf -------------------------------------------------- */
