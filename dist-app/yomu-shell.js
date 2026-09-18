@@ -389,9 +389,40 @@
   }
 
   /**
-   * The index first, because it can answer on its own. Then anything the index
-   * has not seen but the library can identify, so positions recorded before
-   * any of this existed still draw a card instead of silently dropping.
+   * Everything the index knows about one series, however it was filed.
+   *
+   * The index is keyed "<sourceId>:<seriesId>", and the reader's resume anchor
+   * is keyed by the series alone -- it has a chapter and a page and no idea
+   * which source served them. Joining the two on the series is what lets an
+   * anchor stand up without the library being involved.
+   */
+  function indexedBySeries(index, seriesId) {
+    const suffix = ':' + seriesId;
+    for (const [key, record] of Object.entries(index)) {
+      if (key.endsWith(suffix) && record && record.sourceId) return record;
+    }
+    return null;
+  }
+
+  /**
+   * The index first, because it can answer on its own. Then any resume anchor
+   * the index has not already covered.
+   *
+   * That second pass used to require the title to be in the library:
+   *
+   *     const entry = saved.find((t) => String(t.id) === seriesId);
+   *     if (!entry || !entry.sourceId) continue;
+   *
+   * which made Continue Reading depend on a store that has nothing to do with
+   * whether you are part-way through something. Reading three chapters of a
+   * title without saving it, and coming back to a row that has forgotten you,
+   * is the case that produced -- and the join was only ever there to recover
+   * the sourceId the anchor does not carry.
+   *
+   * The index carries it, is written by the reader on every tick, and is
+   * synced, so it is asked first and the library is the fallback rather than
+   * the gate. An anchor nothing can name is still skipped: a card with no
+   * title and no source is not a card, it is a dead link.
    */
   function continueItems() {
     const blocked = adultTitles();
@@ -420,16 +451,19 @@
       });
     }
 
+    const index = readingIndex();
     for (const { seriesId, anchor } of resumeEntries()) {
       if (byId.has(seriesId)) continue;
+      const known = indexedBySeries(index, seriesId);
       const entry = saved.find((t) => String(t.id) === seriesId);
-      if (!entry || !entry.sourceId) continue;
-      if (hiddenOrAdult(entry, entry.sourceId, seriesId)) continue;
+      const sourceId = (known && known.sourceId) || (entry && entry.sourceId) || '';
+      if (!sourceId) continue;
+      if (hiddenOrAdult(entry, sourceId, seriesId)) continue;
       byId.set(seriesId, {
         seriesId,
-        sourceId: entry.sourceId,
-        title: entry.title || 'Untitled',
-        cover: entry.cover || '',
+        sourceId,
+        title: (known && known.title) || (entry && entry.title) || 'Untitled',
+        cover: (known && known.cover) || (entry && entry.cover) || '',
         chapterId: anchor.chapterId,
         chapterLabel: '',
         // No percentage for these. The anchor carries pageIndex but not a page
