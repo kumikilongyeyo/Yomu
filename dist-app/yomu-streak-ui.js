@@ -30,6 +30,27 @@
 
   const S = () => window.YomuStreak;
   const M = () => window.YomuMileage;
+
+  /* --- "it just went up" ---------------------------------------------------- *
+   *
+   * The bar's resting motion is CSS; the one-pass sheen and the brighter
+   * leading edge are not, because they are about a change rather than a
+   * state. Each bar remembers the width it was last painted at, and a repaint
+   * that is wider wears .is-gain for the length of the pass.
+   *
+   * Keyed by a name rather than by node, because the card is rebuilt from
+   * scratch on every paint -- the node that knew the old value is already
+   * gone by the time the new one needs it.
+   */
+  const lastPct = new Map();
+
+  function markGain(bar, key, pct) {
+    const before = lastPct.get(key);
+    lastPct.set(key, pct);
+    if (before === undefined || pct <= before + 0.01 || reduced()) return;
+    bar.classList.add('is-gain');
+    setTimeout(() => bar.classList.remove('is-gain'), 1100);
+  }
   const flameSrc = (stage, mode) => '/brand/flame/s' + (Math.min(6, Math.max(1, stage + 1))) + '-' + (mode === 'aurora' ? 'aurora' : 'paper') + '.svg';
   const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
@@ -69,6 +90,7 @@
       fill.style.setProperty('--ramp-size', (10000 / pct) + '%');
       bar.append(fill);
     }
+    markGain(bar, 'streak', pct);
     for (let i = 1; i < 6; i++) {
       const tick = el('span', 'stk__tick');
       tick.style.left = ((i / 6) * 100) + '%';
@@ -155,6 +177,7 @@
       const fill = el('i');
       fill.style.setProperty('--p', row.pct + '%');
       bar.append(fill);
+      markGain(bar, 'mlg:' + row.family, row.pct);
       copy.append(bar);
       line.append(copy, el('span', 'mlg__left', row.remaining + ' to go'));
       card.append(line);
@@ -340,12 +363,22 @@
 
   /* --- boot --------------------------------------------------------------------------- */
 
-  const api = { repaint() { paintStreak(); paintMileage(); }, toast, openStreakSheet: () => openStreakSheet(S().get()), openMileageSheet };
+  /* `confetti` is public so the chapter-end card can use the one burst this
+     app already draws rather than shipping a second particle library for
+     the same half second. */
+  const api = { repaint() { paintStreak(); paintMileage(); }, toast, confetti, openStreakSheet: () => openStreakSheet(S().get()), openMileageSheet };
   if (typeof window !== 'undefined') window.YomuStreakUI = api;
 
   if (browser) {
     const paint = () => { paintStreak(); paintMileage(); };
     const boot = () => { paint(); applyMood(); if (S()) S().subscribe(paint); if (M()) M().subscribe(paint); };
+    /* A looping animation on a tab nobody is looking at is pure battery. The
+       browser throttles it, but not reliably on every engine, and the flag is
+       one attribute the stylesheet can switch the whole set off with. */
+    const away = () => document.documentElement.toggleAttribute('data-yomu-away', document.hidden);
+    away();
+    addEventListener('visibilitychange', away);
+
     if (document.readyState === 'loading') addEventListener('DOMContentLoaded', boot);
     else boot();
     addEventListener('yomu:progress', paint);

@@ -282,6 +282,31 @@
 
 
 /* ==================================================================== *
+ * The rating pill's one contract
+ * ==================================================================== *
+ *
+ * Four tile shapes draw the same chip and used to inset it by three
+ * different amounts -- 6px on the rail card and the shelf tile, where it is
+ * absolutely positioned against the artwork, and 10px on the home grid and
+ * Discover tiles, where it rides in a copy block that is itself inset from
+ * the card. On Home, which draws both shapes in one column, the same chip
+ * sat at two different distances from the same corner.
+ *
+ * So: one inset for the corner, one inset for the copy blocks, and the pull
+ * is the difference between them. Change --yomu-rating-inset and all four
+ * shapes move together.
+ *
+ * The chip is never taken out of the copy grid to achieve this. The grid is
+ * what guarantees a two-line title cannot run underneath it, and a corner
+ * that is 2px tidier is not worth a title colliding with a number.
+ */
+:root {
+  --yomu-rating-inset: 8px;
+  --yomu-copy-inset: 10px;
+  --yomu-rating-pull: calc(var(--yomu-rating-inset) - var(--yomu-copy-inset));
+}
+
+/* ==================================================================== *
  * Where the footer tags sit: Hot at the left, the rating at the right
  * ==================================================================== *
  *
@@ -308,7 +333,13 @@
 .tile-card .tile-card__footer > .tile-card__source { grid-area: source; margin-top: 4px; }
 .tile-card .tile-card__footer > .tile-card__meta { grid-area: meta; margin-top: 4px; }
 .tile-card .tile-card__footer > .tile-card__hot { grid-area: hot; justify-self: start; align-self: end; margin-top: 6px; }
-.tile-card .tile-card__footer > .yomu-tile__rating { grid-area: rating; justify-self: end; align-self: end; margin-top: 6px; }
+.tile-card .tile-card__footer > .yomu-tile__rating {
+  grid-area: rating; justify-self: end; align-self: end;
+  margin-top: 6px;
+  /* Pulled to the shared corner inset. The chip keeps its own grid cell, so
+     a long title still cannot run underneath it. */
+  margin-right: var(--yomu-rating-pull); margin-bottom: var(--yomu-rating-pull);
+}
 
 /* Discover's tile (find.html, more.html): the title spans, the source line
    sits left and the rating right on the last row. */
@@ -321,11 +352,15 @@
 }
 .tile .tile-copy > .t { grid-area: t; }
 .tile .tile-copy > small { grid-area: s; }
-.tile .tile-copy > .yomu-tile__rating { grid-area: r; justify-self: end; align-self: end; margin-top: 4px; }
+.tile .tile-copy > .yomu-tile__rating {
+  grid-area: r; justify-self: end; align-self: end;
+  margin-top: 4px;
+  margin-right: var(--yomu-rating-pull); margin-bottom: var(--yomu-rating-pull);
+}
 
 /* The rail card's rating, over the art's bottom-right corner. */
 .yr-card__art > .yr-card__rating.ytg {
-  position: absolute; right: 6px; bottom: 6px; z-index: 2;
+  position: absolute; right: var(--yomu-rating-inset); bottom: var(--yomu-rating-inset); z-index: 2;
   margin: 0; width: auto; pointer-events: none;
 }
 
@@ -333,7 +368,7 @@
    the cover, which is a background-image div with no children of its own. */
 .title-card .title-art { position: relative; }
 .title-card .title-art > .yomu-tile__rating.ytg {
-  position: absolute; right: 6px; bottom: 6px; z-index: 2;
+  position: absolute; right: var(--yomu-rating-inset); bottom: var(--yomu-rating-inset); z-index: 2;
   margin: 0; width: auto; pointer-events: none;
 }
 

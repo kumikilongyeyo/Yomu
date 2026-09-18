@@ -39,12 +39,22 @@
    *
    * Deliberately not the app's own tile component: that one is React's and
    * wants a source-bound series id, which a ranked title does not have yet.
-   * A rail card is a cover, a name, and a route into search, which is the
-   * screen that already knows how to turn a title into a source.
+   *
+   * It used to route into search for exactly that reason, and that was the
+   * wrong destination: clicking one named title and being handed a list to
+   * find it in again is the app asking the reader to finish its job.
+   * yomu-open-title.js resolves the title to a source that can actually serve
+   * pages and opens the Yomu series screen; the href stays pointed at search
+   * so a middle click still lands somewhere, and so does a click made before
+   * the resolver has loaded.
+   *
+   * The AniList id travels with it. dedupe() carries `anilistId` through the
+   * catalog, so the resolver can match on an id rather than on a name.
    */
 
   function card(item, badge) {
     const node = el('a', 'yr-card');
+    const target = { title: item.title, anilistId: item.id };
     node.href = '/search?q=' + encodeURIComponent(item.title);
     node.setAttribute('aria-label', item.title);
 
@@ -70,8 +80,12 @@
        (yomu-tags.css) -- then one line of evidence under the title. Only when
        there is real evidence: a score of null or a vote count of zero says
        nothing and is left off. */
-    if (item.score) {
-      const text = (Math.round(item.score) / 10).toFixed(1);
+    /* One formatter, in yomu-ratings.js, so a rail card and a grid tile can
+       never disagree about how many decimals a score carries. */
+    const text = window.YomuRatings?.formatScore
+      ? window.YomuRatings.formatScore(item.score)
+      : (item.score ? (Math.round(item.score) / 10).toFixed(1) : null);
+    if (text) {
       const rating = window.YomuTags?.chip
         ? window.YomuTags.chip('rating', text, { size: 'xs' })
         : el('span', null, '★ ' + text);
@@ -82,9 +96,9 @@
     }
     if (item.votes) node.append(el('span', 'yr-card__note', item.votes.toLocaleString() + ' readers'));
 
-    node.addEventListener('click', () => {
-      window.YomuRank?.note?.('RECOMMENDATION_CLICK', item.title);
-    });
+    const noteClick = () => { window.YomuRank?.note?.('RECOMMENDATION_CLICK', item.title); };
+    if (window.YomuOpenTitle?.bind) window.YomuOpenTitle.bind(node, target, noteClick);
+    else node.addEventListener('click', noteClick);
     return node;
   }
 

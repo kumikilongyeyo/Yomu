@@ -572,6 +572,9 @@ const ASSETS = [
   { file: 'yomu-wall.css', tag: '<link rel="stylesheet" href="/yomu-wall.css">' },
   { file: 'yomu-diary.css', tag: '<link rel="stylesheet" href="/yomu-diary.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
+  /* The reader's chapter-end card. Its own .ych namespace and nothing the
+     skin sets. */
+  { file: 'yomu-chapter-end.css', tag: '<link rel="stylesheet" href="/yomu-chapter-end.css">' },
   /* The glass chips every tile tag wears. After every other tag stylesheet
      so its placement rules win ties. */
   { file: 'yomu-tags.css', tag: '<link rel="stylesheet" href="/yomu-tags.css">' },
@@ -599,6 +602,14 @@ const ASSETS = [
      these at paint time, after every deferred script has run. */
   { file: 'yomu-stickers.js', tag: '<script src="/yomu-stickers.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shelf.js', tag: '<script src="/yomu-shelf.js" defer></scr' + 'ipt>' },
+  /* Reads nothing at load time and depends on nothing loading first.
+     It coordinates with yomu-pet.js over the reader's chapter-end moment, and
+     that handshake is deliberately a question about the *event* rather than
+     about either file's state -- because the order below is not the order the
+     pages are actually in (see the insertion note further down), and a
+     handshake that needed it would be broken on exactly the pages that
+     matter. */
+  { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
   /* After the pet (it borrows the sprite), the shelf (the badge drop) and
@@ -641,9 +652,20 @@ const ASSETS = [
   { file: 'yomu-ratings.js', tag: '<script src="/yomu-ratings.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
+  /* One resolver for "what happens when I click a title", ahead of every
+     surface that draws one. Fetches nothing until something is clicked. */
+  { file: 'yomu-open-title.js', tag: '<script src="/yomu-open-title.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */
   { file: 'yomu-rank.js', tag: '<script src="/yomu-rank.js" defer></scr' + 'ipt>' },
   { file: 'yomu-rails.js', tag: '<script src="/yomu-rails.js" defer></scr' + 'ipt>' },
+  /* The controlled customiser: presets and the knobs the look sheet grew.
+     It rewrites the sheet yomu-look.js builds, so it follows it. These three
+     were shipped by the deploy workflow's HTML injection and by nothing else,
+     which meant a local page and a deployed page disagreed about whether the
+     customiser existed at all. Linking them here makes the committed pages
+     the truth; the workflow's own injection is a no-op once the tag is
+     already present. */
+  { file: 'yomu-controls.js', tag: '<script src="/yomu-controls.js" defer></scr' + 'ipt>' },
   /* Last: it takes the pet's tap over, so the pet has to exist first. */
   { file: 'yomu-mori.js', tag: '<script src="/yomu-mori.js" defer></scr' + 'ipt>' },
   /* Last, so it overrides both the compiled palette and yomu-overrides.css on
@@ -652,6 +674,13 @@ const ASSETS = [
   /* The one thing allowed after the skin: the skins. It overrides the
      Aurora and Paper source tokens the skin defines, and must win on order. */
   { file: 'yomu-skins.css', tag: '<link rel="stylesheet" href="/yomu-skins.css">' },
+  /* ...and the customiser's two sheets, which the deploy workflow has been
+     appending here all along. Kept in that position deliberately rather than
+     filed with the other stylesheets above: the site-gradient presets paint
+     `body`, the skin paints `body`, and the preset is the reader's explicit
+     choice, so it has to be the one that lands last. */
+  { file: 'yomu-controls-base.css', tag: '<link rel="stylesheet" href="/yomu-controls-base.css">' },
+  { file: 'yomu-controls-components.css', tag: '<link rel="stylesheet" href="/yomu-controls-components.css">' },
 ];
 
 // /start is the first-run flow and must not carry the shell: the shell is
@@ -660,6 +689,40 @@ const ASSETS = [
 // wholesale left the first screen a new reader ever sees as the only
 // unskinned one in the app. These pages get the CSS and the fonts, no JS.
 // shelf.html is for someone who does not have Yomu: styles, no companion.
+/* The mode, before the first frame.
+ *
+ * The app sets it in a React effect -- GlassRoot's
+ * `useEffect(() => { document.documentElement.dataset.mode =
+ * localStorage.getItem('yomu.appearance') || 'light' }, [])` -- and an effect
+ * runs after the commit that paints. Nothing carries data-mode in the shipped
+ * HTML, so the stylesheet's own default (Paper) is what the first frame wears
+ * and a dark reader watched every navigation flash white and correct itself.
+ * Landing, Discovery and Search are three separate documents, so it happened
+ * on each of them.
+ *
+ * This is the same read, done synchronously in the head, where it costs a
+ * localStorage hit before anything is drawn. The effect then writes the value
+ * that is already there. The raw preference is written rather than a resolved
+ * one, because 'system' is a mode yomu-skin.css resolves for itself.
+ *
+ * It also carries the skin (same reason, same class of flash), sets
+ * color-scheme so the browser's own scrollbars and form controls are right
+ * from the first frame, and keeps the browser tint in step by reading --bg
+ * back off the stylesheet rather than keeping a second table of grounds here.
+ *
+ * `data-yomu-boot` suppresses transitions until the document is ready, so a
+ * theme applied at boot arrives as a state rather than as an animation. It
+ * must go on the element and its descendants both: a transition on <html>
+ * alone is not what makes a header fade from white.
+ *
+ * Inline on purpose. A file would be a request, and a request is a frame.
+ */
+const HEAD_FIRST = {
+  probe: 'id="yomu-boot"',
+  label: 'prepaint theme bootstrap',
+  tag: `<style id="yomu-boot-style">:root[data-yomu-boot],:root[data-yomu-boot] *{transition:none!important;animation-duration:0s!important}</style><script id="yomu-boot">(function(){try{var d=document.documentElement,p=null;try{p=localStorage.getItem('yomu.appearance')}catch(e){}if(p!=='dark'&&p!=='light'&&p!=='system')p='light';d.dataset.mode=p;var dark=p==='dark'||(p==='system'&&typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches);d.style.colorScheme=dark?'dark':'light';try{var k=localStorage.getItem('yomu.v1.skin');if(k)d.dataset.yomuSkin=k}catch(e){}d.setAttribute('data-yomu-boot','');var tint=function(){var v='';try{v=getComputedStyle(d).getPropertyValue('--bg').trim()}catch(e){}if(!v)v=dark?'#080d14':'#f5f2ec';var m=document.querySelector('meta[name=\"theme-color\"]');if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m)}if(m.content!==v)m.content=v};tint();var done=function(){d.removeAttribute('data-yomu-boot');tint()};if(document.readyState==='loading')addEventListener('DOMContentLoaded',function(){setTimeout(done,0)});else setTimeout(done,0);addEventListener('load',tint);}catch(e){}})();</scr` + `ipt>`,
+};
+
 const SCRIPT_FREE_PAGES = new Set(['start.html', 'shelf.html']);
 const isScript = (a) => a.tag.includes('<script');
 
@@ -724,6 +787,24 @@ if (!failed) {
       changed++;
     }
 
+    /* The prepaint bootstrap goes first in the head, ahead of every
+       stylesheet and every other script, because its whole job is to have
+       run before anything is drawn. */
+    if (!html.includes(HEAD_FIRST.probe)) {
+      const head = html.match(/<head\b[^>]*>/);
+      if (!head) {
+        console.log(`skipped      ${HEAD_FIRST.label}: ${page} (no <head>)`);
+      } else if (check) {
+        console.log(`NOT APPLIED  ${HEAD_FIRST.label}: ${page}`);
+        failed++;
+      } else {
+        html = html.replace(head[0], head[0] + HEAD_FIRST.tag);
+        fs.writeFileSync(pagePath, html);
+        console.log(`applied      ${HEAD_FIRST.label}: ${page}`);
+        changed++;
+      }
+    }
+
     // Matched on the href/src, not the bare filename: a page that merely
     // mentions an asset in a comment must not be mistaken for one that links it.
     const wanted = SCRIPT_FREE_PAGES.has(page) ? ASSETS.filter((a) => !isScript(a)) : ASSETS;
@@ -734,7 +815,42 @@ if (!failed) {
     if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }
     if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map(nameOf).join(', ')})`); failed++; continue; }
 
-    html = html.replace('</head>', missing.map((a) => a.tag).join('') + '</head>');
+    /* Inserted at its place in ASSETS, not appended.
+     *
+     * This used to drop every missing tag in one block before </head>, which
+     * is right for a page being linked for the first time and wrong for a page
+     * that already carries thirty of them: a new asset landed last however the
+     * list was ordered. Several entries above document an order they need --
+     * greetings before the shell, badges before the shelf, the skin last --
+     * and those were only holding because they happened to be added when the
+     * pages were first built. The first new one to actually depend on its
+     * position (yomu-chapter-end.js, which has to register a window listener
+     * before yomu-pet.js registers its own) got index 35 instead of 8 and the
+     * dependency silently did not hold.
+     *
+     * So each tag goes after the last asset before it that the page already
+     * has, and before everything else. A page with none of them is unchanged:
+     * they all go before </head>, in list order.
+     *
+     * This narrows the gap; it does not close it. The existing pages were
+     * built with an order that is not this list's -- yomu-pet.js sits four
+     * entries before yomu-shelf.js here and eight *after* it in index.html --
+     * so a new entry can still land on the far side of something this list
+     * puts it before. Nothing may depend on this list's order for
+     * correctness; it is a preference, and the comments above it say what
+     * each entry would *like*. */
+    for (const asset of missing) {
+      const index = wanted.indexOf(asset);
+      let anchor = null;
+      for (let i = index - 1; i >= 0; i--) {
+        const before = wanted[i];
+        if (missing.includes(before)) continue;
+        if (html.includes(before.tag)) { anchor = before.tag; break; }
+      }
+      html = anchor
+        ? html.replace(anchor, anchor + asset.tag)
+        : html.replace('</head>', asset.tag + '</head>');
+    }
     fs.writeFileSync(pagePath, html);
     console.log(`applied      assets: ${page} (${missing.map(nameOf).join(', ')})`);
     changed++;

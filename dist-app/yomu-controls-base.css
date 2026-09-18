@@ -1,30 +1,46 @@
 /* =====================================================================
- * Yomu controlled customisation + expanded hero
- * Loaded after the existing Yomu look/tag system.
+ * Yomu controlled customisation — the sheet, compacted
+ *
+ * Loaded after the existing Yomu look/tag system and after the skin, so the
+ * site-gradient presets are the last word on the page's own ground.
+ *
+ * The first version of this sheet had one structural bug and it dominated
+ * everything else: the accordion host was a plain CSS grid inside a flex
+ * column, so its five rows shared the sheet's free height between them and a
+ * *closed* accordion was a two-hundred-pixel empty card. Three declarations
+ * fix it -- the host packs its rows at the start, rows are sized to their
+ * content, and a closed body is removed from layout rather than merely
+ * emptied -- and everything below that is the density pass the extra room
+ * paid for.
  * ===================================================================== */
 
-/* ---------- customizer accordions ------------------------------------- */
+/* ---------- the accordion host ---------------------------------------- */
 
 .yui-accordion-host {
   display: grid;
   gap: 8px;
   padding-top: 10px;
+  /* The three that stop the rows stretching. */
+  align-content: start;
+  grid-auto-rows: max-content;
 }
 
-.yui-accordion-host > .ylk__sec {
-  display: none;
-}
+.yui-accordion-host > .ylk__sec { display: none; }
 
 .yui-acc {
+  align-self: start;
   overflow: clip;
   border: 1px solid var(--line, #e4ded2);
   border-radius: 13px;
   background: color-mix(in srgb, var(--surface, #fffdfa) 86%, transparent);
 }
 
+/* A closed body takes exactly zero layout space. */
+.yui-acc:not([open]) .yui-acc__body { display: none; }
+
 .yui-acc__summary {
-  min-height: 52px;
-  padding: 10px 12px 10px 14px;
+  min-height: 42px;
+  padding: 7px 11px 7px 13px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -34,20 +50,13 @@
 }
 
 .yui-acc__summary::-webkit-details-marker { display: none; }
+.yui-acc__summary:hover { background: color-mix(in srgb, var(--raised, #efeade) 72%, transparent); }
+.yui-acc__summary:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: -2px; }
 
-.yui-acc__summary:hover {
-  background: color-mix(in srgb, var(--raised, #efeade) 72%, transparent);
-}
-
-.yui-acc__words {
-  min-width: 0;
-  flex: 1;
-  display: grid;
-  gap: 2px;
-}
+.yui-acc__words { min-width: 0; flex: 1; display: grid; gap: 1px; }
 
 .yui-acc__words strong {
-  font: 800 13px/1.2 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  font: 800 12.5px/1.2 var(--font-display, var(--uiFont, system-ui, sans-serif));
   color: var(--text, #1e1b16);
   letter-spacing: -.01em;
 }
@@ -56,13 +65,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--faint, #9b9184);
 }
 
 .yui-acc__chev {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   flex: none;
   border-right: 1.6px solid currentColor;
   border-bottom: 1.6px solid currentColor;
@@ -71,81 +80,198 @@
   transition: transform 160ms ease;
 }
 
-.yui-acc[open] .yui-acc__chev {
-  transform: rotate(225deg);
-}
+.yui-acc[open] .yui-acc__chev { transform: rotate(225deg); }
 
 .yui-acc__body {
-  padding: 0 12px 14px;
+  padding: 0 11px 11px;
   border-top: 1px solid color-mix(in srgb, var(--line, #e4ded2) 70%, transparent);
 }
 
-.yui-stack {
+.yui-stack { display: grid; gap: 2px; }
+.yui-inner-sec.ylk__sec { margin-top: 11px; }
+.yui-inner-sec > .ylk__sechead { margin-bottom: 6px; }
+
+.yui-controls-panel { display: grid; gap: 0; margin-top: 9px; }
+
+/* ---------- the preset strip ------------------------------------------- *
+ *
+ * Above the accordions and never inside one: it is the thing most readers
+ * will use instead of them, and putting it behind a disclosure would be
+ * burying the shortcut under the long way round.
+ */
+
+.yui-presets { display: grid; gap: 7px; padding: 2px 0 4px; }
+
+.yui-presets__head { display: flex; align-items: baseline; gap: 8px; }
+
+.yui-presets__head strong {
+  font: 800 10.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--faint, #9b9184);
+}
+
+.yui-presets__state {
+  margin-left: auto;
+  font: 600 11px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  color: var(--faint, #9b9184);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yui-presets__state.is-custom { color: var(--accent, #b8791c); font-weight: 800; }
+
+.yui-presets__strip {
   display: grid;
-  gap: 4px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.yui-inner-sec.ylk__sec {
-  margin-top: 14px;
-}
-
-.yui-inner-sec > .ylk__sechead {
-  margin-bottom: 8px;
-}
-
-.yui-controls-panel {
+.yui-preset {
   display: grid;
+  gap: 5px;
+  justify-items: center;
+  padding: 7px 3px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--line, #e4ded2);
+  background: color-mix(in srgb, var(--surface, #fffdfa) 80%, transparent);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.yui-preset:hover { border-color: var(--accentLine, rgba(184, 121, 28, .42)); }
+.yui-preset:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: 2px; }
+
+.yui-preset[aria-checked='true'] {
+  border-color: var(--accent, #b8791c);
+  box-shadow: inset 0 0 0 1px var(--accent, #b8791c);
+  background: var(--accentSoft, rgba(184, 121, 28, .10));
+}
+
+.yui-preset__chip {
+  width: 100%;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(125deg, var(--a) 0 46%, var(--b) 54% 100%);
+  border: 1px solid #00000024;
+}
+
+.yui-preset__name {
+  font: 700 9.5px/1.1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  color: var(--muted, #4a443a);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ---------- a control row ----------------------------------------------- */
+
+.yui-row {
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  margin: 2px 0;
+}
+
+.yui-row--range { grid-template-columns: 88px minmax(0, 1fr) 40px; }
+
+.yui-row__label {
+  font-size: 11.5px;
+  color: var(--muted, #4a443a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yui-select { width: 100%; }
+
+.yui-out {
+  font: 600 10.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  color: var(--faint, #9b9184);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.yui-range {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--accent, #b8791c);
+}
+
+/* ---------- segmented ---------------------------------------------------- */
+
+.yui-seg {
+  display: flex;
+  min-width: 0;
+  padding: 2px;
   gap: 2px;
-  margin-top: 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line, #e4ded2);
+  background: color-mix(in srgb, var(--raised, #efeade) 60%, transparent);
 }
+
+.yui-seg__b {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 24px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted, #4a443a);
+  font: 700 10.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yui-seg__b:hover { color: var(--text, #1e1b16); }
+.yui-seg__b:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: -2px; }
+
+.yui-seg__b[aria-checked='true'] {
+  background: var(--surface, #fffdfa);
+  color: var(--text, #1e1b16);
+  box-shadow: 0 1px 2px #00000014;
+}
+
+/* ---------- previews ------------------------------------------------------ */
 
 .yui-preview {
-  min-height: 92px;
-  margin-bottom: 10px;
-  padding: 14px;
+  min-height: 66px;
+  margin-bottom: 8px;
+  padding: 10px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 11px;
   border: 1px solid color-mix(in srgb, var(--line, #e4ded2) 72%, transparent);
   background:
     radial-gradient(100% 100% at 100% 0%, #5e4b9e38, transparent 58%),
     linear-gradient(155deg, #1c2c3a, #0a1118);
 }
 
-.yui-field {
-  min-height: 42px;
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0;
-}
-
-.yui-field__label {
-  font-size: 12.5px;
-  color: var(--muted, #4a443a);
-}
-
-.yui-select {
-  width: 100%;
-}
-
 .yui-curated-note {
-  margin: -4px 0 10px;
-  font-size: 11px;
+  margin: -2px 0 8px;
+  font-size: 10.5px;
   line-height: 1.4;
   color: var(--faint, #9b9184);
 }
 
 .yui-site-sample {
   width: 100%;
-  min-height: 66px;
+  min-height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 9px;
   color: #fff;
-  font: 900 18px/1 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  font: 900 16px/1 var(--font-display, var(--uiFont, system-ui, sans-serif));
   letter-spacing: -.03em;
   background:
     radial-gradient(90% 130% at 10% 0%, #5377a978, transparent 58%),
@@ -155,7 +281,7 @@
 
 .yui-tile-sample {
   position: relative;
-  width: 92px;
+  width: 68px;
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: var(--yui-tile-radius, 12px);
@@ -171,71 +297,116 @@
   position: absolute;
   inset: 44% 0 0;
   background: linear-gradient(transparent, #061019ed);
+  /* The image dim knob, shown where it is actually felt. */
+  box-shadow: inset 0 0 0 999px rgba(4, 10, 16, calc(var(--yui-tile-dim, 0) / 100));
 }
 
-.yui-tile-sample > .ytg {
+.yui-tile-sample__rating {
   position: absolute;
   z-index: 2;
-  top: 7px;
-  left: 7px;
-  scale: .82;
-  transform-origin: top left;
+  right: 5px;
+  bottom: 5px;
+  scale: .78;
+  transform-origin: bottom right;
 }
 
 .yui-tile-sample__copy {
   position: absolute;
   z-index: 2;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
   display: grid;
   gap: 1px;
   color: #fff;
 }
 
-.yui-tile-sample__copy strong { font-size: 10px; line-height: 1.2; }
-.yui-tile-sample__copy small { font-size: 8px; color: #ffffffb8; }
+.yui-tile-sample__copy strong { font-size: 8.5px; line-height: 1.2; }
+.yui-tile-sample__copy small { font-size: 7px; color: #ffffffb8; }
+
+/* ---------- button and CTA samples ---------------------------------------- *
+ *
+ * Built from the same classes and the same tokens as the real controls, so a
+ * knob that moves one and not the other is visible rather than reported.
+ */
+
+.yui-preview--button { grid-auto-flow: column; gap: 8px; }
 
 .yui-button-sample,
 .yui-cta-sample {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yui-button-icon-gap, 8px);
   border: 0;
-  font: 800 12px/1 var(--uiFont, system-ui, sans-serif);
   cursor: default;
-}
-
-.yui-preview--button {
-  grid-auto-flow: column;
-  gap: 9px;
+  font-family: var(--uiFont, system-ui, sans-serif);
 }
 
 .yui-button-sample {
-  min-height: 38px;
-  padding: 0 16px;
+  min-height: var(--yui-button-height, 38px);
+  padding: 0 15px;
+  justify-content: var(--yui-button-align, center);
   border-radius: var(--yui-button-radius, 11px);
   color: var(--yui-button-ink, #f4f6fa);
   background: var(--yui-button-bg, #ffffff12);
   border: 1px solid var(--yui-button-line, #ffffff24);
-  box-shadow: var(--yui-button-shadow, none);
+  /* -v, not --yui-button-shadow: that name is the knob's 0..200 number, and
+     a box-shadow of "60" is a dropped declaration. */
+  box-shadow: var(--yui-button-shadow-v, none);
+  font-size: 12px;
+  font-weight: var(--yui-button-weight, 800);
+  opacity: var(--yui-button-opacity-f, 1);
+  backdrop-filter: blur(var(--yui-button-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--yui-button-blur, 0px));
 }
 
-.yui-button-sample--icon {
-  width: 38px;
-  padding: 0;
-}
+.yui-button-sample--icon { width: var(--yui-button-height, 38px); padding: 0; justify-content: center; }
+.yui-button-sample--icon .yui-word { display: none; }
 
 .yui-cta-sample {
-  min-height: 42px;
-  padding: 0 20px;
+  min-height: 40px;
+  padding: 0 18px;
+  justify-content: var(--yui-cta-align, center);
   border-radius: var(--yui-cta-radius, 999px);
   color: var(--yui-cta-ink, #18212a);
   background: var(--yui-cta-bg, linear-gradient(120deg, #ffc45f, #ff9d65));
   border: 1px solid var(--yui-cta-line, transparent);
-  box-shadow: var(--yui-cta-shadow, 0 10px 24px -16px #000c);
+  box-shadow: var(--yui-cta-shadow-v, 0 10px 24px -16px #000c);
+  font-size: 12px;
+  font-weight: 800;
+  backdrop-filter: blur(var(--yui-cta-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--yui-cta-blur, 0px));
 }
 
+.yui-ico { display: inline-flex; flex: none; }
+.yui-ico svg { display: block; }
+
+/* Icon placement and text case, on the samples and on the real controls
+   alike -- the rules that target Yomu's own elements are in
+   yomu-controls-components.css and select on the same attributes. */
+:root[data-yui-button-icon='right'] .yui-button-sample { flex-direction: row-reverse; }
+:root[data-yui-button-icon='only'] .yui-button-sample .yui-word { display: none; }
+:root[data-yui-button-icon='only'] .yui-button-sample { width: var(--yui-button-height, 38px); padding: 0; justify-content: center; }
+:root[data-yui-button-case='upper'] .yui-button-sample { text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+:root[data-yui-button-case='caps'] .yui-button-sample { font-variant-caps: all-small-caps; letter-spacing: .04em; }
+
+:root[data-yui-cta-icon='right'] .yui-cta-sample { flex-direction: row-reverse; }
+:root[data-yui-cta-icon='none'] .yui-cta-sample .yui-ico { display: none; }
+:root[data-yui-cta-width='wide'] .yui-cta-sample { padding: 0 34px; }
+:root[data-yui-cta-width='full'] .yui-cta-sample { width: 100%; }
+
 /* Existing tag controls now use curated presets only. */
-.yui-acc--tag .ylk__custom {
-  display: none !important;
+.yui-acc--tag .ylk__custom { display: none !important; }
+
+/* Narrow sheets: five preset cards still fit, the labels shrink. */
+@media (max-width: 380px) {
+  .yui-row { grid-template-columns: 76px minmax(0, 1fr); }
+  .yui-row--range { grid-template-columns: 76px minmax(0, 1fr) 36px; }
+  .yui-preset__name { font-size: 8.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yui-acc__chev { transition: none; }
 }
 
 /* ---------- controlled palette tokens ---------------------------------- */

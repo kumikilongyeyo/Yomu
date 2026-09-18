@@ -189,6 +189,23 @@
       '{count} straight, past everyone\'s bedtime. Bold.',
       '{count} in a row at this hour. One more is fine. Probably.',
     ],
+    /* The reader is within a few chapters of a milestone and has just
+       finished one. {left} is how many are left, {title} is what is waiting.
+       Said in the reader, under the mileage bar, so it never repeats the
+       number the bar is already showing. */
+    near_milestone: [
+      'Close now. {left} to go.',
+      '{left} more and {title} is yours.',
+      'Almost. {title} is {left} away.',
+      'That is nearly it. {left} left.',
+    ],
+    /* The same, for a family tier rather than a chapter count. {family} is
+       the family's name, {left} how many chapters short it is. */
+    near_tier: [
+      '{left} more of these and {family} moves up.',
+      'You are {left} off {family}.',
+      '{family} is watching. {left} to go.',
+    ],
     /* A stage change. {stage} is the new stage's name. */
     evolve: [
       'I feel taller. New form, same shelf.',

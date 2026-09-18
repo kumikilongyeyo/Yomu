@@ -112,6 +112,26 @@ where an idea came from.
 | [LorisYounger/VPet](https://github.com/LorisYounger/VPet) | code MIT; **animation assets carry separate terms, including for commercial use** | Read for behavioural breadth. No assets used, and none may be. |
 | [shimeji-ai/Shimeji-AI-Pets](https://github.com/shimeji-ai/Shimeji-AI-Pets) | **none declared** | Studied conceptually. Nothing copied, and nothing may be until licensing is explicit. |
 
+### The patch handoff's shortlist (2026-09-19)
+
+The Yomu patch handoff named six projects for the chapter-end moment, the
+animated progress bar and the Customize Look rebuild. **None of them is in
+this repository**, and each was declined for a stated reason rather than
+overlooked — the brief's own rule was to ship only code that earns its weight.
+
+| Project | Licence | Proposed for | Why it was not shipped |
+|---|---|---|---|
+| [catdad/canvas-confetti](https://github.com/catdad/canvas-confetti) | ISC | The milestone burst | Yomu already draws one: `confetti()` in `yomu-streak-ui.js`, twenty-six CSS particles, reduced-motion aware, about a kilobyte. The chapter-end card calls that. A second particle system for the same half second is the duplication the brief warns about. |
+| [kimmobrunfeldt/progressbar.js](https://github.com/kimmobrunfeldt/progressbar.js) | MIT | The streak/mileage bar | The bar is a straight CSS fill whose gradient *is* data — its size and offset say which heat colours the reader has reached. A library that owns the drawing would have to be taught that, and the brief asked for the existing bar to be juiced first. Worth revisiting the day Yomu wants a non-linear path. |
+| [9am/fire-flame](https://github.com/9am/fire-flame) | MIT | Ember preset particles | The flame is already vector art per streak stage (`brand/flame/s1-6`). Two CSS keyframes flicker it and two pseudo-elements throw the Ember sparks, at no runtime cost and no bytes. A canvas particle layer behind a preset flag is a lot of machinery for two dots. |
+| [radix-ui/primitives](https://github.com/radix-ui/primitives) | MIT | Accordion, select, slider, tabs behaviour | Behaviour reference only. The accordion is `<details>`/`<summary>` with one-open-at-a-time and scroll-into-view; the segmented control is a `radiogroup` with `aria-checked`. Importing React for a settings sheet in a vanilla app was explicitly ruled out. |
+| [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | MIT | Compact settings layout | Layout reference only — the density targets (42px summaries, 34px rows, an 88px label column) came from the brief itself. Rebuilt in Yomu's own CSS. |
+| [shoelace-style/shoelace](https://github.com/shoelace-style/shoelace) | MIT | Web Component control patterns | Reference only, and the repository is archived. |
+
+Gradients remain [grapick](https://github.com/artf/grapick), already vendored
+under `dist-app/vendor/grapick`. No second gradient editor was added.
+
+
 ---
 
 ## If this artwork is ever published beyond the prototype

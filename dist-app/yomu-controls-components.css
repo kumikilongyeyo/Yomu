@@ -163,3 +163,228 @@
   --yui-cta-ink: #fff;
   backdrop-filter: blur(10px);
 }
+
+/* =====================================================================
+ * The knobs, on Yomu's own controls
+ * =====================================================================
+ *
+ * Everything above this line is a choice -- an attribute on <html> that
+ * selects a block. Everything below is a number: yomu-controls.js writes each
+ * range to a custom property on <html>, and these rules compute with it.
+ *
+ * Two naming rules, both learned the hard way:
+ *   - a percentage knob also gets a `-f` twin holding the same value over a
+ *     hundred, because `opacity` wants 0.92 and a slider says 92;
+ *   - a knob's own property is never also the name of a composite value. The
+ *     button's shadow *strength* is --yui-button-shadow; the shadow it
+ *     produces is --yui-button-shadow-v. One name for both is a box-shadow of
+ *     "60", which the browser drops in silence.
+ *
+ * Each block is a no-op at its default, so a reader who never opens the sheet
+ * gets exactly the shipped look.
+ */
+
+/* ---------- appearance: surfaces, radius, shadow, density --------------- */
+
+:root {
+  --yui-shadow-f: 1;
+  --yui-radius-f: 1;
+  --yui-density-f: 1;
+  --yui-surface-opacity-f: 1;
+}
+
+/* The global radius multiplies the kit's own two radii rather than replacing
+   them, so the relationship between a card and a control survives the knob. */
+:root[data-yui-tile-shape] {
+  --radius-card: calc(16px * var(--yui-radius-f, 1));
+  --radius-control: calc(14px * var(--yui-radius-f, 1));
+}
+
+:root[data-yui-tile-shape] .g-app,
+:root[data-yui-tile-shape] body {
+  font-size: calc(1rem * var(--yui-density-f, 1));
+}
+
+/* Surface opacity and blur, on the things that are actually panels. --bg
+   under --surface is how this system composes an opaque raised thing, so the
+   opacity knob rides on the lift and never on the ground. */
+:root[data-yui-tile-shape] :is(.glass, .g-card, .tile-card, .stk, .mlg, .ysh-card) {
+  --surface: color-mix(in srgb,
+    var(--pa-surface, rgba(255, 255, 255, .055)) calc(var(--yui-surface-opacity, 100) * 1%),
+    transparent);
+}
+
+:root[data-yui-tile-shape] :is(.glass, .dock, .header-tools) {
+  backdrop-filter: blur(calc(12px + var(--yui-surface-blur, 0px)));
+  -webkit-backdrop-filter: blur(calc(12px + var(--yui-surface-blur, 0px)));
+}
+
+/* ---------- tiles: dim, clamp, lift, rating ---------------------------- */
+
+:root[data-yui-tile-shape] :is(.tile-card__cover, .tile-art, .title-art, .yr-card__art)::after {
+  box-shadow: inset 0 0 0 999px rgba(4, 10, 16, calc(var(--yui-tile-dim, 0) / 100));
+}
+
+:root[data-yui-tile-shape] :is(.tile-card__title, .tile-copy .t, .yr-card__title) {
+  -webkit-line-clamp: var(--yui-tile-clamp, 2);
+  line-clamp: var(--yui-tile-clamp, 2);
+}
+
+:root[data-yui-tile-lift='none'] :is(.tile-card, .tile, .yr-card__art, .title-card) { box-shadow: none !important; }
+:root[data-yui-tile-lift='none'] :is(.tile, .yr-card):hover { transform: none; }
+:root[data-yui-tile-lift='high'] :is(.tile, .yr-card):hover { transform: translateY(-4px); }
+:root[data-yui-tile-lift='high'] :is(.tile-card, .tile, .title-card) {
+  box-shadow: 0 18px 38px -26px rgba(0, 0, 0, calc(.85 * var(--yui-shadow-f, 1)));
+}
+
+:root[data-yui-rating-style='solid'] :is(.yomu-tile__rating, .yr-card__rating) {
+  background: var(--accent, #b8791c) !important;
+  color: var(--accentText, #18212a) !important;
+  border-color: transparent !important;
+  backdrop-filter: none !important;
+}
+:root[data-yui-rating-style='bare'] :is(.yomu-tile__rating, .yr-card__rating) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding-inline: 0 !important;
+  text-shadow: 0 1px 3px rgba(6, 12, 20, .8);
+}
+
+/* ---------- secondary buttons ------------------------------------------ */
+
+:root[data-yui-button-shape] :is(
+  .genre-chip,
+  .m-seg button,
+  .home-reload,
+  .icon-button,
+  .tile-card__save,
+  .dock button,
+  .yomu-sidebar__item
+) {
+  min-height: var(--yui-button-height, 38px);
+  font-weight: var(--yui-button-weight, 800);
+  gap: var(--yui-button-icon-gap, 8px);
+  justify-content: var(--yui-button-align, center);
+  border-width: calc(1px * var(--yui-button-border-f, 1));
+  backdrop-filter: blur(var(--yui-button-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--yui-button-blur, 0px));
+}
+
+/* Opacity is applied to the fill, not to the element: fading the whole
+   control fades its label with it, which is what "disabled" looks like. */
+:root[data-yui-button-finish='soft'] :is(.genre-chip, .home-reload, .icon-button, .tile-card__save) {
+  background: color-mix(in srgb,
+    color-mix(in srgb, var(--yui-button-a) 12%, var(--surface, #17232d))
+    calc(var(--yui-button-opacity, 100) * 1%), transparent);
+}
+
+:root[data-yui-button-shadow] :is(.genre-chip, .home-reload, .icon-button, .tile-card__save) {
+  box-shadow: 0 8px 20px -14px rgba(0, 0, 0, calc(var(--yui-button-shadow-f, 0) * var(--yui-shadow-f, 1)));
+}
+
+:root[data-yui-button-case='upper'] :is(.genre-chip, .m-seg button, .home-reload, .yomu-sidebar__item) {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+:root[data-yui-button-case='caps'] :is(.genre-chip, .m-seg button, .home-reload, .yomu-sidebar__item) {
+  font-variant-caps: all-small-caps;
+  letter-spacing: .04em;
+}
+
+:root[data-yui-button-icon='right'] :is(.home-reload, .yomu-sidebar__item, .tile-card__save) { flex-direction: row-reverse; }
+:root[data-yui-button-icon='only'] :is(.home-reload, .yomu-sidebar__item) > :not(svg):not(img) { display: none; }
+
+/* ---------- CTA --------------------------------------------------------- */
+
+:root[data-yui-cta-shape] :is(
+  .hero__acts .primary,
+  .hero__acts > button:first-child,
+  .hero__acts > a:first-child,
+  .m-btn.primary,
+  .ylk-host__btn
+) {
+  justify-content: var(--yui-cta-align, center);
+  gap: var(--yui-button-icon-gap, 8px);
+  backdrop-filter: blur(var(--yui-cta-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--yui-cta-blur, 0px));
+  box-shadow: 0 12px 26px -18px
+    color-mix(in srgb, var(--yui-cta-b) calc(var(--yui-cta-shadow, 100) * .8%), transparent);
+  transition: transform 160ms cubic-bezier(.3, 1, .5, 1), filter 160ms ease;
+}
+
+/* Emphasis is saturation and weight together: a call to action reads louder
+   because it is more itself, not because it is bigger. */
+:root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn) {
+  filter: saturate(var(--yui-cta-emphasis-f, 1));
+  font-weight: calc(700 + 100 * (var(--yui-cta-emphasis-f, 1) - 1));
+}
+
+:root[data-yui-cta-finish='gradient'] :is(
+  .hero__acts .primary,
+  .hero__acts > button:first-child,
+  .hero__acts > a:first-child,
+  .m-btn.primary,
+  .ylk-host__btn
+) {
+  background: linear-gradient(calc(var(--yui-cta-angle, 120) * 1deg), var(--yui-cta-a), var(--yui-cta-b)) !important;
+}
+
+:root[data-yui-cta-width='wide'] :is(.hero__acts .primary, .m-btn.primary) { padding-inline: 34px; }
+:root[data-yui-cta-width='full'] :is(.hero__acts .primary, .m-btn.primary) { width: 100%; }
+
+:root[data-yui-cta-icon='right'] :is(.hero__acts .primary, .m-btn.primary) { flex-direction: row-reverse; }
+:root[data-yui-cta-icon='none'] :is(.hero__acts .primary, .m-btn.primary) > :is(svg, img) { display: none; }
+
+:root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn):hover {
+  transform: translateY(calc(-1px * var(--yui-cta-hover-f, 1)));
+  filter: saturate(var(--yui-cta-emphasis-f, 1)) brightness(calc(1 + .06 * var(--yui-cta-hover-f, 1)));
+}
+:root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn):active {
+  transform: translateY(0) scale(calc(1 - .015 * var(--yui-cta-hover-f, 1)));
+}
+
+/* The preview follows the live selection, on the same tokens. */
+:root[data-yui-button-shadow] .yui-button-sample {
+  --yui-button-shadow-v: 0 8px 20px -14px rgba(0, 0, 0, calc(var(--yui-button-shadow-f, 0) * var(--yui-shadow-f, 1)));
+}
+:root[data-yui-cta-finish='gradient'] .yui-cta-sample {
+  --yui-cta-bg: linear-gradient(calc(var(--yui-cta-angle, 120) * 1deg), var(--yui-cta-a), var(--yui-cta-b));
+}
+:root[data-yui-cta-shape] .yui-cta-sample {
+  --yui-cta-shadow-v: 0 12px 26px -18px
+    color-mix(in srgb, var(--yui-cta-b) calc(var(--yui-cta-shadow, 100) * .8%), transparent);
+  filter: saturate(var(--yui-cta-emphasis-f, 1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn),
+  :root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn):hover,
+  :root[data-yui-cta-shape] :is(.hero__acts .primary, .m-btn.primary, .ylk-host__btn):active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---------- choices that feed a property -------------------------------- *
+ *
+ * Alignment is a choice, so it lands as an attribute; the layout rules want a
+ * flexbox keyword. This is the one place the two are joined. Without it the
+ * Align row was a control that stored a value and moved nothing -- the CSS
+ * read a `--yui-button-align` that nothing ever wrote.
+ */
+:root[data-yui-button-align='start']  { --yui-button-align: flex-start; }
+:root[data-yui-button-align='center'] { --yui-button-align: center; }
+:root[data-yui-button-align='end']    { --yui-button-align: flex-end; }
+
+:root[data-yui-cta-align='start']  { --yui-cta-align: flex-start; }
+:root[data-yui-cta-align='center'] { --yui-cta-align: center; }
+:root[data-yui-cta-align='end']    { --yui-cta-align: flex-end; }
+
+/* The real controls are not all flex containers; a text button needs the
+   text itself moved. */
+:root[data-yui-button-align='start']  :is(.genre-chip, .home-reload, .yomu-sidebar__item) { text-align: left; }
+:root[data-yui-button-align='end']    :is(.genre-chip, .home-reload, .yomu-sidebar__item) { text-align: right; }
+:root[data-yui-cta-align='start']     :is(.hero__acts .primary, .m-btn.primary) { text-align: left; }
+:root[data-yui-cta-align='end']       :is(.hero__acts .primary, .m-btn.primary) { text-align: right; }

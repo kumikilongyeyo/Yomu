@@ -567,17 +567,39 @@
    * milestone -- the reward outranks the chapter, so one animation plays.
    */
 
+  /**
+   * Whether yomu-chapter-end.js is drawing the reader-end moment instead.
+   *
+   * It composes Mori, a bubble and a mileage bar at the bottom of the reader
+   * when something is nearly earned, and two of us speaking at once is the
+   * duplicate-overlay failure. The pose is still set either way -- that is
+   * the sprite it borrows.
+   */
+  const handedOver = (kind, detail) =>
+    surface() === 'reader' && !!window.YomuChapterEnd?.owns?.(kind, detail);
+
   on('yomu:chapter-complete', (event) => {
     const count = event.detail?.count || 1;
     setState('celebrating', 2600);
     if (surface() === 'reader') {
       /* The one thing Mori is allowed to do in the reader, and then it packs
-         itself away rather than sitting on the next chapter. */
-      showOnce(() => {
-        say(window.YomuGreetings?.line?.('chapter_complete') || 'Chapter down.', 3200);
-      }, 3800);
+         itself away rather than sitting on the next chapter.
+
+         Decided a tick late, on purpose. The chapter-end card merges this
+         event with the reward that may follow it out of the same pulse, so
+         at the instant this fires nobody yet knows whether a milestone was
+         crossed -- and asking now gets "no card" for the one chapter that
+         most deserves one, followed by the card anyway. Sixty milliseconds
+         is after that decision and long before anyone could read a bubble. */
+      setTimeout(() => {
+        if (handedOver('chapter', event.detail)) return;
+        showOnce(() => {
+          say(window.YomuGreetings?.line?.('chapter_complete') || 'Chapter down.', 3200);
+        }, 3800);
+      }, 60);
       return;
     }
+    if (handedOver('chapter', event.detail)) return;
     const line = window.YomuGreetings?.line?.('chapter_complete', { count });
     if (line) say(line);
   });
@@ -589,6 +611,9 @@
        the same pose the ceremony asks for. */
     if (event.detail?.quiet) { setState('celebrating', 3400); return; }
     setState('celebrating', 3400);
+    /* In the reader the chapter-end card is the reward beat, badge and all,
+       so the toast and the bubble would be the same news twice. */
+    if (handedOver('reward', event.detail)) return;
     const title = event.detail?.title || '';
     const line = window.YomuGreetings?.line?.('milestone', { title })
       || (title ? title + '. That is a real number.' : null);

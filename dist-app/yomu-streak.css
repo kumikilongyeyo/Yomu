@@ -80,21 +80,104 @@
   position: absolute; left: 0; top: 0; bottom: 0;
   width: var(--p, 0%);
   border-radius: 999px;
+  overflow: hidden;
   background-image: var(--stk-ramp);
   background-size: var(--ramp-size, 100%) 100%;
   background-repeat: no-repeat;
   transition: width 500ms cubic-bezier(.3, 1, .5, 1);
 }
+
+/* --- the bar, alive ---------------------------------------------------------- *
+ *
+ * The ramp itself is data: its size and offset say which colours the reader
+ * has actually reached, so nothing here touches background-position on the
+ * fill. The motion is two layers clipped inside it -- a slow drift that says
+ * the number is live, and a single sheen that runs only when it grows.
+ */
+
+.stk__fill::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(104deg,
+    transparent 30%, rgba(255, 255, 255, .17) 46%, rgba(255, 255, 255, .17) 54%, transparent 70%);
+  background-size: 260% 100%;
+  animation: stk-drift 5.6s linear infinite;
+}
+
+/* One pass across the newly gained segment, on the paint that gained it. */
+.stk__fill::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, .72) 50%, transparent 62%);
+  transform: translateX(-100%);
+}
+.stk__bar.is-gain .stk__fill::after { animation: stk-sheen 820ms cubic-bezier(.4, 0, .2, 1) 120ms 1; }
+
+@keyframes stk-drift {
+  from { background-position: 120% 50%; }
+  to   { background-position: -60% 50%; }
+}
+@keyframes stk-sheen {
+  0%   { opacity: 0; transform: translateX(-100%); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
 .stk__tick { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--bg, #f5f2ec); }
 .stk__head {
   position: absolute; top: 50%; left: var(--p, 0%);
   width: 30px; height: 30px; transform: translate(-50%, -50%);
   border-radius: 50%; display: grid; place-items: center;
   background: var(--stk-pocket, var(--raised, #efeade));
-  box-shadow: 0 0 0 2px var(--bg, #f5f2ec);
-  transition: left 500ms cubic-bezier(.3, 1, .5, 1);
+  box-shadow: 0 0 0 2px var(--bg, #f5f2ec),
+              0 0 var(--stk-bloom, 10px) 0 color-mix(in srgb, var(--stk-ink, #b8791c) var(--stk-bloom-a, 46%), transparent);
+  transition: left 500ms cubic-bezier(.3, 1, .5, 1), box-shadow 420ms ease;
 }
+/* The leading edge brightens for the length of the gain, then settles. */
+.stk__bar.is-gain .stk__head { --stk-bloom: 16px; --stk-bloom-a: 82%; }
 .stk__head img { width: 22px; height: 22px; object-fit: contain; display: block; }
+
+/* The flame, breathing. Two loops at co-prime durations so the flicker never
+   lands on the same beat twice -- one period would read as a pulse. */
+.stk__head img { animation: stk-flicker 1.9s ease-in-out infinite; transform-origin: 50% 82%; }
+.stk__flame img { animation: stk-flicker 2.3s ease-in-out infinite; transform-origin: 50% 82%; }
+.stk__flame.is-out img { animation: none; }
+
+@keyframes stk-flicker {
+  0%   { transform: scale(1)      translateY(0);      filter: brightness(1); }
+  22%  { transform: scale(1.045)  translateY(-.5px);  filter: brightness(1.1); }
+  41%  { transform: scale(.985)   translateY(.3px);   filter: brightness(.96); }
+  63%  { transform: scale(1.03)   translateY(-.35px); filter: brightness(1.07); }
+  81%  { transform: scale(.995)   translateY(.15px);  filter: brightness(1); }
+  100% { transform: scale(1)      translateY(0);      filter: brightness(1); }
+}
+
+/* The flame at the top of the card carries an inline scale for its stage, so
+   it animates from that rather than from 1 and the stage is not flattened. */
+.stk__flame img { animation-name: stk-flicker-soft; }
+@keyframes stk-flicker-soft {
+  0%, 100% { filter: brightness(1)    saturate(1); }
+  27%      { filter: brightness(1.12) saturate(1.06); }
+  52%      { filter: brightness(.95)  saturate(.98); }
+  78%      { filter: brightness(1.07) saturate(1.03); }
+}
+
+/* Ember: a couple of sparks off the head, and only here. Two pseudo dots,
+   no particle engine -- the default preset stays restrained, which is the
+   whole reason this is gated rather than shipped on. */
+:root[data-yui-preset='ember'] .stk__head::before,
+:root[data-yui-preset='ember'] .stk__head::after {
+  content: ''; position: absolute; left: 50%; top: 4px;
+  width: 3px; height: 3px; border-radius: 50%; pointer-events: none;
+  background: color-mix(in srgb, var(--stk-ink, #b8791c) 86%, #fff);
+  animation: stk-ember 2.4s ease-out infinite;
+}
+:root[data-yui-preset='ember'] .stk__head::after { animation-delay: 1.15s; left: 44%; }
+
+@keyframes stk-ember {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.6); }
+  18%  { opacity: .9; }
+  100% { opacity: 0; transform: translate(-50%, -22px) scale(.3); }
+}
 .stk__next { margin: 0 0 12px; font: 600 12px/1.4 var(--uiFont, var(--font-ui, system-ui, sans-serif)); color: var(--muted, #4a443a); }
 
 /* --- the week strip --------------------------------------------------------- */
@@ -132,8 +215,25 @@
 .mlg__row .yb { width: 40px; height: 40px; }
 .mlg__row b { display: block; font: 700 13px/1.3 var(--uiFont, var(--font-ui, system-ui, sans-serif)); }
 .mlg__row small { display: block; font: 500 11.5px/1.3 var(--uiFont, var(--font-ui, system-ui, sans-serif)); color: var(--muted, #4a443a); }
-.mlg__bar { height: 6px; border-radius: 3px; background: var(--raised, #efeade); margin-top: 6px; overflow: hidden; }
-.mlg__bar i { display: block; height: 100%; width: var(--p, 0%); background: var(--accent, #b8791c); border-radius: 3px; }
+.mlg__bar { position: relative; height: 6px; border-radius: 3px; background: var(--raised, #efeade); margin-top: 6px; overflow: hidden; }
+.mlg__bar i {
+  position: relative; display: block; height: 100%; width: var(--p, 0%); border-radius: 3px;
+  overflow: hidden;
+  background: linear-gradient(90deg,
+    var(--accent, #b8791c),
+    color-mix(in srgb, var(--accent, #b8791c) 62%, #fff) 60%,
+    var(--accent, #b8791c));
+  background-size: 220% 100%;
+  animation: stk-drift 6.4s linear infinite;
+  transition: width 520ms cubic-bezier(.3, 1, .5, 1);
+  box-shadow: 0 0 8px -2px color-mix(in srgb, var(--accent, #b8791c) 80%, transparent);
+}
+.mlg__bar.is-gain i::after {
+  content: ''; position: absolute; inset: 0; opacity: 0;
+  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, .7) 50%, transparent 62%);
+  transform: translateX(-100%);
+  animation: stk-sheen 820ms cubic-bezier(.4, 0, .2, 1) 120ms 1;
+}
 .mlg__left { font: 800 12px/1.2 var(--uiFont, var(--font-ui, system-ui, sans-serif)); color: var(--accent, #b8791c); white-space: nowrap; }
 
 /* --- detail sheets ------------------------------------------------------------- */
@@ -183,8 +283,34 @@
 .stk-toast img, .stk-toast .yb { width: 48px; height: 48px; flex: none; object-fit: contain; }
 .stk-toast__kicker { display: block; font: 800 10px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif)); letter-spacing: .08em; text-transform: uppercase; color: var(--accent, #b8791c); margin-bottom: 3px; }
 
+/* Nothing loops while the tab is in the background. yomu-streak-ui.js sets
+   the attribute on visibilitychange. */
+:root[data-yomu-away] .stk__fill::before,
+:root[data-yomu-away] .stk__fill::after,
+:root[data-yomu-away] .stk__head img,
+:root[data-yomu-away] .stk__flame img,
+:root[data-yomu-away] .mlg__bar i,
+:root[data-yomu-away] .stk__head::before,
+:root[data-yomu-away] .stk__head::after { animation-play-state: paused; }
+
 @media (prefers-reduced-motion: reduce) {
-  .stk__fill, .stk__head, .stk__flame img { transition: none; }
+  .stk__fill, .stk__head, .stk__flame img, .mlg__bar i { transition: none; }
   .stk-toast { transition: opacity 120ms linear; transform: translateX(-50%); }
   .stk-sheet { transition: none; }
+
+  /* No drift, no sheen, no flicker, no embers. The width, the colours and
+     the numbers are unchanged -- the information is all still there. */
+  .stk__fill::before,
+  .stk__fill::after,
+  .stk__bar.is-gain .stk__fill::after,
+  .stk__head img,
+  .stk__flame img,
+  .mlg__bar i,
+  .mlg__bar.is-gain i::after,
+  :root[data-yui-preset='ember'] .stk__head::before,
+  :root[data-yui-preset='ember'] .stk__head::after { animation: none; }
+  .stk__fill::before, .stk__fill::after, .mlg__bar.is-gain i::after { display: none; }
+  :root[data-yui-preset='ember'] .stk__head::before,
+  :root[data-yui-preset='ember'] .stk__head::after { display: none; }
+  .stk__bar.is-gain .stk__head { --stk-bloom: 10px; --stk-bloom-a: 46%; }
 }

@@ -1,0 +1,267 @@
+/* =====================================================================
+ * The chapter-end moment — Mori, a line, and one bar that travels.
+ *
+ * Lower centre of the reader, above the page and under nothing. The whole
+ * composition is pointer-transparent: the reader's own next-chapter control
+ * sits beneath it and has to stay tappable while this is on screen.
+ *
+ * Its ground is opaque, and it is not the page's.
+ *
+ * The usual recipe here -- --bg with --surface laid over it -- composes a
+ * raised thing *within* a page, and it is wrong for this one: in the reader
+ * --bg IS the page, and --surface is a 5.5% white lift, so the card came out
+ * as rgb(8,13,20) on a rgb(8,13,20) ground and read as a faint rectangle
+ * rather than a card. So the lift is taken toward the ink instead. In Aurora
+ * that lightens against a near-black reader; in Paper the ink is near-black,
+ * so the same declaration darkens against a warm ground. One rule, separated
+ * in both, with no mode-specific literal to keep in step.
+ * ===================================================================== */
+
+:root {
+  /* The card's own ground: the page's, moved toward its text. */
+  --ych-ground: color-mix(in srgb, var(--text, #eaf0f7) 10%, var(--bg, #f5f2ec));
+  --ych-edge: color-mix(in srgb, var(--text, #eaf0f7) 22%, transparent);
+}
+
+.ych {
+  position: fixed;
+  z-index: 94;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(10px);
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 28px));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms cubic-bezier(.3, 1, .5, 1), transform 320ms cubic-bezier(.3, 1, .5, 1);
+}
+
+.ych.is-on { opacity: 1; transform: translateX(-50%); }
+.ych.is-off { opacity: 0; transform: translateX(-50%) translateY(-6px); transition-duration: 380ms; }
+
+/* --- Mori ---------------------------------------------------------------- */
+
+.ych__mori {
+  flex: none;
+  /* Sized from the sprite, not guessed at. The pet atlas cell is 192x208, so
+     a 76px-wide frame is 82px tall; a square box here let the frame below it
+     in the sheet show as a second Mori. `overflow: hidden` is the insurance
+     for the day those numbers change. */
+  width: 76px;
+  height: 82px;
+  overflow: hidden;
+  margin-bottom: -8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.ych__mori[hidden] { display: none; }
+
+.ych__stack {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+/* --- the bubble ---------------------------------------------------------- *
+ *
+ * The speech comes from Mori, so it has a tail and the tail points at the
+ * sprite. That is the whole difference between "a message" and "Mori said
+ * something", and it is the reason this is not a toast.
+ */
+
+.ych__bubble {
+  position: relative;
+  max-width: 100%;
+  padding: 8px 13px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--ych-ground);
+  border: 1px solid var(--ych-edge);
+  box-shadow: 0 10px 28px -14px rgba(0, 0, 0, .55);
+  color: var(--text, #1e1b16);
+  font: 650 13px/1.35 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  text-wrap: pretty;
+}
+
+.ych__bubble::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  bottom: 7px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: var(--ych-ground);
+  border-left: 1px solid var(--ych-edge);
+  border-bottom: 1px solid var(--ych-edge);
+}
+
+.ych__says { display: block; }
+
+/* --- the card ------------------------------------------------------------ */
+
+.ych__card {
+  width: 100%;
+  min-width: 232px;
+  padding: 10px 13px 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-radius: var(--radius-control, 14px);
+  background: var(--ych-ground);
+  border: 1px solid var(--ych-edge);
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, .6);
+  color: var(--text, #1e1b16);
+  transition: border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.ych__card.is-reward {
+  border-color: var(--accentLine, rgba(184, 121, 28, .42));
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, .6),
+              0 0 0 1px color-mix(in srgb, var(--accent, #b8791c) 26%, transparent),
+              0 0 26px -6px color-mix(in srgb, var(--accent, #b8791c) 62%, transparent);
+}
+
+.ych__badge {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+
+.ych__badge > * { width: 100%; height: 100%; }
+.ych__badge img, .ych__badge svg { display: block; object-fit: contain; }
+
+/* Earned: the locked art comes up to full colour as the bar lands. */
+.ych__badge.is-earned {
+  filter: none;
+  animation: ych-earn 620ms cubic-bezier(.3, 1.4, .5, 1) 340ms both;
+}
+
+@keyframes ych-earn {
+  0%   { transform: scale(.82); filter: grayscale(1) opacity(.55); }
+  55%  { transform: scale(1.14); filter: grayscale(0) opacity(1); }
+  100% { transform: scale(1); filter: none; }
+}
+
+.ych__copy {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.ych__kicker {
+  font: 800 9.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--accent, #b8791c);
+}
+
+.ych__label {
+  font: 800 13.5px/1.25 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  letter-spacing: -.012em;
+  color: var(--text, #1e1b16);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ych__left {
+  font: 600 11px/1.3 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  color: var(--faint, #9b9184);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- the bar -------------------------------------------------------------- *
+ *
+ * One width change, driven from JS by --p. The sheen is a separate layer so
+ * it can run once across the gained segment without touching the fill's own
+ * transition.
+ */
+
+.ych__bar {
+  position: relative;
+  height: 7px;
+  margin: 4px 0 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--stk-track, color-mix(in srgb, var(--text, #1e1b16) 9%, transparent));
+}
+
+.ych__fill {
+  display: block;
+  height: 100%;
+  width: var(--p, 0%);
+  border-radius: 999px;
+  background-image: var(--stk-ramp, linear-gradient(90deg, var(--accent, #b8791c), color-mix(in srgb, var(--accent, #b8791c) 55%, #fff)));
+  background-size: 260% 100%;
+  background-position: 0% 50%;
+  transition: width 760ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.ych__card.is-reward .ych__fill {
+  box-shadow: 0 0 12px -1px color-mix(in srgb, var(--accent, #b8791c) 85%, transparent);
+}
+
+.ych__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 38%, #ffffffb0 50%, transparent 62%);
+  transform: translateX(-100%);
+}
+
+.ych__sheen.is-running {
+  animation: ych-sheen 900ms cubic-bezier(.4, 0, .2, 1) 180ms 1;
+}
+
+@keyframes ych-sheen {
+  0%   { opacity: 0; transform: translateX(-100%); }
+  18%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
+/* The fallback pop, for when the streak card's confetti is not loaded. */
+.ych.is-pop .ych__card { animation: ych-pop 460ms cubic-bezier(.3, 1.5, .5, 1) 1; }
+
+@keyframes ych-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+
+/* --- narrow --------------------------------------------------------------- */
+
+@media (max-width: 420px) {
+  .ych { bottom: calc(84px + env(safe-area-inset-bottom)); gap: 2px; }
+  /* Scaled, not resized: the sprite inside carries its own pixel size. */
+  .ych__mori { transform: scale(.84); transform-origin: bottom right; margin-right: -6px; }
+  .ych__card { min-width: 0; padding: 9px 11px 10px; }
+  .ych__stack { min-width: 0; }
+}
+
+/* --- reduced motion -------------------------------------------------------- *
+ *
+ * The information is complete either way: the bar still lands on the right
+ * width and the number still reads the right count. What goes is the
+ * journey, the one-pass sheen, the badge's pop and the burst.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ych { transition: opacity 140ms linear; transform: translateX(-50%); }
+  .ych.is-on, .ych.is-off { transform: translateX(-50%); }
+  .ych__fill { transition: none; }
+  .ych__sheen, .ych__sheen.is-running { display: none; animation: none; }
+  .ych__badge.is-earned { animation: none; filter: none; }
+  .ych.is-pop .ych__card { animation: none; }
+}
