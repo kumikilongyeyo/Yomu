@@ -1,0 +1,159 @@
+{
+  "id": "readallcomics",
+  "name": "ReadAllComics",
+  "version": 1,
+  "language": "en",
+  "content": [
+    "comic"
+  ],
+  "base": "https://readallcomics.com",
+  "hosts": [
+    "readallcomics.com"
+  ],
+  "defaultCategory": "comic",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 2,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/",
+      "query": {
+        "paged": "{{page}}"
+      },
+      "cacheTtl": 900,
+      "parse": {
+        "type": "html",
+        "list": "ul.list-story.categories li",
+        "limit": 80,
+        "fields": {
+          "id": {
+            "selector": "a.cat-title",
+            "attr": "href",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          },
+          "title": {
+            "selector": "a.cat-title"
+          },
+          "cover": {
+            "selector": "img.book-cover",
+            "attr": "src",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/?s=&type=comic",
+      "query": {
+        "story": "{{rawQuery}}",
+        "paged": "{{page}}"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "ul.list-story.categories li",
+        "limit": 100,
+        "fields": {
+          "id": {
+            "selector": "a.cat-title",
+            "attr": "href",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          },
+          "title": {
+            "selector": "a.cat-title"
+          },
+          "cover": {
+            "selector": "img.book-cover",
+            "attr": "src",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "{{id}}",
+      "cacheTtl": 900,
+      "parse": {
+        "type": "html",
+        "fields": {
+          "title": {
+            "selector": ".description-archive h1"
+          },
+          "synopsis": {
+            "selector": "#hidden-description"
+          },
+          "cover": {
+            "selector": ".description-archive p img",
+            "attr": "src",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "chapters": {
+      "path": "{{id}}",
+      "cacheTtl": 900,
+      "parse": {
+        "type": "html",
+        "list": ".list-story a",
+        "limit": 3000,
+        "fields": {
+          "id": {
+            "selector": "",
+            "attr": "href",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          },
+          "name": {
+            "selector": ""
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "{{chapterId}}",
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "html",
+        "list": "body img:not(div[id=logo] img)",
+        "limit": 400,
+        "fields": {
+          "url": {
+            "selector": "",
+            "attr": "src",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
