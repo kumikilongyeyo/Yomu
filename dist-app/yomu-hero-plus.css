@@ -1,0 +1,99 @@
+/* ---------- hero --------------------------------------------------------- */
+
+.hero-track {
+  cursor: grab;
+  overscroll-behavior-x: contain;
+}
+
+.hero-track.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.yomu-hero-slide {
+  scroll-snap-align: start;
+  flex: 0 0 100%;
+}
+
+.yomu-hero__art {
+  background-position: center 24%;
+}
+
+.yomu-hero__rating {
+  flex: none;
+  margin-left: 2px;
+}
+
+/* Keep the rating beside actions, not up in the tile-tag stack. */
+.hero__acts .yomu-hero__rating {
+  position: static !important;
+  inset: auto !important;
+  max-width: none !important;
+}
+
+.yomu-hero-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  margin: 4px 0 2px;
+}
+
+.yomu-hero-dots button {
+  width: 18px;
+  height: 20px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.yomu-hero-dots i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--faint, #7b8b9e);
+  opacity: .55;
+  transition: width 180ms ease, opacity 180ms ease, background 180ms ease;
+}
+
+.yomu-hero-dots button[aria-current='true'] i {
+  width: 16px;
+  opacity: 1;
+  background: var(--accent, #ffc45f);
+}
+
+/* Hide the app's old pagination only while our complete strip is present. */
+:root:has(#yomu-hero-dots) :is(.hero-dots, .hero-pagination) {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .yui-field {
+    grid-template-columns: 94px minmax(0, 1fr);
+  }
+
+  .yui-acc__words small {
+    max-width: 240px;
+  }
+
+  .hero__acts {
+    flex-wrap: wrap;
+  }
+
+  .hero__acts .yomu-hero__rating {
+    scale: .92;
+    transform-origin: left center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yui-acc__chev,
+  .yomu-hero-dots i {
+    transition: none;
+  }
+}
