@@ -1,0 +1,117 @@
+/* ==================================================================== *
+ * Yomu badges — Aurora and Paper
+ * ====================================================================
+ *
+ * Load AFTER yomu-skin.css. Nothing here is !important.
+ *
+ * The mode blocks mirror yomu-skin.css exactly: 4a Aurora on
+ * [data-mode='dark'], 4b Paper as the default and on 'light', 4c 'system'
+ * split by the OS. Keep them in sync by hand if that file changes.
+ *
+ * Badges do NOT read --accent. A reader who picks a tone (--ua-d / --ua-l)
+ * retints the app; the badge metal stays the brand gold, because Tier IV and V
+ * read as gold and a pink Tier V is not a prestige tier. This is the one place
+ * the tone system is deliberately not followed.
+ *
+ * Plate values are opaque, not the translucent --surface/--raised the rest of
+ * the app uses: a badge has to sit on a cover, a toast and a progress bar, and
+ * a see-through plate loses its emblem over artwork.
+ * ==================================================================== */
+
+:root[data-mode='dark'] {
+  --yb-plate-hi:#1b2734; --yb-plate-lo:#0e1720; --yb-plate-t5:#26364a;
+  --yb-rim:#31404f;      --yb-rim2:#51677f;      --yb-bevel:rgba(255,255,255,.17);
+  --yb-ink:#eaf0f7;      --yb-ink-soft:#9fb2c6;
+  --yb-accent:#e9b45c;   --yb-accent-deep:#a8762d; --yb-accent-soft:rgba(233,180,92,.16);
+  --yb-crack:#141f2b;
+  --yb-lock-hi:#111924;  --yb-lock-lo:#0c131b;   --yb-lock-rim:#243141; --yb-lock-ink:#425366;
+}
+
+:root:not([data-mode='dark']),
+:root[data-mode='light'] {
+  --yb-plate-hi:#fffdfa; --yb-plate-lo:#eee7d8; --yb-plate-t5:#fffefb;
+  --yb-rim:#d3cab8;      --yb-rim2:#b6a993;      --yb-bevel:rgba(255,255,255,.95);
+  --yb-ink:#1e1b16;      --yb-ink-soft:#6d6558;
+  --yb-accent:#b8791c;   --yb-accent-deep:#8a5a13; --yb-accent-soft:rgba(184,121,28,.12);
+  --yb-crack:#e3d9c4;
+  --yb-lock-hi:#ece6da;  --yb-lock-lo:#e3dccd;   --yb-lock-rim:#cfc5b3; --yb-lock-ink:#a89e8c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-mode='system'] {
+  --yb-plate-hi:#1b2734; --yb-plate-lo:#0e1720; --yb-plate-t5:#26364a;
+  --yb-rim:#31404f;      --yb-rim2:#51677f;      --yb-bevel:rgba(255,255,255,.17);
+  --yb-ink:#eaf0f7;      --yb-ink-soft:#9fb2c6;
+  --yb-accent:#e9b45c;   --yb-accent-deep:#a8762d; --yb-accent-soft:rgba(233,180,92,.16);
+  --yb-crack:#141f2b;
+  --yb-lock-hi:#111924;  --yb-lock-lo:#0c131b;   --yb-lock-rim:#243141; --yb-lock-ink:#425366;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-mode='system'] {
+  --yb-plate-hi:#fffdfa; --yb-plate-lo:#eee7d8; --yb-plate-t5:#fffefb;
+  --yb-rim:#d3cab8;      --yb-rim2:#b6a993;      --yb-bevel:rgba(255,255,255,.95);
+  --yb-ink:#1e1b16;      --yb-ink-soft:#6d6558;
+  --yb-accent:#b8791c;   --yb-accent-deep:#8a5a13; --yb-accent-soft:rgba(184,121,28,.12);
+  --yb-crack:#e3d9c4;
+  --yb-lock-hi:#ece6da;  --yb-lock-lo:#e3dccd;   --yb-lock-rim:#cfc5b3; --yb-lock-ink:#a89e8c;
+  }
+}
+
+/* -------------------------------------------------------------------- *
+ * The badge itself. Geometry is in yomu-badges.js; everything that has a
+ * colour is here, so a tier is a class swap and a mode costs nothing.
+ * -------------------------------------------------------------------- */
+.yb{ display:block; overflow:visible;
+  --yb-el:var(--yb-ink); --yb-pl-hi:var(--yb-plate-hi); --yb-pl-lo:var(--yb-plate-lo); }
+.yb .rimfill{ fill:var(--yb-rim); stroke:var(--yb-rim); stroke-width:9; stroke-linejoin:round; }
+.yb .platefill{ stroke:var(--yb-pl-lo); stroke-width:5.6; stroke-linejoin:round; }
+.yb .bevel{ fill:none; stroke:var(--yb-bevel); stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.yb .step{ fill:none; stroke:var(--yb-rim2); stroke-width:1.2; stroke-linejoin:round; }
+.yb .wing{ fill:var(--yb-rim2); stroke:var(--yb-rim2); stroke-width:4; stroke-linejoin:round; }
+.yb .crest{ fill:var(--yb-accent); stroke:var(--yb-accent); stroke-width:4; stroke-linejoin:round; }
+.yb .em{ fill:none; stroke:var(--yb-ink); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+.yb .em .f{ fill:var(--yb-ink); stroke:none; }
+.yb .em .a{ stroke:var(--yb-el); }
+.yb .em .af{ fill:var(--yb-el); stroke:none; }
+.yb .em .crack{ stroke:var(--yb-crack); stroke-width:3.4; fill:none; }
+
+.yb--t2 .rimfill{ fill:var(--yb-rim2); stroke:var(--yb-rim2); }
+.yb--t3{ --yb-el:var(--yb-accent); }
+.yb--t3 .rimfill{ fill:var(--yb-rim2); stroke:var(--yb-rim2); }
+.yb--t3 .step{ stroke:var(--yb-accent-deep); }
+.yb--t4{ --yb-el:var(--yb-accent); }
+.yb--t4 .rimfill{ fill:var(--yb-accent-deep); stroke:var(--yb-accent-deep); }
+.yb--t4 .step{ stroke:var(--yb-accent); }
+.yb--t5{ --yb-el:var(--yb-accent); --yb-pl-hi:var(--yb-plate-t5); }
+.yb--t5 .rimfill{ fill:var(--yb-accent); stroke:var(--yb-accent); stroke-width:10; }
+.yb--t5 .step{ stroke:var(--yb-accent); }
+.yb--t5 .wing{ fill:var(--yb-accent-deep); stroke:var(--yb-accent-deep); }
+
+.yb--micro .rimfill{ stroke-width:11; }
+.yb--micro .platefill{ stroke-width:4.6; }
+.yb--micro .em{ stroke-width:6.4; }
+.yb--locked{ --yb-pl-hi:var(--yb-lock-hi); --yb-pl-lo:var(--yb-lock-lo); --yb-el:var(--yb-lock-ink); }
+.yb--locked .rimfill,.yb--locked .wing,.yb--locked .crest{ fill:var(--yb-lock-rim); stroke:var(--yb-lock-rim); }
+.yb--locked .em{ stroke:var(--yb-lock-ink); }
+.yb--locked .em .f{ fill:var(--yb-lock-ink); }
+.yb--locked .em .crack{ stroke:var(--yb-lock-lo); }
+.yb--mono{ --yb-pl-hi:currentColor; --yb-pl-lo:currentColor; --yb-el:currentColor; }
+.yb--mono .platefill{ opacity:.18; stroke:none; }
+.yb--mono .rimfill{ fill:none; stroke:currentColor; stroke-width:2.4; opacity:.55; }
+.yb--mono .wing,.yb--mono .crest{ fill:currentColor; stroke:currentColor; opacity:.55; }
+.yb--mono .em{ stroke:currentColor; }
+.yb--mono .em .f{ fill:currentColor; }
+.yb--mono .em .crack{ stroke:none; }
+
+/* Sizes. A badge is square; the crest and foot overflow the box on Tier V,
+   which is why .yb sets overflow:visible. */
+.yb[data-size='profile']{ width:96px; height:96px; }
+.yb[data-size='ui']{ width:48px; height:48px; }
+.yb[data-size='micro']{ width:32px; height:32px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .yb--pop{ animation: yb-pop 420ms cubic-bezier(.3,1,.5,1) both; }
+  @keyframes yb-pop { from { transform: scale(.82); opacity: 0 } to { transform: none; opacity: 1 } }
+}

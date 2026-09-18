@@ -554,6 +554,11 @@ const ASSETS = [
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">',
   },
   { file: 'yomu-overrides.css', tag: '<link rel="stylesheet" href="/yomu-overrides.css">' },
+  /* Both define their own namespaced properties (--yb-*, .yp-*) and override
+     nothing the skin sets, so they sit here rather than after it and the
+     skin-goes-last rule below is left intact. */
+  { file: 'yomu-badges.css', tag: '<link rel="stylesheet" href="/yomu-badges.css">' },
+  { file: 'yomu-pet.css', tag: '<link rel="stylesheet" href="/yomu-pet.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
      Both are deferred, and deferred scripts run in document order. */
@@ -562,6 +567,18 @@ const ASSETS = [
   { file: 'yomu-sync.js', tag: '<script src="/yomu-sync.js" defer></scr' + 'ipt>' },
   { file: 'yomu-circle.js', tag: '<script src="/yomu-circle.js" defer></scr' + 'ipt>' },
   { file: 'yomu-ledger.js', tag: '<script src="/yomu-ledger.js" defer></scr' + 'ipt>' },
+  /* Order here is a dependency chain, and deferred scripts run in document
+     order, so it is the only thing holding it together:
+       progress  owns the counters and the affinity gates
+       badges    renders an equipped title, and progress names the family
+       pet       reads progress to know whether Mori is unlocked
+       greet     needs all three before it can choose a line
+     Moving greet above progress does not throw; it silently drops every
+     gated line, which looks like a smaller corpus rather than a bug. */
+  { file: 'yomu-progress.js', tag: '<script src="/yomu-progress.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-badges.js', tag: '<script src="/yomu-badges.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
   /* Last, so it overrides both the compiled palette and yomu-overrides.css on
      equal specificity. Moving it earlier silently un-skins the app. */
   { file: 'yomu-skin.css', tag: '<link rel="stylesheet" href="/yomu-skin.css">' },

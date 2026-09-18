@@ -118,6 +118,13 @@
       margin: 26px 0 9px; font-size: 10px; font-weight: 700;
       letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
     }
+    /* Secondary to the h2 above it: the pet chooser is a footnote to the
+       companion, and must not read as a section of its own competing with
+       the mileage road. */
+    .yp-sub {
+      margin: 14px 0 8px; font-size: 11px; font-weight: 700;
+      letter-spacing: .04em; color: var(--dim);
+    }
     .card {
       border: 1px solid var(--line); background: var(--surface);
       border-radius: 14px; overflow: hidden;
@@ -143,7 +150,7 @@
     .row small { display: block; margin-top: 2px; font: 400 12px/1.4 var(--uiFont); color: var(--faint); }
     .note { margin: 10px 2px 0; font: 400 11.5px/1.5 var(--uiFont); color: var(--faint); }
   </style>
-<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script></head>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><script src="/yomu-progress.js" defer></script><script src="/yomu-badges.js" defer></script><script src="/yomu-pet.js" defer></script><script src="/yomu-greet.js" defer></script></head>
 <body>
 <main>
   <div class="top">
@@ -156,6 +163,9 @@
     <div style="min-width:0;flex:1">
       <input id="name" maxlength="32" placeholder="Your name" aria-label="Your name" />
       <small id="since"></small>
+      <!-- One title beside the name, never the three featured ones: the name
+           line has to stay short, and a trophy row here gets raided for it. -->
+      <div class="yp-title" id="equipped" hidden></div>
     </div>
   </div>
 
@@ -183,6 +193,22 @@
     <div class="stat"><b id="s-sources">0</b><span>Sources</span></div>
   </div>
   <p class="note" id="stat-note"></p>
+
+  <!-- The mileage road. Three stops, three kinds of reward, in the order the
+       mockup draws them; the engine also knows a fourth at five chapters that
+       is deliberately not drawn. -->
+  <h2>Mileage</h2>
+  <div class="yp-road" id="road"></div>
+  <p class="note" id="road-note"></p>
+
+  <!-- Mori. The full-size presentation lives here, which is why the floating
+       companion stands down on this page rather than appearing twice. -->
+  <h2>Companion</h2>
+  <div id="companion"></div>
+
+  <h3 class="yp-sub" id="picker-label" hidden>Prototype pet</h3>
+  <div class="yp-picker" id="picker" role="radiogroup" aria-labelledby="picker-label" hidden></div>
+  <p class="note" id="picker-note" hidden></p>
 
   <h2>Circle</h2>
   <div id="yomu-circle-here"></div>
@@ -454,6 +480,315 @@
   }
   const startingWith = ACCENTS.find((a) => a.id === current()) ?? ACCENTS[0];
   choose(startingWith);
+})();
+</script>
+
+<script>
+/**
+ * Mileage, Mori, and the pet chooser.
+ *
+ * Every number on this page comes out of YomuProgress. Nothing here counts
+ * anything -- that was the whole point of building the store, and a stat
+ * recomputed locally is a stat that disagrees with the roadmap beside it.
+ *
+ * Kept in its own block below the identity script rather than merged into
+ * it: that one is about who you are and runs on a page with no dependencies,
+ * this one needs three deferred scripts to have loaded first.
+ */
+(() => {
+  'use strict';
+
+  const road = document.getElementById('road');
+  const roadNote = document.getElementById('road-note');
+  const companion = document.getElementById('companion');
+  const picker = document.getElementById('picker');
+  const pickerLabel = document.getElementById('picker-label');
+  const pickerNote = document.getElementById('picker-note');
+  const equipped = document.getElementById('equipped');
+
+  /**
+   * The scripts are deferred and this block is inline, so on a cold load it
+   * runs before any of them.
+   *
+   * All three, not just the store. Waiting on `yomu:progress` alone looked
+   * right and was a race: the store loads first in the deferred chain and
+   * fires that event while the pet is still two scripts away, so the panel
+   * painted, threw on YomuPet, and left Companion and the picker blank while
+   * the roadmap above them rendered perfectly.
+   */
+  function whenReady(then) {
+    const up = () => window.YomuProgress && window.YomuPet && window.YomuBadges;
+    if (up()) { then(); return; }
+    let tries = 0;
+    const tick = () => {
+      if (up()) { then(); return; }
+      /* ~5s, then give up rather than spin: a missing script is a deploy
+         problem, and a page that polls forever hides it. */
+      if (++tries > 100) {
+        console.warn('[yomu] companion panel: scripts never arrived');
+        return;
+      }
+      setTimeout(tick, 50);
+    };
+    tick();
+  }
+
+  const REWARD_WORD = {
+    badge: 'Badge earned',
+    xp: (r) => '+' + r.amount + ' XP',
+    sticker: 'Sticker',
+    'pet-unlock': 'Pet unlock',
+  };
+
+  /**
+   * The reward a stop advertises.
+   *
+   * A stop can pay more than one thing -- Page Turner pays a badge and a
+   * sticker -- and the chip has room for one. Ranked, not "the last one":
+   * the mockup's road reads Badge / +40 XP / Pet unlock, and taking the last
+   * reward labelled stop one "Sticker", which is the smaller half of what it
+   * actually gives you.
+   */
+  const RANK = { 'pet-unlock': 3, badge: 2, xp: 1, sticker: 0 };
+
+  function rewardChip(rewards) {
+    const reward = rewards.reduce((best, r) =>
+      (RANK[r.type] ?? 0) > (RANK[best.type] ?? 0) ? r : best);
+    const word = REWARD_WORD[reward.type];
+    const span = document.createElement('span');
+    span.className = 'yp-chip-reward';
+    span.dataset.kind = reward.type;
+    span.textContent = typeof word === 'function' ? word(reward) : (word || reward.type);
+    return span;
+  }
+
+  function paintRoad() {
+    const stops = window.YomuProgress.roadmap();
+    const state = window.YomuProgress.get();
+    road.textContent = '';
+
+    for (const stop of stops) {
+      const row = document.createElement('div');
+      row.className = 'yp-stop' + (stop.collected ? ' is-done' : '');
+
+      const dot = document.createElement('span');
+      dot.className = 'yp-stop__dot';
+      dot.textContent = stop.collected ? '✓' : String(stop.threshold);
+      row.append(dot);
+
+      const body = document.createElement('div');
+      const title = document.createElement('p');
+      title.className = 'yp-stop__title';
+      title.textContent = stop.title;
+      const sub = document.createElement('p');
+      sub.className = 'yp-stop__sub';
+      sub.textContent = stop.collected
+        ? 'Collected'
+        : stop.remaining + ' chapter' + (stop.remaining === 1 ? '' : 's') + ' to go';
+      body.append(title, sub);
+      row.append(body, rewardChip(stop.rewards));
+      road.append(row);
+    }
+
+    roadNote.textContent = state.chaptersRead
+      ? state.chaptersRead.toLocaleString() + ' chapters read so far.'
+      : 'Stops unlock as you finish chapters.';
+  }
+
+  /* --- Mori --------------------------------------------------------------- */
+
+  let sprite = null;
+
+  function paintCompanion() {
+    const state = window.YomuProgress.get();
+    const stage = window.YomuProgress.stageOf();
+    companion.textContent = '';
+
+    const card = document.createElement('div');
+    card.className = 'yp-home';
+
+    const stagePane = document.createElement('div');
+    stagePane.className = 'yp-home__stage';
+
+    const body = document.createElement('div');
+    body.className = 'yp-home__body';
+
+    const name = document.createElement('p');
+    name.className = 'yp-home__name';
+    name.textContent = 'Mori';
+
+    const stageName = document.createElement('p');
+    stageName.className = 'yp-home__stage-name';
+
+    if (!state.petUnlocked) {
+      /* The egg. It sits on the shelf from the first chapter and opens at
+         stop three, so "earned, not handed over" is visible the whole way up
+         rather than being a surprise at fifty. */
+      stagePane.textContent = '🥚';
+      stagePane.style.fontSize = '54px';
+      stagePane.setAttribute('role', 'img');
+      stagePane.setAttribute('aria-label', 'An unhatched egg');
+      stageName.textContent = 'Egg · hatches at 50 chapters';
+    } else {
+      if (sprite) sprite.stop();
+      sprite = window.YomuPet.sprite(96, 'idle');
+      stagePane.append(sprite.node);
+      stageName.textContent = 'Stage ' + stage.level + ' · ' + stage.name;
+    }
+
+    const xpRow = document.createElement('div');
+    xpRow.className = 'yp-xp';
+    const xpLabel = document.createElement('span');
+    xpLabel.textContent = stage.next ? 'Mori evolves' : 'Fully grown';
+    const xpValue = document.createElement('span');
+    xpValue.textContent = stage.next
+      ? Math.round(state.petXp) + ' / ' + stage.next.at + ' XP'
+      : Math.round(state.petXp) + ' XP';
+    xpRow.append(xpLabel, xpValue);
+
+    const bar = document.createElement('div');
+    bar.className = 'yp-bar';
+    const fill = document.createElement('div');
+    fill.className = 'yp-bar__fill';
+    fill.style.width = stage.progress.toFixed(1) + '%';
+    bar.append(fill);
+
+    body.append(name, stageName, xpRow, bar);
+    card.append(stagePane, body);
+    companion.append(card);
+
+    paintControls();
+  }
+
+  /** Mute, minimize, size, off -- all four working from day one. */
+  function paintControls() {
+    const prefs = window.YomuPet.prefs();
+    const bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:10px';
+
+    const toggle = (label, on, onClick) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'yp-chip-reward';
+      button.style.cursor = 'pointer';
+      button.setAttribute('aria-pressed', String(on));
+      if (on) button.dataset.kind = 'pet-unlock';
+      button.textContent = label;
+      button.addEventListener('click', onClick);
+      return button;
+    };
+
+    bar.append(
+      toggle(prefs.muted ? 'Muted' : 'Speech on', prefs.muted, () => {
+        window.YomuPet.set({ muted: !prefs.muted });
+        paintCompanion();
+      }),
+      toggle(prefs.minimized ? 'Hidden' : 'Showing', prefs.minimized, () => {
+        window.YomuPet.set({ minimized: !prefs.minimized });
+        window.YomuPet.refresh();
+        paintCompanion();
+      }),
+      toggle('Size: ' + prefs.size, false, () => {
+        const order = ['small', 'medium', 'large'];
+        const next = order[(order.indexOf(prefs.size) + 1) % order.length];
+        window.YomuPet.set({ size: next });
+        window.YomuPet.refresh();
+        paintCompanion();
+      }),
+      toggle(prefs.enabled ? 'Companion on' : 'Companion off', !prefs.enabled, () => {
+        window.YomuPet.set({ enabled: !prefs.enabled });
+        window.YomuPet.refresh();
+        paintCompanion();
+      }),
+    );
+    companion.append(bar);
+  }
+
+  /* --- the chooser -------------------------------------------------------- *
+   *
+   * Static first frames, not ten running animations. Each thumbnail is the
+   * same sheet at a smaller background-size with the origin at cell 0,0, so
+   * the picker costs no extra asset and no extra timer. */
+
+  function paintPicker() {
+    const state = window.YomuProgress.get();
+    const show = state.petUnlocked;
+    pickerLabel.hidden = !show;
+    picker.hidden = !show;
+    pickerNote.hidden = !show;
+    if (!show) return;
+
+    const prefs = window.YomuPet.prefs();
+    picker.textContent = '';
+
+    for (const pet of window.YomuPet.catalog()) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'yp-chip';
+      chip.setAttribute('role', 'radio');
+      chip.setAttribute('aria-checked', String(pet.id === prefs.selectedPetId));
+      chip.setAttribute('aria-pressed', String(pet.id === prefs.selectedPetId));
+      chip.setAttribute('aria-label', 'Mori as ' + pet.name);
+
+      const art = document.createElement('span');
+      art.className = 'yp-chip__art';
+      art.style.backgroundImage = 'url("' + pet.src + '")';
+      chip.append(art);
+
+      chip.addEventListener('click', () => {
+        window.YomuPet.select(pet.id);
+        paintPicker();
+        paintCompanion();
+      });
+      picker.append(chip);
+    }
+
+    pickerNote.textContent =
+      'Stand-in artwork while Mori is being drawn. Mori is the same companion '
+      + 'whichever one you pick — the name, the level and everything earned stay put.';
+  }
+
+  /* --- the equipped title -------------------------------------------------- */
+
+  function paintEquipped() {
+    const state = window.YomuProgress.get();
+    const id = state.equippedBadgeId || '';
+    const [slug, tier] = id.split(':');
+    if (!slug || !tier || !window.YomuBadges) { equipped.hidden = true; return; }
+
+    const family = window.YomuBadges.list().find((f) => f.slug === slug);
+    if (!family) { equipped.hidden = true; return; }
+
+    equipped.textContent = '';
+    equipped.hidden = false;
+    equipped.append(window.YomuBadges.el(slug, Number(tier), { variant: 'micro', size: 20 }));
+
+    const text = document.createElement('span');
+    text.className = 'yp-title__text';
+    text.textContent = family.title + ' ' + ['I', 'II', 'III', 'IV', 'V'][tier - 1];
+    equipped.append(text);
+  }
+
+  /* --- paint --------------------------------------------------------------- */
+
+  function paintAll() {
+    try {
+      paintRoad();
+      paintCompanion();
+      paintPicker();
+      paintEquipped();
+    } catch (error) {
+      /* This page is also the only way to reach sync and the accent picker.
+         A companion that fails to draw must not take those down with it. */
+      console.warn('[yomu] companion panel:', error);
+    }
+  }
+
+  whenReady(() => {
+    paintAll();
+    addEventListener('yomu:progress', paintAll);
+    addEventListener('yomu:reward', paintAll);
+  });
 })();
 </script>
 </body>

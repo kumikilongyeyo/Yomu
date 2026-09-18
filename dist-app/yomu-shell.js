@@ -3700,6 +3700,23 @@
     return name || 'Reader';
   }
 
+  /* The companion needs the same greeting the masthead is showing, not a
+     second one picked independently: two different greetings on one screen
+     read as a bug, and the picker here already handles the daypart wrap past
+     midnight, the cold-start tone rule and the genre gates. Exposed rather
+     than duplicated in yomu-pet.js. */
+  if (typeof window !== 'undefined') {
+    window.YomuShell = Object.assign(window.YomuShell || {}, {
+      greeting,
+      readerName,
+      timeBucket,
+      readerGenres,
+      /* Whether the masthead is currently showing that line, so Mori can
+         wave without repeating it back. */
+      greetingOnScreen: () => !!document.querySelector('.yomu-greet__copy'),
+    });
+  }
+
   function avatarImage() {
     const saved = readJSON(AVATAR_KEY, null);
     if (!saved) return '';

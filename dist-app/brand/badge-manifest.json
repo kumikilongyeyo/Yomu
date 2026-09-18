@@ -1,0 +1,658 @@
+{
+  "version": 1,
+  "grid": 100,
+  "tiers": {
+    "1": {
+      "name": "Entry",
+      "frame": "plate only"
+    },
+    "2": {
+      "name": "Established",
+      "frame": "waist tabs, inner step"
+    },
+    "3": {
+      "name": "Veteran",
+      "frame": "waist points, deeper notch, first gold"
+    },
+    "4": {
+      "name": "Prestige",
+      "frame": "wings, gold rim"
+    },
+    "5": {
+      "name": "Mastery",
+      "frame": "crest, foot, full gold rim"
+    }
+  },
+  "families": [
+    {
+      "slug": "world-hopper",
+      "category": "manga",
+      "theme": "Isekai",
+      "title": "World Hopper",
+      "files": [
+        "svg/<mode>/badge_manga_world-hopper_t1_profile.svg",
+        "svg/<mode>/badge_manga_world-hopper_t1_micro.svg",
+        "svg/<mode>/badge_manga_world-hopper_t2_profile.svg",
+        "svg/<mode>/badge_manga_world-hopper_t2_micro.svg",
+        "svg/<mode>/badge_manga_world-hopper_t3_profile.svg",
+        "svg/<mode>/badge_manga_world-hopper_t3_micro.svg",
+        "svg/<mode>/badge_manga_world-hopper_t4_profile.svg",
+        "svg/<mode>/badge_manga_world-hopper_t4_micro.svg",
+        "svg/<mode>/badge_manga_world-hopper_t5_profile.svg",
+        "svg/<mode>/badge_manga_world-hopper_t5_micro.svg",
+        "svg/<mode>/badge_manga_world-hopper_t3_locked.svg",
+        "svg/<mode>/badge_manga_world-hopper_emblem.svg",
+        "svg/<mode>/badge_manga_world-hopper_mono.svg"
+      ]
+    },
+    {
+      "slug": "battle-junkie",
+      "category": "manga",
+      "theme": "Shonen / action",
+      "title": "Battle Junkie",
+      "files": [
+        "svg/<mode>/badge_manga_battle-junkie_t1_profile.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t1_micro.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t2_profile.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t2_micro.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t3_profile.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t3_micro.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t4_profile.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t4_micro.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t5_profile.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t5_micro.svg",
+        "svg/<mode>/badge_manga_battle-junkie_t3_locked.svg",
+        "svg/<mode>/badge_manga_battle-junkie_emblem.svg",
+        "svg/<mode>/badge_manga_battle-junkie_mono.svg"
+      ]
+    },
+    {
+      "slug": "realm-wanderer",
+      "category": "manga",
+      "theme": "Fantasy",
+      "title": "Realm Wanderer",
+      "files": [
+        "svg/<mode>/badge_manga_realm-wanderer_t1_profile.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t1_micro.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t2_profile.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t2_micro.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t3_profile.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t3_micro.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t4_profile.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t4_micro.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t5_profile.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t5_micro.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_t3_locked.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_emblem.svg",
+        "svg/<mode>/badge_manga_realm-wanderer_mono.svg"
+      ]
+    },
+    {
+      "slug": "heart-chaser",
+      "category": "manga",
+      "theme": "Romance",
+      "title": "Heart Chaser",
+      "files": [
+        "svg/<mode>/badge_manga_heart-chaser_t1_profile.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t1_micro.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t2_profile.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t2_micro.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t3_profile.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t3_micro.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t4_profile.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t4_micro.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t5_profile.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t5_micro.svg",
+        "svg/<mode>/badge_manga_heart-chaser_t3_locked.svg",
+        "svg/<mode>/badge_manga_heart-chaser_emblem.svg",
+        "svg/<mode>/badge_manga_heart-chaser_mono.svg"
+      ]
+    },
+    {
+      "slug": "quiet-observer",
+      "category": "manga",
+      "theme": "Slice of life",
+      "title": "Quiet Observer",
+      "files": [
+        "svg/<mode>/badge_manga_quiet-observer_t1_profile.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t1_micro.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t2_profile.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t2_micro.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t3_profile.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t3_micro.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t4_profile.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t4_micro.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t5_profile.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t5_micro.svg",
+        "svg/<mode>/badge_manga_quiet-observer_t3_locked.svg",
+        "svg/<mode>/badge_manga_quiet-observer_emblem.svg",
+        "svg/<mode>/badge_manga_quiet-observer_mono.svg"
+      ]
+    },
+    {
+      "slug": "yokai-watcher",
+      "category": "manga",
+      "theme": "Horror / supernatural",
+      "title": "Yokai Watcher",
+      "files": [
+        "svg/<mode>/badge_manga_yokai-watcher_t1_profile.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t1_micro.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t2_profile.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t2_micro.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t3_profile.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t3_micro.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t4_profile.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t4_micro.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t5_profile.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t5_micro.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_t3_locked.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_emblem.svg",
+        "svg/<mode>/badge_manga_yokai-watcher_mono.svg"
+      ]
+    },
+    {
+      "slug": "truth-seeker",
+      "category": "manga",
+      "theme": "Mystery / thriller",
+      "title": "Truth Seeker",
+      "files": [
+        "svg/<mode>/badge_manga_truth-seeker_t1_profile.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t1_micro.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t2_profile.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t2_micro.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t3_profile.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t3_micro.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t4_profile.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t4_micro.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t5_profile.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t5_micro.svg",
+        "svg/<mode>/badge_manga_truth-seeker_t3_locked.svg",
+        "svg/<mode>/badge_manga_truth-seeker_emblem.svg",
+        "svg/<mode>/badge_manga_truth-seeker_mono.svg"
+      ]
+    },
+    {
+      "slug": "final-challenger",
+      "category": "manga",
+      "theme": "Sports",
+      "title": "Final Challenger",
+      "files": [
+        "svg/<mode>/badge_manga_final-challenger_t1_profile.svg",
+        "svg/<mode>/badge_manga_final-challenger_t1_micro.svg",
+        "svg/<mode>/badge_manga_final-challenger_t2_profile.svg",
+        "svg/<mode>/badge_manga_final-challenger_t2_micro.svg",
+        "svg/<mode>/badge_manga_final-challenger_t3_profile.svg",
+        "svg/<mode>/badge_manga_final-challenger_t3_micro.svg",
+        "svg/<mode>/badge_manga_final-challenger_t4_profile.svg",
+        "svg/<mode>/badge_manga_final-challenger_t4_micro.svg",
+        "svg/<mode>/badge_manga_final-challenger_t5_profile.svg",
+        "svg/<mode>/badge_manga_final-challenger_t5_micro.svg",
+        "svg/<mode>/badge_manga_final-challenger_t3_locked.svg",
+        "svg/<mode>/badge_manga_final-challenger_emblem.svg",
+        "svg/<mode>/badge_manga_final-challenger_mono.svg"
+      ]
+    },
+    {
+      "slug": "ronin-reader",
+      "category": "manga",
+      "theme": "Historical / samurai",
+      "title": "Ronin Reader",
+      "files": [
+        "svg/<mode>/badge_manga_ronin-reader_t1_profile.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t1_micro.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t2_profile.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t2_micro.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t3_profile.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t3_micro.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t4_profile.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t4_micro.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t5_profile.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t5_micro.svg",
+        "svg/<mode>/badge_manga_ronin-reader_t3_locked.svg",
+        "svg/<mode>/badge_manga_ronin-reader_emblem.svg",
+        "svg/<mode>/badge_manga_ronin-reader_mono.svg"
+      ]
+    },
+    {
+      "slug": "starbound-pilot",
+      "category": "manga",
+      "theme": "Sci-fi / mecha",
+      "title": "Starbound Pilot",
+      "files": [
+        "svg/<mode>/badge_manga_starbound-pilot_t1_profile.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t1_micro.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t2_profile.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t2_micro.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t3_profile.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t3_micro.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t4_profile.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t4_micro.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t5_profile.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t5_micro.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_t3_locked.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_emblem.svg",
+        "svg/<mode>/badge_manga_starbound-pilot_mono.svg"
+      ]
+    },
+    {
+      "slug": "tower-climber",
+      "category": "manhwa",
+      "theme": "Towers",
+      "title": "Tower Climber",
+      "files": [
+        "svg/<mode>/badge_manhwa_tower-climber_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_emblem.svg",
+        "svg/<mode>/badge_manhwa_tower-climber_mono.svg"
+      ]
+    },
+    {
+      "slug": "dungeon-raider",
+      "category": "manhwa",
+      "theme": "Dungeons / gates",
+      "title": "Dungeon Raider",
+      "files": [
+        "svg/<mode>/badge_manhwa_dungeon-raider_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_emblem.svg",
+        "svg/<mode>/badge_manhwa_dungeon-raider_mono.svg"
+      ]
+    },
+    {
+      "slug": "returner",
+      "category": "manhwa",
+      "theme": "Regression",
+      "title": "Returner",
+      "files": [
+        "svg/<mode>/badge_manhwa_returner_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_returner_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_returner_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_returner_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_returner_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_returner_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_returner_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_returner_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_returner_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_returner_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_returner_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_returner_emblem.svg",
+        "svg/<mode>/badge_manhwa_returner_mono.svg"
+      ]
+    },
+    {
+      "slug": "second-lifer",
+      "category": "manhwa",
+      "theme": "Reincarnation",
+      "title": "Second Lifer",
+      "files": [
+        "svg/<mode>/badge_manhwa_second-lifer_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_emblem.svg",
+        "svg/<mode>/badge_manhwa_second-lifer_mono.svg"
+      ]
+    },
+    {
+      "slug": "system-breaker",
+      "category": "manhwa",
+      "theme": "System / leveling",
+      "title": "System Breaker",
+      "files": [
+        "svg/<mode>/badge_manhwa_system-breaker_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_emblem.svg",
+        "svg/<mode>/badge_manhwa_system-breaker_mono.svg"
+      ]
+    },
+    {
+      "slug": "murim-wanderer",
+      "category": "manhwa",
+      "theme": "Murim",
+      "title": "Murim Wanderer",
+      "files": [
+        "svg/<mode>/badge_manhwa_murim-wanderer_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_emblem.svg",
+        "svg/<mode>/badge_manhwa_murim-wanderer_mono.svg"
+      ]
+    },
+    {
+      "slug": "academy-prodigy",
+      "category": "manhwa",
+      "theme": "Academy",
+      "title": "Academy Prodigy",
+      "files": [
+        "svg/<mode>/badge_manhwa_academy-prodigy_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_emblem.svg",
+        "svg/<mode>/badge_manhwa_academy-prodigy_mono.svg"
+      ]
+    },
+    {
+      "slug": "villainess-enjoyer",
+      "category": "manhwa",
+      "theme": "Villainess",
+      "title": "Villainess Enjoyer",
+      "files": [
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_emblem.svg",
+        "svg/<mode>/badge_manhwa_villainess-enjoyer_mono.svg"
+      ]
+    },
+    {
+      "slug": "contract-romantic",
+      "category": "manhwa",
+      "theme": "Romance",
+      "title": "Contract Romantic",
+      "files": [
+        "svg/<mode>/badge_manhwa_contract-romantic_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_emblem.svg",
+        "svg/<mode>/badge_manhwa_contract-romantic_mono.svg"
+      ]
+    },
+    {
+      "slug": "power-fantasy-addict",
+      "category": "manhwa",
+      "theme": "OP protagonist",
+      "title": "Power Fantasy Addict",
+      "files": [
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t1_profile.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t1_micro.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t2_profile.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t2_micro.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t3_profile.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t3_micro.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t4_profile.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t4_micro.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t5_profile.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t5_micro.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_t3_locked.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_emblem.svg",
+        "svg/<mode>/badge_manhwa_power-fantasy-addict_mono.svg"
+      ]
+    },
+    {
+      "slug": "dao-seeker",
+      "category": "manhua",
+      "theme": "Cultivation",
+      "title": "Dao Seeker",
+      "files": [
+        "svg/<mode>/badge_manhua_dao-seeker_t1_profile.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t1_micro.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t2_profile.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t2_micro.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t3_profile.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t3_micro.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t4_profile.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t4_micro.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t5_profile.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t5_micro.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_t3_locked.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_emblem.svg",
+        "svg/<mode>/badge_manhua_dao-seeker_mono.svg"
+      ]
+    },
+    {
+      "slug": "jianghu-wanderer",
+      "category": "manhua",
+      "theme": "Wuxia",
+      "title": "Jianghu Wanderer",
+      "files": [
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t1_profile.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t1_micro.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t2_profile.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t2_micro.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t3_profile.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t3_micro.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t4_profile.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t4_micro.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t5_profile.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t5_micro.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_t3_locked.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_emblem.svg",
+        "svg/<mode>/badge_manhua_jianghu-wanderer_mono.svg"
+      ]
+    },
+    {
+      "slug": "immortal-aspirant",
+      "category": "manhua",
+      "theme": "Xianxia",
+      "title": "Immortal Aspirant",
+      "files": [
+        "svg/<mode>/badge_manhua_immortal-aspirant_t1_profile.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t1_micro.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t2_profile.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t2_micro.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t3_profile.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t3_micro.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t4_profile.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t4_micro.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t5_profile.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t5_micro.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_t3_locked.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_emblem.svg",
+        "svg/<mode>/badge_manhua_immortal-aspirant_mono.svg"
+      ]
+    },
+    {
+      "slug": "martial-disciple",
+      "category": "manhua",
+      "theme": "Martial arts",
+      "title": "Martial Disciple",
+      "files": [
+        "svg/<mode>/badge_manhua_martial-disciple_t1_profile.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t1_micro.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t2_profile.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t2_micro.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t3_profile.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t3_micro.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t4_profile.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t4_micro.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t5_profile.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t5_micro.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_t3_locked.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_emblem.svg",
+        "svg/<mode>/badge_manhua_martial-disciple_mono.svg"
+      ]
+    },
+    {
+      "slug": "sect-elder",
+      "category": "manhua",
+      "theme": "Sect stories",
+      "title": "Sect Elder",
+      "files": [
+        "svg/<mode>/badge_manhua_sect-elder_t1_profile.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t1_micro.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t2_profile.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t2_micro.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t3_profile.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t3_micro.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t4_profile.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t4_micro.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t5_profile.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t5_micro.svg",
+        "svg/<mode>/badge_manhua_sect-elder_t3_locked.svg",
+        "svg/<mode>/badge_manhua_sect-elder_emblem.svg",
+        "svg/<mode>/badge_manhua_sect-elder_mono.svg"
+      ]
+    },
+    {
+      "slug": "reborn-sage",
+      "category": "manhua",
+      "theme": "Reincarnation",
+      "title": "Reborn Sage",
+      "files": [
+        "svg/<mode>/badge_manhua_reborn-sage_t1_profile.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t1_micro.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t2_profile.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t2_micro.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t3_profile.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t3_micro.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t4_profile.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t4_micro.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t5_profile.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t5_micro.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_t3_locked.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_emblem.svg",
+        "svg/<mode>/badge_manhua_reborn-sage_mono.svg"
+      ]
+    },
+    {
+      "slug": "pill-master",
+      "category": "manhua",
+      "theme": "Alchemy",
+      "title": "Pill Master",
+      "files": [
+        "svg/<mode>/badge_manhua_pill-master_t1_profile.svg",
+        "svg/<mode>/badge_manhua_pill-master_t1_micro.svg",
+        "svg/<mode>/badge_manhua_pill-master_t2_profile.svg",
+        "svg/<mode>/badge_manhua_pill-master_t2_micro.svg",
+        "svg/<mode>/badge_manhua_pill-master_t3_profile.svg",
+        "svg/<mode>/badge_manhua_pill-master_t3_micro.svg",
+        "svg/<mode>/badge_manhua_pill-master_t4_profile.svg",
+        "svg/<mode>/badge_manhua_pill-master_t4_micro.svg",
+        "svg/<mode>/badge_manhua_pill-master_t5_profile.svg",
+        "svg/<mode>/badge_manhua_pill-master_t5_micro.svg",
+        "svg/<mode>/badge_manhua_pill-master_t3_locked.svg",
+        "svg/<mode>/badge_manhua_pill-master_emblem.svg",
+        "svg/<mode>/badge_manhua_pill-master_mono.svg"
+      ]
+    },
+    {
+      "slug": "spirit-tamer",
+      "category": "manhua",
+      "theme": "Spirit beasts",
+      "title": "Spirit Tamer",
+      "files": [
+        "svg/<mode>/badge_manhua_spirit-tamer_t1_profile.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t1_micro.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t2_profile.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t2_micro.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t3_profile.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t3_micro.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t4_profile.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t4_micro.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t5_profile.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t5_micro.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_t3_locked.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_emblem.svg",
+        "svg/<mode>/badge_manhua_spirit-tamer_mono.svg"
+      ]
+    },
+    {
+      "slug": "court-strategist",
+      "category": "manhua",
+      "theme": "Historical / court",
+      "title": "Court Strategist",
+      "files": [
+        "svg/<mode>/badge_manhua_court-strategist_t1_profile.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t1_micro.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t2_profile.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t2_micro.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t3_profile.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t3_micro.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t4_profile.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t4_micro.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t5_profile.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t5_micro.svg",
+        "svg/<mode>/badge_manhua_court-strategist_t3_locked.svg",
+        "svg/<mode>/badge_manhua_court-strategist_emblem.svg",
+        "svg/<mode>/badge_manhua_court-strategist_mono.svg"
+      ]
+    },
+    {
+      "slug": "heaven-defier",
+      "category": "manhua",
+      "theme": "OP cultivation MC",
+      "title": "Heaven Defier",
+      "files": [
+        "svg/<mode>/badge_manhua_heaven-defier_t1_profile.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t1_micro.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t2_profile.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t2_micro.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t3_profile.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t3_micro.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t4_profile.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t4_micro.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t5_profile.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t5_micro.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_t3_locked.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_emblem.svg",
+        "svg/<mode>/badge_manhua_heaven-defier_mono.svg"
+      ]
+    }
+  ]
+}
