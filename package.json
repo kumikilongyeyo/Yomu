@@ -5,6 +5,8 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit --pretty false",
+    "test": "node --test tools/progression/*.test.js",
+    "gauntlet": "node tools/gauntlet.mjs",
     "source:forge": "npm --prefix tools/source-forge start",
     "source:forge:check": "npm --prefix tools/source-forge run check",
     "source:forge:install": "npm --prefix tools/source-forge install && npm --prefix tools/source-forge exec -- playwright install chromium",
