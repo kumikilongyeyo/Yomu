@@ -1,0 +1,221 @@
+{
+  "id": "xoxocomics",
+  "name": "XOXO Comics",
+  "version": 1,
+  "language": "en",
+  "content": [
+    "comic"
+  ],
+  "base": "https://xoxocomic.com",
+  "hosts": [
+    "xoxocomic.com"
+  ],
+  "defaultCategory": "comic",
+  "timeoutMs": 15000,
+  "rateLimit": {
+    "requests": 3,
+    "perSeconds": 1
+  },
+  "endpoints": {
+    "popular": {
+      "path": "/hot-comic",
+      "query": {
+        "page": "{{page}}"
+      },
+      "cacheTtl": 900,
+      "parse": {
+        "type": "html",
+        "list": "div.items div.item",
+        "limit": 80,
+        "fields": {
+          "id": {
+            "selector": "h3 a",
+            "attr": "href",
+            "transform": [
+              {
+                "regex": "/comic/([^/?#]+)"
+              }
+            ]
+          },
+          "title": {
+            "selector": "h3 a"
+          },
+          "cover": {
+            "selector": "div.image:first-of-type img",
+            "attr": "data-original",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "latest": {
+      "path": "/comic-update",
+      "query": {
+        "page": "{{page}}"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "li.row",
+        "limit": 80,
+        "fields": {
+          "id": {
+            "selector": "h3 a",
+            "attr": "href",
+            "transform": [
+              {
+                "regex": "/comic/([^/?#]+)"
+              }
+            ]
+          },
+          "title": {
+            "selector": "h3 a"
+          },
+          "cover": {
+            "selector": "img",
+            "attr": "data-original",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "search": {
+      "path": "/search-comic",
+      "query": {
+        "keyword": "{{rawQuery}}",
+        "page": "{{page}}"
+      },
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "div.items div.item",
+        "limit": 100,
+        "fields": {
+          "id": {
+            "selector": "h3 a",
+            "attr": "href",
+            "transform": [
+              {
+                "regex": "/comic/([^/?#]+)"
+              }
+            ]
+          },
+          "title": {
+            "selector": "h3 a"
+          },
+          "cover": {
+            "selector": "div.image a img",
+            "attr": "data-original",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "series": {
+      "path": "/comic/{{id}}",
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "fields": {
+          "title": {
+            "selector": "h1.title-detail"
+          },
+          "author": {
+            "selector": "article#item-detail li.author p.col-xs-8"
+          },
+          "status": {
+            "selector": "article#item-detail li.status p.col-xs-8",
+            "transform": [
+              {
+                "lower": true
+              }
+            ]
+          },
+          "genres": {
+            "selector": "article#item-detail li.kind p.col-xs-8 a",
+            "many": true
+          },
+          "synopsis": {
+            "selector": "article#item-detail div.detail-content p"
+          },
+          "cover": {
+            "selector": "article#item-detail div.col-image img",
+            "attr": "data-original",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "chapters": {
+      "path": "/comic/{{id}}",
+      "cacheTtl": 600,
+      "parse": {
+        "type": "html",
+        "list": "div.list-chapter li.row:not(.heading)",
+        "limit": 3000,
+        "fields": {
+          "id": {
+            "selector": "a",
+            "attr": "href",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          },
+          "name": {
+            "selector": "a"
+          },
+          "publishedAt": {
+            "selector": "div.col-xs-3",
+            "transform": [
+              {
+                "date": "iso"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "pages": {
+      "path": "{{chapterId}}/all",
+      "cacheTtl": 1800,
+      "parse": {
+        "type": "html",
+        "list": "div.page-chapter > img[data-original], li.blocks-gallery-item img[data-original]",
+        "limit": 400,
+        "fields": {
+          "url": {
+            "selector": "",
+            "attr": "data-original",
+            "transform": [
+              {
+                "resolve": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "seriesIdFromChapter": {
+    "regex": "/comic/([^/]+)/",
+    "group": 1
+  }
+}
