@@ -90,6 +90,11 @@
     seenChapters: 0,
     /** ISO day of the last chapter finished, for the streak. */
     lastReadDay: null,
+    /** Bingo, reported by yomu-bingo.js: lines completed and cards filled,
+     *  lifetime. The card itself lives in its own store; these are the
+     *  counters the milestones watch. */
+    bingoLines: 0,
+    bingoCards: 0,
     /** The last thirty ISO days a chapter was finished on, newest last, so
      *  a week strip can be drawn. History, not truth: the streak is
      *  computed from lastReadDay and currentStreak, not from this list. */
@@ -270,6 +275,25 @@
       rewards: [{ type: 'badge', id: 'stage-familiar' }] },
     { id: 'stage-sage', metric: 'petXp', threshold: 1000, title: 'Sage', quiet: true,
       rewards: [{ type: 'badge', id: 'stage-sage' }] },
+
+    /* Bingo. A line is a badge and a little XP; a full card is the badge
+       that unlocks the Gilt skin (yomu-skins.js reads earnedBadgeIds). */
+    {
+      id: 'bingo-line',
+      metric: 'bingoLines',
+      threshold: 1,
+      title: 'Bingo',
+      how: 'Complete a line on the monthly card',
+      rewards: [{ type: 'badge', id: 'bingo-line' }, { type: 'xp', amount: 30 }],
+    },
+    {
+      id: 'bingo-card',
+      metric: 'bingoCards',
+      threshold: 1,
+      title: 'Full Card',
+      how: 'Fill every square in a month',
+      rewards: [{ type: 'badge', id: 'bingo-card' }, { type: 'xp', amount: 120 }],
+    },
 
     /* Streaks. Never punitive: a missed day resets the count and keeps the
        best, and nothing here is taken back. The metric is the *live* streak
@@ -711,6 +735,8 @@
           sourcesUsed: store.sourcesUsed,
           sourceRescues: store.sourceRescues,
           originsRead: (store.origins || []).length,
+          bingoLines: store.bingoLines,
+          bingoCards: store.bingoCards,
           petXp: store.petXp,
         };
         const result = evaluate(metrics);
@@ -789,6 +815,8 @@
         sourcesUsed: store.sourcesUsed,
         originsRead: (store.origins || []).length,
         currentStreak: streak().current,
+        bingoLines: store.bingoLines,
+        bingoCards: store.bingoCards,
       };
       return MILESTONES.filter((m) => m.metric in metrics).map((m) => ({
         ...m,
@@ -886,6 +914,25 @@
       if (store.equippedBadgeId === next) return false;
       save({ equippedBadgeId: next });
       emit('yomu:progress', { reason: 'adopt', state: get() });
+      return true;
+    },
+
+    /**
+     * Bingo progress, which only the card knows. Monotonic: the card reports
+     * its lifetime totals and the store keeps the higher number, so a card
+     * regenerated for a new month cannot lower them. Each new line is ten
+     * XP on top of whatever milestone it crosses.
+     */
+    noteBingo(lines, cards) {
+      const nextLines = Math.max(store.bingoLines, Number(lines) || 0);
+      const nextCards = Math.max(store.bingoCards, Number(cards) || 0);
+      if (nextLines === store.bingoLines && nextCards === store.bingoCards) return false;
+      save({
+        bingoLines: nextLines,
+        bingoCards: nextCards,
+        petXp: store.petXp + (nextLines - store.bingoLines) * 10,
+      });
+      pulse('bingo');
       return true;
     },
 

@@ -41,6 +41,12 @@ export interface LibraryEntry {
   total?: number;
   latestChapter?: string;
   hidden?: boolean;
+  /**
+   * The time capsule: one optional sentence the reader wrote when they saved
+   * the title, shown back the day they finish it. Rides with the entry so it
+   * follows them across devices; capped, and never anything but text.
+   */
+  note?: string;
   /** When the device that is pushing saved this title, by its own clock.
    *  This is what a tombstone is compared against, so it is the field that
    *  decides whether a delete sticks. See mergeLibrary. */
@@ -307,7 +313,12 @@ export function mergeLibrary(
     // The latest save across devices: if any of them saved it after the
     // removal, that is the one that should decide.
     const saved = Math.max(existing?.at ?? 0, Number(entry.addedAt) || 0);
-    out[key] = { ...existing, ...entry, at: saved };
+    // A note that is absent leaves the stored one standing; a note that is
+    // present replaces it, empty string included, which is how one is erased.
+    const clean: LibraryEntry = { ...entry };
+    if (typeof entry.note === 'string') clean.note = entry.note.slice(0, 240);
+    else delete clean.note;
+    out[key] = { ...existing, ...clean, at: saved };
   }
 
   for (const [key, removedAt] of Object.entries(removed)) {

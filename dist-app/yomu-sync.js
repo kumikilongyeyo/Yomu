@@ -51,6 +51,13 @@
   /** Read for one field -- the equipped badge -- and never written directly:
    *  yomu-progress.js owns that store, and its adoptBadge is the way in. */
   const PROGRESS_KEY = 'yomu.v1.progress';
+  /** Time capsule notes, keyed by titleKey. yomu-capsule.js owns the UI;
+   *  this file carries the note on the library entry it belongs to. */
+  const CAPSULE_KEY = 'yomu.v1.capsule';
+  const capsule = () => {
+    const value = readJSON(CAPSULE_KEY, null);
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  };
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
 
   /** Never less than this between writes. KV's budget is a thousand a day. */
@@ -313,11 +320,19 @@
     const c = collection();
     const library = libraryOf(c);
     const stamps = stampLibrary(library);
+    const notes = capsule();
     return {
-      library: library.map((entry) => ({
-        ...entry,
-        addedAt: stamps[titleKey(entry.sourceId, entry.id)],
-      })),
+      library: library.map((entry) => {
+        const key = titleKey(entry.sourceId, entry.id);
+        const note = notes[key];
+        return {
+          ...entry,
+          addedAt: stamps[key],
+          // Only when the reader wrote one (or erased one on purpose): an
+          // absent field must not blank a note another device carries.
+          ...(note && typeof note.note === 'string' ? { note: note.note } : {}),
+        };
+      }),
       removed: noticeRemovals(library),
       // The whole row, not just the id. A fresh install's source list holds
       // only the built-ins, so an id is something it can recognise but not
@@ -351,12 +366,28 @@
 
     const next = library.filter((e) => wanted.has(titleKey(e.sourceId, e.id)));
     if (next.length !== library.length) structural = true;
+    /* Notes travel beside the rows, not in them: the app rewrites its
+       collection rows from memory and would drop a field it does not know. */
+    const notes = capsule();
+    let notesChanged = false;
     for (const [key, entry] of wanted) {
+      if (typeof entry.note === 'string') {
+        const mine = notes[key];
+        const theirs = Number(entry.at) || 0;
+        if (!mine || (mine.note !== entry.note && !((Number(mine.at) || 0) > theirs))) {
+          notes[key] = { ...(mine || {}), note: entry.note, at: theirs || Date.now() };
+          notesChanged = true;
+        }
+      }
       if (have.has(key)) continue;
-      // `at` and `addedAt` are the merge's bookkeeping, not the app's.
-      const { at, addedAt, ...rest } = entry;
+      // `at`, `addedAt` and `note` are the merge's bookkeeping, not the app's.
+      const { at, addedAt, note, ...rest } = entry;
       next.push(rest);
       structural = true;
+    }
+    if (notesChanged) {
+      writeJSON(CAPSULE_KEY, notes);
+      dispatchEvent(new CustomEvent('yomu:capsule'));
     }
 
     // Two jobs: switch on the ones this device already lists, and create the

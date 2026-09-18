@@ -563,6 +563,7 @@ const ASSETS = [
      (.ysh-*, .ys, .yomu-react*) and nothing the skin sets. */
   { file: 'yomu-shelf.css', tag: '<link rel="stylesheet" href="/yomu-shelf.css">' },
   { file: 'yomu-companion.css', tag: '<link rel="stylesheet" href="/yomu-companion.css">' },
+  { file: 'yomu-discovery.css', tag: '<link rel="stylesheet" href="/yomu-discovery.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
@@ -599,6 +600,12 @@ const ASSETS = [
   { file: 'yomu-roam.js', tag: '<script src="/yomu-roam.js" defer></scr' + 'ipt>' },
   { file: 'yomu-binge.js', tag: '<script src="/yomu-binge.js" defer></scr' + 'ipt>' },
   { file: 'yomu-cast.js', tag: '<script src="/yomu-cast.js" defer></scr' + 'ipt>' },
+  /* The discovery update. Skins first: it sets data-yomu-skin on <html>
+     as it loads and the earlier that lands the less of a flash. */
+  { file: 'yomu-skins.js', tag: '<script src="/yomu-skins.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-roulette.js', tag: '<script src="/yomu-roulette.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-bingo.js', tag: '<script src="/yomu-bingo.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-capsule.js', tag: '<script src="/yomu-capsule.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */
@@ -609,6 +616,9 @@ const ASSETS = [
   /* Last, so it overrides both the compiled palette and yomu-overrides.css on
      equal specificity. Moving it earlier silently un-skins the app. */
   { file: 'yomu-skin.css', tag: '<link rel="stylesheet" href="/yomu-skin.css">' },
+  /* The one thing allowed after the skin: the skins. It overrides the
+     Aurora and Paper source tokens the skin defines, and must win on order. */
+  { file: 'yomu-skins.css', tag: '<link rel="stylesheet" href="/yomu-skins.css">' },
 ];
 
 // /start is the first-run flow and must not carry the shell: the shell is

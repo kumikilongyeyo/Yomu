@@ -81,6 +81,14 @@
       tier: 3, title: 'Three Shores', theme: 'Korea, Japan and China',
       em: '<path d="M28 42 q5.5 -6 11 0 t11 0 t11 0 t11 0"/><path class="a" d="M28 53 q5.5 -6 11 0 t11 0 t11 0 t11 0"/><path d="M28 64 q5.5 -6 11 0 t11 0 t11 0 t11 0"/>',
     },
+    'bingo-line': {
+      tier: 2, title: 'Bingo', theme: 'A line on the card',
+      em: '<path d="M30 30 h40 v40 h-40 Z"/><path d="M43 30 v40 M57 30 v40 M30 43 h40 M30 57 h40"/><path class="a" d="M33 33 l34 34"/>',
+    },
+    'bingo-card': {
+      tier: 4, title: 'Full Card', theme: 'Every square in a month',
+      em: '<path d="M30 30 h40 v40 h-40 Z"/><path d="M43 30 v40 M57 30 v40 M30 43 h40 M30 57 h40"/><path class="af" d="M33 33 h7 v7 h-7 Z M46 33 h8 v7 h-8 Z M60 33 h7 v7 h-7 Z M33 46 h7 v8 h-7 Z M46 46 h8 v8 h-8 Z M60 46 h7 v8 h-7 Z M33 60 h7 v7 h-7 Z M46 60 h8 v7 h-8 Z M60 60 h7 v7 h-7 Z"/>',
+    },
     'streak-week': {
       tier: 2, title: 'Week of Pages', theme: 'Seven days running',
       em: '<path d="M50 28 c5 10 14 14 14 27 a14 14 0 0 1 -28 0 c0 -8 5 -12 7 -18 c2 5 5 7 7 7 c-1 -6 -2 -10 0 -16 Z"/><path class="af" d="M50 52 c3 4 6 7 6 11 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -11 Z"/>',
@@ -234,7 +242,9 @@
           : badge.metric === 'sourcesUsed' ? state.sourcesUsed
           : badge.metric === 'titlesCompleted' ? state.titlesCompleted
           : badge.metric === 'originsRead' ? (state.origins || []).length
-          : badge.metric === 'currentStreak' ? (P.streak ? P.streak().current : 0) : 0;
+          : badge.metric === 'currentStreak' ? (P.streak ? P.streak().current : 0)
+          : badge.metric === 'bingoLines' ? state.bingoLines
+          : badge.metric === 'bingoCards' ? state.bingoCards : 0;
         const left = Math.max(0, badge.threshold - Math.floor(value));
         if (badge.metric === 'chaptersRead') how += ` · ${left} to go`;
         else if (badge.metric === 'petXp') how += ` · ${left} XP to go`;
