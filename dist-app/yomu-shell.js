@@ -2227,7 +2227,8 @@
     return tile;
   }
 
-  function kinRow(heading, note, entries) {
+  /** `more` is { href, label }: the way to the whole list, when there is one. */
+  function kinRow(heading, note, entries, more) {
     const row = document.createElement('div');
     row.className = 'yomu-kin-row';
 
@@ -2240,6 +2241,20 @@
       const small = document.createElement('small');
       small.textContent = note;
       head.append(small);
+    }
+    /* An arrow at the right edge of the heading, into /more, when the row
+       is only the first of what there is. A rail that already holds the
+       whole answer has nowhere further to go and gets none. */
+    if (more && more.href) {
+      const link = document.createElement('a');
+      link.className = 'yomu-kin-more';
+      link.href = more.href;
+      link.title = more.label;
+      link.setAttribute('aria-label', more.label);
+      link.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" '
+        + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="m9 5 7 7-7 7"/></svg>';
+      head.append(link);
     }
 
     const rail = document.createElement('div');
@@ -2292,9 +2307,18 @@
       if (!answer || !answer.matched) { section.remove(); return; }
 
       const rows = [];
+      const enc = encodeURIComponent;
       for (const credit of [answer.author, answer.artist]) {
         if (credit && credit.series && credit.series.length) {
-          rows.push(kinRow('More from ' + credit.name, '', credit.series));
+          /* MangaDex's total counts this title too, and the row leaves it
+             out, so "more than the row" is total > shown + 1. An answer the
+             edge cached before the Worker sent ids has no total and gets no
+             arrow until it expires; an hour, at most. */
+          const more = credit.id && Number(credit.total) > credit.series.length + 1
+            ? { href: '/more?kind=author&id=' + enc(credit.id) + '&name=' + enc(credit.name),
+                label: 'Every title by ' + credit.name }
+            : null;
+          rows.push(kinRow('More from ' + credit.name, '', credit.series, more));
         }
       }
       if (answer.related && answer.related.length) {
@@ -2302,7 +2326,14 @@
       }
       if (answer.similar && answer.similar.length) {
         const because = (answer.similarBecause || []).join(' · ');
-        rows.push(kinRow('You might like', because, answer.similar));
+        const seed = (answer.matched && answer.matched.title) || title;
+        /* Always: the full page ranks a pool of a hundred where the row
+           had forty, so there is more to see even when the row is full. */
+        const more = answer.matched && answer.matched.id
+          ? { href: '/more?kind=alike&id=' + enc(answer.matched.id) + '&title=' + enc(seed),
+              label: 'Everything like ' + seed }
+          : null;
+        rows.push(kinRow('You might like', because, answer.similar, more));
       }
 
       if (!rows.length) { section.remove(); return; }
@@ -3043,6 +3074,36 @@
         el.classList.remove('is-out');
       }, 240);
     }, SEARCH_GREET_EVERY);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Search, arrived at with a question
+   *
+   * The rail cards and Mori's picks send a title to /search?q=..., because
+   * search is the screen that knows which source can serve it. The Search
+   * screen keeps its query in React state and never reads the URL, so the
+   * reader landed on an empty box with the title nowhere -- a tap on a
+   * Hidden gem did, as far as they could see, nothing.
+   *
+   * React tracks a controlled input through a value tracker on the element,
+   * so assigning .value directly is invisible to it. The prototype's own
+   * setter runs first, then an `input` event the root listens for, and the
+   * screen searches as if the title had been typed. Once per URL: clearing
+   * the box afterwards must not have the title typed back.
+   * ------------------------------------------------------------------ */
+  let prefilledSearch = '';
+
+  function prefillSearch() {
+    if (!/^\/search\/?$/.test(location.pathname)) { prefilledSearch = ''; return; }
+    const wanted = (new URLSearchParams(location.search).get('q') || '').trim();
+    if (!wanted || prefilledSearch === location.search) return;
+    const field = document.querySelector('.g-input input[aria-label="Search titles"]');
+    if (!field) return;
+    prefilledSearch = location.search;
+    if (field.value === wanted) return;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    if (setter) setter.call(field, wanted); else field.value = wanted;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   function mountChapterJump() {
@@ -3835,6 +3896,7 @@
     foldGenreRow();
     foldTagRow();
     mountSearchGreeting();
+    prefillSearch();
     foldSourceSwitch();
     mountKin();
     windowLongLists();

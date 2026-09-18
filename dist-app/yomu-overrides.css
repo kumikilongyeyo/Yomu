@@ -400,6 +400,9 @@
   .dock { display: none; }
   .masthead > a[aria-label="Yomu home"] { visibility: hidden; }
   .g-app { padding-left: 184px; }
+  /* The hand-written pages (Discover, More) centre a main.wrap on the whole
+     viewport and have no .g-app, so the rail sat over their first column. */
+  main.wrap { margin-left: 184px; }
   .g-main { padding-bottom: 40px; }
 }
 
@@ -2325,6 +2328,24 @@ html.yomu-fabric-away #yomu-source-fabric-command { display: none !important; }
   font-size: 11px; color: var(--faint);
   letter-spacing: .04em; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* The arrow into /more -- every title by the author, everything like this
+   one -- at the right edge of the heading, when the row is only the first
+   of it. Built by kinRow in yomu-shell.js. */
+.yomu-kin-more {
+  flex: none; margin-left: auto; align-self: center;
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); text-decoration: none;
+  transition: border-color .18s, color .18s, background .18s;
+}
+.yomu-kin-more svg { width: 18px; height: 18px; display: block; }
+.yomu-kin-more:hover { border-color: var(--accentLine); color: var(--accent); background: var(--raised); }
+.yomu-kin-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 767px) {
+  /* "Keep a 44px interactive hit target on mobile." */
+  .yomu-kin-more { width: 40px; height: 40px; }
 }
 
 .yomu-kin-rail {

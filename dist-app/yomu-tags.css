@@ -279,3 +279,100 @@
 .yomu-series-rating.ytg { margin: 8px 0 0; }
 
 @media (prefers-reduced-motion: reduce) { .ytg:is(a,button):active { translate: none; } }
+
+
+/* ==================================================================== *
+ * Where the footer tags sit: Hot at the left, the rating at the right
+ * ==================================================================== *
+ *
+ * The footer stacked its tags as lines -- title, Hot, source, chapter,
+ * rating -- and a tile carrying all five read as a list stuck on a cover.
+ * The footer is a grid now: the title and the two text lines span it, and
+ * the last row holds Hot at the left and the rating at the right, one line
+ * along the tile's bottom edge. The Discover tile's copy block takes the
+ * same shape, and the rail card puts its rating over the art in the same
+ * corner (yomu-rails.js appends it into .yr-card__art), so the rating is in
+ * one place on every tile shape.
+ *
+ * Gaps are margins on the children, not row-gap, so an empty row costs
+ * nothing: a tile with only a title and a rating has one line between them.
+ * (0,2,0) and up, over the compiled footer rules and yomu-overrides.css. */
+.tile-card .tile-card__footer {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'title title' 'source source' 'meta meta' 'hot rating';
+  align-items: end;
+  gap: 0 8px;
+}
+.tile-card .tile-card__footer > .tile-card__title { grid-area: title; }
+.tile-card .tile-card__footer > .tile-card__source { grid-area: source; margin-top: 4px; }
+.tile-card .tile-card__footer > .tile-card__meta { grid-area: meta; margin-top: 4px; }
+.tile-card .tile-card__footer > .tile-card__hot { grid-area: hot; justify-self: start; align-self: end; margin-top: 6px; }
+.tile-card .tile-card__footer > .yomu-tile__rating { grid-area: rating; justify-self: end; align-self: end; margin-top: 6px; }
+
+/* Discover's tile (find.html, more.html): the title spans, the source line
+   sits left and the rating right on the last row. */
+.tile .tile-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 't t' 's r';
+  align-items: end;
+  gap: 0 8px;
+}
+.tile .tile-copy > .t { grid-area: t; }
+.tile .tile-copy > small { grid-area: s; }
+.tile .tile-copy > .yomu-tile__rating { grid-area: r; justify-self: end; align-self: end; margin-top: 4px; }
+
+/* The rail card's rating, over the art's bottom-right corner. */
+.yr-card__art > .yr-card__rating.ytg {
+  position: absolute; right: 6px; bottom: 6px; z-index: 2;
+  margin: 0; width: auto; pointer-events: none;
+}
+
+/* The shelf tile (Library, the app's Search results): the same corner of
+   the cover, which is a background-image div with no children of its own. */
+.title-card .title-art { position: relative; }
+.title-card .title-art > .yomu-tile__rating.ytg {
+  position: absolute; right: 6px; bottom: 6px; z-index: 2;
+  margin: 0; width: auto; pointer-events: none;
+}
+
+
+/* ==================================================================== *
+ * Customize look (yomu-look.js): the reader's own chip settings
+ * ==================================================================== *
+ *
+ * Each knob is its own attribute on <html>, set only when the reader moved
+ * it off the default, so an untouched look changes nothing here. The values
+ * are inline custom properties on <html> that yomu-look.js writes.
+ *
+ * :root[attr] .ytg is (0,2,1): above the presets ([data-ytg=x], (0,1,0)) and
+ * the variants (.ytg--flat, (0,1,0)) that set the same properties on the
+ * chip itself, which is what lets one knob reach every chip. */
+:root[data-yl-fill]  .ytg { --ytg-fill:  var(--yl-fill); }
+:root[data-yl-frost] .ytg { --ytg-frost: var(--yl-frost); }
+:root[data-yl-lift]  .ytg { --ytg-lift:  var(--yl-lift); }
+
+/* Blur is the one thing the pack left out, on purpose ("no blur"); the
+   reader can add it. It sits on the glass body, which already covers the
+   chip and clips to its radius, so it blurs the cover under the chip only. */
+:root[data-yl-blur] .ytg::after {
+  -webkit-backdrop-filter: blur(var(--yl-blur));
+  backdrop-filter: blur(var(--yl-blur));
+}
+
+/* The custom gradient: a glow and three stops, drawn by the reader in the
+   sheet. A chip wears it by data-ytg="custom", like any preset. */
+.ytg[data-ytg=custom] {
+  --ytg-c0: var(--yl-c0, #ffb02e);
+  --ytg-c1: var(--yl-c1, #ff2d9a);
+  --ytg-c2: var(--yl-c2, #8b2bf2);
+  --ytg-c3: var(--yl-c3, #17b6ff);
+}
+
+/* Cover shade: how dark the lower third of a cover goes under the copy, on
+   the grid tile (yomu-overrides.css draws it) and the Discover tile alike. */
+:root[data-yl-shade] .tile-card__cover::before,
+:root[data-yl-shade] .tile-card__cover::after,
+:root[data-yl-shade] .tile::before,
+:root[data-yl-shade] .tile::after { opacity: var(--yl-shade); }

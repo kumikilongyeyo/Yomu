@@ -27,6 +27,10 @@
   const SHAPES = [
     { tile: '.tile-card', title: '.tile-card__title', host: '.tile-card__footer' },
     { tile: '.tile', title: '.tile-copy .t', host: '.tile-copy' },
+    /* The shelf tile: the Library grid and the app's own Search results. Its
+       copy sits under the cover on the page ground, so the rating goes over
+       the art's bottom-right corner, where the rail card keeps its own. */
+    { tile: '.title-card', title: '.title-info strong', host: '.title-art' },
   ];
   const MISS_KEY = 'yomu.v1.ratingMiss';
 

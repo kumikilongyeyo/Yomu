@@ -632,6 +632,12 @@ const ASSETS = [
   /* Ahead of the files that build chips (ratings, rails), so YomuTags exists
      when they paint. Rails and ratings still work without it. */
   { file: 'yomu-tags.js', tag: '<script src="/yomu-tags.js" defer></scr' + 'ipt>' },
+  /* Customize look: the sheet Mori's menu and Your Yomu open. Its chip hooks
+     live in yomu-tags.css; this pair is the knobs and the sheet. The gradient
+     editor it uses (/vendor/grapick) is fetched by the sheet on demand and is
+     deliberately not linked here. */
+  { file: 'yomu-look.css', tag: '<link rel="stylesheet" href="/yomu-look.css">' },
+  { file: 'yomu-look.js', tag: '<script src="/yomu-look.js" defer></scr' + 'ipt>' },
   { file: 'yomu-ratings.js', tag: '<script src="/yomu-ratings.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },

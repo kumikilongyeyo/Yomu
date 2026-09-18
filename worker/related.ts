@@ -49,14 +49,41 @@ export interface RelatedTile {
   relation?: string;
 }
 
+export interface Credit {
+  /** MangaDex's id for the person, which /api/catalog/author takes for the whole bibliography. */
+  id: string;
+  name: string;
+  series: RelatedTile[];
+  /** How many titles MangaDex files under this person, the current one included. */
+  total: number;
+}
+
 export interface RelatedAnswer {
   matched: { id: string; title: string } | null;
-  author?: { name: string; series: RelatedTile[] };
-  artist?: { name: string; series: RelatedTile[] };
+  author?: Credit;
+  artist?: Credit;
   related: RelatedTile[];
   similar: RelatedTile[];
   /** The tags the similar row was built from, so the UI can say why. */
   similarBecause: string[];
+  /** How many candidates cleared the resemblance floor; more than the row
+   *  shows means /api/catalog/alike has something to add. */
+  similarTotal: number;
+}
+
+/** Everything MangaDex files under one person, as author or as artist. */
+export interface WorksAnswer {
+  id: string;
+  name: string;
+  total: number;
+  series: RelatedTile[];
+}
+
+/** Every title that clears the resemblance floor, not just the first row. */
+export interface AlikeAnswer {
+  matched: { id: string; title: string } | null;
+  because: string[];
+  similar: RelatedTile[];
 }
 
 async function md<T = any>(path: string): Promise<T | null> {
@@ -152,12 +179,13 @@ async function resolve(id: string, source: string, title: string, ratings: strin
 async function tagPool(
   ranked: Array<{ id: string; name: string }>,
   ratings: string,
+  limit = 40,
 ): Promise<any | null> {
   if (!ranked.length) return null;
   const ask = (tags: Array<{ id: string }>) =>
     md(
       `/manga?${tags.map((t) => `includedTags[]=${encodeURIComponent(t.id)}`).join('&')}`
-      + `&includedTagsMode=AND&order[followedCount]=desc&includes[]=cover_art&includes[]=author&limit=40${ratings}`,
+      + `&includedTagsMode=AND&order[followedCount]=desc&includes[]=cover_art&includes[]=author&limit=${limit}${ratings}`,
     );
 
   const narrow = await ask(ranked.slice(0, 3));
@@ -176,12 +204,60 @@ async function tagPool(
  */
 const SAME_WORK = new Set(['colored', 'alternate_version', 'preserialization', 'doujinshi']);
 
+/** A tile per result, skipping what an earlier row already spent, up to a cap. */
+function takeTiles(data: any, spent: Set<string>, cap: number, origin: string): RelatedTile[] {
+  const out: RelatedTile[] = [];
+  for (const item of data?.data ?? []) {
+    const tile = toTile(item, origin);
+    if (spent.has(tile.id)) continue;
+    spent.add(tile.id);
+    out.push(tile);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+/**
+ * A title's tags, themes before genres and the broadest genres last, cut to
+ * the five that say the most -- and the whole set, to score against.
+ */
+function rankTags(manga: any): { ranked: Array<{ id: string; name: string }>; mine: Set<string> } {
+  const tags: any[] = manga.attributes?.tags ?? [];
+  const named = tags
+    .map((t) => ({ id: String(t.id), name: String(t.attributes?.name?.en ?? ''), group: String(t.attributes?.group ?? '') }))
+    .filter((t) => t.id && t.name);
+  const ranked = [
+    ...named.filter((t) => t.group === 'theme'),
+    ...named.filter((t) => t.group === 'genre' && !BROAD.has(t.name)),
+    ...named.filter((t) => t.group === 'genre' && BROAD.has(t.name)),
+  ].slice(0, 5);
+  return { ranked, mine: new Set(named.map((t) => t.id)) };
+}
+
+/**
+ * Candidates ranked by how much of this title's tag set they actually share,
+ * not by how popular they are. Jaccard rather than a raw count, so a title
+ * tagged with everything does not win by breadth. Three shared tags is the
+ * floor: below that the resemblance is a coincidence.
+ */
+function scoreByTags(pool: any, mine: Set<string>): Array<{ item: any; shared: number; score: number }> {
+  return (pool?.data ?? [])
+    .map((item: any) => {
+      const theirs: string[] = (item.attributes?.tags ?? []).map((t: any) => String(t.id));
+      const shared = theirs.filter((id) => mine.has(id));
+      const union = new Set([...theirs, ...mine]).size;
+      return { item, shared: shared.length, score: union ? shared.length / union : 0 };
+    })
+    .filter((row: { shared: number }) => row.shared >= 3)
+    .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+}
+
 export async function relatedFor(
   { id, source, title, adult, origin }:
   { id: string; source: string; title: string; adult: boolean; origin: string },
 ): Promise<RelatedAnswer> {
   const ratings = adult ? RATINGS_ADULT : RATINGS_SAFE;
-  const empty: RelatedAnswer = { matched: null, related: [], similar: [], similarBecause: [] };
+  const empty: RelatedAnswer = { matched: null, related: [], similar: [], similarBecause: [], similarTotal: 0 };
 
   const manga = await resolve(id, source, title, ratings);
   if (!manga) return empty;
@@ -205,16 +281,7 @@ export async function relatedFor(
    * worse, not better -- the pool becomes "the most followed titles on
    * MangaDex" and Vagabond gets One Piece and SPY×FAMILY. Narrow first,
    * then rank. */
-  const tags: any[] = manga.attributes?.tags ?? [];
-  const named = tags
-    .map((t) => ({ id: String(t.id), name: String(t.attributes?.name?.en ?? ''), group: String(t.attributes?.group ?? '') }))
-    .filter((t) => t.id && t.name);
-  const ranked = [
-    ...named.filter((t) => t.group === 'theme'),
-    ...named.filter((t) => t.group === 'genre' && !BROAD.has(t.name)),
-    ...named.filter((t) => t.group === 'genre' && BROAD.has(t.name)),
-  ].slice(0, 5);
-  const mineTags = new Set(named.map((t) => t.id));
+  const { ranked, mine: mineTags } = rankTags(manga);
 
   const list = (qs: string) => md(`/manga?${qs}&includes[]=cover_art&includes[]=author&limit=${PER_ROW + 4}${ratings}`);
 
@@ -228,17 +295,7 @@ export async function relatedFor(
   ]);
 
   const self = String(manga.id);
-  const take = (data: any, spent: Set<string>, cap = PER_ROW): RelatedTile[] => {
-    const out: RelatedTile[] = [];
-    for (const item of data?.data ?? []) {
-      const tile = toTile(item, origin);
-      if (spent.has(tile.id)) continue;
-      spent.add(tile.id);
-      out.push(tile);
-      if (out.length >= cap) break;
-    }
-    return out;
-  };
+  const take = (data: any, spent: Set<string>, cap = PER_ROW): RelatedTile[] => takeTiles(data, spent, cap, origin);
 
   /* Two scopes, not one. "What else did this person make" is its own
    * question, and spending a title in Related first left TurtleMe's row empty
@@ -256,32 +313,106 @@ export async function relatedFor(
   const related = take(byRelation, discovery)
     .map((t) => ({ ...t, ...(relation.get(t.id) ? { relation: relation.get(t.id) } : {}) }));
 
-  /* Ranked by how much of this title's tag set a candidate actually shares,
-   * not by how popular it is. Jaccard rather than a raw count, so a title
-   * tagged with everything does not win by breadth. Three shared tags is the
-   * floor: below that the resemblance is a coincidence and the row is better
-   * off not existing. */
-  const scored = (byTags?.data ?? [])
-    .map((item: any) => {
-      const theirs = (item.attributes?.tags ?? []).map((t: any) => String(t.id));
-      const shared = theirs.filter((id: string) => mineTags.has(id));
-      const union = new Set([...theirs, ...mineTags]).size;
-      return { item, shared: shared.length, score: union ? shared.length / union : 0 };
-    })
-    .filter((row: any) => row.shared >= 3)
-    .sort((a: any, b: any) => b.score - a.score);
+  /* Resemblance, scored (scoreByTags): three shared tags is the floor, and
+   * below it the row is better off not existing. */
+  const scored = scoreByTags(byTags, mineTags);
   const similar = take({ data: scored.map((row: any) => row.item) }, discovery);
 
   return {
     matched: { id: self, title: pickTitle(manga.attributes) },
     ...(author?.attributes?.name
-      ? { author: { name: String(author.attributes.name), series: take(byAuthor, byline) } }
+      ? {
+          author: {
+            id: String(author.id),
+            name: String(author.attributes.name),
+            series: take(byAuthor, byline),
+            total: Number(byAuthor?.total ?? 0),
+          },
+        }
       : {}),
     ...(artist?.attributes?.name && artist.id !== author?.id
-      ? { artist: { name: String(artist.attributes.name), series: take(byArtist, byline) } }
+      ? {
+          artist: {
+            id: String(artist.id),
+            name: String(artist.attributes.name),
+            series: take(byArtist, byline),
+            total: Number(byArtist?.total ?? 0),
+          },
+        }
       : {}),
     related,
     similar,
     similarBecause: ranked.slice(0, 3).map((t) => t.name),
+    similarTotal: scored.length,
+  };
+}
+
+/**
+ * Everything MangaDex files under one person, as author and as artist.
+ *
+ * Two lists, because MangaDex takes the two roles as separate filters and
+ * has no way to ask for either: the authored list leads and anything only
+ * drawn follows it. A hundred of each is MangaDex's ceiling per request and
+ * more than any bibliography in the catalogue needs, so there is no paging.
+ * This is the page behind the arrow on a series page's "More from" row.
+ */
+export async function worksBy(
+  { id, adult, origin }: { id: string; adult: boolean; origin: string },
+): Promise<WorksAnswer | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const ratings = adult ? RATINGS_ADULT : RATINGS_SAFE;
+  const list = (role: string) =>
+    md(`/manga?${role}[]=${encodeURIComponent(id)}&order[followedCount]=desc&includes[]=cover_art&includes[]=author&limit=100${ratings}`);
+  const [person, authored, drawn] = await Promise.all([
+    md(`/author/${encodeURIComponent(id)}`),
+    list('authors'),
+    list('artists'),
+  ]);
+  if (!person && !authored && !drawn) return null;
+  const spent = new Set<string>();
+  const series = [
+    ...takeTiles(authored, spent, 100, origin),
+    ...takeTiles(drawn, spent, 100, origin),
+  ];
+  return {
+    id,
+    name: String(person?.data?.attributes?.name ?? ''),
+    total: series.length,
+    series,
+  };
+}
+
+/**
+ * Everything like this title, not just the first row of it.
+ *
+ * The resemblance relatedFor computes -- the most specific tags ANDed, then
+ * Jaccard over the whole set with a floor of three -- over a pool of a
+ * hundred rather than forty, handed back whole. Only a MangaDex id will do:
+ * this is the page behind an arrow on a series page that already resolved
+ * the title, so there is nothing left to guess at.
+ */
+export async function alikeFor(
+  { id, adult, origin, limit = 60 }: { id: string; adult: boolean; origin: string; limit?: number },
+): Promise<AlikeAnswer> {
+  const empty: AlikeAnswer = { matched: null, because: [], similar: [] };
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return empty;
+  const ratings = adult ? RATINGS_ADULT : RATINGS_SAFE;
+  const found = await md(`/manga/${encodeURIComponent(id)}`);
+  const manga = found?.data;
+  if (!manga) return empty;
+
+  const { ranked, mine } = rankTags(manga);
+  const pool = await tagPool(ranked, ratings, 100);
+  const scored = scoreByTags(pool, mine);
+  /* This title, and everything MangaDex already relates to it: the sequel,
+   * the colour edition, the spin-off belong in Related on the series page,
+   * where the label says what they are. "Like this" is for titles that are
+   * not this. */
+  const spent = new Set<string>([String(manga.id)]);
+  for (const r of manga.relationships ?? []) if (r.type === 'manga' && r.id) spent.add(String(r.id));
+  return {
+    matched: { id: String(manga.id), title: pickTitle(manga.attributes) },
+    because: ranked.slice(0, 3).map((t) => t.name),
+    similar: takeTiles({ data: scored.map((row) => row.item) }, spent, Math.max(1, Math.min(100, limit)), origin),
   };
 }

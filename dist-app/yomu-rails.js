@@ -65,9 +65,11 @@
     node.append(art);
     node.append(el('span', 'yr-card__title', item.title));
 
-    /* The rating first, as the same ★ chip the grid tiles wear, then one
-       line of evidence. Only when there is real evidence: a score of null or
-       a vote count of zero says nothing and is left off. */
+    /* The rating, as the same ★ chip the grid tiles wear, over the art's
+       bottom-right corner -- the corner it takes on every tile shape
+       (yomu-tags.css) -- then one line of evidence under the title. Only when
+       there is real evidence: a score of null or a vote count of zero says
+       nothing and is left off. */
     if (item.score) {
       const text = (Math.round(item.score) / 10).toFixed(1);
       const rating = window.YomuTags?.chip
@@ -75,7 +77,8 @@
         : el('span', null, '★ ' + text);
       rating.classList.add('yr-card__rating');
       rating.title = text + ' / 10 on AniList';
-      node.append(rating);
+      rating.setAttribute('aria-label', 'Rated ' + text + ' out of 10 on AniList');
+      art.append(rating);
     }
     if (item.votes) node.append(el('span', 'yr-card__note', item.votes.toLocaleString() + ' readers'));
 

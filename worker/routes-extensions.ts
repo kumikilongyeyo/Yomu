@@ -22,7 +22,7 @@ import { getSuwayomiSources, suwayomiConfigured, suwayomiSourceProvider } from '
 import { DEFAULT_RANK, chapterLedger, dedupe, fromAll, normalizeTitle, rankByRelevance, relevance, withFallback } from './catalog';
 import type { Provider } from './catalog';
 import type { SeriesSummary } from './extensions/types';
-import { relatedFor } from './related';
+import { alikeFor, relatedFor, worksBy } from './related';
 
 const json = (body: unknown, status = 200, cache = 'no-store') =>
   new Response(JSON.stringify(body), {
@@ -389,6 +389,26 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
       adult: url.searchParams.get('adult') === '1',
       origin,
     });
+    return json(answer, 200, 'public, max-age=3600');
+  }
+
+  /* The whole answer behind the two arrows on a series page: every title
+     MangaDex files under a person, and every title that clears the
+     resemblance floor rather than the first twelve. Ids only -- both pages
+     are reached from a title the related route already resolved. */
+  if (url.pathname === '/api/catalog/author') {
+    const id = url.searchParams.get('id') ?? '';
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: 'Need a MangaDex author id.' }, 400);
+    const answer = await worksBy({ id, adult: url.searchParams.get('adult') === '1', origin });
+    if (!answer) return json({ error: 'Could not reach MangaDex.' }, 502);
+    return json(answer, 200, 'public, max-age=3600');
+  }
+
+  if (url.pathname === '/api/catalog/alike') {
+    const id = url.searchParams.get('id') ?? '';
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: 'Need a MangaDex series id.' }, 400);
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') ?? '60') || 60));
+    const answer = await alikeFor({ id, adult: url.searchParams.get('adult') === '1', origin, limit });
     return json(answer, 200, 'public, max-age=3600');
   }
 

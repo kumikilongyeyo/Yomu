@@ -1,0 +1,216 @@
+/* ==================================================================== *
+ * Customize look — the sheet (yomu-look.js)
+ * ====================================================================
+ *
+ * Yomu's tokens throughout, so the sheet follows the mode, the accent and
+ * the skin it is changing without knowing any of them changed. Grounds are
+ * --bg with --surface layered over it, the pair the menus and the bubble
+ * use: --surface alone is translucent in both modes, and a panel you can
+ * read the tiles through is not a panel.
+ *
+ * The chip hooks the sheet drives live in yomu-tags.css; this file is only
+ * the sheet, the door on Your Yomu, and a few lines that fit grapick in.
+ * ==================================================================== */
+
+.ylk-scrim {
+  position: fixed; inset: 0; z-index: 81;
+  background: var(--scrim, rgba(0, 0, 0, .4));
+  opacity: 0; visibility: hidden;
+  transition: opacity 200ms ease, visibility 200ms;
+}
+
+.ylk {
+  position: fixed; z-index: 82;
+  top: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+  width: min(384px, calc(100vw - 32px));
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  border-radius: var(--radius-card, 16px);
+  border: 1px solid var(--line, #e4ded2);
+  background: var(--bg, #f5f2ec);
+  background-image: linear-gradient(var(--surface, #fffdfa), var(--surface, #fffdfa));
+  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, .28));
+  color: var(--text, #1e1b16);
+  font: 500 13px/1.4 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  opacity: 0; visibility: hidden; transform: translateX(12px);
+  transition: opacity 220ms cubic-bezier(.3, 1, .5, 1), transform 220ms cubic-bezier(.3, 1, .5, 1), visibility 220ms;
+}
+.ylk.is-on { opacity: 1; visibility: visible; transform: none; }
+
+/* --- header, body, footer ----------------------------------------------- */
+
+.ylk__head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 14px 12px 18px;
+  border-bottom: 1px solid var(--line, #e4ded2);
+}
+.ylk__head > div { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ylk__head strong {
+  font: 800 15px/1.2 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  letter-spacing: -.02em;
+}
+.ylk__head small { font-size: 11.5px; color: var(--faint, #9b9184); }
+.ylk__close {
+  flex: none; width: 34px; height: 34px; border-radius: 999px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line, #e4ded2); background: none; color: var(--muted, #4a443a);
+  cursor: pointer;
+}
+.ylk__close:hover { background: var(--raised, #efeade); color: var(--text, #1e1b16); }
+.ylk__close:focus-visible, .ylk__btn:focus-visible, .ylk__segbtn:focus-visible, .ylk__sw:focus-visible {
+  outline: 2px solid var(--accent, #b8791c); outline-offset: 2px;
+}
+
+.ylk__body { overflow-y: auto; overscroll-behavior: contain; padding: 4px 18px 14px; scrollbar-width: thin; }
+
+.ylk__foot {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line, #e4ded2);
+}
+.ylk__btn {
+  min-height: 38px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--line, #e4ded2); background: none; color: var(--muted, #4a443a);
+  font: 700 13px/1 var(--uiFont, system-ui, sans-serif); cursor: pointer;
+}
+.ylk__btn:hover { background: var(--raised, #efeade); color: var(--text, #1e1b16); }
+.ylk__btn--primary { background: var(--accent, #b8791c); border-color: transparent; color: var(--accentText, #fff8ec); }
+.ylk__btn--primary:hover { background: var(--accent, #b8791c); color: var(--accentText, #fff8ec); filter: brightness(1.05); }
+
+/* --- sections ------------------------------------------------------------- */
+
+.ylk__sec { margin-top: 18px; }
+.ylk__sechead { display: flex; align-items: baseline; gap: 8px; margin: 0 0 10px; min-width: 0; }
+.ylk__sechead h3 {
+  flex: none; margin: 0;
+  font: 700 10.5px/1 var(--uiFont, system-ui, sans-serif);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--faint, #9b9184);
+}
+.ylk__hint { min-width: 0; font-size: 11.5px; color: var(--faint, #9b9184); line-height: 1.4; }
+.ylk__note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--faint, #9b9184); }
+
+/* --- the segmented control (mode) ----------------------------------------- */
+
+.ylk__seg { display: flex; gap: 4px; padding: 3px; border-radius: 999px; border: 1px solid var(--line, #e4ded2); }
+.ylk__segbtn {
+  flex: 1; min-height: 34px; border: 0; border-radius: 999px;
+  background: none; color: var(--muted, #4a443a);
+  font: 700 12.5px/1 var(--uiFont, system-ui, sans-serif); cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.ylk__segbtn:hover { background: var(--raised, #efeade); }
+.ylk__segbtn[aria-checked='true'] { background: var(--accent, #b8791c); color: var(--accentText, #fff8ec); }
+
+/* --- swatches (accent) ---------------------------------------------------- */
+
+.ylk__swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.ylk__sw {
+  width: 32px; height: 32px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+  transition: transform 160ms cubic-bezier(.3, 1, .5, 1);
+}
+.ylk__sw:hover { transform: translateY(-1px); }
+.ylk__sw[aria-checked='true'] { box-shadow: 0 0 0 2px var(--bg, #f5f2ec), 0 0 0 4px var(--text, #1e1b16); }
+
+/* --- skins: the picker Your Yomu draws, three to a row here --------------- */
+
+.ylk .ysk { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ylk .ysk__chip { padding: 8px 4px; }
+.ylk .ysk__swatch { width: 38px; height: 38px; }
+
+/* --- tags ----------------------------------------------------------------- */
+
+/* A fixed dark ground, not a token: the chips live over cover art, and the
+   preview has to show them the way a cover does whatever the page's mode. */
+.ylk__preview {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 14px; margin: 0 0 12px; border-radius: 12px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(120, 90, 200, .35), transparent 60%),
+    linear-gradient(160deg, #22354a, #0b121a);
+}
+
+.ylk__field {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 10px;
+  margin: 8px 0;
+}
+.ylk__field--inline { grid-template-columns: 72px auto minmax(0, 1fr); }
+.ylk__label { font-size: 12.5px; color: var(--muted, #4a443a); }
+.ylk__select {
+  min-height: 34px; padding: 0 10px; border-radius: 10px;
+  border: 1px solid var(--line, #e4ded2); background: var(--surface, #fffdfa); color: var(--text, #1e1b16);
+  font: 600 12.5px/1 var(--uiFont, system-ui, sans-serif);
+}
+.ylk__field input[type='color'] {
+  width: 34px; height: 34px; padding: 2px; border-radius: 10px;
+  border: 1px solid var(--line, #e4ded2); background: var(--surface, #fffdfa); cursor: pointer;
+}
+
+.ylk__range {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr) 46px; align-items: center; gap: 10px;
+  margin: 10px 0;
+}
+.ylk__range input[type='range'] { width: 100%; margin: 0; accent-color: var(--accent, #b8791c); }
+.ylk__range output { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted, #4a443a); }
+
+.ylk__check { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; font-size: 12.5px; color: var(--muted, #4a443a); cursor: pointer; }
+.ylk__check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent, #b8791c); }
+
+.ylk__kinds { margin-top: 12px; border-top: 1px solid var(--line, #e4ded2); padding-top: 8px; }
+.ylk__kinds summary { cursor: pointer; font: 700 12.5px/1.4 var(--uiFont, system-ui, sans-serif); color: var(--muted, #4a443a); list-style: none; }
+.ylk__kinds summary::-webkit-details-marker { display: none; }
+.ylk__kinds summary::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 10px 1px 2px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 160ms ease;
+}
+.ylk__kinds[open] summary::before { transform: rotate(45deg); }
+.ylk__kinds .ylk__field { margin: 6px 0; }
+
+/* --- the custom gradient: grapick, fitted --------------------------------- *
+ * The stop's × sits 17px above the bar and its colour well below it, so the
+ * editor gets room on both sides rather than clipping them off. */
+.ylk__custom { margin: 4px 0 8px; padding: 10px 12px 4px; border-radius: 12px; background: var(--raised, #efeade); }
+.ylk__grp { padding: 22px 10px 26px; }
+.ylk__grp .ylk__hint { display: block; text-align: center; }
+.ylk .grp-wrapper { position: relative; border-radius: 8px; border: 1px solid var(--line, #e4ded2); }
+.ylk .grp-preview { border-radius: 7px; }
+.ylk .grp-handler-close { color: var(--text, #1e1b16); background: var(--surface, #fffdfa); }
+.ylk .grp-handler-drag { background-color: rgba(255, 255, 255, .85); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); }
+.ylk .grp-handler-selected .grp-handler-drag { background-color: var(--accent, #b8791c); }
+.ylk__custom > .ylk__hint { display: block; margin: 0 0 8px; }
+
+/* --- the door on Your Yomu ---------------------------------------------- */
+
+.ylk-host {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius-card, 14px);
+  border: 1px solid var(--line, #e4ded2); background: var(--surface, #fffdfa);
+}
+.ylk-host__line { flex: 1; min-width: 0; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted, #4a443a); }
+.ylk-host__btn {
+  flex: none; min-height: 38px; padding: 0 16px; border-radius: 999px; border: 0;
+  background: var(--accent, #b8791c); color: var(--accentText, #fff8ec);
+  font: 700 13px/1 var(--uiFont, system-ui, sans-serif); cursor: pointer;
+}
+.ylk-host__btn:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: 2px; }
+
+/* --- phones: a bottom sheet under a scrim --------------------------------- */
+
+@media (max-width: 767px) {
+  .ylk {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto;
+    max-height: min(86vh, 720px);
+    border-radius: var(--radius-card, 16px) var(--radius-card, 16px) 0 0; border-bottom: 0;
+    transform: translateY(16px);
+  }
+  .ylk.is-on { transform: none; }
+  .ylk-scrim.is-on { opacity: 1; visibility: visible; }
+  .ylk__foot { flex-wrap: wrap; }
+  .ylk__foot .ylk__btn { flex: 1; }
+  .ylk-host { flex-direction: column; align-items: stretch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ylk, .ylk-scrim, .ylk__segbtn, .ylk__sw, .ylk__kinds summary::before { transition: none; }
+  .ylk { transform: none; }
+}

@@ -12,6 +12,9 @@ image asset or CSS: all of that is open. The one visual rule is the theming
 one already in force across the app, stated in section 7.
 
 Prepared 18 September 2026 against `kumikilongyeyo/Yomu` at `382bda2`.
+Amended the same day: slot C became one bottom row (Hot left, rating right),
+the rail card's rating moved over its art, and the reader gained a customizer
+for the chips (section 7).
 
 
 ## 1. The tiles
@@ -24,6 +27,7 @@ title appears in all of them.
 | Grid tile | Home (Your library, the popular grid), the app's Search results | `.tile-card[data-series]` | `.tile-card__title` | `.tile-card__footer` | React bundle (do not edit); shell decorates |
 | Discover tile | `/find` results | `.tile` | `.tile-copy .t` | `.tile-copy` | `find.html` (hand-written, editable) |
 | Rail card | Discover rails, Home rails, the roulette landing | `.yr-card` | `.yr-card__title` | the card body under the art (`.yr-card__art` holds the cover) | `yomu-rails.js` (editable) |
+| Shelf tile | Library, the app's Search results | `.title-card` | `.title-info strong` | the copy under the art (`.title-art` is the cover); the rating goes over the art, bottom-right | React bundle (do not edit); shell decorates |
 
 The grid and Discover tiles are 2:3 covers with the copy laid **over** the
 bottom of the artwork on a dark gradient. The rail card is a cover with the
@@ -53,7 +57,7 @@ owner order, so two tags never fight for the same pixels.
  │ [C] footer                   │   on the artwork below this line except in C
  │  title                       │
  │  source · chapter            │
- │  C-lines (tags as lines)     │
+ │  Hot                rating   │
  └──────────────────────────────┘
 ```
 
@@ -71,15 +75,20 @@ and the slot is reserved for it: no tag may be placed within 44px of the
 top-right corner, because that is the touch target on a phone. A tag that
 would land there moves to the left of it (the circle dot already does this).
 
-**Slot C — footer lines.** Tags that describe the *title itself*: the rating,
-and the app's own "Hot". They are lines or chips inside the footer block,
-after the source line, never over the artwork above the gradient. A footer
-tag must not push the title off the tile: the title keeps its two-line clamp,
-and footer tags are the first thing to give way on a short tile.
+**Slot C — the footer's bottom row.** Tags that describe the *title itself*:
+the app's own "Hot" and the rating. They share one line at the foot of the
+footer block, the tile's bottom edge: Hot at the left, the rating at the
+right, never over the artwork above the gradient. A footer tag must not push
+the title off the tile: the title keeps its two-line clamp, and the row is
+the first thing to give way on a short tile. The Discover tile's copy block
+takes the same shape, and on a rail card the rating takes the art's
+bottom-right corner instead (slot D2), so the rating is in one place on
+every tile shape.
 
 **Slot D — rail badge.** Rail cards have one top-left badge (`.yr-badge`)
 naming the rail's reason: Trending, Gem, New. A rail card has no slot A
-stack; its rating and reader count are body lines under the title.
+stack; its rating sits over the art at the bottom-right (slot D2, the grid
+tile's corner) and the reader count is a body line under the title.
 
 **Slot E — full-cover state.** Not a tag but a state of the whole tile: the
 18+ blur from the adult gate. When it is on, slots A and C still render, over
@@ -100,8 +109,9 @@ Rationale: the thing that changed most recently goes first; a title's
 permanent facts next; your position next; what others did last. The circle
 dot is the smallest mark and is the one that yields when the stack is full.
 
-Slot C order, top to bottom under the source line: Hot, then rating. Hot is
-the app's own and sits where it always did.
+Slot C is one line: Hot at the left, the rating at the right. Hot is the
+app's own; the rating is appended by yomu-ratings.js and placed by the
+footer grid in yomu-tags.css.
 
 Two tags may **never** overlap. The current rule set does this with
 `:has()` selectors that move the lower tag down or right when the upper one
@@ -119,8 +129,8 @@ guarantee, and must keep it when the tile is 120px wide.
 | Completed | The title's status is complete | A (after freshness) | `.tile-card__status` text reads "Completed" | Source status | On render | `.tile-card[data-yomu-tag='completed']` (seal drawn on the cover's `::before`) | `yomu-shell.js` |
 | Progress | The chapter you are on | A (after completed) | A reading position exists for the series | Reading index `yomu.v1.reading` | Every shell pass | `.yomu-tile__progress` text "Ch. 41" | `yomu-shell.js` |
 | Circle dot | Your circle has comments you may read and have not opened | A (last, or right of the stack) | Joined a circle; count > 0 | `/api/circle/unread`, one call per grid, 5-min cache | On pass, invalidated when a thread is opened | `.yomu-tile__circle` | `yomu-circle.js` |
-| Hot | The source lists the title as hot | C | Source says so | App's own feed state | On render | `.tile-card__hot` (flame icon + "Hot") | React bundle |
-| Rating | AniList community score, out of ten | C (last) | AniList knows the title and has a score | `yomu.v1.anilist` cache; lookups one per 2.6s, 20 per page, visible tab only | On pass; a miss is remembered a week | `.yomu-tile__rating` (grid, Discover) · `.yr-card__rating` (rails) | `yomu-ratings.js`, `yomu-rails.js` |
+| Hot | The source lists the title as hot | C (left) | Source says so | App's own feed state | On render | `.tile-card__hot` (flame icon + "Hot") | React bundle |
+| Rating | AniList community score, out of ten | C (right); D2 on a rail card | AniList knows the title and has a score | `yomu.v1.anilist` cache; lookups one per 2.6s, 20 per page, visible tab only | On pass; a miss is remembered a week | `.yomu-tile__rating` (grid, Discover) · `.yr-card__rating` (rails) | `yomu-ratings.js`, `yomu-rails.js` |
 | Rail badge | Why this card is in this rail | D | Always on rails that declare one | Rail definition | On rail build | `.yr-badge` | `yomu-rails.js` |
 | Status | Ongoing / Completed / Hiatus, as text | — | Never as text | Source status | — | `.tile-card__status` (hidden; it feeds the seal) | React bundle |
 | Adult | The title is 18+ and not unlocked | E | The gate says so | `yomu.v1.adultTitles`, the gate | On pass | The gate's own classes | `yomu-gate.js` |
@@ -195,6 +205,14 @@ Image-asset tags (the `/tags/*.svg` tabs) are drawn as-is and do not follow
 the theme; that is a property of the asset, not a bug, and any new asset tag
 must be legible on a bright cover and a dark one.
 
+The reader may retint the chips. Customize look (`yomu-look.js`, opened
+from Mori's menu and from Your Yomu) offers a preset gradient for every
+chip or per tag, a gradient of their own, and the glass itself: fill, frost,
+blur, shadow, angle. Each knob is an attribute on `<html>` with an inline
+custom property, set only when it is off the default, and `yomu-tags.css`
+carries the hook for each. The ink stays light and the rule above holds: a
+customised chip is still text over artwork.
+
 Everything else is open: shape, size within the row metric, icon, type,
 whether the rating is a pill or a bare glyph, whether the circle dot is a dot
 or a ring, whether freshness is a tab or a corner fold.
@@ -235,8 +253,10 @@ or a ring, whether freshness is a tab or a corner fold.
 
 - [ ] A tile with every slot-A tag shows all of them, none overlapping, the
       save control untouched, at 120px wide.
-- [ ] A tile with only a rating shows it under the source line and the title
+- [ ] A tile with only a rating shows it at the bottom-right and the title
       still has two lines.
+- [ ] A tile with Hot and a rating shows Hot at the bottom-left and the
+      rating at the bottom-right, on one line, at 120px wide.
 - [ ] Switching Aurora to Paper, and to a skin, changes no tag over artwork
       and recolours every tag on a rail card, with no reload.
 - [ ] Changing the accent recolours rail tags and nothing over artwork.

@@ -146,6 +146,18 @@
 
     add('What should I read?', 'From your shelf', () => suggest());
 
+    /* Two doors into the look, because the pet is the one thing on every
+       screen: the mode flip, and the whole sheet behind it (yomu-look.js).
+       Neither is offered when that file is absent; the menu still works. */
+    const look = window.YomuLook;
+    if (look && look.toggleMode) {
+      const paper = look.mode() === 'light';
+      add(paper ? 'Aurora mode' : 'Paper mode', paper ? 'Dark' : 'Light', () => { close(); look.toggleMode(); });
+    }
+    if (look && look.open) {
+      add('Customize look', 'Colours, tags', () => { close(); look.open(); });
+    }
+
     add('Hide Mori', null, () => {
       close();
       window.YomuPet.set({ minimized: true });
