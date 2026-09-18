@@ -67,11 +67,12 @@
               background:linear-gradient(145deg,#567591,#141d30)}
     .tile-art img{width:100%;height:100%;object-fit:cover;display:block}
     /* Blurred dark lower edge, then the sharp gradient the copy sits on. */
-    .tile::before{content:"";position:absolute;inset:53% -12px -12px;z-index:-2;
+    /* Kept to the lower third, the same as the home grid's tiles. */
+    .tile::before{content:"";position:absolute;inset:68% -12px -12px;z-index:-2;
                   background:#101a25b3;filter:blur(18px);pointer-events:none}
     .tile::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-                 background:linear-gradient(180deg,#07101922 0,transparent 40%,
-                            #0c151b70 66%,#0c151bf5 100%)}
+                 background:linear-gradient(180deg,#07101922 0,transparent 60%,
+                            #0c151b70 80%,#0c151bf5 100%)}
 
     .tile-copy{position:absolute;bottom:10px;left:10px;right:10px}
     .tile-copy .t{font-size:12px;font-weight:650;line-height:1.3;

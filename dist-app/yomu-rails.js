@@ -65,12 +65,15 @@
     node.append(art);
     node.append(el('span', 'yr-card__title', item.title));
 
-    /* One line of evidence, and only when there is real evidence. A score of
-       null or a vote count of zero says nothing and is left off. */
-    const note = item.votes ? item.votes.toLocaleString() + ' readers'
-      : item.score ? item.score + '%'
-      : '';
-    if (note) node.append(el('span', 'yr-card__note', note));
+    /* The rating first, as the same ★ chip the grid tiles wear, then one
+       line of evidence. Only when there is real evidence: a score of null or
+       a vote count of zero says nothing and is left off. */
+    if (item.score) {
+      const rating = el('span', 'yr-card__rating', '★ ' + (Math.round(item.score) / 10).toFixed(1));
+      rating.title = (Math.round(item.score) / 10).toFixed(1) + ' / 10 on AniList';
+      node.append(rating);
+    }
+    if (item.votes) node.append(el('span', 'yr-card__note', item.votes.toLocaleString() + ' readers'));
 
     node.addEventListener('click', () => {
       window.YomuRank?.note?.('RECOMMENDATION_CLICK', item.title);

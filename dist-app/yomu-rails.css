@@ -102,6 +102,21 @@
   color: var(--faint, #9b9184);
 }
 
+/* The AniList score, out of ten, as the tiles draw it. On the card's own
+   ground here rather than over artwork, so it takes the accent. */
+.yr-card__rating {
+  align-self: flex-start;
+  justify-self: start;
+  width: max-content;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accentSoft, rgba(184, 121, 28, .10));
+  border: 1px solid var(--accentLine, rgba(184, 121, 28, .42));
+  color: var(--accent, #b8791c);
+  font: 800 10.5px/1.5 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: .02em;
+}
+
 /* --- the badge ----------------------------------------------------------- *
  * One word, over the cover's top-left. Backed by the ground rather than a
  * translucent lift, because it sits on artwork that can be any colour. */

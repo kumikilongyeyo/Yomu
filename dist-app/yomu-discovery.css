@@ -182,3 +182,5 @@
   color: var(--accent, #b8791c);
   font: 800 11px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));
 }
+/* Discover's own tiles keep the same chip; their copy block stacks. */
+.tile-copy .yomu-tile__rating { display: inline-block; margin-top: 4px; }

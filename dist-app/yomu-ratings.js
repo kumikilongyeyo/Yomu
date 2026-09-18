@@ -18,7 +18,16 @@
   const CLASS = 'yomu-tile__rating';
   const SERIES_ID = 'yomu-series-rating';
   const EVERY_MS = 2600;
-  const PER_PAGE = 12;
+  const PER_PAGE = 20;
+
+  /* Every tile shape the app draws, and where its title and its footer are.
+     The home grid and the app's own search results are React's .tile-card;
+     the hand-written Discover page has its own .tile. Rail cards carry a
+     score of their own and draw it themselves. */
+  const SHAPES = [
+    { tile: '.tile-card', title: '.tile-card__title', host: '.tile-card__footer' },
+    { tile: '.tile', title: '.tile-copy .t', host: '.tile-copy' },
+  ];
   const MISS_KEY = 'yomu.v1.ratingMiss';
 
   const browser = typeof document !== 'undefined';
@@ -101,19 +110,21 @@
   }
 
   function paint() {
-    for (const tile of document.querySelectorAll('.tile-card')) {
-      const title = tile.querySelector('.tile-card__title')?.textContent?.trim();
-      const footer = tile.querySelector('.tile-card__footer');
-      if (!title || !footer) continue;
-      const { text, known } = scoreFor(title);
-      let mark = footer.querySelector('.' + CLASS);
-      if (!known) { enqueue(title); mark?.remove(); continue; }
-      if (!text) { mark?.remove(); continue; }
-      if (mark && mark.dataset.score === text) continue;
-      mark?.remove();
-      mark = chip(text);
-      mark.dataset.score = text;
-      footer.append(mark);
+    for (const shape of SHAPES) {
+      for (const tile of document.querySelectorAll(shape.tile)) {
+        const title = tile.querySelector(shape.title)?.textContent?.trim();
+        const footer = tile.querySelector(shape.host);
+        if (!title || !footer) continue;
+        const { text, known } = scoreFor(title);
+        let mark = footer.querySelector('.' + CLASS);
+        if (!known) { enqueue(title); mark?.remove(); continue; }
+        if (!text) { mark?.remove(); continue; }
+        if (mark && mark.dataset.score === text) continue;
+        mark?.remove();
+        mark = chip(text);
+        mark.dataset.score = text;
+        footer.append(mark);
+      }
     }
 
     /* The series page: after the facts line, once. */
