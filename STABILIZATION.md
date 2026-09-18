@@ -55,6 +55,7 @@ Found while running the gauntlets, and fixed here too:
 | Finding | Commit |
 |---|---|
 | U14 `--faint` failed WCAG AA in 11 of 12 palette/mode pairs | `ad2724b` |
+| U2 sidebar lit Home on every screen; `/discover` was unmapped | `03d77ed` |
 
 ### Verification
 
@@ -98,6 +99,18 @@ One note toward Phase 5: `/title/<slug>` shipped here is the shape a real
 CanonicalTitle id slots into without changing a caller. The path stays
 `/title/<id>`; only what resolves it changes.
 
+### U0 — first-run friction
+
+The welcome screen is "Step 1 of 6", and the way past it ("Or look around
+without setting anything up") is a small underlined link beneath two buttons.
+That is the audit's own P2 finding, and it is filed there as a *product
+issue*, not a bug.
+
+Deliberately not touched. The audit's rule for this pass is "do not add new
+user-facing features during the stabilization pass unless they are required to
+fix a core flow", and re-weighting onboarding is a product decision with an
+opinion in it — it wants Klyde, not a stabilization branch.
+
 ### P2 items
 
 Adult-gate DOM observation, route-level code splitting for Discover/Search,
@@ -117,8 +130,10 @@ relies on.
   Phase 3 exists to recover.
 - **`/api/md/*` 500s in local dev** are the sandbox's blocked outbound
   network, not the Worker.
-- **"Yomu Core" truncates to "Yomu C…"** on the preset card below ~340px.
-  Cosmetic, P3, and the other four names fit.
+- **A Continue Reading card can say "Untitled"** when the reading index has a
+  source and a chapter but never captured a title. Pre-existing on that path,
+  and preferred to dropping the card: the position is real and the card opens
+  the right chapter.
 
 ## Gauntlet coverage
 
@@ -143,6 +158,12 @@ Run once, by hand, against this branch on a desktop browser:
 | U10 motion | pass — 31 reduced-motion blocks cover 9 looping rules |
 | U13 density at 320px | pass — no horizontal overflow, presets and chapter-end card fit |
 | U14 contrast | pass, after `ad2724b` |
+| U0 first five seconds | **noted, not fixed** — see below |
+| U1 hierarchy | pass — Continue Reading sits above the promotional rows |
+| U2 navigation | pass, after `03d77ed` |
+| U4 series detail | pass — primary action dominant; metadata now per title |
+| U11 error states | pass — "This source was removed. Add it again in Sources." names the cause and the next step |
+| U12 brand consistency | pass — hand-built and app-derived pages share one token set and one lockup |
 
 Still not run, and required before a merge to `main`:
 
@@ -153,14 +174,14 @@ Still not run, and required before a merge to `main`:
 - **G7** storage: fresh user, established user, malformed values, quota.
 - **G9** source switching with a dead preferred source.
 - **G10** performance against a baseline with realistic title counts.
-- **U0–U7, U11, U12, U15** — the judgement gates: first impression,
-  hierarchy, navigation, discovery, series, reader focus, chapter end, error
-  copy, brand consistency and the polish sweep. These are review, not
-  measurement, and want eyes.
+- **U3, U5, U6, U15** — discovery behaviour with sources actually enabled,
+  reader focus in both page modes, the chapter-end moment at a real milestone,
+  and the polish sweep. These need a populated library and a real reading
+  session, which a fresh local profile does not have.
 - The **browser/device matrix** in full. Everything above was Chromium at
-  desktop, 375px and 320px. Safari, Firefox, a real iPhone and a real Android
-  are untested, and the audit names Safari specifically for storage, PWA and
-  theme behaviour.
+  1200px, 1100px, 375px and 320px. Safari, Firefox, a real iPhone and a real
+  Android are untested, and the audit names Safari specifically for storage,
+  PWA and theme behaviour.
 
 ---
 
@@ -175,8 +196,9 @@ Per the audit's release matrix, this branch is **not ready to merge**:
   because Phase 2 is deferred. ⚠️
 - Accessibility: zoom restored, contrast now passes AA in every palette,
   touch targets checked. Keyboard and screen-reader passes are not done. ⚠️
-- UI/UX gauntlet: the measurable gates pass; the judgement gates (U0–U7, U11,
-  U12, U15) are not run. ❌
+- UI/UX gauntlet: U1, U2, U4, U7–U14 pass; U3, U5, U6 and U15 need a
+  populated library and a real reading session; U0 is a product decision left
+  to Klyde. ⚠️
 - Browser/device matrix: Chromium only, at three widths. ❌
 
 The remaining blockers are the ones that need a person, a real device, or
