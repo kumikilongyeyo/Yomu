@@ -45,18 +45,28 @@ Suggested-first-batch items 1–6 and 8–10. One atomic commit each.
 | 4 | P0 fail-safe source capability resolution | `1daad25` | done |
 | 5 | P1 unify theme bootstrap, remove page-switch flash | `6d4c72d` | done (bootstrap itself shipped pre-audit) |
 | 6 | P1 restore browser zoom | `472b003` | done |
-| 7 | P1 consolidate Continue Reading on one ReadingHistory | — | **not done — see below** |
+| 7 | P1 consolidate Continue Reading on one ReadingHistory | `3e6413d` | **partly — the defect, not the refactor** |
 | 8 | P1 version + clean service-worker caches | `f252b7e` | done |
 | 9 | P1 per-series metadata / canonical URL | `b856132` | done |
 | 10 | P1 automated smoke tests | `686559a` | done |
 
+Found while running the gauntlets, and fixed here too:
+
+| Finding | Commit |
+|---|---|
+| U14 `--faint` failed WCAG AA in 11 of 12 palette/mode pairs | `ad2724b` |
+
 ### Verification
 
-- Unit suite: **243 pass, 0 fail**, and the same under `TZ=Asia/Manila`,
+- Unit suite: **251 pass, 0 fail**, and the same under `TZ=Asia/Manila`,
   `TZ=UTC` and `TZ=America/New_York` — the progression tests were silently
   asking a timezone question and now pin one.
 - `npm run typecheck`: clean.
-- `npm run gauntlet`: **31 passed, 0 failed** (G1, G2, G3, G8, G11).
+- `npm run gauntlet`: **67 passed, 0 failed** (G1, G2, G3, G8, G11, U14).
+- G12 sweep: all six primary routes serve 200, carry the prepaint bootstrap,
+  allow zoom, and no longer re-interpret the mode.
+- U13 at 320px: no horizontal overflow; the customiser's five presets and the
+  chapter-end card both fit.
 
 ---
 
@@ -64,15 +74,18 @@ Suggested-first-batch items 1–6 and 8–10. One atomic commit each.
 
 ### Item 7 — one canonical `ReadingHistory`
 
-Deliberately deferred. This is the audit's own Phase 2, not Phase 1: it is a
-storage refactor with a migration, and the audit's rule is *do not silently
-change storage schema without versioning and migration tests*. Doing it in the
-same pass as six correctness fixes would mean a release where a progress bug
-and a storage migration cannot be reverted independently — which is the exact
-failure the branch strategy exists to prevent.
+**The confirmed defect is fixed; the refactor is not.**
 
-It should be its own branch (`refactor/reading-history-store`), with the
-IndexedDB move, so that a migration failure is revertible on its own.
+The defect was a join, not a schema: `yomu.v1.reading` knows which source
+served a title, the reader's resume anchor knows which chapter and page, and
+the code joined them by asking the *library* for the source — so a title read
+but never saved vanished from Continue Reading. `3e6413d` makes the reading
+index the first answer and the library the fallback. No store changed.
+
+The consolidation the audit describes — one ReadingHistory record on
+IndexedDB, with a migration — is still Phase 2 and still wants
+`refactor/reading-history-store`. Keeping it separate means a migration
+failure is revertible without taking the Continue Reading fix with it.
 
 ### Phases 2–7
 
@@ -95,6 +108,18 @@ relies on.
 
 ---
 
+## Known issues, not introduced here
+
+- **React hydration error #418** on every route, from the compiled Expo
+  bundle. Present before this branch and on pages nothing rewrites — verified
+  by loading a series page with no `?source=`, which no code here touches, and
+  seeing the same errors. It belongs to the Expo source, which is the thing
+  Phase 3 exists to recover.
+- **`/api/md/*` 500s in local dev** are the sandbox's blocked outbound
+  network, not the Worker.
+- **"Yomu Core" truncates to "Yomu C…"** on the preset card below ~340px.
+  Cosmetic, P3, and the other four names fit.
+
 ## Gauntlet coverage
 
 Automated (`npm run gauntlet`), so they run on every change:
@@ -106,6 +131,7 @@ Automated (`npm run gauntlet`), so they run on every change:
 | G3 | prepaint theme bootstrap on every primary route, one owner |
 | G8 | shell cache versioned, bounded, scoped cleanup, API never cached |
 | G11 | image proxy refuses link-local and `file:`, metadata is escaped |
+| U14 | faint/dim/muted clear AA against every palette's own ground |
 
 Still manual, and required before a merge to `main`:
 
@@ -127,8 +153,11 @@ Per the audit's release matrix, this branch is **not ready to merge**:
 
 - P0s: three found, three fixed, each with tests. ✅
 - Rollback: drilled. ✅
-- Progress integrity: timezone fixed and tested; storage durability is not,
-  because item 7 and Phase 2 are deferred. ⚠️
+- Progress integrity: timezone fixed and tested, Continue Reading no longer
+  depends on library membership; storage durability is still not addressed,
+  because Phase 2 is deferred. ⚠️
+- Accessibility: zoom restored, contrast now passes AA in every palette,
+  touch targets checked. Keyboard and screen-reader passes are not done. ⚠️
 - UI/UX gauntlet: not run. ❌
 - Browser/device matrix: not run. ❌
 
