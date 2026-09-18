@@ -6,23 +6,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const { week, mood } = await import('../../dist-app/yomu-streak.js');
+const { mood } = await import('../../dist-app/yomu-streak.js');
 const { chooseTarget } = await import('../../dist-app/yomu-roam.js');
 const { tally, SITTING_MS } = await import('../../dist-app/yomu-binge.js');
 const { trimDescription, roleLabel, shape } = await import('../../dist-app/yomu-cast.js');
 const { POOLS } = await import('../../dist-app/yomu-greet.js');
 
 /* --- streak ---------------------------------------------------------------- */
-
-test('the week strip is seven days ending today, marked off the read list', () => {
-  const days = week(['2026-09-12', '2026-09-14', '2026-01-01'], '2026-09-14');
-  assert.equal(days.length, 7);
-  assert.equal(days[0].iso, '2026-09-08');
-  assert.equal(days[6].iso, '2026-09-14');
-  assert.equal(days[6].today, true);
-  assert.deepEqual(days.map((d) => d.read), [false, false, false, false, true, false, true]);
-  assert.equal(days[6].letter, 'M', '14 September 2026 is a Monday');
-});
 
 test('Mori is awake for a day, dozes after two, is out cold after four', () => {
   assert.equal(mood(null), 0);

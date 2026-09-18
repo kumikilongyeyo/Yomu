@@ -6,6 +6,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 const { MILESTONES, TIER_XP } = await import('../../dist-app/yomu-progress.js');
 const { MILESTONE_FAMILIES, parse } = await import('../../dist-app/yomu-shelf.js');
@@ -67,3 +68,16 @@ test('parse reads both id shapes and rejects the rest', () => {
   assert.equal(parse(null), null);
   assert.equal(TIER_XP.length, 5);
 });
+
+test('every affinity family has its painted badge shipped at 256px', () => {
+  const dir = new URL('../../dist-app/brand/badges/', import.meta.url);
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.png'));
+  assert.equal(files.length, 30);
+  const { FAMILY_RULES } = await_import_rules();
+  for (const [slug] of FAMILY_RULES) {
+    assert.ok(files.some((f) => /^(manga|manhwa|manhua)_/.test(f) && f.endsWith('_' + slug + '.png')), slug + ' has art');
+  }
+  for (const f of files) assert.ok(fs.statSync(new URL(f, dir)).size < 200000, f + ' is under 200 KB');
+});
+function await_import_rules() { return rulesModule; }
+const rulesModule = await import('../../dist-app/yomu-progress.js');

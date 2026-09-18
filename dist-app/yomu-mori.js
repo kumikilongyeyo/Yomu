@@ -3,41 +3,31 @@
  *
  * Before this, a tap played a wave and said one of four lines. Pleasant, and
  * not a reason to tap twice. This makes the tap open a small menu instead:
- * pick up where you left off, ask what to read next, or talk to Mori.
+ * pick up where you left off, or ask what to read next.
  *
- * Two different things answer "what should I read", and the difference is
- * worth keeping straight:
+ * **Nothing here is a model call.** There was a chat panel once, backed by a
+ * paid API key, and it was removed: a companion whose best affordance stops
+ * working when a key expires is worse than one that never had it. Suggest
+ * reads the reader's own library and asks AniList what is similar to
+ * something they already have -- from the browser, with Yomu's own catalogue
+ * as the floor. It costs nothing and is always there.
  *
- *   **Suggest** is not AI. It reads the reader's own library, asks Yomu's
- *   catalogue what is similar to something they already have, and shows the
- *   answer. It costs nothing, works offline-ish, and is always available.
- *
- *   **Ask** is a real model call, and is the only part of Yomu that costs
- *   money per use. It is hidden entirely unless the deployment has a key --
- *   `/api/mori/status` decides, not this file -- so it cannot render a button
- *   that leads nowhere.
- *
- * Every recommendation, from either path, is a title Yomu can actually open.
- * Nothing here invents a name.
+ * Every recommendation is a title Yomu can actually open. Nothing here
+ * invents a name.
  */
 (() => {
   'use strict';
 
   const MENU_ID = 'yomu-mori-menu';
-  const CHAT_ID = 'yomu-mori-chat';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
   const CIRCLE_KEY = 'yomu.v1.circle';
-  const HISTORY_KEY = 'yomu.v1.mori.history';
 
   const readJSON = (key, fallback) => {
     try {
       const value = JSON.parse(localStorage.getItem(key) || 'null');
       return value ?? fallback;
     } catch { return fallback; }
-  };
-  const writeJSON = (key, value) => {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
   };
 
   /* Same guard as yomu-pet.js: this file is imported by its tests, where
@@ -101,40 +91,6 @@
     return shelf.length ? (shelf[Math.floor(Math.random() * shelf.length)].title || '') : '';
   }
 
-  const displayName = () => {
-    const raw = readJSON(CIRCLE_KEY, {})?.name;
-    return typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, 24) : '';
-  };
-
-  /** The genres the progression store has been quietly learning. */
-  function topGenres() {
-    const affinity = window.YomuProgress?.get?.().affinity || {};
-    const families = window.YomuBadges?.list?.() || [];
-    return Object.entries(affinity)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([slug]) => families.find((f) => f.slug === slug)?.theme || slug);
-  }
-
-  /* --- is chat even available? -------------------------------------------- *
-   *
-   * Asked once, cached for the page. A deployment with no key must show no
-   * chat affordance at all -- a button that always fails is worse than a
-   * feature that is not there.
-   */
-
-  let chatReady = null;
-
-  async function chatAvailable() {
-    if (chatReady !== null) return chatReady;
-    try {
-      const response = await fetch('/api/mori/status');
-      const data = await response.json();
-      chatReady = !!data.configured;
-    } catch { chatReady = false; }
-    return chatReady;
-  }
-
   /* --- the menu ------------------------------------------------------------ */
 
   let open = false;
@@ -142,7 +98,6 @@
   function close() {
     open = false;
     document.getElementById(MENU_ID)?.remove();
-    document.getElementById(CHAT_ID)?.remove();
   }
 
   /** Anchor to the pet, flipping when it is close to an edge. */
@@ -158,7 +113,7 @@
     panel.style.left = Math.max(12, Math.min(box.left + box.width / 2 - wide / 2, innerWidth - wide - 12)) + 'px';
   }
 
-  async function openMenu() {
+  function openMenu() {
     const root = window.YomuPet?.root?.();
     if (!root) return;
     if (open) { close(); return; }
@@ -191,11 +146,6 @@
 
     add('What should I read?', 'From your shelf', () => suggest());
 
-    /* Only when the deployment can actually answer. */
-    if (await chatAvailable()) {
-      add('Ask Mori…', 'Talk about books', () => openChat());
-    }
-
     add('Hide Mori', null, () => {
       close();
       window.YomuPet.set({ minimized: true });
@@ -211,7 +161,6 @@
   on('pointerdown', (event) => {
     if (!open) return;
     if (event.target.closest?.('#' + MENU_ID)) return;
-    if (event.target.closest?.('#' + CHAT_ID)) return;
     if (event.target.closest?.('#yomu-pet')) return;
     close();
   }, true);
@@ -300,123 +249,6 @@
     place(panel, root);
   }
 
-  /* --- chat ---------------------------------------------------------------- */
-
-  const history = () => {
-    const rows = readJSON(HISTORY_KEY, []);
-    return Array.isArray(rows) ? rows.slice(-8) : [];
-  };
-
-  function openChat() {
-    const root = window.YomuPet?.root?.();
-    if (!root) return;
-    close();
-    open = true;
-    window.YomuPet.hush?.();
-
-    const panel = el('div', 'ym-chat');
-    panel.id = CHAT_ID;
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Ask Mori');
-
-    const head = el('div', 'ym-chat__head');
-    head.append(el('strong', null, 'Ask Mori'));
-    const shut = el('button', 'ym-chat__x', '×');
-    shut.type = 'button';
-    shut.setAttribute('aria-label', 'Close');
-    shut.addEventListener('click', close);
-    head.append(shut);
-    panel.append(head);
-
-    const log = el('div', 'ym-log');
-    log.setAttribute('aria-live', 'polite');
-    panel.append(log);
-
-    for (const turn of history()) addTurn(log, turn.role, turn.content);
-    if (!history().length) {
-      addTurn(log, 'assistant', 'Ask me what to read next, or about something on your shelf.');
-    }
-
-    const form = el('form', 'ym-form');
-    const input = el('input', 'ym-input');
-    input.type = 'text';
-    input.maxLength = 600;
-    input.placeholder = 'Something like Solo Leveling?';
-    input.setAttribute('aria-label', 'Message Mori');
-    const send = el('button', 'ym-send', 'Ask');
-    send.type = 'submit';
-    form.append(input, send);
-    panel.append(form);
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const text = input.value.trim();
-      if (!text || send.disabled) return;
-      input.value = '';
-      addTurn(log, 'user', text);
-
-      send.disabled = true;
-      const pending = addTurn(log, 'assistant', '…');
-      pending.classList.add('is-pending');
-      window.YomuPet.setState('thinking', 30000);
-
-      const reply = await ask(text);
-      pending.remove();
-      addTurn(log, 'assistant', reply);
-      window.YomuPet.release();
-      window.YomuPet.setState('happy', 1600);
-      send.disabled = false;
-      input.focus();
-
-      const rows = history();
-      rows.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
-      writeJSON(HISTORY_KEY, rows.slice(-8));
-    });
-
-    document.body.append(panel);
-    place(panel, root);
-    input.focus();
-  }
-
-  function addTurn(log, role, text) {
-    const row = el('div', 'ym-turn ym-turn--' + role, text);
-    log.append(row);
-    log.scrollTop = log.scrollHeight;
-    return row;
-  }
-
-  /**
-   * One call. The context is a courtesy to the model, not a credential -- the
-   * Worker treats every field of it as untrusted and only reads it back as
-   * flavour text, so a tampered payload can change Mori's tone and nothing
-   * else.
-   */
-  async function ask(message) {
-    const top = mostRead();
-    try {
-      const response = await fetch('/api/mori/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          history: history(),
-          context: {
-            name: displayName(),
-            chaptersRead: window.YomuProgress?.get?.().chaptersRead ?? 0,
-            topGenres: topGenres(),
-            library: library().slice(0, 12).map((t) => t.title).filter(Boolean),
-            reading: top?.title || '',
-          },
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) return data.error || 'I could not answer that one.';
-      return data.reply || 'I lost my thread there.';
-    } catch {
-      return 'I could not reach anyone just now.';
-    }
-  }
-
   /* --- boot ---------------------------------------------------------------- */
 
   /* Returning true claims the tap. The pet keeps its own fallback for the
@@ -439,8 +271,8 @@
   on('yomu:pet-moved', close);
   for (const type of ['popstate', 'hashchange']) on(type, close);
 
-  if (browser) window.YomuMori = { openMenu, openChat, suggest, close, chatAvailable };
+  if (browser) window.YomuMori = { openMenu, suggest, close };
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { mostRead, seedTitle, library, HISTORY_KEY };
+    module.exports = { mostRead, seedTitle, library };
   }
 })();

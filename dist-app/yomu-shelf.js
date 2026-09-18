@@ -156,11 +156,55 @@
     return parts.milestone ? fam.title : fam.title + ' ' + ROMAN[parts.tier - 1];
   }
 
+  /* --- the rendered art ------------------------------------------------------ *
+   *
+   * The thirty affinity families also have painted, cartoon badges, shipped
+   * at 256px under /brand/badges. They are an exception to the live-vector
+   * rule, made on purpose: at shelf size the painting is the point. Below
+   * about 40px a painting goes muddy and the vector micro badge takes over,
+   * so the masthead and a comment's name stay vector. The tier rides on a
+   * corner chip, because the art has no tiers of its own; locked is the
+   * same picture, greyed.
+   */
+  const ART_BASE = '/brand/badges/';
+  const ART_MIN = 40;
+  const artFor = (slug) => {
+    const fam = family(slug);
+    return fam && ['manga', 'manhwa', 'manhua'].includes(fam.cat) ? ART_BASE + fam.cat + '_' + slug + '.png' : '';
+  };
+
+  function artEl(parts, opts) {
+    const size = Number(opts.size) || 56;
+    const locked = opts.variant === 'locked';
+    const wrap = document.createElement('span');
+    wrap.className = 'yba yba--t' + parts.tier + (locked ? ' is-locked' : '');
+    wrap.style.width = size + 'px';
+    wrap.style.height = size + 'px';
+    wrap.setAttribute('role', 'img');
+    wrap.setAttribute('aria-label', title(parts.slug + ':' + parts.tier) + (locked ? ', locked' : ''));
+    const img = document.createElement('img');
+    img.src = artFor(parts.slug);
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    wrap.append(img);
+    const chip = document.createElement('i');
+    chip.className = 'yba__tier';
+    chip.textContent = ROMAN[parts.tier - 1];
+    wrap.append(chip);
+    return wrap;
+  }
+
   function el(id, opts) {
     register();
     const parts = parse(id);
     if (!parts || !family(parts.slug) || !window.YomuBadges) return null;
-    return window.YomuBadges.el(parts.slug, parts.tier, opts || {});
+    const o = opts || {};
+    const size = Number(o.size) || 0;
+    if (o.art !== false && !parts.milestone && o.variant !== 'micro' && size >= ART_MIN && artFor(parts.slug)) {
+      return artEl(parts, o);
+    }
+    return window.YomuBadges.el(parts.slug, parts.tier, o);
   }
 
   /* --- the masthead ------------------------------------------------------- *
@@ -371,7 +415,7 @@
 
   /* --- boot -------------------------------------------------------------- */
 
-  const api = { parse, title, el, register, families: MILESTONE_FAMILIES, repaint() { paintShelf(); paintStickers(); paintMasthead(); } };
+  const api = { parse, title, el, artFor, register, families: MILESTONE_FAMILIES, repaint() { paintShelf(); paintStickers(); paintMasthead(); } };
 
   if (typeof window !== 'undefined') window.YomuShelf = api;
   if (typeof module !== 'undefined' && module.exports) {

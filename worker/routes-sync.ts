@@ -109,6 +109,7 @@ const publicDoc = (doc: SyncDoc, code: string) => ({
   removed: Object.keys(doc.removed),
   ...(doc.searchHistory ? { searchHistory: doc.searchHistory } : {}),
   ...(doc.profile ? { profile: doc.profile } : {}),
+  ...(doc.streak ? { streak: doc.streak } : {}),
   devices: Object.entries(doc.devices)
     .map(([id, device]) => ({ id, name: device.name, lastSeen: device.lastSeen }))
     .sort((a, b) => b.lastSeen - a.lastSeen),

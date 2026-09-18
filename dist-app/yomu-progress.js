@@ -635,6 +635,23 @@
   }
 
   function streak() {
+    /* The streak engine, when it has loaded, is the truth: it knows the
+       04:00 day boundary and the rest nights, which this store does not.
+       The fallback below is what it says before the engine arrives. */
+    const engine = typeof window !== 'undefined' && window.YomuStreak?.get?.();
+    if (engine) {
+      return {
+        current: engine.current,
+        longest: engine.best,
+        lastReadDay: engine.lastDay,
+        daysSince: engine.daysSince,
+        readDays: engine.days,
+        today: engine.todayDone,
+        restNights: engine.restNights,
+        stage: engine.stage,
+        stageName: engine.stageName,
+      };
+    }
     const last = store.lastReadDay;
     const since = last ? daysBetween(last, today()) : null;
     const alive = since !== null && since <= 1;
@@ -700,7 +717,11 @@
    * 30 families times 5 tiers is 150 rows nobody should hand-write, and the
    * thresholds are the same ladder for every family.
    */
-  const TIER_XP = [10, 40, 120, 300, 700];
+  /* Chapters per family, not XP: the mileage engine (yomu-streak.js) counts
+     them off the read arrays and hands the totals in through setAffinity,
+     so a tier is a pure function of chapters read in that family. The gaps
+     widen so each tier takes longer than the last. */
+  const TIER_XP = [10, 40, 100, 250, 500];
 
   function evaluateAffinity(patch) {
     const earned = new Set(patch.earnedBadgeIds ?? store.earnedBadgeIds);
@@ -1034,6 +1055,28 @@
       emit('yomu:progress', { reason: 'adopt', state: get() });
       return true;
     },
+
+    /**
+     * Family chapter counts from the mileage engine. Replaces the accrued
+     * affinity wholesale -- a rebuilt count is the truth, not an addition
+     * to it -- and pays any tier it crosses the way a pulse would.
+     */
+    setAffinity(counts) {
+      if (!counts || typeof counts !== 'object') return false;
+      const affinity = {};
+      for (const [slug, n] of Object.entries(counts)) if (Number(n) > 0) affinity[slug] = Number(n);
+      if (JSON.stringify(affinity) === JSON.stringify(store.affinity)) return false;
+      save({ affinity });
+      const patch = {};
+      const paid = evaluateAffinity(patch);
+      if (Object.keys(patch).length) save(patch);
+      for (const milestone of paid) {
+        emit('yomu:reward', { milestoneId: milestone.id, title: milestone.title, rewards: milestone.rewards, quiet: true });
+      }
+      emit('yomu:progress', { reason: 'mileage', state: get() });
+      return true;
+    },
+    familiesForTags,
 
     /**
      * Bingo progress, which only the card knows. Monotonic: the card reports

@@ -8,46 +8,6 @@
  * pair the toast and the bubble use; --surface alone is a window.
  * ==================================================================== */
 
-/* --- the streak card ----------------------------------------------------- */
-
-.ystk {
-  padding: 14px 16px 12px;
-  border-radius: var(--radius-card, 16px);
-  background: var(--surface, #fffdfa);
-  border: 1px solid var(--line, #e4ded2);
-}
-.ystk__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.ystk__big { display: flex; align-items: baseline; gap: 8px; }
-.ystk__big b {
-  font-family: var(--font-display, var(--uiFont, system-ui, sans-serif));
-  font-variation-settings: 'wdth' 110;
-  font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -.03em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text, #1e1b16);
-}
-.ystk__big span, .ystk__best {
-  font: 700 11px/1.2 var(--uiFont, var(--font-ui, system-ui, sans-serif));
-  letter-spacing: .06em; text-transform: uppercase;
-  color: var(--faint, #a89e8c);
-}
-.ystk__week { display: flex; gap: 6px; margin-top: 12px; }
-.ystk__day {
-  flex: 1; height: 30px;
-  display: grid; place-items: center;
-  border-radius: 9px;
-  background: var(--raised, #efeade);
-  color: var(--faint, #a89e8c);
-  font: 700 11px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
-}
-.ystk__day.is-read { background: var(--accent, #b8791c); color: var(--accentText, #18212a); }
-.ystk__day.is-today { box-shadow: inset 0 0 0 1.5px var(--text, #1e1b16); }
-.ystk__day.is-today.is-read { box-shadow: none; }
-.ystk__note {
-  margin: 10px 0 0;
-  font: 400 11.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));
-  color: var(--faint, #a89e8c);
-}
-
 /* --- confetti ----------------------------------------------------------- */
 
 .ystk-confetti { position: fixed; z-index: 96; width: 0; height: 0; pointer-events: none; }

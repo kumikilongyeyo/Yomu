@@ -562,6 +562,9 @@ const ASSETS = [
   /* The shelf, the stickers and the Circle reactions. Its own namespace
      (.ysh-*, .ys, .yomu-react*) and nothing the skin sets. */
   { file: 'yomu-shelf.css', tag: '<link rel="stylesheet" href="/yomu-shelf.css">' },
+  /* Heat ramp tokens keyed on data-mode like yomu-badges.css; nothing the
+     skin sets. */
+  { file: 'yomu-streak.css', tag: '<link rel="stylesheet" href="/yomu-streak.css">' },
   { file: 'yomu-companion.css', tag: '<link rel="stylesheet" href="/yomu-companion.css">' },
   { file: 'yomu-discovery.css', tag: '<link rel="stylesheet" href="/yomu-discovery.css">' },
   { file: 'yomu-social.css', tag: '<link rel="stylesheet" href="/yomu-social.css">' },
@@ -598,7 +601,9 @@ const ASSETS = [
   { file: 'yomu-ceremony.js', tag: '<script src="/yomu-ceremony.js" defer></scr' + 'ipt>' },
   /* The companion update. All four read the pet, the store and greet, and
      none is read by anything earlier. */
+  /* Engines, then the UI that reads them. */
   { file: 'yomu-streak.js', tag: '<script src="/yomu-streak.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-streak-ui.js', tag: '<script src="/yomu-streak-ui.js" defer></scr' + 'ipt>' },
   { file: 'yomu-roam.js', tag: '<script src="/yomu-roam.js" defer></scr' + 'ipt>' },
   { file: 'yomu-binge.js', tag: '<script src="/yomu-binge.js" defer></scr' + 'ipt>' },
   { file: 'yomu-cast.js', tag: '<script src="/yomu-cast.js" defer></scr' + 'ipt>' },

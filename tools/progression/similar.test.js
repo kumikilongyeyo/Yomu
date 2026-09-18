@@ -73,7 +73,6 @@ test('input is bounded', () => {
 
 /* --- the callers agree on the shape -------------------------------------- */
 
-const MORI_TS = fs.readFileSync(new URL('../../worker/mori.ts', import.meta.url), 'utf8');
 const MORI_JS = fs.readFileSync(new URL('../../dist-app/yomu-mori.js', import.meta.url), 'utf8');
 
 const ANILIST_JS = fs.readFileSync(new URL('../../dist-app/yomu-anilist.js', import.meta.url), 'utf8');
@@ -93,14 +92,6 @@ test('the browser client falls through to the Worker floor', () => {
   assert.match(ANILIST_JS, /localStorage|CACHE_KEY/, 'answers are cached on the device');
 });
 
-test('the chat tool keeps a server-side path of its own', () => {
-  /* The tool runs mid-request on the Worker and cannot borrow the browser's
-     IP, so it uses the cached route -- which now means MangaDex in practice.
-     Worth knowing: chat recommendations are weaker than the menu's. */
-  assert.match(MORI_TS, /handleSimilar/, 'the tool goes through the cached route');
-  assert.ok(!/api\/catalog\/related/.test(MORI_TS), 'the tool no longer uses the old route');
-});
-
 test('the series page keeps the old endpoint', () => {
   /* yomu-shell.js renders the series "related" row from it, and this work is
      not allowed to change that screen. */
@@ -115,7 +106,6 @@ test('the series page keeps the old endpoint', () => {
   );
 });
 
-test('the vote count is shown to the reader, not just the model', () => {
+test('the vote count is shown to the reader', () => {
   assert.match(MORI_JS, /readers?'/, 'the panel prints the vote weight');
-  assert.match(MORI_TS, /vote count/, 'the model is told what the number means');
 });

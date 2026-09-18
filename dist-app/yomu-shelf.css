@@ -21,6 +21,27 @@
 }
 .yomu-greet__badge .yb { display: inline-block; width: 18px; height: 18px; }
 
+/* --- the painted badges ------------------------------------------------- *
+ * A square with the 256px painting inside and a tier chip on the corner.
+ * Locked is the same painting, greyed: what you would get, not a hole. */
+
+.yba { position: relative; display: inline-block; line-height: 0; flex: none; }
+.yba img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 3px 5px rgba(60, 48, 30, .22)); }
+:root[data-mode='dark'] .yba img { filter: drop-shadow(0 3px 7px rgba(0, 0, 0, .5)); }
+.yba.is-locked img { filter: grayscale(1) opacity(.42); }
+.yba__tier {
+  position: absolute; right: -4px; bottom: -2px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; display: grid; place-items: center;
+  background: var(--yb-rim2, #b6a993); color: var(--yb-plate-hi, #fffdfa);
+  font: 800 9.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif)); font-style: normal; letter-spacing: .02em;
+  box-shadow: 0 0 0 2px var(--surface, #fffdfa);
+}
+.yba--t3 .yba__tier { background: var(--yb-accent-deep, #8a5a13); }
+.yba--t4 .yba__tier, .yba--t5 .yba__tier { background: var(--yb-accent, #b8791c); color: var(--yb-plate-hi, #fffdfa); }
+.yba.is-locked .yba__tier { background: var(--yb-lock-rim, #cfc5b3); color: var(--yb-lock-ink, #a89e8c); }
+.ysh-badge .yba { width: 56px; height: 56px; }
+
 /* --- the shelf on Your Yomu --------------------------------------------- */
 
 .ysh-head {

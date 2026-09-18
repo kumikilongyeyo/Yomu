@@ -51,6 +51,9 @@
   /** Read for one field -- the equipped badge -- and never written directly:
    *  yomu-progress.js owns that store, and its adoptBadge is the way in. */
   const PROGRESS_KEY = 'yomu.v1.progress';
+  /** The streak engine's record and where a pull is parked for it. */
+  const STREAK_KEY = 'yomu.v1.streak';
+  const STREAK_REMOTE_KEY = 'yomu.v1.streak.remote';
   /** Time capsule notes, keyed by titleKey. yomu-capsule.js owns the UI;
    *  this file carries the note on the library entry it belongs to. */
   const CAPSULE_KEY = 'yomu.v1.capsule';
@@ -310,13 +313,32 @@
       changed = true;
     }
 
+    // The streak: handed to its engine, or parked for it if this ran first.
+    // The engine merges and recomputes; nothing here decides a streak.
+    if (doc && doc.streak && typeof doc.streak === 'object') {
+      if (window.YomuStreak?.adopt) window.YomuStreak.adopt(doc.streak);
+      else { writeJSON(STREAK_REMOTE_KEY, doc.streak); dispatchEvent(new CustomEvent('yomu:streak-remote')); }
+    }
+
     // Stamped even when nothing changed, so an already-matching profile is not
     // re-examined on every pull.
     setState({ profileAt: at, ...(changed ? { profileSig: profileSig(localProfile()) } : {}) });
   }
 
+  /** History and tokens, never `current`. Null when unchanged since the
+   *  last acknowledged push. */
+  function streakPatch() {
+    const s = readJSON(STREAK_KEY, null);
+    if (!s || !Array.isArray(s.days) || !s.days.length) return null;
+    const entry = { days: s.days.slice(-400), restUsed: Array.isArray(s.restUsed) ? s.restUsed.slice(-60) : [], best: Number(s.best) || 0, restNights: Number(s.restNights) || 0, updatedAt: Number(s.updatedAt) || 0 };
+    const sig = entry.days.length + ':' + (entry.days[entry.days.length - 1] || '') + ':' + entry.restUsed.length + ':' + entry.best + ':' + entry.restNights;
+    if (state().streakSig === sig) return null;
+    return { entry, sig };
+  }
+
   function buildPatch() {
     const profile = profilePatch();
+    const streakOut = streakPatch();
     const c = collection();
     const library = libraryOf(c);
     const stamps = stampLibrary(library);
@@ -343,6 +365,7 @@
         .map((s) => ({ id: s.id, label: s.label, category: s.category, kind: s.kind, url: s.url })),
       progress: progressPatch(),
       ...(profile ? { profile } : {}),
+      ...(streakOut ? { streak: streakOut.entry } : {}),
       ...(sharingSearches()
         ? { searchHistory: readJSON(HISTORY_KEY, []) || [] }
         // Sent once on the way out, so turning the setting off removes what is
@@ -555,6 +578,7 @@
         ...(patch.profile
           ? { profileSig: profileSig(localProfile()), profileAt: patch.profile.updatedAt }
           : {}),
+        ...(patch.streak ? { streakSig: streakPatch()?.sig || state().streakSig } : {}),
         ...(patch.forgetSearchHistory ? { forgetSearches: false } : {}) });
       applyProfile(doc);
       if (applyDoc(doc)) announce();

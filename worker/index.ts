@@ -18,7 +18,6 @@ import {
   suwayomiBases,
 } from './providers/suwayomi';
 import { handleCatalog, handleExtensions } from './routes-extensions';
-import { handleMori } from './mori';
 import { handleSimilar } from './similar';
 import { handleSync } from './routes-sync';
 import { handleCircle } from './routes-circle';
@@ -34,11 +33,6 @@ export interface Env {
   /** Yomu Sync's store. Optional: without the binding /api/sync/* answers 503
    *  and every other route, and the whole app, is unaffected. */
   SYNC: KVNamespace;
-  /** Mori's voice. A secret, never in the repo:
-   *    npx wrangler secret put ANTHROPIC_API_KEY
-   *  Unset, /api/mori/* answers `configured:false` and the app hides the
-   *  chat, so the feature is off by default rather than broken by default. */
-  ANTHROPIC_API_KEY?: string;
 }
 
 type AnyObject = Record<string, any>;
@@ -380,7 +374,6 @@ export default {
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);
     if (url.pathname.startsWith('/api/catalog/')) return handleCatalog(request, env, url);
-    if (url.pathname.startsWith('/api/mori/')) return handleMori(request, env, url);
     if (url.pathname.startsWith('/api/suwayomi/')) return handleSuwayomi(request, env, url);
     if (url.pathname.startsWith('/api/sync/')) return handleSync(request, env, url);
     if (url.pathname.startsWith('/api/circle/')) return handleCircle(request, env, url);

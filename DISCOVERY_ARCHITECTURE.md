@@ -149,8 +149,9 @@ touched here, but whether `yomu-sync.js` translates correctly when pushing
 
 `wrangler.jsonc` binds `ASSETS`, one KV namespace (`SYNC`), and env vars.
 **No D1, no Durable Objects, no R2, no Analytics Engine, no Queues.** KV's
-free tier is 1,000 writes/day and Sync, Circle and Mori already share it —
-`mori.ts:138` sizes its own budget around exactly that.
+free tier is 1,000 writes/day and Sync and Circle already share it. (Mori's
+chat endpoint used to take a slice of it too; it was removed along with the
+paid model call it counted.)
 
 D1 *is* available on the account and unused. Adding it is possible. It is a
 decision, not a detail.

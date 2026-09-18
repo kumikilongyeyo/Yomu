@@ -125,6 +125,23 @@ export interface SourceEntry {
   at: number;
 }
 
+/**
+ * The reading streak. The one thing the read lists cannot rebuild: which
+ * days they grew on. History and tokens travel; `current` never does -- it
+ * is recomputed from the merged days on both ends, so a device offline for
+ * a week cannot hand back a streak that did not happen.
+ */
+export interface StreakEntry {
+  /** Local day keys, 'YYYY-MM-DD', ascending. */
+  days: string[];
+  /** Days a rest night covered. */
+  restUsed: string[];
+  best: number;
+  /** Tokens held. Merged conservatively: the smaller number wins. */
+  restNights: number;
+  updatedAt: number;
+}
+
 export interface SyncDoc {
   schema: typeof SCHEMA;
   revision: number;
@@ -141,6 +158,7 @@ export interface SyncDoc {
   searchHistory?: string[];
   /** Last writer wins, by its own clock. One name per library. */
   profile?: ProfileEntry;
+  streak?: StreakEntry;
 }
 
 /** What a client sends up. Every field optional: a device that has not loaded
@@ -152,6 +170,7 @@ export interface SyncPatch {
   sources?: SourceEntry[];
   searchHistory?: string[];
   profile?: ProfileEntry;
+  streak?: StreakEntry;
   /** Turning the setting off: drop what is stored rather than just stopping.
    *  An opt-in that leaves the old data behind was never really opt-in. */
   forgetSearchHistory?: boolean;
@@ -433,6 +452,30 @@ export function mergeProfile(
   return next;
 }
 
+const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
+const dayKeys = (raw: unknown, max: number) =>
+  [...new Set((Array.isArray(raw) ? raw : []).filter((k): k is string => typeof k === 'string' && DAY_KEY.test(k)))]
+    .sort()
+    .slice(-max);
+
+/**
+ * Two devices, two evenings: days and rest days are unioned. A record is a
+ * record: best is the max. Tokens are never gifted across a merge: the
+ * smaller count wins, and the earning rule re-grants on the next rollover.
+ * `current` is not stored here at all; each device recomputes it.
+ */
+export function mergeStreak(a: StreakEntry | undefined, b: StreakEntry | undefined): StreakEntry | undefined {
+  if (!b) return a;
+  const held = (s: StreakEntry | undefined) => (s ? Math.max(0, Math.min(3, Number(s.restNights) || 0)) : 3);
+  return {
+    days: dayKeys([...(a?.days ?? []), ...(b.days ?? [])], 400),
+    restUsed: dayKeys([...(a?.restUsed ?? []), ...(b.restUsed ?? [])], 60),
+    best: Math.max(Number(a?.best) || 0, Number(b.best) || 0),
+    restNights: Math.min(held(a), held(b)),
+    updatedAt: Math.max(Number(a?.updatedAt) || 0, Number(b.updatedAt) || 0),
+  };
+}
+
 export function applyPatch(doc: SyncDoc, patch: SyncPatch, now: number): SyncDoc {
   const removed = mergeRemovals(doc.removed, patch.removed, now);
   const library = mergeLibrary(doc.library, patch.library, removed, now);
@@ -454,6 +497,7 @@ export function applyPatch(doc: SyncDoc, patch: SyncPatch, now: number): SyncDoc
     progress,
     sources: mergeSources(doc.sources, patch.sources, now),
     ...(patch.profile ? { profile: mergeProfile(doc.profile, patch.profile, now) } : {}),
+    ...(patch.streak ? { streak: mergeStreak(doc.streak, patch.streak) } : {}),
     // Absent means "this device is not sharing", which must not erase what
     // another device shares -- so only an explicit forget clears it.
     ...(patch.forgetSearchHistory
