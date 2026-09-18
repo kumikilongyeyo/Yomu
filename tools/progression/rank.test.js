@@ -206,11 +206,34 @@ test('the rails do not duplicate what yomu-shell.js already renders', () => {
   assert.ok(!/RAILS\.fresh/.test(rails), 'no second "New chapters" on home');
 });
 
-test('the rails anchor below the shell chain, never inside it', () => {
-  /* Anchoring between two sections another MutationObserver orders makes the
-     page rewrite itself at frame rate. */
+test('exactly one file decides the home feed order', () => {
+  /* Two observers each positioning against the other's neighbour is how a
+     page rewrites itself at frame rate. The shell owns the sequence; the
+     rails are a member of its list and never move themselves. */
   const rails = fs.readFileSync(new URL('../../dist-app/yomu-rails.js', import.meta.url), 'utf8');
-  assert.match(rails, /SHELL_CHAIN = \['yomu-because', 'yomu-fresh', 'yomu-continue'\]/);
-  assert.match(rails, /if \(built\.isConnected\) return;/,
-    'placement is asserted once, not re-litigated every pass');
+  const shell = fs.readFileSync(new URL('../../dist-app/yomu-shell.js', import.meta.url), 'utf8');
+
+  assert.match(shell, /const FEED_ORDER = \[CONTINUE_ID, 'yomu-rails', FRESH_ID, BECAUSE_ID\]/,
+    'the shell knows about the rails and where they go');
+  assert.match(shell, /for \(const id of FEED_ORDER\)/, 'orderFeed walks that list');
+
+  assert.ok(!/\.after\(built\)|before\(built\)|prepend\(built\)/.test(rails),
+    'the rails never insert themselves at a position');
+  assert.match(rails, /parent\.append\(built\)/, 'they only join the feed');
+});
+
+test('the reading order is carousel, continue, discovery, new, similar', () => {
+  const shell = fs.readFileSync(new URL('../../dist-app/yomu-shell.js', import.meta.url), 'utf8');
+  const order = /const FEED_ORDER = \[([^\]]*)\]/.exec(shell)[1]
+    .split(',').map((s) => s.trim());
+  assert.deepEqual(order, ["CONTINUE_ID", "'yomu-rails'", "FRESH_ID", "BECAUSE_ID"]);
+});
+
+test('the rails wait for a feed rather than guessing', () => {
+  /* Mounted before the shell's sections exist, they were appended into an
+     empty .g-main and React drew the carousel after them -- "Popular right
+     now" above the hero. */
+  const rails = fs.readFileSync(new URL('../../dist-app/yomu-rails.js', import.meta.url), 'utf8');
+  assert.match(rails, /if \(!feedParent\(\)\) return;/, 'build waits for a feed');
+  assert.match(rails, /built\.isConnected\) return/, 'and does not re-place once mounted');
 });

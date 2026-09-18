@@ -115,30 +115,29 @@
   const isHome = () => location.pathname === '/' || location.pathname === '/index.html';
 
   /**
-   * Below everything yomu-shell.js owns, never inside it.
+   * Where the rails live, but never *when* in the running order.
    *
-   * The shell's `orderFeed()` chains #yomu-continue, #yomu-fresh and
-   * #yomu-because after the hero and re-asserts that chain on every mutation
-   * pass. Anchoring to #yomu-continue puts these rails *between* two sections
-   * another observer is actively ordering: it moves #yomu-fresh back up, this
-   * moves the rails back down, and the page rewrites itself at frame rate.
-   * The same trap took out a browser tab when two injected Settings groups
-   * each positioned against the other's neighbour.
+   * yomu-shell.js owns the home feed's sequence: `orderFeed()` walks
+   * FEED_ORDER and chains the sections after the hero on every pass, and
+   * `yomu-rails` is a member of that list. Two observers each positioning
+   * against the other's neighbour is how a page rewrites itself at frame
+   * rate, so the ordering has exactly one owner and it is not this file.
    *
-   * So: anchor to the LAST section of that chain, which the shell never
-   * asserts anything after.
+   * What is here is the decision not to mount too early. The first attempt
+   * anchored to whatever existed at the time, and on a cold load that is
+   * nothing -- the shell's sections mount when their fetches land -- so the
+   * rails were appended into an empty `.g-main` and React rendered the
+   * carousel *after* them. "Popular right now" ended up above the hero.
+   * Waiting for the feed to exist costs a second and removes the whole class
+   * of bug.
    */
-  const SHELL_CHAIN = ['yomu-because', 'yomu-fresh', 'yomu-continue'];
-
-  function anchor() {
-    for (const id of SHELL_CHAIN) {
+  function feedParent() {
+    for (const id of ['yomu-continue', 'yomu-fresh', 'yomu-because']) {
       const node = document.getElementById(id);
-      if (node?.parentNode) return { parent: node.parentNode, after: node };
+      if (node?.parentNode) return node.parentNode;
     }
     const hero = document.querySelector('.hero-pagination') || document.querySelector('.hero-carousel');
-    if (hero?.parentNode) return { parent: hero.parentNode, after: hero };
-    const main = document.querySelector('.g-main');
-    return main ? { parent: main, after: null } : null;
+    return hero?.parentNode || null;
   }
 
   let built = null;
@@ -146,6 +145,9 @@
 
   async function build() {
     if (building || built) return;
+    /* No feed yet means no idea where these belong. The next mutation pass
+       will try again, and there are many. */
+    if (!feedParent()) return;
     building = true;
     try {
       const wrap = el('div', 'yr-wrap');
@@ -184,21 +186,17 @@
   }
 
   /**
-   * Placed once, then only re-placed if it actually fell out of the document.
+   * Put the rails in the feed. Their position in it is the shell's business.
    *
-   * Re-asserting an exact sibling every pass is what starts the fight: the
-   * shell's chain grows as its feeds arrive, so "directly after
-   * #yomu-continue" stops being true a second later through no fault of
-   * these rails. Being in the tree, below that chain, is the whole
-   * requirement.
+   * Only ever appended, never inserted at an index: `orderFeed()` moves the
+   * section into place on the pass that follows, and doing it here as well
+   * means two files deciding the same thing.
    */
   function place() {
-    if (!built || !isHome()) return;
-    if (built.isConnected) return;
-    const spot = anchor();
-    if (!spot) return;
-    if (spot.after) spot.after.after(built);
-    else spot.parent.append(built);
+    if (!built || !isHome() || built.isConnected) return;
+    const parent = feedParent();
+    if (!parent) return;
+    parent.append(built);
   }
 
   /* --- discover ---------------------------------------------------------------- *

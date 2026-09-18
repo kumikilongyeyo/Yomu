@@ -3443,12 +3443,24 @@
      appear in is the order the network answered, not the order they belong in.
      This puts them back. Idempotent: a section already in place is not moved,
      so the mutation pass this runs in does not thrash the DOM. */
+  /* The home feed's running order, and the only place that decides it.
+   *
+   * yomu-rails.js adds discovery rails and must not order itself: two
+   * observers each positioning against the other's neighbour is how a page
+   * ends up rewriting itself at frame rate. It mounts into this container and
+   * leaves the sequence here, which is why its id is in this list rather than
+   * in that file.
+   *
+   * Reading order: the carousel, where you left off, what is worth reading
+   * now, what is new, then what is like what you read. */
+  const FEED_ORDER = [CONTINUE_ID, 'yomu-rails', FRESH_ID, BECAUSE_ID];
+
   function orderFeed() {
     if (!onHome()) return;
     const anchor = continueAnchor();
     if (!anchor || !anchor.after) return;
     let previous = anchor.after;
-    for (const id of [CONTINUE_ID, FRESH_ID, BECAUSE_ID]) {
+    for (const id of FEED_ORDER) {
       const section = document.getElementById(id);
       if (!section) continue;
       if (section.previousElementSibling !== previous) previous.after(section);
