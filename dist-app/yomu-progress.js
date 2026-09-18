@@ -47,7 +47,52 @@
   };
 
   const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
-  const today = () => new Date().toISOString().slice(0, 10);
+
+  /* --- what day it is ---------------------------------------------------- *
+   *
+   * The reader's day, not UTC's.
+   *
+   * This used to be `new Date().toISOString().slice(0, 10)`, which is the UTC
+   * calendar date. In Manila that is eight hours behind: a chapter finished at
+   * 00:30 on Tuesday was filed under Monday, so a streak could break on a
+   * night somebody actually read, and the last chapter of a month could land
+   * in the wrong month's wrap. Every hour of local time before 08:00 was
+   * mis-filed, which is most of a late-night reading session.
+   *
+   * The day starts at 04:00 rather than midnight, and that is deliberate:
+   * reading until 1am is still last night. yomu-streak.js already defined a
+   * day exactly this way (`dayKey`, DAY_START_HOUR 4), and two files
+   * disagreeing about what day it is would be a second source of truth for
+   * the same question. So when that engine is loaded its answer is used
+   * outright; the local copy below is for a page that has not loaded it, and
+   * for the tests, and must stay identical to it.
+   *
+   * Arithmetic stays in UTC on the key string -- Date.parse of a bare
+   * 'YYYY-MM-DD' is UTC midnight by spec -- so a DST change cannot make two
+   * adjacent keys 23 or 25 hours apart.
+   *
+   * Nothing already stored is rewritten. Keys written under the old rule keep
+   * their meaning; only new writes use the new one. At worst a reader gets one
+   * day counted under both rules on the changeover, which is a day they did
+   * read, and never a day they did not.
+   */
+  const DAY_START_HOUR = 4;
+  const pad = (n) => String(n).padStart(2, '0');
+
+  function localDay(ts) {
+    const d = new Date(ts === undefined ? Date.now() : ts);
+    d.setHours(d.getHours() - DAY_START_HOUR);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  const today = (ts) => {
+    const engine = typeof window !== 'undefined' && window.YomuStreak;
+    if (engine && typeof engine.dayKey === 'function') {
+      try { return engine.dayKey(ts); } catch {}
+    }
+    return localDay(ts);
+  };
+
   const daysBetween = (a, b) =>
     Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
 
@@ -906,7 +951,8 @@
       }
       const badges = [];
       for (const [id, at] of Object.entries(store.claimedAt || {})) {
-        if (new Date(at).toISOString().slice(0, 7) !== key) continue;
+        /* The month the reader was in when it was paid, not UTC's. */
+        if (today(at).slice(0, 7) !== key) continue;
         const milestone = MILESTONES.find((m) => m.id === id);
         for (const r of milestone?.rewards || []) if (r.type === 'badge') badges.push({ id: r.id, title: milestone.title, at });
       }
@@ -1114,7 +1160,7 @@
 
   if (typeof window !== 'undefined') window.YomuProgress = api;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { familiesForTags, stageOf, MILESTONES, STAGES, TIER_XP, BROAD, FAMILY_RULES };
+    module.exports = { familiesForTags, stageOf, MILESTONES, STAGES, TIER_XP, BROAD, FAMILY_RULES, localDay, daysBetween, DAY_START_HOUR };
   }
 
   /* --- boot -------------------------------------------------------------- *

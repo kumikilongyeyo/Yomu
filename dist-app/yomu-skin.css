@@ -87,7 +87,7 @@
   --pa-text:      #1e1b16;                      /* kit --text  */
   --pa-muted:     #4a443a;                      /* EXTENDED: between text and dim */
   --pa-dim:       #6d6558;                      /* kit --dim   */
-  --pa-faint:     #9b9184;                      /* kit --faint */
+  --pa-faint:#746d63;                      /* kit --faint */
   --pa-accent:    #b8791c;                      /* kit --accent */
   --pa-onaccent:  #fff8ec;                      /* kit --on-accent */
   --pa-accsoft:   rgba(184,121,28,.10);         /* kit --accsoft */

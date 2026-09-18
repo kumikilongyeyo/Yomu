@@ -16,13 +16,13 @@
 :root[data-yomu-skin='autumn'] {
   --pa-bg:#f1e7d6; --pa-surface:#fbf4e8; --pa-raised:#e9dcc4; --pa-elevated:#dccbaa;
   --pa-line:#dccbb0; --pa-line2:#c9b491; --pa-hairline:#e6d8c1; --pa-hair:rgba(42,31,18,.06); --pa-sep:rgba(42,31,18,.1);
-  --pa-text:#2a1f12; --pa-muted:#5a4630; --pa-dim:#7d6647; --pa-faint:#a58f6f;
+  --pa-text:#2a1f12; --pa-muted:#5a4630; --pa-dim:#786248; --pa-faint:#75664f;
   --pa-accent:#b5501f; --pa-onaccent:#fff6ea; --pa-accsoft:rgba(181,80,31,.12); --pa-accline:rgba(181,80,31,.42);
   --pa-overlay:rgba(247,239,225,.96); --pa-scrim:rgba(42,31,18,.4); --pa-glass:rgba(251,244,232,.86);
   --pa-warn:#8d5a12; --pa-bad:#9d2f1a; --pa-hot:#b5501f;
   --au-bg:#f1e7d6; --au-surface:#fbf4e8; --au-raised:#e9dcc4; --au-elevated:#dccbaa;
   --au-line:#dccbb0; --au-line2:#c9b491; --au-hairline:#e6d8c1; --au-hair:rgba(42,31,18,.06); --au-sep:rgba(42,31,18,.1);
-  --au-text:#2a1f12; --au-muted:#5a4630; --au-dim:#7d6647; --au-faint:#a58f6f;
+  --au-text:#2a1f12; --au-muted:#5a4630; --au-dim:#786248; --au-faint:#75664f;
   --au-accent:#b5501f; --au-onaccent:#fff6ea; --au-accsoft:rgba(181,80,31,.12); --au-accline:rgba(181,80,31,.42);
   --au-overlay:rgba(247,239,225,.96); --au-scrim:rgba(42,31,18,.4); --au-glass:rgba(251,244,232,.86);
   --au-warn:#8d5a12; --au-bad:#9d2f1a; --au-hot:#b5501f;
@@ -34,13 +34,13 @@
 :root[data-yomu-skin='midnight'] {
   --au-bg:#05070d; --au-surface:rgba(255,255,255,.05); --au-raised:rgba(255,255,255,.085); --au-elevated:rgba(255,255,255,.13);
   --au-line:rgba(160,180,230,.12); --au-line2:rgba(160,180,230,.2); --au-hairline:rgba(160,180,230,.07); --au-hair:rgba(160,180,230,.05); --au-sep:rgba(160,180,230,.1);
-  --au-text:#dfe6f5; --au-muted:#b3bfd6; --au-dim:#8b9ab8; --au-faint:#5d6c8a;
+  --au-text:#dfe6f5; --au-muted:#b3bfd6; --au-dim:#8b9ab8; --au-faint:#6a7893;
   --au-accent:#7aa2ff; --au-onaccent:#08111f; --au-accsoft:rgba(122,162,255,.16); --au-accline:rgba(122,162,255,.45);
   --au-overlay:rgba(6,9,16,.94); --au-scrim:rgba(1,3,8,.76); --au-glass:rgba(10,15,26,.74);
   --au-warn:#c9b47a; --au-bad:#ff9a8f; --au-hot:#ff7a66;
   --pa-bg:#05070d; --pa-surface:rgba(255,255,255,.05); --pa-raised:rgba(255,255,255,.085); --pa-elevated:rgba(255,255,255,.13);
   --pa-line:rgba(160,180,230,.12); --pa-line2:rgba(160,180,230,.2); --pa-hairline:rgba(160,180,230,.07); --pa-hair:rgba(160,180,230,.05); --pa-sep:rgba(160,180,230,.1);
-  --pa-text:#dfe6f5; --pa-muted:#b3bfd6; --pa-dim:#8b9ab8; --pa-faint:#5d6c8a;
+  --pa-text:#dfe6f5; --pa-muted:#b3bfd6; --pa-dim:#8b9ab8; --pa-faint:#6a7893;
   --pa-accent:#7aa2ff; --pa-onaccent:#08111f; --pa-accsoft:rgba(122,162,255,.16); --pa-accline:rgba(122,162,255,.45);
   --pa-overlay:rgba(6,9,16,.94); --pa-scrim:rgba(1,3,8,.76); --pa-glass:rgba(10,15,26,.74);
   --pa-warn:#c9b47a; --pa-bad:#ff9a8f; --pa-hot:#ff7a66;
@@ -52,13 +52,13 @@
 :root[data-yomu-skin='neon'] {
   --au-bg:#0b0616; --au-surface:rgba(255,255,255,.06); --au-raised:rgba(255,255,255,.1); --au-elevated:rgba(255,255,255,.15);
   --au-line:rgba(255,79,216,.18); --au-line2:rgba(255,79,216,.3); --au-hairline:rgba(255,79,216,.1); --au-hair:rgba(255,79,216,.07); --au-sep:rgba(255,79,216,.14);
-  --au-text:#f3e9ff; --au-muted:#cbb8e6; --au-dim:#a58cc8; --au-faint:#73609a;
+  --au-text:#f3e9ff; --au-muted:#cbb8e6; --au-dim:#a58cc8; --au-faint:#8170a4;
   --au-accent:#ff4fd8; --au-onaccent:#1a0520; --au-accsoft:rgba(255,79,216,.16); --au-accline:rgba(255,79,216,.5);
   --au-overlay:rgba(14,7,28,.94); --au-scrim:rgba(4,1,10,.76); --au-glass:rgba(22,11,40,.74);
   --au-warn:#ffd166; --au-bad:#ff8e8e; --au-hot:#ff5d5d;
   --pa-bg:#0b0616; --pa-surface:rgba(255,255,255,.06); --pa-raised:rgba(255,255,255,.1); --pa-elevated:rgba(255,255,255,.15);
   --pa-line:rgba(255,79,216,.18); --pa-line2:rgba(255,79,216,.3); --pa-hairline:rgba(255,79,216,.1); --pa-hair:rgba(255,79,216,.07); --pa-sep:rgba(255,79,216,.14);
-  --pa-text:#f3e9ff; --pa-muted:#cbb8e6; --pa-dim:#a58cc8; --pa-faint:#73609a;
+  --pa-text:#f3e9ff; --pa-muted:#cbb8e6; --pa-dim:#a58cc8; --pa-faint:#8170a4;
   --pa-accent:#ff4fd8; --pa-onaccent:#1a0520; --pa-accsoft:rgba(255,79,216,.16); --pa-accline:rgba(255,79,216,.5);
   --pa-overlay:rgba(14,7,28,.94); --pa-scrim:rgba(4,1,10,.76); --pa-glass:rgba(22,11,40,.74);
   --pa-warn:#ffd166; --pa-bad:#ff8e8e; --pa-hot:#ff5d5d;
@@ -72,13 +72,13 @@
 :root[data-yomu-skin='scanlation'] {
   --pa-bg:#e9e2d3; --pa-surface:#f3ede0; --pa-raised:#e0d8c6; --pa-elevated:#d3cab6;
   --pa-line:#cfc6b2; --pa-line2:#b9ae96; --pa-hairline:#ded5c3; --pa-hair:rgba(34,34,34,.06); --pa-sep:rgba(34,34,34,.1);
-  --pa-text:#222222; --pa-muted:#4b4b4b; --pa-dim:#6e6e6e; --pa-faint:#9a9384;
+  --pa-text:#222222; --pa-muted:#4b4b4b; --pa-dim:#606060; --pa-faint:#69645a;
   --pa-accent:#b3261e; --pa-onaccent:#fff4f2; --pa-accsoft:rgba(179,38,30,.1); --pa-accline:rgba(179,38,30,.4);
   --pa-overlay:rgba(243,237,224,.96); --pa-scrim:rgba(34,34,34,.42); --pa-glass:rgba(243,237,224,.86);
   --pa-warn:#7a5a12; --pa-bad:#8e1f19; --pa-hot:#b3261e;
   --au-bg:#e9e2d3; --au-surface:#f3ede0; --au-raised:#e0d8c6; --au-elevated:#d3cab6;
   --au-line:#cfc6b2; --au-line2:#b9ae96; --au-hairline:#ded5c3; --au-hair:rgba(34,34,34,.06); --au-sep:rgba(34,34,34,.1);
-  --au-text:#222222; --au-muted:#4b4b4b; --au-dim:#6e6e6e; --au-faint:#9a9384;
+  --au-text:#222222; --au-muted:#4b4b4b; --au-dim:#606060; --au-faint:#69645a;
   --au-accent:#b3261e; --au-onaccent:#fff4f2; --au-accsoft:rgba(179,38,30,.1); --au-accline:rgba(179,38,30,.4);
   --au-overlay:rgba(243,237,224,.96); --au-scrim:rgba(34,34,34,.42); --au-glass:rgba(243,237,224,.86);
   --au-warn:#7a5a12; --au-bad:#8e1f19; --au-hot:#b3261e;
@@ -94,12 +94,12 @@
 :root[data-yomu-skin='gilt'] {
   --pa-bg:#f7f1e3; --pa-surface:#fffaf0; --pa-raised:#efe4cc; --pa-elevated:#e4d6b6;
   --pa-line:#e1d5b8; --pa-line2:#cdbc94; --pa-hairline:#ece2cc; --pa-hair:rgba(36,31,20,.06); --pa-sep:rgba(36,31,20,.1);
-  --pa-text:#241f14; --pa-muted:#544a34; --pa-dim:#786a4c; --pa-faint:#a3957a;
+  --pa-text:#241f14; --pa-muted:#544a34; --pa-dim:#786a4c; --pa-faint:#776d59;
   --pa-accent:#9a7a1a; --pa-onaccent:#fffbee; --pa-accsoft:rgba(154,122,26,.13); --pa-accline:rgba(154,122,26,.45);
   --pa-overlay:rgba(250,245,232,.96); --pa-scrim:rgba(36,31,20,.4); --pa-glass:rgba(255,250,240,.86);
   --au-bg:#f7f1e3; --au-surface:#fffaf0; --au-raised:#efe4cc; --au-elevated:#e4d6b6;
   --au-line:#e1d5b8; --au-line2:#cdbc94; --au-hairline:#ece2cc; --au-hair:rgba(36,31,20,.06); --au-sep:rgba(36,31,20,.1);
-  --au-text:#241f14; --au-muted:#544a34; --au-dim:#786a4c; --au-faint:#a3957a;
+  --au-text:#241f14; --au-muted:#544a34; --au-dim:#786a4c; --au-faint:#776d59;
   --au-accent:#9a7a1a; --au-onaccent:#fffbee; --au-accsoft:rgba(154,122,26,.13); --au-accline:rgba(154,122,26,.45);
   --au-overlay:rgba(250,245,232,.96); --au-scrim:rgba(36,31,20,.4); --au-glass:rgba(255,250,240,.86);
   --au-shadow:0 12px 40px rgba(60,48,20,.14); --au-lift:0 1px 2px rgba(60,48,20,.12), 0 6px 18px rgba(60,48,20,.09);

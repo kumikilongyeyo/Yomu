@@ -160,14 +160,53 @@
     { href: '/settings', label: 'Settings', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 0 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.5-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4a2 2 0 0 1 4 0a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 0 1 0 4Z' },
   ];
 
-  /** The item a path belongs to. The reader and series pages sit under Home. */
+  /**
+   * The item a path belongs to. The reader and series pages sit under Home.
+   *
+   * `/discover` was missing, which is the route the app's own dock navigates
+   * to -- the sidebar spells the same destination `/find.html`, so nothing
+   * matched and Home stayed lit on the Discover screen. The audit's note about
+   * mixed `.html` and extensionless conventions is exactly this, seen from the
+   * inside: two spellings of one place, and a comparison between them.
+   * Everything Discover can reach is listed rather than inferred.
+   */
   function activeHref(pathname) {
-    if (pathname.startsWith('/find') || pathname.startsWith('/search')) return '/find.html';
+    if (pathname.startsWith('/find') || pathname.startsWith('/search')
+        || pathname.startsWith('/discover') || pathname.startsWith('/more')
+        || pathname.startsWith('/adult')) return '/find.html';
     if (pathname.startsWith('/library') || pathname.startsWith('/downloads')) return '/library';
     if (pathname.startsWith('/you')) return '/you';
     if (pathname.startsWith('/settings') || pathname.startsWith('/sources')
         || pathname.startsWith('/extensions') || pathname.startsWith('/suwayomi')) return '/settings';
     return '/';
+  }
+
+  /**
+   * Keep the lit item honest after a client-side navigation.
+   *
+   * The sidebar is built once -- it lives outside React's tree, so nothing
+   * rebuilds it -- and the active item was therefore decided at first paint
+   * and never again. Arriving anywhere by the app's own dock, which navigates
+   * with pushState, left Home lit on every screen.
+   *
+   * Change-only writes, and that is not tidiness. This runs from pass(), which
+   * a document-wide MutationObserver schedules; writing an attribute
+   * unconditionally there is a mutation that schedules the next pass, which is
+   * the microtask loop that took /sources down once already.
+   */
+  function markActive() {
+    const nav = document.getElementById(ID);
+    if (!nav) return;
+    const current = activeHref(location.pathname);
+    for (const link of nav.querySelectorAll('.yomu-sidebar__item')) {
+      const active = link.getAttribute('href') === current;
+      if (link.classList.contains('is-active') !== active) link.classList.toggle('is-active', active);
+      if (active) {
+        if (link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      } else if (link.hasAttribute('aria-current')) {
+        link.removeAttribute('aria-current');
+      }
+    }
   }
 
   function build() {
@@ -389,9 +428,40 @@
   }
 
   /**
-   * The index first, because it can answer on its own. Then anything the index
-   * has not seen but the library can identify, so positions recorded before
-   * any of this existed still draw a card instead of silently dropping.
+   * Everything the index knows about one series, however it was filed.
+   *
+   * The index is keyed "<sourceId>:<seriesId>", and the reader's resume anchor
+   * is keyed by the series alone -- it has a chapter and a page and no idea
+   * which source served them. Joining the two on the series is what lets an
+   * anchor stand up without the library being involved.
+   */
+  function indexedBySeries(index, seriesId) {
+    const suffix = ':' + seriesId;
+    for (const [key, record] of Object.entries(index)) {
+      if (key.endsWith(suffix) && record && record.sourceId) return record;
+    }
+    return null;
+  }
+
+  /**
+   * The index first, because it can answer on its own. Then any resume anchor
+   * the index has not already covered.
+   *
+   * That second pass used to require the title to be in the library:
+   *
+   *     const entry = saved.find((t) => String(t.id) === seriesId);
+   *     if (!entry || !entry.sourceId) continue;
+   *
+   * which made Continue Reading depend on a store that has nothing to do with
+   * whether you are part-way through something. Reading three chapters of a
+   * title without saving it, and coming back to a row that has forgotten you,
+   * is the case that produced -- and the join was only ever there to recover
+   * the sourceId the anchor does not carry.
+   *
+   * The index carries it, is written by the reader on every tick, and is
+   * synced, so it is asked first and the library is the fallback rather than
+   * the gate. An anchor nothing can name is still skipped: a card with no
+   * title and no source is not a card, it is a dead link.
    */
   function continueItems() {
     const blocked = adultTitles();
@@ -420,16 +490,19 @@
       });
     }
 
+    const index = readingIndex();
     for (const { seriesId, anchor } of resumeEntries()) {
       if (byId.has(seriesId)) continue;
+      const known = indexedBySeries(index, seriesId);
       const entry = saved.find((t) => String(t.id) === seriesId);
-      if (!entry || !entry.sourceId) continue;
-      if (hiddenOrAdult(entry, entry.sourceId, seriesId)) continue;
+      const sourceId = (known && known.sourceId) || (entry && entry.sourceId) || '';
+      if (!sourceId) continue;
+      if (hiddenOrAdult(entry, sourceId, seriesId)) continue;
       byId.set(seriesId, {
         seriesId,
-        sourceId: entry.sourceId,
-        title: entry.title || 'Untitled',
-        cover: entry.cover || '',
+        sourceId,
+        title: (known && known.title) || (entry && entry.title) || 'Untitled',
+        cover: (known && known.cover) || (entry && entry.cover) || '',
         chapterId: anchor.chapterId,
         chapterLabel: '',
         // No percentage for these. The anchor carries pageIndex but not a page
@@ -3884,6 +3957,7 @@
 
   const pass = () => {
     brandLockup();
+    markActive();
     markBusy();
     mountGreeting();
     gateFabric();

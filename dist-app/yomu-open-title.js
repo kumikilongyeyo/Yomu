@@ -51,29 +51,100 @@
     return id;
   }
 
-  /* --- which providers can actually serve a page --------------------------- */
+  /* --- which providers can actually serve a page --------------------------- *
+   *
+   * This is safety-critical routing information, not a nicety, and the first
+   * version got its failure mode backwards: a failed lookup produced an empty
+   * "cannot serve pages" set, so *unknown* was read as *readable* and a
+   * metadata-only provider became a destination that 502s on the first
+   * chapter. One offline moment was enough to do it.
+   *
+   * Three sources, in order, and the last one always answers:
+   *
+   *   1. the live call, which is same-origin and cheap;
+   *   2. the last successful answer, kept for a week -- capabilities change
+   *      when an extension is rewritten, not between page loads;
+   *   3. a baked table of providers known to be metadata-only.
+   *
+   * And the ranking below treats *known readable* as strictly better than
+   * *unknown*, so a provider nobody has vouched for is only ever chosen when
+   * there is nothing better. Blind providers are never chosen at all.
+   */
 
-  let readOnly = null;
+  const CAPS_KEY = 'yomu.v1.capabilities';
+  const CAPS_MS = 7 * 24 * 60 * 60 * 1000;
+
+  /**
+   * Known metadata-only, baked in.
+   *
+   * Comick is the one this exists for: it has the best metadata and the
+   * widest catalog, which is exactly why it comes back first, and asking it
+   * for a chapter is a 502. Being wrong here is cheap in one direction only
+   * -- a source listed and readable just loses a little ranking -- so the
+   * table errs toward listing.
+   */
+  const BAKED_BLIND = ['yomuext-comick'];
+
+  /** Sources readable by definition, whatever the extension registry says. */
+  const NATIVE_READABLE = ['mangadex'];
+
+  /* { blind: Set, readable: Set, source: 'live'|'cache'|'baked' } */
+  let caps = null;
   let learning = null;
 
+  function cachedCaps() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CAPS_KEY) || 'null');
+      if (!raw || !(raw.at > Date.now() - CAPS_MS)) return null;
+      if (!Array.isArray(raw.blind) || !Array.isArray(raw.readable)) return null;
+      return { blind: new Set(raw.blind), readable: new Set(raw.readable), source: 'cache' };
+    } catch { return null; }
+  }
+
+  function bakedCaps() {
+    return { blind: new Set(BAKED_BLIND), readable: new Set(NATIVE_READABLE), source: 'baked' };
+  }
+
+  /** Never returns null, and never returns an empty blind set by accident. */
+  function fallbackCaps() {
+    const hit = cachedCaps();
+    if (!hit) return bakedCaps();
+    /* Even a cached answer keeps the baked table under it: an extension that
+       was readable last week and has since been rewritten as metadata-only
+       should still not be a destination. */
+    for (const id of BAKED_BLIND) { hit.blind.add(id); hit.readable.delete(id); }
+    return hit;
+  }
+
   function learnCapabilities() {
-    if (readOnly) return Promise.resolve(readOnly);
+    if (caps) return Promise.resolve(caps);
     if (learning) return learning;
     learning = fetch('/api/ext/sources')
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then((body) => {
-        const out = new Set();
-        for (const e of body.extensions || []) {
-          if (!e.capabilities?.pages) out.add('yomuext-' + e.id);
+        const list = body && Array.isArray(body.extensions) ? body.extensions : null;
+        /* A 200 with the wrong shape is a failure, not an empty registry.
+           Treating it as "no extension is blind" is the bug this replaces. */
+        if (!list) throw new Error('malformed');
+        const blind = new Set(BAKED_BLIND);
+        const readable = new Set(NATIVE_READABLE);
+        for (const e of list) {
+          if (!e || !e.id) continue;
+          const id = 'yomuext-' + e.id;
+          if (e.capabilities && e.capabilities.pages) readable.add(id);
+          else blind.add(id);
         }
-        readOnly = out;
-        return out;
+        caps = { blind, readable, source: 'live' };
+        try {
+          localStorage.setItem(CAPS_KEY, JSON.stringify({
+            at: Date.now(), blind: [...blind], readable: [...readable],
+          }));
+        } catch {}
+        return caps;
       })
       .catch(() => {
-        /* Not knowing is survivable: ranking falls back to the catalog's own
-           order, which is what happened before any of this existed. */
-        readOnly = new Set();
-        return readOnly;
+        caps = fallbackCaps();
+        return caps;
       })
       .finally(() => { learning = null; });
     return learning;
@@ -93,26 +164,71 @@
   /**
    * Pure: a catalog entry and this device's situation -> where to send them.
    *
-   * @param entry    { providers: [{ id, name, kind, seriesId }], title }
-   * @param have     Set of app source ids this device has enabled
-   * @param noPages  Set of app source ids that cannot serve pages
+   * Three tiers, and the order between them is the safety property:
+   *
+   *   0  known readable        somebody said this source can serve pages
+   *   1  unknown               nobody has said either way
+   *   2  known metadata-only   never a destination, at any price
+   *
+   * Enablement breaks ties *within* a tier, never across one, so an enabled
+   * source of unknown capability does not outrank a known-readable one the
+   * reader has not enabled -- the reader can add a source, but they cannot
+   * make a metadata mirror serve pages.
+   *
+   * @param entry  { providers: [{ id, name, kind, seriesId }], title }
+   * @param have   Set of app source ids this device has enabled
+   * @param caps   { blind: Set, readable: Set } -- never null in practice,
+   *               because learnCapabilities() always resolves to something
    */
-  function pick(entry, have, noPages) {
+  function pick(entry, have, caps) {
     const providers = entry?.providers;
     if (!Array.isArray(providers) || !providers.length) return null;
     const enabled = have || new Set();
-    const blind = noPages || new Set();
+    const blind = (caps && caps.blind) || new Set();
+    const readable = (caps && caps.readable) || new Set();
+    const tier = (id) => (blind.has(id) ? 2 : readable.has(id) ? 0 : 1);
     const rank = (p) => {
       const id = appSourceId(p.id);
-      return (blind.has(id) ? 2 : 0) + (enabled.has(id) ? 0 : 1);
+      return tier(id) * 10 + (enabled.has(id) ? 0 : 1);
     };
     const best = [...providers].sort((a, b) => rank(a) - rank(b))[0];
-    if (!best || blind.has(appSourceId(best.id))) return null;
+    if (!best || tier(appSourceId(best.id)) === 2) return null;
     return { seriesId: best.seriesId, sourceId: appSourceId(best.id), name: best.name };
   }
 
   const href = (seriesId, sourceId) =>
     '/series/' + encodeURIComponent(seriesId) + '?source=' + encodeURIComponent(sourceId);
+
+  /* --- the address a title has before any of this runs --------------------- *
+   *
+   * A href cannot be made correct by intercepting the click on it. The first
+   * version pointed every rail card at `/search?q=` and swapped in the series
+   * screen from a click handler, which worked for a plain left click and for
+   * nothing else: cmd-click, middle-click, "copy link address", a shared URL,
+   * a bookmark and a restored session all followed the href into Search.
+   *
+   * `/title/<slug>?q=<name>&al=<anilistId>` is answered by the Worker
+   * (worker/title.ts), which resolves it and 302s to the series screen. The
+   * slug is decoration so a pasted link says what it is; `q` carries the exact
+   * name, because the slug has already lost its punctuation.
+   */
+
+  const slugify = (name) => String(name || '')
+    .toLowerCase()
+    .replace(/['\u2019]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+
+  function canonicalHref(item) {
+    const name = String(item?.title || '').trim();
+    if (!name) return '/';
+    const id = Number(item?.anilistId ?? (item?.source === 'anilist' ? item?.id : null)) || null;
+    const slug = slugify(name) || 'title';
+    const query = new URLSearchParams({ q: name });
+    if (id) query.set('al', String(id));
+    return '/title/' + slug + '?' + query.toString();
+  }
 
   /* --- remembering --------------------------------------------------------- */
 
@@ -179,8 +295,7 @@
       return { seriesId: String(item.seriesId), sourceId: String(item.sourceId), name: item.sourceName || '' };
     }
     if (Array.isArray(item.providers) && item.providers.length) {
-      await learnCapabilities();
-      return pick(item, enabledSourceIds(), readOnly);
+      return pick(item, enabledSourceIds(), await learnCapabilities());
     }
 
     const title = String(item.title || '').trim();
@@ -192,8 +307,9 @@
     if (hit && hit.miss) return null;
 
     let entries = [];
+    let known;
     try {
-      await learnCapabilities();
+      known = await learnCapabilities();
       let adult = false;
       try { adult = localStorage.getItem('yomu.v1.adult') === 'on'; } catch {}
       const url = '/api/catalog/search?q=' + encodeURIComponent(title) + (adult ? '&adult=1' : '');
@@ -204,7 +320,7 @@
       return null;
     }
 
-    const found = pick(match(entries, item), enabledSourceIds(), readOnly);
+    const found = pick(match(entries, item), enabledSourceIds(), known);
     remember(key, found || { miss: true });
     return found;
   }
@@ -219,9 +335,11 @@
    */
   async function open(item, opts) {
     const found = await resolve(item);
-    const to = found
-      ? href(found.seriesId, found.sourceId)
-      : '/search?q=' + encodeURIComponent(String(item?.title || ''));
+    /* Unresolved goes to the canonical route rather than straight to Search:
+       the Worker gets its own attempt with the whole catalog behind it, and
+       falls through to Search itself if that fails too. One destination, one
+       fallback, decided in one place. */
+    const to = found ? href(found.seriesId, found.sourceId) : canonicalHref(item);
     if (opts?.dryRun) return to;
     location.href = to;
     return to;
@@ -234,7 +352,11 @@
    */
   function bind(node, item, onClick) {
     if (!node) return node;
-    node.href = '/search?q=' + encodeURIComponent(String(item?.title || ''));
+    /* Valid before JavaScript, and identical for every way of following a
+       link. The handler below is a shortcut, not the thing that makes it
+       work: it knows which sources this device has enabled, which the Worker
+       cannot, so a plain click skips a round trip. */
+    node.href = canonicalHref(item);
     node.addEventListener('click', (event) => {
       /* Leave the modified clicks to the browser -- they are how someone
          opens a second tab on purpose. */
@@ -248,10 +370,15 @@
     return node;
   }
 
-  const api = { appSourceId, pick, match, href, resolve, open, bind, learnCapabilities, enabledSourceIds };
+  const api = {
+    appSourceId, pick, match, href, canonicalHref, slugify, resolve, open, bind, learnCapabilities, enabledSourceIds,
+    /** What the router currently believes, and where it learnt it. */
+    capabilities: () => (caps ? { blind: [...caps.blind], readable: [...caps.readable], source: caps.source } : null),
+    BAKED_BLIND, NATIVE_READABLE,
+  };
   if (typeof window !== 'undefined') window.YomuOpenTitle = api;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { appSourceId, pick, match, href };
+    module.exports = { appSourceId, pick, match, href, canonicalHref, slugify, BAKED_BLIND, NATIVE_READABLE };
   }
 
   /* Warm the capability list once the page is quiet, so the first click is

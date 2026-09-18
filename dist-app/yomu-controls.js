@@ -127,7 +127,10 @@
    */
   const PRESETS = [
     {
-      id: 'core', name: 'Yomu Core', hint: 'The house look',
+      /* `short` is what the 52px card shows at 320px, where "Yomu Core"
+         truncated to "Yomu C..." and the other four names fit. The full
+         name stays the accessible one. */
+      id: 'core', name: 'Yomu Core', short: 'Core', hint: 'The house look',
       swatch: ['#ffc45f', '#1b2836'],
       patch: {
         siteGradient: 'default', tileShape: 'soft', tileTone: 'neutral', tileLift: 'soft',
@@ -449,7 +452,8 @@
       const chip = el('span', 'yui-preset__chip');
       chip.style.setProperty('--a', p.swatch[0]);
       chip.style.setProperty('--b', p.swatch[1]);
-      card.append(chip, el('span', 'yui-preset__name', p.name));
+      card.setAttribute('aria-label', p.name);
+      card.append(chip, el('span', 'yui-preset__name', p.short || p.name));
       card.addEventListener('click', () => applyPreset(p.id));
       strip.append(card);
     }

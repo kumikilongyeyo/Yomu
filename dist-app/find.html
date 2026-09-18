@@ -2,7 +2,7 @@
 <html lang="en">
 <head><style id="yomu-boot-style">:root[data-yomu-boot],:root[data-yomu-boot] *{transition:none!important;animation-duration:0s!important}</style><script id="yomu-boot">(function(){try{var d=document.documentElement,p=null;try{p=localStorage.getItem('yomu.appearance')}catch(e){}if(p!=='dark'&&p!=='light'&&p!=='system')p='light';d.dataset.mode=p;var dark=p==='dark'||(p==='system'&&typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches);d.style.colorScheme=dark?'dark':'light';try{var k=localStorage.getItem('yomu.v1.skin');if(k)d.dataset.yomuSkin=k}catch(e){}d.setAttribute('data-yomu-boot','');var tint=function(){var v='';try{v=getComputedStyle(d).getPropertyValue('--bg').trim()}catch(e){}if(!v)v=dark?'#080d14':'#f5f2ec';var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m)}if(m.content!==v)m.content=v};tint();var done=function(){d.removeAttribute('data-yomu-boot');tint()};if(document.readyState==='loading')addEventListener('DOMContentLoaded',function(){setTimeout(done,0)});else setTimeout(done,0);addEventListener('load',tint);}catch(e){}})();</script>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-title" content="Yomu" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -235,7 +235,6 @@
   'use strict';
   const COLLECTION_KEY = 'yomu.v1.collection';
 
-  try { document.documentElement.dataset.mode = localStorage.getItem('yomu.appearance') || 'light'; } catch {}
 
   const $ = (id) => document.getElementById(id);
 
