@@ -1764,9 +1764,18 @@
 
   /** True once a timed attempt has been refused for want of a gesture. */
   let fsAwaitingGesture = false;
+  /**
+   * True once the reader has left fullscreen on purpose this session -- the
+   * toggle, the double tap, Esc, a swipe out. From then on no timer and no
+   * carried gesture asks the browser for fullscreen again; only the toggle
+   * does. Wanting the bars back once was being read as "until the next
+   * chapter", and the next chapter re-asked two seconds in.
+   */
+  let fsDeclined = false;
 
-  function requestFullscreen() {
+  function requestFullscreen(force) {
     if (!fsSupported() || fsElement()) return;
+    if (fsDeclined && !force) return;
     const el = fsTarget();
     try {
       const attempt = el.requestFullscreen?.({ navigationUI: 'hide' })
@@ -1778,14 +1787,14 @@
     } catch { fsAwaitingGesture = true; }
   }
 
-  function enterImmersive() {
+  function enterImmersive(force) {
     if (!inReader()) return;
     if (!immOn()) {
       document.documentElement.classList.add(IMM_CLASS);
       showExitHint();
       showHomeScreenHint();
     }
-    requestFullscreen();
+    requestFullscreen(force);
     mountImmersiveToggle();
   }
 
@@ -1796,8 +1805,10 @@
    * tap was spent getting out, so it brings its own bars back rather than
    * toggling them, and a single gesture never does two things at once.
    */
-  function leaveImmersive() {
+  function leaveImmersive(byReader) {
     if (!immOn() && !fsElement()) return false;
+    /* A route change is not a decision; anything else here is one. */
+    if (byReader !== false) fsDeclined = true;
     fsAwaitingGesture = false;
     armed = false;
     document.documentElement.classList.remove(IMM_CLASS);
@@ -1830,7 +1841,7 @@
       if (armTimer) { clearTimeout(armTimer); armTimer = null; }
       armed = false;
       armedFor = '';
-      if (immOn()) leaveImmersive();
+      if (immOn()) leaveImmersive(false);
       return;
     }
     if (here === armedFor) return;
@@ -1934,7 +1945,7 @@
         // button from also counting as the first of a double tap.
         event.stopPropagation();
         if (immOn()) { setImmWanted(false); leaveImmersive(); }
-        else { setImmWanted(true); armed = true; enterImmersive(); }
+        else { setImmWanted(true); fsDeclined = false; armed = true; enterImmersive(true); }
       });
     }
 
@@ -1956,11 +1967,14 @@
 
   /* --- gestures and the browser's own exits ----------------------------- */
 
-  // A refused timed attempt is retried on the next deliberate touch, which is
-  // the gesture the browser was holding out for. Capture phase, so it runs
-  // whether or not the reader stops the event.
-  document.addEventListener('pointerdown', () => {
-    if (!fsAwaitingGesture || !inReader() || !immOn()) return;
+  // A refused timed attempt is retried on the next deliberate tap, which is
+  // the gesture the browser was holding out for. A completed click, not a
+  // pointerdown: a touch-scroll begins with a pointerdown, and carrying the
+  // request on that made the reader go fullscreen the moment you scrolled
+  // the next chapter, without having tapped anything. Capture phase, so it
+  // runs whether or not the reader stops the event.
+  document.addEventListener('click', () => {
+    if (!fsAwaitingGesture || fsDeclined || !inReader() || !immOn()) return;
     fsAwaitingGesture = false;
     requestFullscreen();
   }, true);
