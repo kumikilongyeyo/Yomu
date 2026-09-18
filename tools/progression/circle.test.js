@@ -18,7 +18,7 @@ const circle = (() => {
   js = js.replace(/import \{ generateCode \} from '\.\/sync';/, "const generateCode = () => 'ABCDEFGHJK';");
   js = js.replace(/^export (async function|function|const|let)/gm, '$1');
   js = js.replace(/^export \{[^}]*\};?$/gm, '');
-  js += '\nreturn { gate, react, setBadge, unreadCount, publicComment, sanitiseBadge, sanitiseSticker, reactionSummary, recordProgress, reachedIn };';
+  js += '\nreturn { gate, react, setBadge, unreadCount, publicComment, sanitiseBadge, sanitiseSticker, reactionSummary, recordProgress, reachedIn, raceView, RACE_WEEK_MS };';
   return new Function(js)();
 })();
 
@@ -105,4 +105,48 @@ test('the gate itself is unchanged by reactions', () => {
   const view = circle.gate(thread, 12, 'b');
   assert.equal(view.visible.length, 0);
   assert.equal(view.lockedTotal, 1);
+});
+
+/* --- the reading race ------------------------------------------------------ */
+
+test('recordProgress stamps when it advances and leaves the document alone otherwise', () => {
+  const d = doc();
+  const same = circle.recordProgress(d, 'b', 'src:s1', 5, 1000);
+  assert.equal(same, d, 'not an advance');
+  const next = circle.recordProgress(d, 'b', 'src:s1', 20, 1000);
+  assert.equal(next.progress.b['src:s1'], 20);
+  assert.equal(next.progressAt.b['src:s1'], 1000);
+  assert.equal(d.progressAt, undefined, 'old document untouched');
+});
+
+test('the race view counts anonymously and names only at or below your mark', () => {
+  const d = doc();
+  d.members.c = { name: 'Cy', joinedAt: 1, lastSeen: 1 };
+  d.progress.c = { 'src:s1': 12 };
+  // Bo at 12, Cy at 12, Ana at 40. Viewer Bo.
+  const view = circle.raceView(d, 'src:s1', 'b', 5000);
+  assert.equal(view.mine, 12);
+  assert.deepEqual(view.marks, [{ chapter: 12, count: 2 }, { chapter: 40, count: 1 }]);
+  assert.equal(view.ahead, 1);
+  assert.equal(view.alongside, 1);
+  assert.equal(view.behind, 0);
+  assert.deepEqual(view.known, [{ name: 'Cy', chapter: 12 }], 'Ana is ahead and unnamed');
+  assert.equal(view.on, false);
+  assert.equal(view.leader, null, 'no leader while the race is off');
+  assert.ok(!JSON.stringify(view).includes('Ana'));
+});
+
+test("with the race on, the week's leader is the freshest furthest mark, unnamed when ahead of you", () => {
+  const now = 10 * 86400000;
+  const d = { ...doc(), race: true, progressAt: { a: { 'src:s1': now - 86400000 }, b: { 'src:s1': now - 2 * 86400000 } } };
+  const asBo = circle.raceView(d, 'src:s1', 'b', now);
+  assert.deepEqual(asBo.leader, { chapter: 40, name: null, isYou: false }, 'Ana leads but Bo has not got there');
+  const asAna = circle.raceView(d, 'src:s1', 'a', now);
+  assert.deepEqual(asAna.leader, { chapter: 40, name: 'Ana', isYou: true });
+  // Ana's mark is from three weeks ago: Bo leads the week from chapter 12.
+  const stale = { ...d, progressAt: { a: { 'src:s1': now - 21 * 86400000 }, b: { 'src:s1': now - 86400000 } } };
+  assert.deepEqual(circle.raceView(stale, 'src:s1', 'b', now).leader, { chapter: 12, name: 'Bo', isYou: true });
+  // A mark that never had a stamp (a circle from before) cannot lead.
+  const unstamped = { ...d, progressAt: {} };
+  assert.equal(circle.raceView(unstamped, 'src:s1', 'b', now).leader, null);
 });

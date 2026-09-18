@@ -22,6 +22,7 @@ import { handleMori } from './mori';
 import { handleSimilar } from './similar';
 import { handleSync } from './routes-sync';
 import { handleCircle } from './routes-circle';
+import { handleShelf } from './routes-shelf';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -367,6 +368,14 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    /* A shared shelf link is /shelf/<code>: no file by that name, so the
+       asset server hands it here, and here it becomes the shelf page, which
+       reads the code back out of the address. */
+    if (/^\/shelf\/[A-Za-z0-9-]{6,20}\/?$/.test(url.pathname) && request.method === 'GET') {
+      // Extensionless on purpose: the asset server answers /shelf.html with a
+      // 307 to /shelf, and a rewrite that redirects is not a rewrite.
+      return env.ASSETS.fetch(new Request(new URL('/shelf', url.origin).href, request));
+    }
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);
@@ -375,6 +384,7 @@ export default {
     if (url.pathname.startsWith('/api/suwayomi/')) return handleSuwayomi(request, env, url);
     if (url.pathname.startsWith('/api/sync/')) return handleSync(request, env, url);
     if (url.pathname.startsWith('/api/circle/')) return handleCircle(request, env, url);
+    if (url.pathname.startsWith('/api/shelf/')) return handleShelf(request, env, url);
     return handleLegacyProxy(request, url);
   },
 };

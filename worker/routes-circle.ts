@@ -28,6 +28,7 @@ import {
   emptyCircle,
   gate,
   publicComment,
+  raceView,
   reachedIn,
   react,
   recordProgress,
@@ -90,6 +91,7 @@ const publicCircle = (doc: CircleDoc, code: string, viewerId: string) => ({
   display: formatCode(code),
   name: doc.name,
   revision: doc.revision,
+  race: !!doc.race,
   youAreOwner: doc.ownerId === viewerId,
   memberId: viewerId,
   members: Object.entries(doc.members)
@@ -204,7 +206,7 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
 
     const chapter = Number(payload.chapter);
     const before = doc;
-    doc = recordProgress(doc, memberId, key, chapter);
+    doc = recordProgress(doc, memberId, key, chapter, now);
     if (doc !== before || badgeChanged) await writeCircle(env, code, touch(doc, memberId, now));
 
     const thread = await readThread(env, code, key);
@@ -215,6 +217,7 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
       comments: view.visible.map((c) => publicComment(c, doc, memberId)),
       locked: view.locked,
       lockedTotal: view.lockedTotal,
+      race: raceView(doc, key, memberId, now),
     });
   }
 
@@ -229,7 +232,7 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
 
     // Posting about a chapter is reaching it. Without this, your own comment
     // would be the only thing you could see in a thread you just opened.
-    doc = recordProgress(doc, memberId, key, chapter);
+    doc = recordProgress(doc, memberId, key, chapter, now);
     await writeCircle(env, code, touch(doc, memberId, now));
 
     const thread = await readThread(env, code, key);
@@ -335,6 +338,15 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
     thread.comments = thread.comments.filter((c) => c.id !== id);
     await writeThread(env, code, key, thread);
     return json({ ok: true });
+  }
+
+  /* The race switch. Owner only, like every other circle-wide setting; the
+   * ticks themselves are always on, this adds the week's leader. */
+  if (route === 'race') {
+    if (doc.ownerId !== memberId) return bad('Only the circle owner can do that.', 403);
+    const next = { ...doc, race: !!payload.on };
+    await writeCircle(env, code, next);
+    return json(publicCircle({ ...next, revision: next.revision + 1 }, code, memberId));
   }
 
   /* Remove a member. Owner only, and the owner cannot remove themselves --

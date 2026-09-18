@@ -1,0 +1,99 @@
+/* ==================================================================== *
+ * Yomu social update — the race, the heat strip, the shelf publisher
+ * ==================================================================== */
+
+/* --- race ticks on chapter rows ----------------------------------------- */
+
+.yomu-race-tick {
+  flex: none;
+  align-self: center;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--raised, #efeade);
+  color: var(--dim, #6d6558);
+  font: 700 9.5px/1.6 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  white-space: nowrap;
+}
+.yomu-race-tick.is-you { background: var(--accent, #b8791c); color: var(--accentText, #18212a); }
+.rd-chapters li { position: relative; }
+.rd-chapters li .yomu-race-tick { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+
+.yomu-race-badge {
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--raised, #efeade);
+  color: var(--dim, #6d6558);
+  font: 700 10.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.yomu-race-badge.is-race { border: 1px solid var(--accentLine, rgba(184, 121, 28, .42)); color: var(--accent, #b8791c); background: var(--accentSoft, rgba(184, 121, 28, .1)); }
+.yomu-race-leader {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accentSoft, rgba(184, 121, 28, .1));
+  border: 1px solid var(--accentLine, rgba(184, 121, 28, .42));
+  color: var(--accent, #b8791c);
+  font: 700 10.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+}
+
+/* --- the heat strip ------------------------------------------------------ */
+
+.yomu-heat { margin: 10px 0 12px; }
+.yomu-heat__head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  margin: 0 2px 6px;
+  font: 700 10.5px/1.4 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--faint, #9b9184);
+}
+.yomu-heat__upto { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.yomu-heat__strip { display: flex; gap: 2px; align-items: stretch; height: 14px; }
+.yomu-heat__seg {
+  flex: 1 1 0; min-width: 3px; padding: 0; border: 0; cursor: pointer;
+  border-radius: 3px;
+  /* Ground plus accent at the segment's own heat. A quiet chapter is the
+     raised ground; a hot one is the accent. */
+  background: color-mix(in srgb, var(--accent, #b8791c) calc(var(--heat, 0) * 100%), var(--raised, #efeade));
+}
+.yomu-heat__seg.is-hot { box-shadow: 0 0 0 1px var(--accentLine, rgba(184, 121, 28, .42)); }
+.yomu-heat__seg:focus-visible { outline: 2px solid var(--accent, #b8791c); outline-offset: 1px; }
+.yomu-heat__beyond {
+  flex: 0 0 auto; padding: 0 6px;
+  border-radius: 3px; border: 1px dashed var(--line, #e4ded2);
+  color: var(--faint, #9b9184);
+  font: 700 9.5px/14px var(--uiFont, var(--font-ui, system-ui, sans-serif));
+}
+
+/* --- the shelf publisher ------------------------------------------------- */
+
+.yss {
+  padding: 14px 16px;
+  border-radius: var(--radius-card, 14px);
+  border: 1px solid var(--line, #e4ded2);
+  background: var(--surface, #fffdfa);
+  display: grid; gap: 10px;
+}
+.yss__copy { margin: 0; font: 400 12.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif)); color: var(--muted, #4a443a); }
+.yss__link {
+  border: 1px dashed var(--accentLine, rgba(184, 121, 28, .42)); background: var(--accentSoft, rgba(184, 121, 28, .1));
+  color: var(--accent, #b8791c); border-radius: 10px; padding: 9px 12px; cursor: pointer; text-align: left;
+  font: 700 13px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere;
+}
+.yss__acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.yss__go {
+  display: inline-grid; place-items: center; min-height: 38px; padding: 0 14px;
+  border-radius: 999px; border: 0; cursor: pointer; text-decoration: none;
+  background: var(--accent, #b8791c); color: var(--accentText, #18212a);
+  font: 700 13px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+}
+.yss__go[disabled] { opacity: .6; cursor: default; }
+.yss__quiet {
+  min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line, #e4ded2);
+  background: none; color: var(--dim, #6d6558); cursor: pointer;
+  font: 700 12.5px/1 var(--uiFont, var(--font-ui, system-ui, sans-serif));
+}

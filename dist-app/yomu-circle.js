@@ -127,6 +127,14 @@
 
   let members = [];
   let isOwner = false;
+  /** The reading race switch, as the server last reported it. */
+  let raceOn = false;
+  const takeCircle = (circle) => {
+    if (!circle) return;
+    if (Array.isArray(circle.members)) members = circle.members;
+    isOwner = !!circle.youAreOwner;
+    raceOn = !!circle.race;
+  };
 
   function row(title, subtitle, onClick, extra) {
     const element = document.createElement(onClick ? 'button' : 'div');
@@ -212,6 +220,22 @@
     ));
 
     group.append(row(
+      'Reading race',
+      raceOn
+        ? 'On · a leader badge for the week, on every chapter list'
+        : 'Off · chapter lists still show where everyone is',
+      async () => {
+        if (!isOwner) { note('Only whoever started the circle can switch the race.'); return; }
+        try {
+          const circle = await api('race', { on: !raceOn });
+          takeCircle(circle);
+          renderGroup();
+        } catch (error) { note(error.message); }
+      },
+      raceOn ? ' is-accent' : '',
+    ));
+
+    group.append(row(
       isOwner ? 'Close this circle' : 'Leave this circle',
       isOwner
         ? 'Ends it for everyone, and deletes every comment in it.'
@@ -222,8 +246,7 @@
 
   function adopt(circle, name) {
     setState({ code: circle.code, memberId: circle.memberId, name });
-    members = circle.members || [];
-    isOwner = !!circle.youAreOwner;
+    takeCircle(circle);
     renderGroup();
   }
 
@@ -298,8 +321,7 @@
   async function refreshMembers() {
     try {
       const circle = await api('info', {});
-      members = circle.members || [];
-      isOwner = !!circle.youAreOwner;
+      takeCircle(circle);
       renderGroup();
     } catch (error) {
       if (/not a member|No circle/i.test(error.message)) {
@@ -339,10 +361,18 @@
       // the Circle group mounts, which only happens on /settings -- so an
       // owner who opened the reader directly had no Delete on anyone else's
       // comment, which is most of the moderation this design has.
-      if (thread.circle) {
-        isOwner = !!thread.circle.youAreOwner;
-        members = thread.circle.members || members;
-      }
+      if (thread.circle) takeCircle(thread.circle);
+      /* The race and the heat strip listen for this: the same gated answer
+         feeds every social surface, so nothing is fetched twice. */
+      dispatchEvent(new CustomEvent('yomu:circle-thread', {
+        detail: {
+          key: context.sourceId + ':' + context.seriesId,
+          chapter: context.chapter,
+          reached: thread.reached,
+          comments: thread.comments || [],
+          race: thread.race || null,
+        },
+      }));
       // Opening a chapter's conversation is having seen it, which is what the
       // series page's "3 new" counts against. Marked on the newest comment
       // rather than on the clock, so a comment posted while this was open is
@@ -712,6 +742,8 @@
 
   let seriesFor = '';
   let seriesThread = null;
+  /** The last series answer, for a listener that mounted after it landed. */
+  let lastSeries = null;
 
   function seriesPageContext() {
     if (!location.pathname.startsWith('/series/')) return null;
@@ -883,10 +915,21 @@
         // reached anything. recordProgress ignores a missing or zero chapter,
         // so opening a series page can never move your own high-water mark.
         seriesThread = await api('read', { sourceId: context.sourceId, seriesId: context.seriesId });
-        if (seriesThread.circle) isOwner = !!seriesThread.circle.youAreOwner;
+        if (seriesThread.circle) takeCircle(seriesThread.circle);
       } catch { seriesThread = { comments: [] }; }
+      lastSeries = { key, reached: seriesThread.reached || 0, comments: seriesThread.comments || [], race: seriesThread.race || null };
+      dispatchEvent(new CustomEvent('yomu:circle-series', { detail: lastSeries }));
     }
     paintSeries(context);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.YomuCircle = {
+      joined,
+      series: () => lastSeries,
+      thread: () => (thread && !thread.error ? { key: threadFor, reached: thread.reached, comments: thread.comments || [], race: thread.race || null } : null),
+      raceOn: () => raceOn,
+    };
   }
 
   /* --- boot -------------------------------------------------------------- */

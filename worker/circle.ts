@@ -67,6 +67,12 @@ export interface CircleDoc {
    * not re-hide conversations you have already been part of.
    */
   progress: Record<string, Record<string, number>>;
+  /** When each mark last advanced, same shape. Only the race reads it, to
+   *  find who moved furthest this week. Absent on circles from before. */
+  progressAt?: Record<string, Record<string, number>>;
+  /** The reading race: anonymous ticks are always on; this adds a leader
+   *  badge for the week. Owner's switch. */
+  race?: boolean;
 }
 
 export interface Comment {
@@ -131,13 +137,77 @@ export function recordProgress(
   memberId: string,
   key: string,
   chapter: number,
+  now?: number,
 ): CircleDoc {
   if (!Number.isFinite(chapter) || chapter <= 0) return doc;
   const mine = doc.progress[memberId] ?? {};
   if ((mine[key] ?? 0) >= chapter) return doc;
+  const stamps = doc.progressAt ?? {};
   return {
     ...doc,
     progress: { ...doc.progress, [memberId]: { ...mine, [key]: chapter } },
+    ...(now ? { progressAt: { ...stamps, [memberId]: { ...(stamps[memberId] ?? {}), [key]: now } } } : {}),
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * The reading race
+ *
+ * Built entirely from the marks the gate already holds. What leaves the
+ * server is: how many members stand at each chapter (numbers, never who),
+ * the names of members at or below your own mark (you could see them in
+ * the thread anyway), and -- when the race is on -- the week's leader,
+ * named only if you have reached where they are. Someone ahead of you is
+ * "someone ahead", which says a chapter number exists and nothing else.
+ * ------------------------------------------------------------------ */
+
+export const RACE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+export interface RaceView {
+  on: boolean;
+  mine: number;
+  marks: { chapter: number; count: number }[];
+  ahead: number;
+  behind: number;
+  alongside: number;
+  known: { name: string; chapter: number }[];
+  leader: { chapter: number; name: string | null; isYou: boolean } | null;
+}
+
+export function raceView(doc: CircleDoc, key: string, viewerId: string, now: number): RaceView {
+  const mine = reachedIn(doc, viewerId, key);
+  const marks = new Map<number, number>();
+  const known: { name: string; chapter: number }[] = [];
+  let ahead = 0, behind = 0, alongside = 0;
+
+  for (const [id, member] of Object.entries(doc.members)) {
+    const chapter = doc.progress[id]?.[key] ?? 0;
+    if (chapter > 0) marks.set(chapter, (marks.get(chapter) ?? 0) + 1);
+    if (id === viewerId) continue;
+    if (chapter > mine) ahead++;
+    else if (chapter < mine) behind++;
+    else alongside++;
+    if (chapter > 0 && chapter <= mine) known.push({ name: member.name, chapter });
+  }
+  known.sort((a, b) => b.chapter - a.chapter || a.name.localeCompare(b.name));
+
+  let leader: RaceView['leader'] = null;
+  if (doc.race) {
+    for (const [id, member] of Object.entries(doc.members)) {
+      const chapter = doc.progress[id]?.[key] ?? 0;
+      const at = doc.progressAt?.[id]?.[key] ?? 0;
+      if (!chapter || !at || now - at > RACE_WEEK_MS) continue;
+      if (!leader || chapter > leader.chapter) {
+        leader = { chapter, name: id === viewerId || chapter <= mine ? member.name : null, isYou: id === viewerId };
+      }
+    }
+  }
+
+  return {
+    on: !!doc.race,
+    mine,
+    marks: [...marks].map(([chapter, count]) => ({ chapter, count })).sort((a, b) => a.chapter - b.chapter),
+    ahead, behind, alongside, known, leader,
   };
 }
 

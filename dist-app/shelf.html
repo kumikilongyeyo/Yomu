@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <meta name="theme-color" content="#f5f2ec" />
+  <title>Yomu · A shelf</title>
+  <link rel="stylesheet" href="/_expo/static/css/glass-b8012aec7a06ecd6e8c5e04e9e0a7b17.css" />
+  <style>
+    /* Theme tokens come from yomu-skin.css, linked in by the patcher. This
+       page loads none of the shell scripts: it is for someone who does not
+       have Yomu, and a companion, a circle or a sync prompt on it would be
+       three things they cannot use. */
+    body {
+      margin: 0; min-height: 100dvh;
+      padding: 0 max(16px, env(safe-area-inset-left)) calc(40px + env(safe-area-inset-bottom));
+      background: var(--bg, #f5f2ec); color: var(--text, #1e1b16);
+      font-family: var(--uiFont, system-ui, sans-serif);
+    }
+    main { width: min(920px, 100%); margin: 0 auto; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0 8px; }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.01em; text-decoration: none; color: inherit; }
+    .brand img { width: 26px; height: 26px; }
+    .get {
+      min-height: 38px; padding: 0 14px; display: inline-grid; place-items: center;
+      border-radius: 999px; background: var(--accent, #b8791c); color: var(--accentText, #18212a);
+      font: 700 13px/1 var(--uiFont, system-ui, sans-serif); text-decoration: none;
+    }
+    h1 {
+      margin: 18px 0 4px;
+      font-family: var(--titleFont, var(--uiFont, system-ui, sans-serif));
+      font-variation-settings: 'wdth' 110;
+      font-size: 28px; font-weight: 800; letter-spacing: -.025em;
+    }
+    .sub { margin: 0 0 18px; font-size: 13px; color: var(--faint, #9b9184); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+    .card {
+      display: grid; gap: 8px;
+      padding: 10px; border-radius: 16px;
+      background: var(--surface, #fffdfa); border: 1px solid var(--line, #e4ded2);
+    }
+    .cover {
+      aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden;
+      background: var(--raised, #efeade);
+      display: grid; place-items: center;
+      color: var(--faint, #9b9184); font: 800 22px/1 var(--uiFont, system-ui, sans-serif);
+    }
+    .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .title { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+    .cat {
+      display: inline-block; padding: 2px 7px; border-radius: 999px;
+      background: var(--accentSoft, rgba(184,121,28,.1)); color: var(--accent, #b8791c);
+      font: 700 10px/1.4 var(--uiFont, system-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase;
+    }
+    .note {
+      margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted, #4a443a);
+      font-family: var(--titleFont, var(--uiFont, system-ui, sans-serif)); font-weight: 600;
+    }
+    .note::before { content: '“'; } .note::after { content: '”'; }
+    .quiet { margin: 40px 0; text-align: center; color: var(--faint, #9b9184); font-size: 14px; }
+    .foot { margin: 30px 0 0; text-align: center; font-size: 12.5px; color: var(--faint, #9b9184); }
+    .foot a { color: var(--accent, #b8791c); font-weight: 700; text-decoration: none; }
+  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-overrides.css"><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><link rel="stylesheet" href="/yomu-shelf.css"><link rel="stylesheet" href="/yomu-companion.css"><link rel="stylesheet" href="/yomu-discovery.css"><link rel="stylesheet" href="/yomu-social.css"><link rel="stylesheet" href="/yomu-rails.css"><link rel="stylesheet" href="/yomu-skin.css"><link rel="stylesheet" href="/yomu-skins.css"></head>
+<body>
+<main>
+  <div class="top">
+    <a class="brand" href="/start"><img src="/icon-192.png" alt="" /> Yomu</a>
+    <a class="get" href="/start">Get Yomu</a>
+  </div>
+  <div id="state"><p class="quiet">Opening the shelf…</p></div>
+  <p class="foot">A shelf shared from <a href="/start">Yomu</a>, the manga reader that lives in your browser. Covers and titles only — no reading progress, no account.</p>
+</main>
+<script>
+/**
+ * A shared shelf: read-only, for someone who does not have Yomu.
+ *
+ * The code comes from the address -- /shelf/<code>, rewritten to this page
+ * by the Worker -- or from ?c= for a bare link. It is public by design: a
+ * shelf link is meant to be posted.
+ */
+(() => {
+  'use strict';
+  const state = document.getElementById('state');
+  const code = (location.pathname.match(/^\/shelf\/([A-Za-z0-9-]+)/) || [])[1]
+    || new URLSearchParams(location.search).get('c') || '';
+  const quiet = (text) => { state.innerHTML = ''; const p = document.createElement('p'); p.className = 'quiet'; p.textContent = text; state.append(p); };
+  const initials = (title) => String(title || '?').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
+
+  if (!code) { quiet('This link has no shelf on it.'); return; }
+
+  (async () => {
+    try {
+      const response = await fetch('/api/shelf/' + encodeURIComponent(code));
+      const shelf = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(shelf.error || 'This shelf is gone, or the link is wrong.');
+      document.title = 'Yomu · ' + shelf.name;
+      state.innerHTML = '';
+      const h1 = document.createElement('h1');
+      h1.textContent = shelf.name;
+      const sub = document.createElement('p');
+      sub.className = 'sub';
+      sub.textContent = shelf.count + (shelf.count === 1 ? ' title' : ' titles')
+        + ' · updated ' + new Date(shelf.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+      state.append(h1, sub);
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      for (const item of shelf.items) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        const cover = document.createElement('div');
+        cover.className = 'cover';
+        if (item.cover) {
+          const img = document.createElement('img');
+          img.src = item.cover; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+          img.addEventListener('error', () => { cover.textContent = initials(item.title); });
+          cover.append(img);
+        } else cover.textContent = initials(item.title);
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = item.title;
+        card.append(cover, title);
+        if (item.category) { const c = document.createElement('span'); c.className = 'cat'; c.textContent = item.category; card.append(c); }
+        if (item.note) { const n = document.createElement('p'); n.className = 'note'; n.textContent = item.note; card.append(n); }
+        grid.append(card);
+      }
+      state.append(grid);
+    } catch (error) {
+      quiet(error.message);
+    }
+  })();
+})();
+</script>
+</body>
+</html>

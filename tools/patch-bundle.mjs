@@ -564,6 +564,7 @@ const ASSETS = [
   { file: 'yomu-shelf.css', tag: '<link rel="stylesheet" href="/yomu-shelf.css">' },
   { file: 'yomu-companion.css', tag: '<link rel="stylesheet" href="/yomu-companion.css">' },
   { file: 'yomu-discovery.css', tag: '<link rel="stylesheet" href="/yomu-discovery.css">' },
+  { file: 'yomu-social.css', tag: '<link rel="stylesheet" href="/yomu-social.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
@@ -606,6 +607,10 @@ const ASSETS = [
   { file: 'yomu-roulette.js', tag: '<script src="/yomu-roulette.js" defer></scr' + 'ipt>' },
   { file: 'yomu-bingo.js', tag: '<script src="/yomu-bingo.js" defer></scr' + 'ipt>' },
   { file: 'yomu-capsule.js', tag: '<script src="/yomu-capsule.js" defer></scr' + 'ipt>' },
+  /* The social update. All three read what yomu-circle.js already fetched. */
+  { file: 'yomu-race.js', tag: '<script src="/yomu-race.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-heat.js', tag: '<script src="/yomu-heat.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-shelfshare.js', tag: '<script src="/yomu-shelfshare.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */
@@ -626,7 +631,8 @@ const ASSETS = [
 // That applies to the scripts, not the stylesheets -- skipping the page
 // wholesale left the first screen a new reader ever sees as the only
 // unskinned one in the app. These pages get the CSS and the fonts, no JS.
-const SCRIPT_FREE_PAGES = new Set(['start.html']);
+// shelf.html is for someone who does not have Yomu: styles, no companion.
+const SCRIPT_FREE_PAGES = new Set(['start.html', 'shelf.html']);
 const isScript = (a) => a.tag.includes('<script');
 
 for (const { file: assetFile } of ASSETS) {
