@@ -13,6 +13,8 @@
  *   G8  offline / PWA            caches are versioned, bounded, and not the
  *                                app's to delete
  *   G11 content safety           no open proxy, no unescaped injection
+ *   U14 accessibility            secondary text clears WCAG AA in every
+ *                                palette, not only the one anybody looked at
  *
  *   node tools/gauntlet.mjs                     # against a local wrangler dev
  *   node tools/gauntlet.mjs https://yomu...     # against a deployment
@@ -153,10 +155,79 @@ async function g11() {
     /escapeAttr\(/.test(meta) && /replace\(\/"\/g, '&quot;'\)/.test(meta));
 }
 
+/* --- U14: contrast, in every palette and both modes ---------------------- *
+ *
+ * `--faint` is the app's secondary text -- the reason under a rail, the hint
+ * under an accordion heading, the "of 100" under a progress bar. It cleared
+ * AA on Aurora, which is the palette anybody looks at while building, and
+ * failed on all five of the others: 2.37:1 on Scanlation against a 4.5:1
+ * requirement. A token is one value read by a hundred places, so this is
+ * checked at the token rather than per component.
+ */
+
+const relativeLuminance = (rgb) => {
+  const [r, g, b] = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+const contrast = (a, b) => {
+  const hi = Math.max(relativeLuminance(a), relativeLuminance(b));
+  const lo = Math.min(relativeLuminance(a), relativeLuminance(b));
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+const hexToRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+/** Every ground/ink pair the app can actually be wearing. */
+function palettes() {
+  const skin = fs.readFileSync(path.join(ROOT, 'dist-app/yomu-skin.css'), 'utf8');
+  const skins = fs.readFileSync(path.join(ROOT, 'dist-app/yomu-skins.css'), 'utf8');
+  const grab = (src, name) => (src.match(new RegExp(`${name}:\\s*(#[0-9a-f]{6})`, 'i')) || [])[1];
+
+  const rows = [
+    { name: 'base/paper', bg: grab(skin, '--pa-bg'), inks: { faint: grab(skin, '--pa-faint'), dim: grab(skin, '--pa-dim'), muted: grab(skin, '--pa-muted') } },
+    { name: 'base/aurora', bg: grab(skin, '--au-bg'), inks: { faint: grab(skin, '--au-faint'), dim: grab(skin, '--au-dim'), muted: grab(skin, '--au-muted') } },
+  ];
+  for (const id of ['autumn', 'midnight', 'neon', 'scanlation', 'gilt']) {
+    const after = skins.split(`[data-yomu-skin='${id}']`)[1];
+    if (!after) continue;
+    const body = after.slice(0, after.indexOf('}'));
+    for (const [prefix, mode] of [['pa', 'paper'], ['au', 'aurora']]) {
+      const bg = grab(body, `--${prefix}-bg`);
+      if (!bg) continue;
+      rows.push({
+        name: `${id}/${mode}`,
+        bg,
+        inks: {
+          faint: grab(body, `--${prefix}-faint`),
+          dim: grab(body, `--${prefix}-dim`),
+          muted: grab(body, `--${prefix}-muted`),
+        },
+      });
+    }
+  }
+  return rows;
+}
+
+async function u14() {
+  for (const palette of palettes()) {
+    if (!palette.bg) { check('U14', `${palette.name} declares a ground`, false); continue; }
+    for (const [role, ink] of Object.entries(palette.inks)) {
+      if (!ink) continue;
+      const ratio = contrast(hexToRgb(ink), hexToRgb(palette.bg));
+      check('U14', `${palette.name} ${role} clears AA`, ratio >= 4.5,
+        `${ink} on ${palette.bg} is ${ratio.toFixed(2)}:1, needs 4.5`);
+    }
+  }
+}
+
 /* --- run ----------------------------------------------------------------- */
 
-const only = process.argv.slice(3).filter((a) => /^G\d+$/i.test(a)).map((a) => a.toUpperCase());
-const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G11: g11 };
+const only = process.argv.slice(3).filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
+const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G11: g11, U14: u14 };
 
 console.log(`\nYomu engineering gauntlet — ${BASE}\n`);
 for (const [name, fn] of Object.entries(gates)) {
