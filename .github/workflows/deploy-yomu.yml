@@ -43,6 +43,11 @@ jobs:
           tags = [
               '<script src="/source-auto-switch.js" defer></script>',
               '<script src="/community-pack-top.js" defer></script>',
+              '<link rel="stylesheet" href="/yomu-controls-base.css">',
+              '<link rel="stylesheet" href="/yomu-controls-components.css">',
+              '<link rel="stylesheet" href="/yomu-hero-plus.css">',
+              '<script src="/yomu-controls.js" defer></script>',
+              '<script src="/yomu-hero-plus.js" defer></script>',
           ]
           changed = 0
           for path in Path('dist-app').rglob('*.html'):
@@ -106,9 +111,15 @@ jobs:
           grep -q 'community-pack-compact.js' /tmp/yomu-sources.html
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
+          grep -q 'yomu-controls.js' /tmp/yomu-sources.html
+          grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
           curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-compact.js > /tmp/community-pack-compact.js
           grep -q 'Community Pack source' /tmp/community-pack-compact.js
           curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-auto-switch.js > /tmp/source-auto-switch.js
           grep -q 'Find another source' /tmp/source-auto-switch.js
           curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-top.js > /tmp/community-pack-top.js
           grep -q 'yomu-community-pack-top' /tmp/community-pack-top.js
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js > /tmp/yomu-controls.js
+          grep -q 'yomu.v1.controls' /tmp/yomu-controls.js
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js > /tmp/yomu-hero-plus.js
+          grep -q 'Highest rated' /tmp/yomu-hero-plus.js
