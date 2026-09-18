@@ -19,7 +19,8 @@
   margin-left: 6px;
   line-height: 0;
 }
-.yomu-greet__badge .yb { display: inline-block; width: 18px; height: 18px; }
+.yomu-greet__badge .yb, .yomu-greet__badge .yba { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; }
+.yomu-greet__badge .yba img, .yomu-cmt__badge .yba img, .yp-title .yba img { filter: none; }
 
 /* --- the painted badges ------------------------------------------------- *
  * A square with the 256px painting inside and a tier chip on the corner.
@@ -208,7 +209,8 @@
 
 /* The badge on a comment's name. */
 .yomu-cmt__badge { display: inline-block; vertical-align: -3px; margin-left: 4px; line-height: 0; }
-.yomu-cmt__badge .yb { width: 14px; height: 14px; }
+.yomu-cmt__badge .yb, .yomu-cmt__badge .yba { width: 16px; height: 16px; border-radius: 3px; }
+.yp-title .yba { width: 22px; height: 22px; border-radius: 4px; vertical-align: -5px; }
 
 /* --- the unread dot on a series card ------------------------------------ */
 

@@ -167,7 +167,10 @@
    * same picture, greyed.
    */
   const ART_BASE = '/brand/badges/';
+  /* The painted family badges go muddy below about 40px. The milestone set
+     was drawn to read at 32px and does, so it goes down to the masthead. */
   const ART_MIN = 40;
+  const MILESTONE_ART_MIN = 16;
 
   /* The nineteen milestone badges have casual-game art of their own
      (yomu-badges-casual-v2), one picture each with the progression drawn
@@ -222,7 +225,9 @@
     if (!parts || !family(parts.slug) || !window.YomuBadges) return null;
     const o = opts || {};
     const size = Number(o.size) || 0;
-    if (o.art !== false && o.variant !== 'micro' && size >= ART_MIN && artFor(parts.slug)) {
+    const min = parts.milestone ? MILESTONE_ART_MIN : ART_MIN;
+    const small = !parts.milestone && o.variant === 'micro';
+    if (o.art !== false && !small && size >= min && artFor(parts.slug)) {
       return artEl(parts, o);
     }
     return window.YomuBadges.el(parts.slug, parts.tier, o);
@@ -244,7 +249,7 @@
     if (!id) { existing?.remove(); return; }
     if (existing && existing.dataset.badgeId === id) return;
     existing?.remove();
-    const badge = el(id, { variant: 'micro', size: 18 });
+    const badge = el(id, { variant: 'micro', size: 20 });
     if (!badge) return;
     const wrap = document.createElement('span');
     wrap.className = MAST_CLASS;

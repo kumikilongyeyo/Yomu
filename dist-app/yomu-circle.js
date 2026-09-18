@@ -411,7 +411,7 @@
     // not. Micro, and inside the name so a long thread stays one line per
     // head.
     if (comment.badge && window.YomuShelf?.el) {
-      const mark = window.YomuShelf.el(comment.badge, { variant: 'micro', size: 14 });
+      const mark = window.YomuShelf.el(comment.badge, { variant: 'micro', size: 16 });
       if (mark) {
         const wrap = document.createElement('span');
         wrap.className = 'yomu-cmt__badge';
