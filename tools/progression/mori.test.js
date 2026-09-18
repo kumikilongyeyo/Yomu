@@ -66,7 +66,9 @@ test('history and context from the client are rebuilt, not trusted', () => {
 
 test('the tool is strict and answers from the catalogue', () => {
   assert.match(MORI_TS, /strict: true/, 'tool arguments are schema-validated');
-  assert.match(MORI_TS, /relatedFor\(/, 'find_similar reads Yomu\'s own catalogue');
+  /* Through the recommendation engine, which is cached and vote-weighted --
+     not the model's memory, and not the old tag-overlap route. */
+  assert.match(MORI_TS, /handleSimilar\(/, 'find_similar reads Yomu\'s own catalogue');
   assert.match(MORI_TS, /additionalProperties: false/);
 });
 

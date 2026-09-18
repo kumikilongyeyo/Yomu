@@ -233,10 +233,10 @@
 
     try {
       const params = new URLSearchParams({ title });
-      const response = await fetch('/api/catalog/related?' + params.toString());
+      const response = await fetch('/api/catalog/similar?' + params.toString());
       if (!response.ok) throw new Error('catalogue');
       const data = await response.json();
-      const rows = [...(data.related || []), ...(data.similar || [])].slice(0, 3);
+      const rows = (data.picks || []).slice(0, 3);
       if (!rows.length) {
         window.YomuPet.release();
         window.YomuPet.say('Nothing close to ' + title + ' in the catalogue today.', 5200);
@@ -246,7 +246,7 @@
          'happy' ranks below 'thinking' and would otherwise be refused. */
       window.YomuPet.release();
       window.YomuPet.setState('happy', 2000);
-      showPicks(title, rows, data.similarBecause || []);
+      showPicks(data.matched || title, rows, data.because || []);
     } catch {
       window.YomuPet.release();
       window.YomuPet.say('I could not reach the shelf just now.', 4200);
@@ -279,9 +279,12 @@
       const item = el('button', 'ym-item');
       item.type = 'button';
       item.append(el('span', 'ym-item__label', row.title));
-      if (row.year || row.status) {
-        item.append(el('span', 'ym-item__hint', [row.year, row.status].filter(Boolean).join(' · ')));
-      }
+      /* The vote count is the recommendation's evidence, so it is on screen
+         rather than only in the model's head. */
+      const hint = row.votes
+        ? row.votes.toLocaleString() + (row.votes === 1 ? ' reader' : ' readers')
+        : [row.year, row.status].filter(Boolean).join(' · ');
+      if (hint) item.append(el('span', 'ym-item__hint', hint));
       item.addEventListener('click', () => {
         close();
         /* Search rather than a direct link: the related rows are MangaDex

@@ -25,7 +25,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import type { Env } from './index';
-import { relatedFor } from './related';
+import { handleSimilar } from './similar';
 
 /* The model is a constant and not a request parameter on purpose: the caller
    is a public web page, and letting it name a model lets it name an
@@ -66,7 +66,7 @@ Who you are: warm, brief, and a little dry. You live in a small speech bubble, s
 
 What you do: talk about what the reader is reading, help them decide what to read next, and answer questions about series, genres and tropes.
 
-Recommending: call find_similar to get real titles from Yomu's own catalogue, and recommend from what it returns. Do not recommend a title from memory -- if it is not in Yomu, the reader cannot open it, and a name they cannot tap is worse than no answer. If the tool gives you nothing useful, say so plainly and ask what they are in the mood for.
+Recommending: call find_similar and recommend from what it returns. Each pick carries a vote count -- how many readers of that series suggested it -- so prefer the ones with real weight behind them, and you may say so ("a lot of Solo Leveling readers go to this next"). Never quote the raw number as a statistic. Do not recommend a title from memory -- if it is not in Yomu, the reader cannot open it, and a name they cannot tap is worse than no answer. If the tool gives you nothing useful, say so plainly and ask what they are in the mood for.
 
 Naming: when you recommend something, name it once and say in a few words why it fits what they already read. No synopses.
 
@@ -79,7 +79,7 @@ const TOOLS: Anthropic.Tool[] = [
     name: 'find_similar',
     description:
       "Find series in Yomu's catalogue similar to a title the reader knows, or that match a theme. "
-      + 'Returns real titles that can be opened in the app, plus the tags the match was made on. '
+      + 'Returns real titles readers of that series voted for, each with a vote count, plus the tags the match was made on. '
       + 'Call this before recommending anything.',
     input_schema: {
       type: 'object',
@@ -98,16 +98,27 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-/** The tool, answered from Yomu's own catalogue rather than the model's memory. */
-async function findSimilar(title: string, origin: string): Promise<string> {
+/**
+ * The tool, answered by the recommendation engine rather than the model's
+ * memory.
+ *
+ * Goes through the same cached route the menu uses, so a model call and a tap
+ * on "What should I read?" cannot disagree, and the second of them is free.
+ * The vote counts are handed to the model deliberately: "1,387 readers" is
+ * the difference between a recommendation it can stand behind and a list.
+ */
+async function findSimilar(title: string, env: Env, origin: string): Promise<string> {
   try {
-    const answer = await relatedFor({ id: '', source: '', title, adult: false, origin });
-    const rows = [...(answer.related ?? []), ...(answer.similar ?? [])].slice(0, 12);
-    if (!rows.length) return JSON.stringify({ found: 0, note: 'Nothing in the catalogue matched that title.' });
+    const url = new URL(`${origin}/api/catalog/similar?title=${encodeURIComponent(title)}`);
+    const response = await handleSimilar(new Request(url.toString()), env, url);
+    const answer: any = await response.json();
+    if (!answer?.picks?.length) {
+      return JSON.stringify({ found: 0, note: 'Nothing in the catalogue matched that title.' });
+    }
     return JSON.stringify({
-      matched: answer.matched?.title ?? title,
-      because: answer.similarBecause ?? [],
-      titles: rows.map((r) => r.title),
+      matched: answer.matched ?? title,
+      tags: (answer.tags ?? []).slice(0, 6),
+      picks: answer.picks.slice(0, 8),
     });
   } catch (error: any) {
     /* An error is returned to the model as a result, not thrown: the
@@ -252,7 +263,7 @@ export async function handleMori(request: Request, env: Env, url: URL): Promise<
         results.push({
           type: 'tool_result',
           tool_use_id: use.id,
-          content: await findSimilar(String(input?.title ?? ''), url.origin),
+          content: await findSimilar(String(input?.title ?? ''), env, url.origin),
         });
       }
       messages.push({ role: 'user', content: results });

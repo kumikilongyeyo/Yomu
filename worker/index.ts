@@ -19,6 +19,7 @@ import {
 } from './providers/suwayomi';
 import { handleCatalog, handleExtensions } from './routes-extensions';
 import { handleMori } from './mori';
+import { handleSimilar } from './similar';
 import { handleSync } from './routes-sync';
 import { handleCircle } from './routes-circle';
 
@@ -368,6 +369,7 @@ export default {
 
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
+    if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);
     if (url.pathname.startsWith('/api/catalog/')) return handleCatalog(request, env, url);
     if (url.pathname.startsWith('/api/mori/')) return handleMori(request, env, url);
     if (url.pathname.startsWith('/api/suwayomi/')) return handleSuwayomi(request, env, url);

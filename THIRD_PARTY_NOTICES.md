@@ -58,6 +58,42 @@ dialogue behaviour depends on it.
 `yomu-mark.svg` and the palettes in `yomu-skin.css`. No third-party licence
 applies. Listed here only so the inventory is complete.
 
+### Recommendations — AniList
+
+| | |
+|---|---|
+| Service | [AniList](https://anilist.co) GraphQL API, `https://graphql.anilist.co` |
+| Docs | [AniList/docs](https://github.com/AniList/docs) |
+| What we use | Manga search, ranked tags, and community recommendations |
+| What we ship | No code and no data. Answers are fetched at request time. |
+
+`worker/similar.ts` queries AniList for what readers of a series recommend
+next. The value is not an algorithm — it is that AniList's users have voted on
+"if you liked X, read Y", so a recommendation arrives with a count behind it
+(Solo Leveling → Omniscient Reader is 1,387 readers). That is a body of human
+judgement Yomu does not have to build, which is the whole reason to use it
+rather than write a recommender.
+
+No API key, no account, and no data is stored: answers are cached for a day in
+Cloudflare's edge cache and nothing is persisted. AniList allows 30 requests a
+minute **per IP**, and a Worker egresses from one shared address for every
+reader at once, which is why the cache is load-bearing rather than an
+optimisation.
+
+Titles and vote counts are displayed as AniList returns them, attributed on
+screen as reader votes. If Yomu ever needs a stronger guarantee than "a public
+API that is up today", the fallback path below is the floor.
+
+**Fallback:** a miss or an outage falls through to the existing MangaDex
+tag-overlap route, so the worst case is the recommendation quality Yomu had
+before this.
+
+**Considered and not used:** [jikan-me/jikan](https://github.com/jikan-me/jikan)
+(MIT), the unofficial MyAnimeList API. It has the same kind of community
+recommendation data, but it is a proxy in front of MAL and returned
+`504 — MyAnimeList may be down` when tested on 2026-09-18. A recommendation
+feature should not inherit two upstreams' uptime when one will do.
+
 ---
 
 ## Read, not shipped
