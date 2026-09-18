@@ -2,8 +2,8 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 7,
-  "updatedAt": "2026-09-16",
+  "version": 8,
+  "updatedAt": "2026-09-18",
   "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it. Browser-only discoveries are not promoted into this installable pack.",
   "sources": [
     {
@@ -113,6 +113,26 @@
     {
       "url": "https://tapas.io/",
       "tags": ["webtoon", "western-comics", "indie", "official", "mixed-access", "github-recipe"]
+    },
+    {
+      "url": "https://xoxocomic.com/",
+      "tags": ["western-comics", "marvel", "dc", "general", "github-recipe"]
+    },
+    {
+      "url": "https://readallcomics.com/",
+      "tags": ["western-comics", "marvel", "dc", "older-titles", "github-recipe"]
+    },
+    {
+      "url": "https://readcomiconline.li/",
+      "tags": ["western-comics", "marvel", "dc", "mihon", "suwayomi-required"]
+    },
+    {
+      "url": "https://comicextra.me/",
+      "tags": ["western-comics", "marvel", "dc", "older-titles", "github-recipe"]
+    },
+    {
+      "url": "https://viewcomics.co/",
+      "tags": ["western-comics", "marvel", "dc", "general", "github-recipe"]
     }
   ]
 }
