@@ -22,6 +22,7 @@ import { handleSimilar } from './similar';
 import { handleSync } from './routes-sync';
 import { handleCircle } from './routes-circle';
 import { handleShelf } from './routes-shelf';
+import { handleTitle } from './title';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -370,6 +371,11 @@ export default {
       // 307 to /shelf, and a rewrite that redirects is not a rewrite.
       return env.ASSETS.fetch(new Request(new URL('/shelf', url.origin).href, request));
     }
+    /* A book's own address, resolved to whoever can serve it. This is what
+       every title card points at, so it has to answer before any script runs
+       -- see worker/title.ts. Above the asset handoff because there is no
+       file by that name and the SPA fallback would otherwise swallow it. */
+    if (url.pathname.startsWith('/title/')) return handleTitle(request, env, url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);

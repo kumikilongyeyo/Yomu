@@ -199,6 +199,37 @@
   const href = (seriesId, sourceId) =>
     '/series/' + encodeURIComponent(seriesId) + '?source=' + encodeURIComponent(sourceId);
 
+  /* --- the address a title has before any of this runs --------------------- *
+   *
+   * A href cannot be made correct by intercepting the click on it. The first
+   * version pointed every rail card at `/search?q=` and swapped in the series
+   * screen from a click handler, which worked for a plain left click and for
+   * nothing else: cmd-click, middle-click, "copy link address", a shared URL,
+   * a bookmark and a restored session all followed the href into Search.
+   *
+   * `/title/<slug>?q=<name>&al=<anilistId>` is answered by the Worker
+   * (worker/title.ts), which resolves it and 302s to the series screen. The
+   * slug is decoration so a pasted link says what it is; `q` carries the exact
+   * name, because the slug has already lost its punctuation.
+   */
+
+  const slugify = (name) => String(name || '')
+    .toLowerCase()
+    .replace(/['\u2019]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+
+  function canonicalHref(item) {
+    const name = String(item?.title || '').trim();
+    if (!name) return '/';
+    const id = Number(item?.anilistId ?? (item?.source === 'anilist' ? item?.id : null)) || null;
+    const slug = slugify(name) || 'title';
+    const query = new URLSearchParams({ q: name });
+    if (id) query.set('al', String(id));
+    return '/title/' + slug + '?' + query.toString();
+  }
+
   /* --- remembering --------------------------------------------------------- */
 
   const keyOf = (item) =>
@@ -304,9 +335,11 @@
    */
   async function open(item, opts) {
     const found = await resolve(item);
-    const to = found
-      ? href(found.seriesId, found.sourceId)
-      : '/search?q=' + encodeURIComponent(String(item?.title || ''));
+    /* Unresolved goes to the canonical route rather than straight to Search:
+       the Worker gets its own attempt with the whole catalog behind it, and
+       falls through to Search itself if that fails too. One destination, one
+       fallback, decided in one place. */
+    const to = found ? href(found.seriesId, found.sourceId) : canonicalHref(item);
     if (opts?.dryRun) return to;
     location.href = to;
     return to;
@@ -319,7 +352,11 @@
    */
   function bind(node, item, onClick) {
     if (!node) return node;
-    node.href = '/search?q=' + encodeURIComponent(String(item?.title || ''));
+    /* Valid before JavaScript, and identical for every way of following a
+       link. The handler below is a shortcut, not the thing that makes it
+       work: it knows which sources this device has enabled, which the Worker
+       cannot, so a plain click skips a round trip. */
+    node.href = canonicalHref(item);
     node.addEventListener('click', (event) => {
       /* Leave the modified clicks to the browser -- they are how someone
          opens a second tab on purpose. */
@@ -334,14 +371,14 @@
   }
 
   const api = {
-    appSourceId, pick, match, href, resolve, open, bind, learnCapabilities, enabledSourceIds,
+    appSourceId, pick, match, href, canonicalHref, slugify, resolve, open, bind, learnCapabilities, enabledSourceIds,
     /** What the router currently believes, and where it learnt it. */
     capabilities: () => (caps ? { blind: [...caps.blind], readable: [...caps.readable], source: caps.source } : null),
     BAKED_BLIND, NATIVE_READABLE,
   };
   if (typeof window !== 'undefined') window.YomuOpenTitle = api;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { appSourceId, pick, match, href, BAKED_BLIND, NATIVE_READABLE };
+    module.exports = { appSourceId, pick, match, href, canonicalHref, slugify, BAKED_BLIND, NATIVE_READABLE };
   }
 
   /* Warm the capability list once the page is quiet, so the first click is
