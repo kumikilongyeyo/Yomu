@@ -232,10 +232,11 @@
     window.YomuPet.say('Looking at your shelf…', 12000);
 
     try {
-      const params = new URLSearchParams({ title });
-      const response = await fetch('/api/catalog/similar?' + params.toString());
-      if (!response.ok) throw new Error('catalogue');
-      const data = await response.json();
+      /* From this browser, not the Worker: AniList blocks datacentre egress
+         outright (403, "manually blocked"), so the server can never be the
+         one to ask. YomuAniList falls through to the Worker's MangaDex floor
+         on its own if this browser cannot reach it either. */
+      const data = (await window.YomuAniList?.similar?.(title)) || {};
       const rows = (data.picks || []).slice(0, 3);
       if (!rows.length) {
         window.YomuPet.release();

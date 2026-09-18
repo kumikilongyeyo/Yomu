@@ -76,11 +76,28 @@ test('input is bounded', () => {
 const MORI_TS = fs.readFileSync(new URL('../../worker/mori.ts', import.meta.url), 'utf8');
 const MORI_JS = fs.readFileSync(new URL('../../dist-app/yomu-mori.js', import.meta.url), 'utf8');
 
-test('the chat tool and the tap menu use the same engine', () => {
+const ANILIST_JS = fs.readFileSync(new URL('../../dist-app/yomu-anilist.js', import.meta.url), 'utf8');
+
+test('the browser asks AniList directly, because the Worker cannot', () => {
+  /* AniList answers a Cloudflare Worker with 403 "You have been manually
+     blocked" -- it blocks datacentre egress, and no amount of caching or
+     backoff changes a manual block. The reader's own IP is not blocked and
+     AniList sends access-control-allow-origin: *, so the page asks. */
+  assert.match(ANILIST_JS, /graphql\.anilist\.co/, 'the client calls AniList');
+  assert.match(MORI_JS, /YomuAniList\?\.similar/, 'the menu goes through it');
+  assert.ok(!/graphql\.anilist\.co/.test(MORI_JS), 'the menu does not call it directly');
+});
+
+test('the browser client falls through to the Worker floor', () => {
+  assert.match(ANILIST_JS, /\/api\/catalog\/similar/, 'a blocked browser still gets an answer');
+  assert.match(ANILIST_JS, /localStorage|CACHE_KEY/, 'answers are cached on the device');
+});
+
+test('the chat tool keeps a server-side path of its own', () => {
+  /* The tool runs mid-request on the Worker and cannot borrow the browser's
+     IP, so it uses the cached route -- which now means MangaDex in practice.
+     Worth knowing: chat recommendations are weaker than the menu's. */
   assert.match(MORI_TS, /handleSimilar/, 'the tool goes through the cached route');
-  assert.match(MORI_JS, /\/api\/catalog\/similar/, 'the menu does too');
-  /* Two paths to one answer means a model call and a tap cannot disagree,
-     and the second of them is free. */
   assert.ok(!/api\/catalog\/related/.test(MORI_TS), 'the tool no longer uses the old route');
 });
 

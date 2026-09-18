@@ -579,6 +579,8 @@ const ASSETS = [
   { file: 'yomu-badges.js', tag: '<script src="/yomu-badges.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
+  /* Ahead of yomu-mori.js, which asks it for recommendations. */
+  { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* Last: it takes the pet's tap over, so the pet has to exist first. */
   { file: 'yomu-mori.js', tag: '<script src="/yomu-mori.js" defer></scr' + 'ipt>' },
   /* Last, so it overrides both the compiled palette and yomu-overrides.css on

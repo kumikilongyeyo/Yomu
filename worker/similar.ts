@@ -103,9 +103,20 @@ async function fromAniList(search: string): Promise<SimilarAnswer | null> {
     console.warn('[similar] anilist rate limited');
     return null;
   }
-  if (!response.ok) return null;
+  /* Distinguish the three ways this comes back empty. They have completely
+     different fixes -- an HTTP status is us being blocked, a GraphQL error is
+     a bad query, and a null Media is simply a title AniList does not index --
+     and a single "had nothing" log cannot tell them apart. */
+  if (!response.ok) {
+    console.warn('[similar] anilist http', response.status, (await response.text()).slice(0, 200));
+    return null;
+  }
 
   const data: any = await response.json().catch(() => null);
+  if (data?.errors?.length) {
+    console.warn('[similar] anilist graphql', JSON.stringify(data.errors).slice(0, 200));
+    return null;
+  }
   const media = data?.data?.Media;
   if (!media) return null;
 
