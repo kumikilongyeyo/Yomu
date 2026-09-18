@@ -133,7 +133,18 @@ Automated (`npm run gauntlet`), so they run on every change:
 | G11 | image proxy refuses link-local and `file:`, metadata is escaped |
 | U14 | faint/dim/muted clear AA against every palette's own ground |
 
-Still manual, and required before a merge to `main`:
+Run once, by hand, against this branch on a desktop browser:
+
+| Gate | Result |
+|---|---|
+| G12 regression sweep, six primary routes | pass — 200, bootstrap present, zoom allowed, no late theme |
+| U8 typography / zoom | pass — `user-scalable=no` gone from all 24 pages |
+| U9 touch and keyboard targets | partial — no nav target under 40px; tab order and screen reader not checked |
+| U10 motion | pass — 31 reduced-motion blocks cover 9 looping rules |
+| U13 density at 320px | pass — no horizontal overflow, presets and chapter-end card fit |
+| U14 contrast | pass, after `ad2724b` |
+
+Still not run, and required before a merge to `main`:
 
 - **G4** capability API timeout / malformed / provider failure against a live
   bridge. The unit tests cover the decision; the network shapes are not faked.
@@ -142,8 +153,14 @@ Still manual, and required before a merge to `main`:
 - **G7** storage: fresh user, established user, malformed values, quota.
 - **G9** source switching with a dead preferred source.
 - **G10** performance against a baseline with realistic title counts.
-- **G12** regression sweep across all primary routes.
-- The whole **UI/UX gauntlet** (U0–U15) and the browser/device matrix.
+- **U0–U7, U11, U12, U15** — the judgement gates: first impression,
+  hierarchy, navigation, discovery, series, reader focus, chapter end, error
+  copy, brand consistency and the polish sweep. These are review, not
+  measurement, and want eyes.
+- The **browser/device matrix** in full. Everything above was Chromium at
+  desktop, 375px and 320px. Safari, Firefox, a real iPhone and a real Android
+  are untested, and the audit names Safari specifically for storage, PWA and
+  theme behaviour.
 
 ---
 
@@ -158,8 +175,9 @@ Per the audit's release matrix, this branch is **not ready to merge**:
   because Phase 2 is deferred. ⚠️
 - Accessibility: zoom restored, contrast now passes AA in every palette,
   touch targets checked. Keyboard and screen-reader passes are not done. ⚠️
-- UI/UX gauntlet: not run. ❌
-- Browser/device matrix: not run. ❌
+- UI/UX gauntlet: the measurable gates pass; the judgement gates (U0–U7, U11,
+  U12, U15) are not run. ❌
+- Browser/device matrix: Chromium only, at three widths. ❌
 
-The remaining blockers are the ones that need a person on a device, not more
-code.
+The remaining blockers are the ones that need a person, a real device, or
+both — not more code.
