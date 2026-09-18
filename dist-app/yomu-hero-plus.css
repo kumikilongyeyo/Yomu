@@ -24,9 +24,18 @@
   margin-left: 2px;
 }
 
-/* Keep the rating beside actions, not up in the tile-tag stack. */
+/* Keep the rating beside actions, not up in the tile-tag stack.
+
+   `relative`, not `static`: a glass chip paints itself with an absolutely
+   positioned ::after at inset 0, so it has to be that layer's containing
+   block. Static handed the job to the hero slide instead, and the chip's
+   amber glow inflated to the width of the copy column -- the big pink ellipse
+   over the title -- while the chip itself was left as bare "* 9.2" text.
+   With no offsets set, relative lays out identically to static, so the
+   placement this rule exists for is unchanged; `inset: auto` below still
+   defeats the tile-tag corner rules. */
 .hero__acts .yomu-hero__rating {
-  position: static !important;
+  position: relative !important;
   inset: auto !important;
   max-width: none !important;
 }
