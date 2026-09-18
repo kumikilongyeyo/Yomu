@@ -304,6 +304,8 @@
 
   const pet = { node: null, state: 'idle', frame: 0, at: 0 };
   let revertTimer = 0;
+  /** Set by yomu-mori.js. Returning true means it handled the tap. */
+  let onTap = null;
 
   /**
    * @param hold ms to stay in this state before falling back to idle.
@@ -330,6 +332,24 @@
         start();
       }, hold);
     }
+    start();
+  }
+
+  /**
+   * End the current hold and drop back to idle.
+   *
+   * `setState` deliberately refuses a lower-priority state while a hold is
+   * running, which is what stops an idle wander cutting a celebration short.
+   * That same rule traps a *busy* state: `thinking` is held for as long as a
+   * lookup might take, and the lookup finishing is not a lower-priority
+   * interruption -- it is the hold being over. Without this the pet reads as
+   * permanently thinking after the first search.
+   */
+  function release() {
+    clearTimeout(revertTimer);
+    revertTimer = 0;
+    pet.state = 'idle';
+    pet.frame = 0;
     start();
   }
 
@@ -446,6 +466,11 @@
     button.addEventListener('click', () => {
       if (dragged) return;
       setState('happy', 1600);
+      /* yomu-mori.js takes the tap over when it is loaded, because a tap that
+         opens a menu and a tap that says a line are the same gesture and only
+         one of them can win. Without it the tap still does something, which
+         is what keeps the pet useful on a deployment that has no menu. */
+      if (onTap && onTap() === true) return;
       const line = window.YomuGreetings?.line?.('tap');
       if (line) say(line);
     });
@@ -670,8 +695,13 @@
       return true;
     },
     say,
+    hush,
+    /** The tap seam, and where a menu anchors itself. */
+    onTap: (fn) => { onTap = fn; },
+    root: () => document.getElementById(ROOT_ID),
     state: () => pet.state,
     setState,
+    release,
     surface,
     policy,
     /** A sprite the You page and the picker can own, sharing the one loop. */
@@ -713,7 +743,21 @@
     /* React discards nodes it does not own, so the mount is re-asserted --
        but only the existence of the root, never its position, which the
        person may have dragged and another observer must not fight over. */
+    /* Anything anchored to the pet -- the tap menu, the picks panel, the
+       chat -- has to know when the pet moves or leaves, and this file is
+       already the one wrapping pushState. A third wrapper in a third file
+       would be the same bug waiting to happen, so the surface change is
+       announced once, here. */
+    let announced = surface();
+    const announce = () => {
+      const now = surface();
+      if (now === announced) return;
+      announced = now;
+      dispatchEvent(new CustomEvent('yomu:pet-surface', { detail: { surface: now } }));
+    };
+
     const settle = () => {
+      announce();
       if (!prefs.enabled || !policy().visible) {
         document.getElementById(ROOT_ID)?.remove();
         players.delete(pet);
