@@ -74,6 +74,11 @@
       em: '<path d="M34 26 v50"/><path d="M34 28 h34 v24 h-34 z"/>' +
           '<path class="k" d="M34 28 h8.5 v8 h-8.5 z M51 28 h8.5 v8 h-8.5 z M42.5 36 h8.5 v8 h-8.5 z M59.5 36 h8.5 v8 h-8.5 z M34 44 h8.5 v8 h-8.5 z M51 44 h8.5 v8 h-8.5 z"/>',
     },
+    'streak-month-sticker': {
+      title: 'Month of Pages', tone: 'gold', hint: 'Thirty days reading in a row',
+      em: '<path class="k" d="M50 26 c4 10 14 14 14 28 a14 14 0 0 1 -28 0 c0 -8 5 -12 7 -18 c2 5 5 7 7 7 c-1 -6 -2 -11 0 -17 z"/>' +
+          '<path class="p" d="M50 52 c3 4 6 7 6 11 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -11 z"/>',
+    },
     'three-shores-sticker': {
       title: 'Three Shores', tone: 'mint', hint: 'A title each from Korea, Japan and China',
       em: '<path d="M26 40 q6 -7 12 0 t12 0 t12 0 t12 0"/>' +

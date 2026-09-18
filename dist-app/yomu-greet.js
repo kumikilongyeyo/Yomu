@@ -165,6 +165,30 @@
       'Fifty chapters and here I am. Good shelf.',
       'Hatched. Now show me what you were reading.',
     ],
+    /* Days without a chapter. {days} is how many. Never a scold. */
+    missed: [
+      '{days} days. I kept your page warm.',
+      'You were gone {days} days. Nothing moved.',
+      '{days} days off. The shelf is patient.',
+    ],
+    /* A saved title on Home just grew a chapter. {title} is its name. */
+    fresh: [
+      '{title} has a new one.',
+      'New chapter of {title}. Just saying.',
+      '{title} moved. Thought you would want to know.',
+    ],
+    /* Chapters in one sitting. {count} is how many. */
+    binge: [
+      'Chapter {count} in a row. Mori suggests water.',
+      '{count} in a row. The cliffhangers are winning.',
+      'That is {count} straight. Blink occasionally.',
+      '{count} chapters this sitting. Respect.',
+    ],
+    binge_late: [
+      'Chapter {count} in a row, and it is late. Mori is not judging. Much.',
+      '{count} straight, past everyone\'s bedtime. Bold.',
+      '{count} in a row at this hour. One more is fine. Probably.',
+    ],
     /* A stage change. {stage} is the new stage's name. */
     evolve: [
       'I feel taller. New form, same shelf.',

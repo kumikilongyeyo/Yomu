@@ -81,6 +81,18 @@
       tier: 3, title: 'Three Shores', theme: 'Korea, Japan and China',
       em: '<path d="M28 42 q5.5 -6 11 0 t11 0 t11 0 t11 0"/><path class="a" d="M28 53 q5.5 -6 11 0 t11 0 t11 0 t11 0"/><path d="M28 64 q5.5 -6 11 0 t11 0 t11 0 t11 0"/>',
     },
+    'streak-week': {
+      tier: 2, title: 'Week of Pages', theme: 'Seven days running',
+      em: '<path d="M50 28 c5 10 14 14 14 27 a14 14 0 0 1 -28 0 c0 -8 5 -12 7 -18 c2 5 5 7 7 7 c-1 -6 -2 -10 0 -16 Z"/><path class="af" d="M50 52 c3 4 6 7 6 11 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -11 Z"/>',
+    },
+    'streak-month': {
+      tier: 4, title: 'Month of Pages', theme: 'Thirty days running',
+      em: '<path d="M50 26 c5 10 14 14 14 29 a14 14 0 0 1 -28 0 c0 -8 5 -12 7 -18 c2 5 5 7 7 7 c-1 -6 -2 -10 0 -18 Z"/><path class="af" d="M50 52 c3 4 6 7 6 11 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -11 Z"/><path class="a" d="M30 70 h40"/>',
+    },
+    'streak-hundred': {
+      tier: 5, title: 'Hundred Days', theme: 'A hundred days running',
+      em: '<path d="M50 24 c5 10 15 15 15 31 a15 15 0 0 1 -30 0 c0 -9 5 -13 7 -19 c2 5 5 7 7 7 c-1 -6 -2 -10 1 -19 Z"/><path class="af" d="M50 52 c3 4 6 7 6 11 a6 6 0 0 1 -12 0 c0 -4 3 -7 6 -11 Z"/><path class="a" d="M26 72 h48 M32 66 l4 -6 M68 66 l-4 -6"/>',
+    },
     'stage-fledgling': {
       tier: 1, title: 'Fledgling', theme: 'Mori, stage 2',
       em: '<path d="M50 30 c-12 0 -16 13 -16 21 a16 16 0 0 0 32 0 c0 -8 -4 -21 -16 -21 Z"/><path class="a" d="M45 44 l4 5 l-3 5 l4 5"/>',
@@ -221,10 +233,12 @@
           : badge.metric === 'petXp' ? state.petXp
           : badge.metric === 'sourcesUsed' ? state.sourcesUsed
           : badge.metric === 'titlesCompleted' ? state.titlesCompleted
-          : badge.metric === 'originsRead' ? (state.origins || []).length : 0;
+          : badge.metric === 'originsRead' ? (state.origins || []).length
+          : badge.metric === 'currentStreak' ? (P.streak ? P.streak().current : 0) : 0;
         const left = Math.max(0, badge.threshold - Math.floor(value));
         if (badge.metric === 'chaptersRead') how += ` · ${left} to go`;
         else if (badge.metric === 'petXp') how += ` · ${left} XP to go`;
+        else if (badge.metric === 'currentStreak') how += ` · ${left} more day${left === 1 ? '' : 's'}`;
       }
       rows.push({ id: badge.id, slug: parts.slug, tier: parts.tier, earned: badge.earned, kind: 'milestone', how });
     }

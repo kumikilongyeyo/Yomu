@@ -90,6 +90,10 @@
     seenChapters: 0,
     /** ISO day of the last chapter finished, for the streak. */
     lastReadDay: null,
+    /** The last thirty ISO days a chapter was finished on, newest last, so
+     *  a week strip can be drawn. History, not truth: the streak is
+     *  computed from lastReadDay and currentStreak, not from this list. */
+    readDays: [],
   };
 
   function load() {
@@ -266,6 +270,37 @@
       rewards: [{ type: 'badge', id: 'stage-familiar' }] },
     { id: 'stage-sage', metric: 'petXp', threshold: 1000, title: 'Sage', quiet: true,
       rewards: [{ type: 'badge', id: 'stage-sage' }] },
+
+    /* Streaks. Never punitive: a missed day resets the count and keeps the
+       best, and nothing here is taken back. The metric is the *live* streak
+       (see streak()), so a seven from last month does not pay today. */
+    {
+      id: 'streak-week',
+      metric: 'currentStreak',
+      threshold: 7,
+      title: 'Week of Pages',
+      how: 'Seven days reading in a row',
+      rewards: [{ type: 'badge', id: 'streak-week' }],
+    },
+    {
+      id: 'streak-month',
+      metric: 'currentStreak',
+      threshold: 30,
+      title: 'Month of Pages',
+      how: 'Thirty days in a row',
+      rewards: [
+        { type: 'badge', id: 'streak-month' },
+        { type: 'sticker', id: 'streak-month-sticker' },
+      ],
+    },
+    {
+      id: 'streak-hundred',
+      metric: 'currentStreak',
+      threshold: 100,
+      title: 'Hundred Days',
+      how: 'A hundred days in a row',
+      rewards: [{ type: 'badge', id: 'streak-hundred' }],
+    },
   ];
 
   /**
@@ -510,6 +545,37 @@
     patch.lastReadDay = day;
     patch.currentStreak = streak;
     patch.longestStreak = Math.max(store.longestStreak, streak);
+    const days = Array.isArray(store.readDays) ? store.readDays.filter((d) => d !== day) : [];
+    days.push(day);
+    patch.readDays = days.slice(-30);
+  }
+
+  /**
+   * The streak as it stands right now, not as it stood the last time a
+   * chapter was finished.
+   *
+   * `currentStreak` in the store is only ever written on a read, so a reader
+   * who stopped a fortnight ago still has "7" sitting there. Two days
+   * without reading is a streak of nothing -- shown as 0, and the best is
+   * kept. Yesterday still counts: the day is not over until you have missed
+   * the whole of it.
+   */
+  function streak() {
+    const last = store.lastReadDay;
+    const since = last ? daysBetween(last, today()) : null;
+    const alive = since !== null && since <= 1;
+    return {
+      current: alive ? store.currentStreak : 0,
+      longest: store.longestStreak,
+      lastReadDay: last,
+      /** Days since the last finished chapter; null when there never was one. */
+      daysSince: since,
+      /* Stores written before readDays existed have a lastReadDay and no
+         list; the day it names is still a day something was read. */
+      readDays: [...new Set([...(Array.isArray(store.readDays) ? store.readDays : []), ...(last ? [last] : [])])].sort(),
+      /** Today has a chapter in it already. */
+      today: last === today(),
+    };
   }
 
   /* --- the evaluator ----------------------------------------------------- *
@@ -641,7 +707,7 @@
         const metrics = {
           chaptersRead: store.chaptersRead,
           titlesCompleted: store.titlesCompleted,
-          currentStreak: store.currentStreak,
+          currentStreak: streak().current,
           sourcesUsed: store.sourcesUsed,
           sourceRescues: store.sourceRescues,
           originsRead: (store.origins || []).length,
@@ -696,6 +762,7 @@
   const api = {
     get,
     stageOf: () => stageOf(store.petXp),
+    streak,
     stages: () => STAGES.slice(),
     milestones: () => MILESTONES.slice(),
     tierXp: () => TIER_XP.slice(),
@@ -721,6 +788,7 @@
         titlesCompleted: store.titlesCompleted,
         sourcesUsed: store.sourcesUsed,
         originsRead: (store.origins || []).length,
+        currentStreak: streak().current,
       };
       return MILESTONES.filter((m) => m.metric in metrics).map((m) => ({
         ...m,

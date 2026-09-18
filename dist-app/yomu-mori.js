@@ -434,6 +434,9 @@
      pushState and fires neither -- so the pet announces the surface change
      and this listens for that rather than wrapping history a second time. */
   on('yomu:pet-surface', close);
+  /* Mori wanders Home now (yomu-roam.js), and a menu anchored to where it
+     used to stand is a menu floating over a cover. */
+  on('yomu:pet-moved', close);
   for (const type of ['popstate', 'hashchange']) on(type, close);
 
   if (browser) window.YomuMori = { openMenu, openChat, suggest, close, chatAvailable };

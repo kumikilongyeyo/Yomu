@@ -562,6 +562,7 @@ const ASSETS = [
   /* The shelf, the stickers and the Circle reactions. Its own namespace
      (.ysh-*, .ys, .yomu-react*) and nothing the skin sets. */
   { file: 'yomu-shelf.css', tag: '<link rel="stylesheet" href="/yomu-shelf.css">' },
+  { file: 'yomu-companion.css', tag: '<link rel="stylesheet" href="/yomu-companion.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
@@ -592,6 +593,12 @@ const ASSETS = [
   /* After the pet (it borrows the sprite), the shelf (the badge drop) and
      greet (the line). */
   { file: 'yomu-ceremony.js', tag: '<script src="/yomu-ceremony.js" defer></scr' + 'ipt>' },
+  /* The companion update. All four read the pet, the store and greet, and
+     none is read by anything earlier. */
+  { file: 'yomu-streak.js', tag: '<script src="/yomu-streak.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-roam.js', tag: '<script src="/yomu-roam.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-binge.js', tag: '<script src="/yomu-binge.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-cast.js', tag: '<script src="/yomu-cast.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */

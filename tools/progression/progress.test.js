@@ -54,7 +54,7 @@ function fakeStorage(seed = {}) {
  * `fetch` is stubbed to fail, so affinity stays empty unless a test says
  * otherwise -- no test should depend on the network.
  */
-function boot({ storage = fakeStorage(), path = '/', search = '', fetchImpl } = {}) {
+function boot({ storage = fakeStorage(), path = '/', search = '', fetchImpl, clock } = {}) {
   const events = [];
   const listeners = new Map();
   const context = {
@@ -76,6 +76,15 @@ function boot({ storage = fakeStorage(), path = '/', search = '', fetchImpl } = 
       listeners.get(type).push(fn);
     },
   };
+  /* A settable clock, for the streak: the engine stamps days with `new
+     Date()` and diffs them with Date.parse, so both are served by a Date
+     whose no-argument form and now() read `clock.now`. */
+  if (clock) {
+    context.Date = class FakeDate extends Date {
+      constructor(...args) { super(...(args.length ? args : [clock.now])); }
+      static now() { return clock.now; }
+    };
+  }
   context.window = context;
   /* No `document` key at all: the engine's boot block is guarded on it, so
      leaving it undefined is how a test gets the API without the listeners. */
@@ -526,4 +535,58 @@ test('every badge and sticker the roadmap pays has a listed id, and every trail 
     }
     if (m.metric !== 'chaptersRead' && m.metric !== 'petXp') assert.ok(m.how, m.id + ' has a how');
   }
+});
+
+/* --- streaks, live ------------------------------------------------------- */
+
+const DAY = 86400000;
+
+/** Read one more chapter, with the clock at `now`. */
+async function readOn(api, storage, now, clock, series = 'ext-a:solo-leveling') {
+  clock.now = now;
+  const list = JSON.parse(storage.getItem(RESUME + series + '.read') || '[]');
+  list.push('ch-' + list.length);
+  storage.setItem(RESUME + series + '.read', JSON.stringify(list));
+  await api.refresh();
+}
+
+test('a streak is live: yesterday holds it, two days away shows zero and keeps the best', async () => {
+  const clock = { now: Date.UTC(2026, 8, 10, 12) };
+  const storage = fakeStorage();
+  const { api } = boot({ storage, clock });
+  for (let day = 0; day < 3; day++) await readOn(api, storage, clock.now + (day ? DAY : 0), clock);
+  assert.equal(api.streak().current, 3);
+  assert.equal(api.streak().today, true);
+  assert.deepEqual(plain(api.streak().readDays), ['2026-09-10', '2026-09-11', '2026-09-12']);
+
+  clock.now += DAY;                         // the next day, nothing read yet
+  assert.equal(api.streak().current, 3, 'yesterday still counts');
+  assert.equal(api.streak().daysSince, 1);
+
+  clock.now += DAY;                         // a whole day missed
+  assert.equal(api.streak().current, 0, 'two days away is no streak');
+  assert.equal(api.streak().longest, 3, 'the best is kept');
+  assert.equal(api.get().currentStreak, 3, 'the store is untouched until the next read');
+
+  await readOn(api, storage, clock.now, clock);
+  assert.equal(api.streak().current, 1, 'starts again, not from three');
+  assert.equal(api.streak().longest, 3);
+});
+
+test('seven days running pays Week of Pages once, and a stale seven does not', async () => {
+  const clock = { now: Date.UTC(2026, 8, 1, 9) };
+  const storage = fakeStorage();
+  const { api, events } = boot({ storage, clock });
+  for (let day = 0; day < 6; day++) await readOn(api, storage, clock.now + (day ? DAY : 0), clock);
+  assert.ok(!ids(events).includes('streak-week'), 'not at six');
+  await readOn(api, storage, clock.now + DAY, clock);
+  assert.equal(ids(events).filter((id) => id === 'streak-week').length, 1);
+  assert.ok(api.get().earnedBadgeIds.includes('streak-week'));
+  const trail = api.trails().find((t) => t.id === 'streak-week');
+  assert.equal(trail.collected, true);
+
+  // A fortnight later, with a stale 7 in the store, the month badge must not
+  // be reachable by a single read.
+  clock.now += 14 * DAY;
+  assert.equal(api.trails().find((t) => t.id === 'streak-month').value, 0);
 });
