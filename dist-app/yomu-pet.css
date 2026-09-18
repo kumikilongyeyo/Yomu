@@ -288,50 +288,223 @@
   white-space: nowrap;
 }
 
-/* --- the roadmap -------------------------------------------------------- */
+/* --- the roadmap -------------------------------------------------------- *
+ *
+ * Replaces the block in yomu-pet.css that runs from "--- the roadmap ---"
+ * down to (not including) "--- the unlock toast ---".
+ *
+ * The old road was seven identical cards in a column, which reads as a
+ * settings list: nothing in it says "these are in order" or "you are here".
+ * This is one continuous track with the stops hung off it. The track behind
+ * and below a collected stop is lit; past the stop you are working on it goes
+ * dark. That stop is the only loud thing on the screen -- bigger cell, filled
+ * in the accent, one slow ring -- so the eye lands on the next thing to earn
+ * rather than sweeping a list.
+ *
+ * No markup change. .yp-stop is still [dot][body][chip] and both #road and
+ * #trails keep painting exactly what they paint now. Grid puts the cell in
+ * the middle column across both rows; the label and its chip share one side
+ * column, stacked, and alternate sides so the copy leans into the track.
+ *
+ * "You are here" is the first uncollected stop. Collected stops are always a
+ * prefix of the list, so the sibling selector finds it without JS. If you
+ * ever want it explicit, add .is-next to the row and it is honoured.
+ */
 
-.yp-road { display: grid; gap: 10px; }
+.yp-road {
+  --hex: clamp(46px, 13.5vw, 54px);
+  --gap: 26px;
+  --rim: var(--line2, #d8d0c1);
+  --rail: var(--line, #e4ded2);
+
+  display: grid;
+  gap: var(--gap);
+  padding: 2px 0 4px;
+}
 
 .yp-stop {
+  position: relative;
   display: grid;
-  grid-template-columns: 34px 1fr auto;
+  grid-template-columns: 1fr var(--hex) 1fr;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-card, 16px);
-  background: var(--surface, #fffdfa);
-  border: 1px solid var(--line, #e4ded2);
+  column-gap: 12px;
+
+  /* the card is gone */
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
 }
 
+/* The track. A stop owns the segment behind itself plus the gap below it, so
+   a collected stop lights the road down to the next one and the line goes
+   dark exactly at the stop you are working on. */
+.yp-stop::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: calc(var(--gap) * -1);
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--rail);
+}
+
+.yp-road > .yp-stop:last-child::before { bottom: 50%; }
+
+.yp-stop.is-done::before { background: var(--accentLine, rgba(184, 121, 28, .42)); }
+
+/* The stop. clip-path draws the cell, and clip-path also eats borders, so the
+   rim is four one-pixel drop shadows that follow the clipped edge. */
 .yp-stop__dot {
-  width: 34px;
-  height: 34px;
+  grid-area: 1 / 2 / 3 / 3;
+  justify-self: center;
+  position: relative;
+  z-index: 2;
+
+  width: var(--hex);
+  height: calc(var(--hex) * 1.12);
   display: grid;
   place-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--line2, #d8d0c1);
+
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 0;
+  border-radius: 0;
   background: var(--raised, #efeade);
-  font: 800 12px/1 var(--font-ui, system-ui, sans-serif);
   color: var(--dim, #6d6558);
+  font: 800 13px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  filter:
+    drop-shadow(1px 0 0 var(--rim)) drop-shadow(-1px 0 0 var(--rim))
+    drop-shadow(0 1px 0 var(--rim)) drop-shadow(0 -1px 0 var(--rim));
 }
+
+.yp-stop.is-done { --rim: var(--accentLine, rgba(184, 121, 28, .42)); }
 
 .yp-stop.is-done .yp-stop__dot {
   background: var(--accentSoft, rgba(184, 121, 28, .10));
-  border-color: var(--accentLine, rgba(184, 121, 28, .42));
   color: var(--accent, #b8791c);
+  font-size: 15px;
 }
+
+/* --- you are here ------------------------------------------------------- */
+
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+) {
+  --hex: clamp(62px, 18vw, 72px);
+  --rim: var(--accent, #b8791c);
+}
+
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+) .yp-stop__dot {
+  background: var(--accent, #b8791c);
+  color: var(--accentText, #fff8ec);
+  font-size: 17px;
+  filter:
+    drop-shadow(1px 0 0 var(--rim)) drop-shadow(-1px 0 0 var(--rim))
+    drop-shadow(0 1px 0 var(--rim)) drop-shadow(0 -1px 0 var(--rim))
+    drop-shadow(0 5px 14px var(--accentLine, rgba(184, 121, 28, .42)));
+}
+
+/* One ring, once, on one stop. It is the only motion the page starts by
+   itself, and it exists to answer "where was I". */
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: calc(var(--hex) + 18px);
+  height: calc((var(--hex) + 18px) * 1.12);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: var(--accent, #b8791c);
+  opacity: .22;
+  transform: translate(-50%, -50%);
+  animation: yp-here 2.8s cubic-bezier(.22, .61, .36, 1) infinite;
+}
+
+@keyframes yp-here {
+  0%   { transform: translate(-50%, -50%) scale(.84); opacity: .26; }
+  70%  { transform: translate(-50%, -50%) scale(1.18); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.18); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .yp-stop.is-next,
+    .yp-stop.is-done + .yp-stop:not(.is-done),
+    .yp-road > .yp-stop:first-child:not(.is-done)
+  )::after {
+    animation: none;
+    opacity: .14;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* --- the label ---------------------------------------------------------- */
+
+.yp-stop > div {
+  grid-area: 1 / 1 / 2 / 2;
+  min-width: 0;
+  text-align: right;
+}
+
+.yp-stop > .yp-chip-reward {
+  grid-area: 2 / 1 / 3 / 2;
+  justify-self: end;
+  margin-top: 5px;
+}
+
+.yp-stop:nth-child(even) > div { grid-column: 3; text-align: left; }
+.yp-stop:nth-child(even) > .yp-chip-reward { grid-column: 3; justify-self: start; }
 
 .yp-stop__title {
   margin: 0;
-  font: 800 14px/1.2 var(--font-ui, system-ui, sans-serif);
+  font: 800 14px/1.22 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: -.012em;
   color: var(--text, #1e1b16);
 }
 
 .yp-stop__sub {
-  margin: 2px 0 0;
-  font: 600 12px/1.3 var(--font-ui, system-ui, sans-serif);
+  margin: 3px 0 0;
+  font: 600 11.5px/1.36 var(--font-ui, system-ui, sans-serif);
   color: var(--dim, #6d6558);
 }
+
+.yp-stop:not(.is-done):not(.is-next) .yp-stop__title { color: var(--muted, #4a443a); }
+
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+) .yp-stop__title {
+  font-size: 15.5px;
+  color: var(--text, #1e1b16);
+}
+
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+) .yp-stop__sub {
+  color: var(--accent, #b8791c);
+  font-weight: 700;
+}
+
+/* --- the reward chip ---------------------------------------------------- */
 
 .yp-chip-reward {
   flex: none;
@@ -362,6 +535,43 @@
   background: var(--accentSoft, rgba(184, 121, 28, .10));
   border-color: var(--accentLine, rgba(184, 121, 28, .42));
   color: var(--accent, #b8791c);
+}
+
+/* The stop you are working on says what it pays out loud. */
+:is(
+  .yp-stop.is-next,
+  .yp-stop.is-done + .yp-stop:not(.is-done),
+  .yp-road > .yp-stop:first-child:not(.is-done)
+) > .yp-chip-reward {
+  background: var(--accent, #b8791c);
+  border-color: transparent;
+  color: var(--accentText, #fff8ec);
+}
+
+/* Collected stops step back: the chip is a receipt, not an offer. */
+.yp-stop.is-done > .yp-chip-reward {
+  background: none;
+  border-color: var(--line, #e4ded2);
+  color: var(--faint, #9b9184);
+}
+
+/* Under about 340px the side columns stop holding two words, so the label
+   goes under its stop and the road runs straight through the middle. */
+@media (max-width: 340px) {
+  .yp-road { --hex: 44px; }
+
+  .yp-stop {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    row-gap: 6px;
+  }
+
+  .yp-stop__dot { grid-area: 1 / 1 / 2 / 2; }
+  .yp-stop > div,
+  .yp-stop:nth-child(even) > div { grid-area: 2 / 1 / 3 / 2; text-align: center; }
+  .yp-stop > .yp-chip-reward,
+  .yp-stop:nth-child(even) > .yp-chip-reward { grid-area: 3 / 1 / 4 / 2; justify-self: center; }
 }
 
 /* --- the unlock toast --------------------------------------------------- */
