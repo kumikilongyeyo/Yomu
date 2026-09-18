@@ -215,19 +215,7 @@
 /* --- the unread dot on a series card ------------------------------------ */
 
 .yomu-tile__circle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 2;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent, #b8791c);
-  box-shadow: 0 0 0 2.5px var(--bg, #f5f2ec), 0 1px 4px rgba(0, 0, 0, .35);
+  /* A glass chip with the unread count, top right of the cover, clear of the
+     save control: yomu-tags.css places it. */
   pointer-events: none;
 }
-/* The top-left corner is taken by the progress tag, or the freshness tag,
-   when a tile has one; the dot steps right of them and stays clear of the
-   save button at the far right. */
-.tile-card__cover:has(.yomu-tile__progress) .yomu-tile__circle,
-.tile-card__cover:has(.freshness) .yomu-tile__circle { left: auto; right: 54px; }

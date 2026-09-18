@@ -69,8 +69,12 @@
        line of evidence. Only when there is real evidence: a score of null or
        a vote count of zero says nothing and is left off. */
     if (item.score) {
-      const rating = el('span', 'yr-card__rating', '★ ' + (Math.round(item.score) / 10).toFixed(1));
-      rating.title = (Math.round(item.score) / 10).toFixed(1) + ' / 10 on AniList';
+      const text = (Math.round(item.score) / 10).toFixed(1);
+      const rating = window.YomuTags?.chip
+        ? window.YomuTags.chip('rating', text, { size: 'xs' })
+        : el('span', null, '★ ' + text);
+      rating.classList.add('yr-card__rating');
+      rating.title = text + ' / 10 on AniList';
       node.append(rating);
     }
     if (item.votes) node.append(el('span', 'yr-card__note', item.votes.toLocaleString() + ' readers'));

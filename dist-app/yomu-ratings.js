@@ -101,9 +101,12 @@
   }
 
   function chip(text) {
-    const node = document.createElement('span');
-    node.className = CLASS;
-    node.textContent = '★ ' + text;
+    /* The glass chip from yomu-tags.js when it is there, a plain pill when it
+       is not (the module is optional). */
+    const node = window.YomuTags?.chip
+      ? window.YomuTags.chip('rating', text, { size: 'xs' })
+      : Object.assign(document.createElement('span'), { textContent: '★ ' + text });
+    node.classList.add(CLASS);
     node.title = text + ' / 10 on AniList';
     node.setAttribute('aria-label', 'Rated ' + text + ' out of 10 on AniList');
     return node;
@@ -137,11 +140,13 @@
     if (!text) { existing?.remove(); return; }
     if (existing && existing.dataset.score === text) { if (!existing.isConnected) facts.after(existing); return; }
     existing?.remove();
-    const line = chip(text);
+    const line = window.YomuTags?.chip
+      ? window.YomuTags.chip('rating', text + ' on AniList', { size: 'sm' })
+      : Object.assign(document.createElement('span'), { textContent: '★ ' + text + ' on AniList' });
     line.id = SERIES_ID;
-    line.className = 'yomu-series-rating';
+    line.classList.add('yomu-series-rating');
     line.dataset.score = text;
-    line.textContent = '★ ' + text + ' on AniList';
+    line.title = text + ' / 10 on AniList';
     facts.after(line);
   }
 

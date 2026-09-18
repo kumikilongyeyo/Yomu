@@ -572,6 +572,9 @@ const ASSETS = [
   { file: 'yomu-wall.css', tag: '<link rel="stylesheet" href="/yomu-wall.css">' },
   { file: 'yomu-diary.css', tag: '<link rel="stylesheet" href="/yomu-diary.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
+  /* The glass chips every tile tag wears. After every other tag stylesheet
+     so its placement rules win ties. */
+  { file: 'yomu-tags.css', tag: '<link rel="stylesheet" href="/yomu-tags.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
      Both are deferred, and deferred scripts run in document order. */
@@ -626,6 +629,9 @@ const ASSETS = [
   /* Mori's diary: on-device lines when a title is finished. No model call. */
   { file: 'yomu-diary.js', tag: '<script src="/yomu-diary.js" defer></scr' + 'ipt>' },
   /* Ratings on tiles, from the AniList cache yomu-anilist.js keeps. */
+  /* Ahead of the files that build chips (ratings, rails), so YomuTags exists
+     when they paint. Rails and ratings still work without it. */
+  { file: 'yomu-tags.js', tag: '<script src="/yomu-tags.js" defer></scr' + 'ipt>' },
   { file: 'yomu-ratings.js', tag: '<script src="/yomu-ratings.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },

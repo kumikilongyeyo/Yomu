@@ -326,53 +326,11 @@
 /* ------------------------------------------------------------------ *
  * Status tags
  *
- * The app draws freshness as a coloured text pill. These are the kit's
- * editorial shapes, set as a background at the asset's own proportions --
- * height fixed, width from aspect-ratio, so neither axis is stretched. The
- * label stays in the accessibility tree; only its rendering is replaced.
+ * Freshness, the completed seal, progress and the rest are glass chips now:
+ * yomu-tags.css owns the look and the top-left stack, yomu-tags.js dresses
+ * the app's own .freshness and .tile-card__hot in place. The image tabs in
+ * /tags/ are retired; the label stays in the accessibility tree.
  * ------------------------------------------------------------------ */
-.freshness {
-  height: 22px;
-  padding: 0;
-  border-radius: 0;
-  max-width: calc(100% - 52px);
-  background: none no-repeat left center / contain !important;
-  font-size: 0 !important;
-  color: transparent !important;
-  overflow: visible;
-}
-/* Both of the app's freshness states are update states -- it emits
-   "New chapter" or "Updated" and nothing else -- so both take the New Chapter
-   tab. Hottest means trending, which is a different thing entirely, and the
-   kit is explicit that the two must not be conflated. */
-.freshness--new,
-.freshness--updated {
-  aspect-ratio: 152 / 32;
-  background-image: url('/tags/new-chapter.svg') !important;
-}
-
-/* Completed is the one other tag with real data behind it: the tile already
-   carries an Ongoing / Completed / Hiatus status, which yomu-shell.js reads
-   into data-yomu-tag. Hottest, Newest and Most Popular have no such signal and
-   are left unused rather than invented. */
-.tile-card[data-yomu-tag='completed'] .tile-card__cover::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  height: 22px;
-  aspect-ratio: 132 / 32;
-  background: url('/tags/completed.svg') no-repeat left center / contain;
-  filter: none;
-  inset: auto auto auto 10px;
-  pointer-events: none;
-}
-/* When a title is both completed and freshly updated, the update tab keeps the
-   corner and the seal sits under it, as the kit's second-row rule asks. */
-.tile-card[data-yomu-tag='completed']:has(.freshness) .tile-card__cover::before {
-  top: 38px;
-}
 
 /* ------------------------------------------------------------------ *
  * Desktop sidebar
@@ -1326,26 +1284,12 @@
    this. Accent rather than neutral, so it reads as yours rather than as
    another thing the source is announcing. */
 .yomu-tile__progress {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 3;
-  max-width: calc(100% - 56px);        /* clear of the save button */
-  padding: 3px 7px;
-  border-radius: 6px;
-  background: var(--accent, #ffc45f);
-  color: var(--accentText, #18212a);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .01em;
-  line-height: 1.45;
+  /* A glass chip, second row of the top-left stack: yomu-tags.css. */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
 }
-/* Both want the same corner, and the freshness tag was there first. */
-.tile-card__cover:has(.freshness) .yomu-tile__progress { top: 38px; }
 
 /* ------------------------------------------------------------------ *
  * Home: the filters stop being a wall

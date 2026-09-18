@@ -847,6 +847,7 @@
         (tile.querySelector('.tile-card__cover') ?? tile).append(dot);
       }
       const label = count + ' new circle comment' + (count === 1 ? '' : 's');
+      if (dot.dataset.count !== String(count)) dot.dataset.count = String(count);
       if (dot.title !== label) {
         dot.title = label;
         dot.setAttribute('role', 'img');

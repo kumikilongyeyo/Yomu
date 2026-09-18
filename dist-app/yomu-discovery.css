@@ -158,21 +158,11 @@
   .ycap { transition: opacity 120ms linear; transform: translateX(-50%); }
 }
 
-/* --- ratings ---------------------------------------------------------------- *
- * Over the cover, in the footer under the source. Text over a picture is
- * not a theme colour: pinned light with a shadow in both themes. */
-.yomu-tile__rating {
-  display: inline-block;
-  align-self: flex-start;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(8, 13, 20, .55);
-  color: #ffd97a;
-  font: 800 10.5px/1.5 var(--uiFont, var(--font-ui, system-ui, sans-serif));
-  letter-spacing: .02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
-}
-.yomu-series-rating {
+/* --- ratings: the chip look is yomu-tags.css; only placement lives here --- */
+.yomu-tile__rating { align-self: flex-start; }
+/* The accent pill is the fallback for when yomu-tags.js is not loaded; the
+   glass chip (.ytg) is the look. */
+.yomu-series-rating:not(.ytg) {
   display: inline-block;
   margin: 6px 0 0;
   padding: 3px 9px;

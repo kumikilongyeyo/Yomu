@@ -1,0 +1,281 @@
+/* ==================================================================== *
+ * Yomu tile tags — the glass chips (yomu-badges-v3, vendored)
+ * ====================================================================
+ *
+ * This is the delivered "Yomu Badges v3" stylesheet, renamed from `.yb` to
+ * `.ytg` because `.yb` is already the class the badge renderer puts on its
+ * SVG plates (yomu-badges.js). Every class, part and token is the pack's,
+ * prefix aside: `.ytg`, `.ytg--sm`, `.ytg--leaf`, `.ytg--tail`, `.ytg-i`,
+ * `--ytg-fill`, `data-ytg="ember"` and so on. The pack's own comments follow.
+ *
+ * Below the vendored block is the Yomu layer: which chip each tile tag wears
+ * (see docs/tile-tags-spec.md), how the top-left stack lays out at the small
+ * size, and the overrides that turn the two React-owned tags into chips.
+ * ==================================================================== */
+
+/* ============================================================
+   Yomu Badges v3 — translucent chips for a reader UI
+   Pure CSS. No images, no blur, no backdrop-filter, no JS.
+   Colour bleeds through the fill; there is no white shimmer.
+   ============================================================ */
+
+:root{
+  /* ---- palette ---- */
+  --ytg-c1:#ff2d9a;            /* gradient start                     */
+  --ytg-c2:#8b2bf2;            /* gradient middle                    */
+  --ytg-c3:#17b6ff;            /* gradient end                       */
+  --ytg-c0:#ffb02e;            /* fin accent — the warm drip         */
+  --ytg-angle:100deg;
+
+  /* ---- glass ---- */
+  --ytg-fill:.62;              /* 0 clear · 1 solid paint            */
+  --ytg-frost:.10;             /* flat veil, lifts text off busy art */
+  --ytg-edge:1;                /* hairline that defines the rim      */
+  --ytg-lift:1;                /* 0 removes the cast shadow          */
+
+  /* ---- light leak: colour bleeding through the glass ---- */
+  --ytg-leak:1;                /* 0 turns it off                     */
+  --ytg-leak-1:var(--ytg-c0);   /* colour leaking in from the corner  */
+  --ytg-leak-2:var(--ytg-c3);   /* colour leaking in from the far side*/
+  --ytg-leak-x:4%;             /* where the first leak enters        */
+  --ytg-leak-y:116%;
+  --ytg-leak-spread:92%;       /* how far it bleeds across           */
+
+  --ytg-ink:#fff;
+
+  /* fin silhouettes — the top edge IS the chip's own outline, which
+     is why they butt on with no overlap and no gap */
+  --ytg-fin:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 140'%3E%3Cpath d='M3.49 66.93C0 86 2 105 6 117c3 8 15 11 20 0 44-16 114-17.5 179-17.5H50A49.5 49.5 0 0 1 3.49 66.93Z'/%3E%3C/svg%3E");
+  --ytg-fin-leaf:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 140'%3E%3Cpath d='M4.75 95.25C1 107 2 119 6 127c3 7 14 9 19 0 45-23 115-27.5 180-27.5H15a14.5 14.5 0 0 1-10.25-4.25Z'/%3E%3C/svg%3E");
+}
+
+/* ---------- base: layout only; the element paints nothing itself ---------- */
+.ytg{
+  --ytg-h:44px; --ytg-px:18px; --ytg-fs:15px; --ytg-icon:21px; --ytg-r:999px;
+
+  position:relative;
+  isolation:isolate;
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  box-sizing:border-box;
+  min-height:var(--ytg-h);
+  padding:6px var(--ytg-px);
+  border:0;
+  border-radius:var(--ytg-r);
+  background:none;
+  font-family:var(--ytg-font,inherit);
+  font-size:var(--ytg-fs);
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:-.01em;
+  color:var(--ytg-ink);
+  text-decoration:none;
+  white-space:nowrap;
+  text-shadow:0 1px 3px rgba(10,4,24,calc(.5 * (1 - var(--ytg-fill))));
+  box-shadow:0 calc(9px * var(--ytg-lift)) calc(22px * var(--ytg-lift))
+             calc(-12px * var(--ytg-lift)) var(--ytg-cast,rgba(20,10,40,.45));
+  -webkit-tap-highlight-color:transparent;
+
+  /* solid fallback wherever color-mix is missing */
+  --ytg-f0:var(--ytg-c0); --ytg-f1:var(--ytg-c1);
+  --ytg-f2:var(--ytg-c2); --ytg-f3:var(--ytg-c3);
+  --ytg-lk1:transparent;  --ytg-lk2:transparent;
+}
+
+@supports (color:color-mix(in srgb,red,blue)){
+  .ytg{
+    --ytg-f0:color-mix(in srgb,var(--ytg-c0) calc(var(--ytg-fill) * 100%),transparent);
+    --ytg-f1:color-mix(in srgb,var(--ytg-c1) calc(var(--ytg-fill) * 100%),transparent);
+    --ytg-f2:color-mix(in srgb,var(--ytg-c2) calc(var(--ytg-fill) * 100%),transparent);
+    --ytg-f3:color-mix(in srgb,var(--ytg-c3) calc(var(--ytg-fill) * 100%),transparent);
+    --ytg-lk1:color-mix(in srgb,var(--ytg-leak-1) calc(80% * var(--ytg-leak) * var(--ytg-fill)),transparent);
+    --ytg-lk2:color-mix(in srgb,var(--ytg-leak-2) calc(52% * var(--ytg-leak) * var(--ytg-fill)),transparent);
+    --ytg-cast:color-mix(in oklab,var(--ytg-c2) 55%,transparent);
+  }
+}
+
+/* ---------- the glass body ---------- */
+.ytg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    /* 1 — colour leaking in from the near corner */
+    radial-gradient(var(--ytg-leak-spread) 190% at var(--ytg-leak-x) var(--ytg-leak-y),
+      var(--ytg-lk1),transparent 70%),
+    /* 2 — colour leaking in from the far side */
+    radial-gradient(76% 170% at 96% -34%,
+      var(--ytg-lk2),transparent 68%),
+    /* 3 — frost: a flat veil for legibility, no blur involved */
+    linear-gradient(rgba(255,255,255,var(--ytg-frost)),rgba(255,255,255,var(--ytg-frost))),
+    /* 4 — the see-through fill */
+    linear-gradient(var(--ytg-angle),var(--ytg-f1),var(--ytg-f2) 50%,var(--ytg-f3));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,calc(.40 * var(--ytg-edge))),
+    inset 0 0 0 1px rgba(255,255,255,calc(.20 * var(--ytg-edge))),
+    inset 0 -1px 0 rgba(255,255,255,calc(.10 * var(--ytg-edge))),
+    inset 0 -22px 28px -24px rgba(0,0,0,calc(.5 * var(--ytg-edge)));
+}
+.ytg > *{position:relative;z-index:2}
+
+/* ---------- the fin ---------- */
+.ytg--tail::before{
+  content:"";
+  position:absolute;
+  z-index:1;
+  left:0;
+  bottom:calc(var(--ytg-h) * -.4);
+  width:calc(var(--ytg-h) * 2.1);
+  height:calc(var(--ytg-h) * 1.4);
+  background-image:linear-gradient(168deg,var(--ytg-f1) 0 24%,var(--ytg-f0));
+  -webkit-mask:var(--ytg-fin) 0 0/100% 100% no-repeat;
+  mask:var(--ytg-fin) 0 0/100% 100% no-repeat;
+  pointer-events:none;
+}
+[dir=rtl] .ytg--tail::before{left:auto;right:0;scale:-1 1}
+
+/* ---------- shapes ---------- */
+.ytg--leaf{
+  --ytg-fin:var(--ytg-fin-leaf);
+  --ytg-r:calc(var(--ytg-h) * .85) calc(var(--ytg-h) * .15)
+         calc(var(--ytg-h) * .85) calc(var(--ytg-h) * .15);
+}
+.ytg--sq{--ytg-r:28%;width:var(--ytg-h);padding:0;justify-content:center;gap:0}
+
+/* ---------- sizes ---------- */
+.ytg--lg{--ytg-h:66px;--ytg-px:22px;--ytg-fs:18px;--ytg-icon:30px;gap:15px}
+.ytg--sm{--ytg-h:32px;--ytg-px:12px;--ytg-fs:13px;--ytg-icon:16px;gap:7px}
+
+/* ---------- parts ---------- */
+.ytg-i{width:var(--ytg-icon);height:var(--ytg-icon);flex:none;fill:currentColor}
+.ytg-stack{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.ytg-sub{font-size:.8em;font-weight:600;opacity:.92;letter-spacing:0}
+.ytg-go{
+  margin-inline-start:4px;
+  width:calc(var(--ytg-icon) * .8);height:calc(var(--ytg-icon) * .8);
+  flex:none;fill:currentColor;opacity:.9
+}
+.ytg-avs{display:flex;align-items:center}
+.ytg-av{
+  width:calc(var(--ytg-h) * .72);height:calc(var(--ytg-h) * .72);
+  border-radius:50%;object-fit:cover;background:#fff;
+  box-shadow:0 0 0 2.5px rgba(255,255,255,.9)
+}
+.ytg-av + .ytg-av{margin-inline-start:-11px}
+
+/* ---------- variants ---------- */
+.ytg--solid{--ytg-fill:1;--ytg-frost:0}
+.ytg--clear{--ytg-fill:.34;--ytg-frost:.14}
+.ytg--ink{--ytg-c0:#38425c;--ytg-c1:#3b4767;--ytg-c2:#1a2135;--ytg-c3:#0b1020;
+  --ytg-fill:.78;--ytg-leak:.5;--ytg-cast:rgba(8,12,22,.5)}
+.ytg--flat{--ytg-lift:0;--ytg-edge:.7;--ytg-leak:.6}
+
+/* ---------- interaction ---------- */
+.ytg:is(a,button){cursor:pointer;-webkit-appearance:none;appearance:none}
+.ytg:is(a,button):hover{--ytg-edge:1.25;--ytg-leak:1.3}
+.ytg:is(a,button):active{translate:0 1px}
+.ytg:focus-visible{outline:2.5px solid var(--ytg-ring,currentColor);outline-offset:3px}
+
+/* ---------- presets (on the chip or any ancestor) ---------- */
+[data-ytg=aurora]{--ytg-c0:#ffb02e;--ytg-c1:#ff2d9a;--ytg-c2:#8b2bf2;--ytg-c3:#17b6ff}
+[data-ytg=sunset]{--ytg-c0:#ffd166;--ytg-c1:#ff7a1a;--ytg-c2:#f7258a;--ytg-c3:#b429f9}
+[data-ytg=ocean] {--ytg-c0:#8ef2d8;--ytg-c1:#00d4ff;--ytg-c2:#2a6bff;--ytg-c3:#7a3bff}
+[data-ytg=ember] {--ytg-c0:#ffd166;--ytg-c1:#ff9f1c;--ytg-c2:#ff2e63;--ytg-c3:#c0217a}
+[data-ytg=matcha]{--ytg-c0:#e6ff8a;--ytg-c1:#3ddc84;--ytg-c2:#00b3a4;--ytg-c3:#0a7cff}
+[data-ytg=sakura]{--ytg-c0:#ffe3ef;--ytg-c1:#ff9ec4;--ytg-c2:#f0569b;--ytg-c3:#9b5de5}
+[data-ytg=ink]   {--ytg-c0:#38425c;--ytg-c1:#3b4767;--ytg-c2:#1a2135;--ytg-c3:#0b1020;--ytg-fill:.78}
+
+
+/* ==================================================================== *
+ * The Yomu layer
+ * ==================================================================== */
+
+/* Chips over artwork take frost, not fill, as the pack advises; and the
+   focus ring is the page ink so it shows on Paper. */
+.tile-card .ytg, .tile .ytg, .yr-card .ytg { --ytg-frost: .16; --ytg-ring: var(--text, #1e1b16); }
+
+/* A label that has to give way does so with an ellipsis, not by running
+   under the save control. */
+.ytg > .ytg-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ytg-short { display: none; }
+
+/* --- the smallest chip, for covers ------------------------------------- *
+ * The pack's small chip is 32px, sized for lists. A grid cover is about
+ * 150px wide, so on covers the chips wear a 26px cut of the same recipe
+ * and step up to the pack's small size once the tile has room. The tile is
+ * the container; the queries below read its width. */
+.ytg--xs, .tile-card__cover .ytg {
+  --ytg-h: 26px; --ytg-px: 9px; --ytg-fs: 11px; --ytg-icon: 13px; gap: 5px; padding: 3px var(--ytg-px);
+}
+.tile-card { container-type: inline-size; }
+
+/* --- slot A: the top-left stack ------------------------------------------ *
+ * Order is fixed by the spec: freshness, completed, progress. Rows are the
+ * chip height plus 6px: 32px at the small cut, 38px at the pack's size. */
+.tile-card__cover .freshness.ytg,
+.yomu-tile__done,
+.yomu-tile__progress.ytg {
+  position: absolute; left: 8px; top: 8px; z-index: 3;
+  max-width: calc(100% - 50px);       /* the save control is 36px, 6px in, 8px clear */
+}
+.tile-card__cover:has(.freshness) .yomu-tile__done,
+.tile-card__cover:has(.freshness) .yomu-tile__progress.ytg,
+.tile-card__cover:has(.yomu-tile__done) .yomu-tile__progress.ytg { top: 40px; }
+.tile-card__cover:has(.freshness):has(.yomu-tile__done) .yomu-tile__progress.ytg { top: 72px; }
+/* The circle count takes the right column under the save control, where a
+   150px cover has no other claim. */
+.yomu-tile__circle.ytg {
+  position: absolute; top: 48px; right: 6px; left: auto; bottom: auto; z-index: 3;
+  width: auto; height: auto; border-radius: var(--ytg-r); background: none; box-shadow: none;
+  pointer-events: none;
+}
+/* Narrow tiles say "New" for "New chapter"; the full words stay for the
+   accessibility tree, at font-size 0 under the glass. */
+@container (max-width: 199px) {
+  .tile-card__cover .freshness.ytg .ytg-label { display: none; }
+  .tile-card__cover .freshness.ytg .ytg-short { display: inline; }
+}
+@container (min-width: 230px) {
+  .tile-card__cover .ytg:not(.ytg--xs) {
+    --ytg-h: 32px; --ytg-px: 12px; --ytg-fs: 13px; --ytg-icon: 16px; gap: 7px; padding: 6px var(--ytg-px);
+  }
+  .tile-card__cover:has(.freshness) .yomu-tile__done,
+  .tile-card__cover:has(.freshness) .yomu-tile__progress.ytg,
+  .tile-card__cover:has(.yomu-tile__done) .yomu-tile__progress.ytg { top: 46px; }
+  .tile-card__cover:has(.freshness):has(.yomu-tile__done) .yomu-tile__progress.ytg { top: 84px; }
+}
+
+/* The completed seal used to be an image on the cover's ::before, which is
+   also the blur band under the title. The chip replaces the seal; the band
+   comes back. */
+.tile-card[data-yomu-tag='completed'] .tile-card__cover::before,
+.tile-card[data-yomu-tag='completed']:has(.freshness) .tile-card__cover::before {
+  content: ''; inset: 68% -12px -12px; top: auto; left: auto; height: auto; aspect-ratio: auto; z-index: auto;
+  background: #101a25b3; filter: blur(18px);
+}
+
+/* --- the two React-owned tags, dressed as chips ------------------------- *
+ * Their own text node stays (React owns it) at font-size 0 under the glass;
+ * the visible label and icon are children yomu-tags.js adds. */
+.freshness.ytg, .tile-card__hot.ytg {
+  font-size: 0 !important; color: var(--ytg-ink) !important;
+  background: none !important; height: auto !important; aspect-ratio: auto !important;
+  padding: 3px var(--ytg-px) !important; border: 0 !important; border-radius: var(--ytg-r) !important;
+  overflow: visible !important; line-height: 1.2 !important;
+}
+.freshness.ytg > *, .tile-card__hot.ytg > * { font-size: var(--ytg-fs) !important; }
+.tile-card__hot.ytg > svg:not(.ytg-i) { display: none; }
+.tile-card__hot.ytg { align-self: flex-start; }
+@container (min-width: 230px) { .tile-card__cover .freshness.ytg { padding: 6px var(--ytg-px) !important; } }
+
+/* --- footer, rail and series chips -------------------------------------- */
+.yomu-tile__rating.ytg { align-self: flex-start; }
+.yr-card__rating.ytg { align-self: flex-start; justify-self: start; width: max-content; margin: 2px 0 0; }
+.yr-badge.ytg { position: absolute; top: 6px; left: 6px; z-index: 2; }
+.yomu-series-rating.ytg { margin: 8px 0 0; }
+
+@media (prefers-reduced-motion: reduce) { .ytg:is(a,button):active { translate: none; } }
