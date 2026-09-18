@@ -734,7 +734,24 @@ for (const { file: assetFile } of ASSETS) {
 }
 
 if (!failed) {
-  for (const page of fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html'))) {
+  /* Top-level pages, then the route shells in subdirectories.
+   *
+   * Only the top level gets the asset links: those shells are Expo's dynamic
+   * route templates, the SPA fallback serves index.html in their place, and
+   * giving them thirty-eight scripts they will never run would be cost with
+   * no reader behind it. The markup edits *do* reach them -- a viewport that
+   * blocks zoom is wrong wherever it is written, and these two files are the
+   * series and reader shells, which is exactly where somebody wants to
+   * enlarge a panel. */
+  const subPages = fs.readdirSync(PAGES_DIR, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .flatMap((dir) => fs.readdirSync(path.join(PAGES_DIR, dir.name))
+      .filter((f) => f.endsWith('.html'))
+      .map((f) => path.join(dir.name, f)));
+  const topPages = fs.readdirSync(PAGES_DIR).filter((f) => f.endsWith('.html'));
+
+  for (const page of [...topPages, ...subPages]) {
+    const markupOnly = subPages.includes(page);
     const pagePath = path.join(PAGES_DIR, page);
     let html = fs.readFileSync(pagePath, 'utf8');
 
@@ -766,6 +783,28 @@ if (!failed) {
           to:   `<meta name="theme-color" content="#f5f2ec"${close}`,
         })),
       ),
+      /* Pinch zoom, given back.
+       *
+       * Expo exports `maximum-scale=1, user-scalable=no`, which is the single
+       * most common accessibility defect in a mobile web app: it takes the
+       * browser's own magnification away from anyone who needs it, and a
+       * reader app is exactly where someone wants to enlarge a panel. Safari
+       * has ignored it since iOS 10, so on iPhone this was already only
+       * affecting Android and desktop -- which is to say it was doing nothing
+       * except for the people it hurt.
+       *
+       * `viewport-fit=cover` stays: that is the notch, not the zoom. Both
+       * spellings Expo and the hand-written pages use are matched, and pages
+       * already correct are left alone.
+       */
+      ...[
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
+        'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover',
+      ].map((old) => ({
+        name: 'restore pinch zoom',
+        from: `<meta name="viewport" content="${old}"`,
+        to: '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"',
+      })),
       {
         name: 'duplicate genre chips',
         // Pairs with the bundle edit of the same name. Reincarnation and
@@ -786,6 +825,8 @@ if (!failed) {
       console.log(`applied      ${edit.name}: ${page}`);
       changed++;
     }
+
+    if (markupOnly) continue;
 
     /* The prepaint bootstrap goes first in the head, ahead of every
        stylesheet and every other script, because its whole job is to have
