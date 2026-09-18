@@ -610,3 +610,178 @@
 }
 
 .ym-send:disabled { opacity: .5; cursor: default; }
+
+/* ====================================================================
+ * The evolution ceremony (yomu-ceremony.js)
+ *
+ * A fixed card over a scrim, five seconds, tap anywhere to leave. Grounded
+ * the way the toast is -- --bg with --surface layered over it -- because a
+ * glass panel over a cover grid is a window, not a stage.
+ *
+ * `.yc--still` is set under reduced motion: the egg is already open and
+ * the sprite already there, nothing moves, and the card still says what
+ * happened.
+ * ==================================================================== */
+
+.yc {
+  position: fixed;
+  inset: 0;
+  z-index: 95;               /* over the toast (90) and the sheets (80) */
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 240ms cubic-bezier(.3, 1, .5, 1);
+}
+.yc.is-on { opacity: 1; }
+.yc__scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: var(--scrim, rgba(12, 19, 27, .55));
+  cursor: pointer;
+}
+.yc__card {
+  position: relative;
+  width: min(360px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 22px 20px 18px;
+  border-radius: var(--radius-card, 20px);
+  background: var(--bg, #f5f2ec);
+  background-image: linear-gradient(var(--surface, #fffdfa), var(--surface, #fffdfa));
+  border: 1px solid var(--accentLine, rgba(184, 121, 28, .42));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .28);
+  color: var(--text, #1e1b16);
+  text-align: center;
+  transform: translateY(10px) scale(.96);
+  transition: transform 340ms cubic-bezier(.3, 1, .5, 1);
+}
+.yc.is-on .yc__card { transform: none; }
+
+.yc__stage {
+  position: relative;
+  width: 160px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control, 14px);
+  background: var(--raised, #efeade);
+  overflow: hidden;
+}
+.yc__new {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: scale(.6) translateY(14px);
+  animation: yc-arrive 700ms cubic-bezier(.3, 1.2, .5, 1) 1100ms forwards;
+}
+.yc__egg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 64px;
+  line-height: 1;
+  z-index: 3;
+  animation: yc-wobble 900ms ease-in-out 2;
+}
+.yc__shell {
+  position: absolute;
+  animation-fill-mode: forwards;
+  animation-duration: 800ms;
+  animation-timing-function: cubic-bezier(.3, 1, .5, 1);
+  animation-delay: 1150ms;
+}
+/* Each half is the whole glyph clipped to one side, so the seam is where
+   the crack is. */
+.yc__shell--l { clip-path: inset(0 50% 0 0); animation-name: yc-shell-l; }
+.yc__shell--r { clip-path: inset(0 0 0 50%); animation-name: yc-shell-r; }
+.yc__was {
+  position: absolute;
+  inset: 20% 30%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--accentSoft, rgba(184, 121, 28, .18)), transparent);
+  animation: yc-glow 1400ms ease-in-out 1;
+}
+
+.yc__kicker {
+  margin: 12px 0 0;
+  font: 800 10px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent, #b8791c);
+}
+.yc__title {
+  margin: 0;
+  /* Explicit, because the You page styles its h2 as an uppercase eyebrow and
+     this is a heading, not a section label. */
+  text-transform: none;
+  color: var(--text, #1e1b16);
+  font-family: var(--font-display, var(--font-ui, system-ui, sans-serif));
+  font-variation-settings: 'wdth' 110;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+}
+.yc__badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  background: var(--accentSoft, rgba(184, 121, 28, .10));
+  border: 1px solid var(--accentLine, rgba(184, 121, 28, .42));
+  font: 700 12px/1 var(--font-ui, system-ui, sans-serif);
+  color: var(--accent, #b8791c);
+  opacity: 0;
+  animation: yc-arrive 500ms cubic-bezier(.3, 1.2, .5, 1) 1700ms forwards;
+}
+.yc__badge .yb { width: 30px; height: 30px; }
+.yc__line {
+  margin: 6px 0 0;
+  font: 500 14px/1.4 var(--font-ui, system-ui, sans-serif);
+  color: var(--muted, #4a443a);
+}
+.yc__line::before { content: '“'; }
+.yc__line::after { content: '”'; }
+.yc__ok {
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--accent, #b8791c);
+  color: var(--accentText, #18212a);
+  font: 700 13px/1 var(--font-ui, system-ui, sans-serif);
+  cursor: pointer;
+}
+.yc__ok:focus-visible { outline: 2px solid var(--text, #1e1b16); outline-offset: 3px; }
+
+@keyframes yc-wobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-9deg); }
+  75% { transform: rotate(9deg); }
+}
+@keyframes yc-shell-l { to { transform: translate(-46px, 30px) rotate(-38deg); opacity: 0; } }
+@keyframes yc-shell-r { to { transform: translate(46px, 30px) rotate(38deg); opacity: 0; } }
+@keyframes yc-arrive { to { opacity: 1; transform: none; } }
+@keyframes yc-glow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+/* Reduced motion, and the same rules when the class is set by JS: nothing
+   animates, and everything is already in its final place. */
+.yc--still .yc__new, .yc--still .yc__badge { animation: none; opacity: 1; transform: none; }
+.yc--still .yc__egg, .yc--still .yc__shell, .yc--still .yc__was { animation: none; }
+.yc--still .yc__egg { display: none; }
+.yc--still .yc__card { transition: none; transform: none; }
+.yc--still.yc { transition: opacity 120ms linear; }
+@media (prefers-reduced-motion: reduce) {
+  .yc__new, .yc__badge { animation: none; opacity: 1; transform: none; }
+  .yc__egg, .yc__shell, .yc__was { animation: none; }
+  .yc__egg { display: none; }
+  .yc__card { transition: none; transform: none; }
+}

@@ -81,6 +81,9 @@
 
     /** familySlug -> affinity XP. Drives which badge you are earning. */
     affinity: {},
+    /** Countries of origin read from -- KR, JP, CN. A union that never
+     *  shrinks, because the metadata cache it is read off does. */
+    origins: [],
     /** Milestone ids already paid. The guard against paying twice. */
     claimed: [],
     /** Mirror of the derived chapter count, so a delta can be spotted. */
@@ -157,6 +160,112 @@
         { type: 'pet-unlock', id: 'mori' },
       ],
     },
+
+    /* Past fifty. A reader at chapter 51 had nothing left to chase, and
+       these are the readers who are actually here. The spacing widens the
+       way reading does: the gap from 50 to 100 is a fortnight for a binge
+       reader; 500 to 1000 is a year. */
+    {
+      id: 'century',
+      metric: 'chaptersRead',
+      threshold: 100,
+      title: 'Century',
+      rewards: [
+        { type: 'badge', id: 'century' },
+        { type: 'sticker', id: 'century-sticker' },
+      ],
+    },
+    {
+      id: 'shelf-bender',
+      metric: 'chaptersRead',
+      threshold: 250,
+      title: 'Shelf Bender',
+      rewards: [
+        { type: 'badge', id: 'shelf-bender' },
+        { type: 'xp', amount: 60 },
+      ],
+    },
+    {
+      id: 'tome-eater',
+      metric: 'chaptersRead',
+      threshold: 500,
+      title: 'Tome Eater',
+      rewards: [
+        { type: 'badge', id: 'tome-eater' },
+        { type: 'sticker', id: 'tome-eater-sticker' },
+      ],
+    },
+    {
+      id: 'living-library',
+      metric: 'chaptersRead',
+      threshold: 1000,
+      title: 'Living Library',
+      rewards: [
+        { type: 'badge', id: 'living-library' },
+        { type: 'sticker', id: 'living-library-sticker' },
+      ],
+    },
+
+    /* Trails: the milestones that are not a chapter count. Drawn on the You
+       page under the road rather than on it, because "5 sources" is not a
+       distance along the same line as "100 chapters". */
+    {
+      id: 'well-sourced',
+      metric: 'sourcesUsed',
+      threshold: 5,
+      title: 'Well Sourced',
+      how: 'Five sources switched on',
+      rewards: [
+        { type: 'badge', id: 'well-sourced' },
+        { type: 'sticker', id: 'well-sourced-sticker' },
+      ],
+    },
+    {
+      id: 'finisher',
+      metric: 'titlesCompleted',
+      threshold: 1,
+      title: 'Finisher',
+      how: 'Read a saved title to its last chapter',
+      rewards: [
+        { type: 'badge', id: 'finisher' },
+        { type: 'sticker', id: 'finisher-sticker' },
+      ],
+    },
+    {
+      id: 'closer',
+      metric: 'titlesCompleted',
+      threshold: 10,
+      title: 'Closer',
+      how: 'Ten titles finished',
+      rewards: [
+        { type: 'badge', id: 'closer' },
+        { type: 'xp', amount: 80 },
+      ],
+    },
+    {
+      id: 'three-shores',
+      metric: 'originsRead',
+      threshold: 3,
+      title: 'Three Shores',
+      how: 'A title each from Korea, Japan and China',
+      rewards: [
+        { type: 'badge', id: 'three-shores' },
+        { type: 'sticker', id: 'three-shores-sticker' },
+      ],
+    },
+
+    /* Stage badges. Paid by XP at the same thresholds as STAGES, so a stage
+       change and its badge arrive in the same pulse. `quiet` keeps the
+       generic unlock toast away: the evolution ceremony is the announcement,
+       and two announcements of one moment is one too many. */
+    { id: 'stage-fledgling', metric: 'petXp', threshold: 60, title: 'Fledgling', quiet: true,
+      rewards: [{ type: 'badge', id: 'stage-fledgling' }] },
+    { id: 'stage-companion', metric: 'petXp', threshold: 200, title: 'Companion', quiet: true,
+      rewards: [{ type: 'badge', id: 'stage-companion' }] },
+    { id: 'stage-familiar', metric: 'petXp', threshold: 480, title: 'Familiar', quiet: true,
+      rewards: [{ type: 'badge', id: 'stage-familiar' }] },
+    { id: 'stage-sage', metric: 'petXp', threshold: 1000, title: 'Sage', quiet: true,
+      rewards: [{ type: 'badge', id: 'stage-sage' }] },
   ];
 
   /**
@@ -327,7 +436,64 @@
     return {
       librarySize: library.filter((t) => t && !t.hidden).length,
       sourcesUsed: sources.filter((s) => s && s.enabled).length,
+      titlesCompleted: deriveCompleted(library),
+      origins: deriveOrigins(library),
     };
+  }
+
+  /** The finished chapters of one saved title, off the app's own list. */
+  function readCount(seriesId) {
+    const list = readJSON(RESUME_PREFIX + seriesId + '.read', []);
+    return Array.isArray(list) ? list.length : 0;
+  }
+
+  /**
+   * A saved title is finished when every chapter it has is in the read list.
+   *
+   * Only titles that say how many chapters they have count: a row with no
+   * total cannot be finished, only read a lot, and "finished" is a claim the
+   * roadmap makes in the reader's name. Conservative on purpose -- the read
+   * list is ids, not numbers, so a series read across two sources can hold
+   * more entries than chapters and still be genuinely finished; that direction
+   * is fine. The other direction, calling something finished that is not, is
+   * the one that would read as a lie.
+   */
+  function deriveCompleted(library) {
+    let done = 0;
+    for (const row of library) {
+      if (!row || row.hidden || !row.id) continue;
+      const total = Number(row.total);
+      if (!Number.isFinite(total) || total <= 0) continue;
+      if (readCount(row.id) >= total) done++;
+    }
+    return done;
+  }
+
+  const ANILIST_CACHE_KEY = 'yomu.v1.anilist';
+  const ORIGINS = new Set(['KR', 'JP', 'CN']);
+
+  /**
+   * Which of the three origins the reader has read from, unioned with what
+   * the store already knows.
+   *
+   * The country comes from AniList by way of yomu-anilist.js's cache, which
+   * is keyed by lowercased title and holds a hundred-odd rows for a week.
+   * Read directly rather than through that file's API: this store loads
+   * first in the chain and a metric that waits on a later script is a
+   * metric that is sometimes zero. The union is what makes the cache's
+   * eviction harmless -- a shore reached stays reached.
+   */
+  function deriveOrigins(library) {
+    const known = new Set(Array.isArray(store.origins) ? store.origins : []);
+    const cache = readJSON(ANILIST_CACHE_KEY, {}) || {};
+    for (const row of library) {
+      if (!row || !row.id || !row.title) continue;
+      if (!readCount(row.id)) continue;
+      const hit = cache[String(row.title).trim().toLowerCase()];
+      const country = hit && hit.answer && hit.answer.country;
+      if (country && ORIGINS.has(country)) known.add(country);
+    }
+    return [...known].sort();
   }
 
   /**
@@ -463,21 +629,41 @@
 
       save(patch);
 
-      const metrics = {
-        chaptersRead: store.chaptersRead,
-        titlesCompleted: store.titlesCompleted,
-        currentStreak: store.currentStreak,
-        sourcesUsed: store.sourcesUsed,
-        sourceRescues: store.sourceRescues,
-        petXp: store.petXp,
-      };
-      const { patch: rewardPatch, paid } = evaluate(metrics);
-      const affinityPaid = evaluateAffinity(rewardPatch);
-      if (Object.keys(rewardPatch).length) save(rewardPatch);
+      /* Evaluated until nothing more pays out, because a reward can move a
+         metric: Little Bookworm pays 40 XP, and 40 XP is what carries a
+         reader at chapter twenty over the Fledgling line. Taken once, the
+         stage badge arrived one pulse late -- on the next route change, or
+         the next morning -- as an unlock nobody had done anything to earn
+         just then. Bounded: only XP rewards move a metric, and no XP
+         milestone pays XP, so two rounds is the most this ever takes. */
+      const paid = [];
+      for (let round = 0; round < 4; round++) {
+        const metrics = {
+          chaptersRead: store.chaptersRead,
+          titlesCompleted: store.titlesCompleted,
+          currentStreak: store.currentStreak,
+          sourcesUsed: store.sourcesUsed,
+          sourceRescues: store.sourceRescues,
+          originsRead: (store.origins || []).length,
+          petXp: store.petXp,
+        };
+        const result = evaluate(metrics);
+        if (!result.paid.length) break;
+        paid.push(...result.paid);
+        save(result.patch);
+      }
+      const affinityPatch = {};
+      const affinityPaid = evaluateAffinity(affinityPatch);
+      if (Object.keys(affinityPatch).length) save(affinityPatch);
 
       if (delta > 0) emit('yomu:chapter-complete', { count: delta, total: chapters });
       for (const milestone of [...paid, ...affinityPaid]) {
-        emit('yomu:reward', { milestoneId: milestone.id, title: milestone.title, rewards: milestone.rewards });
+        emit('yomu:reward', {
+          milestoneId: milestone.id,
+          title: milestone.title,
+          rewards: milestone.rewards,
+          quiet: !!milestone.quiet,
+        });
       }
       emit('yomu:progress', { reason, state: get() });
     } finally {
@@ -512,16 +698,81 @@
     stageOf: () => stageOf(store.petXp),
     stages: () => STAGES.slice(),
     milestones: () => MILESTONES.slice(),
+    tierXp: () => TIER_XP.slice(),
 
-    /** Roadmap rows: the three drawn stops, with live state on each. */
+    /** Roadmap rows: the chapter stops from ten up, with live state on each.
+     *  The five-chapter sticker stays undrawn -- the first reward should
+     *  arrive before you have been told to expect it. */
     roadmap() {
       const claimed = new Set(store.claimed);
-      return MILESTONES.filter((m) => m.threshold >= 10).map((m) => ({
+      return MILESTONES.filter((m) => m.metric === 'chaptersRead' && m.threshold >= 10).map((m) => ({
         ...m,
         collected: claimed.has(m.id),
         progress: clamp((store.chaptersRead / m.threshold) * 100, 0, 100),
         remaining: Math.max(m.threshold - store.chaptersRead, 0),
       }));
+    },
+
+    /** The trails: milestones on a metric other than chapters, and not the
+     *  stage badges, which the ceremony announces on its own. */
+    trails() {
+      const claimed = new Set(store.claimed);
+      const metrics = {
+        titlesCompleted: store.titlesCompleted,
+        sourcesUsed: store.sourcesUsed,
+        originsRead: (store.origins || []).length,
+      };
+      return MILESTONES.filter((m) => m.metric in metrics).map((m) => ({
+        ...m,
+        value: metrics[m.metric],
+        collected: claimed.has(m.id),
+        progress: clamp((metrics[m.metric] / m.threshold) * 100, 0, 100),
+        remaining: Math.max(m.threshold - metrics[m.metric], 0),
+      }));
+    },
+
+    /** Every badge the roadmap can pay, in the order it pays them, so a
+     *  shelf can draw the locked ones too. Affinity badges are not here:
+     *  thirty families times five tiers is not a shelf, it is a wall. */
+    milestoneBadges() {
+      const claimed = new Set(store.claimed);
+      const out = [];
+      for (const m of MILESTONES) {
+        for (const reward of m.rewards) {
+          if (reward.type !== 'badge') continue;
+          out.push({
+            id: reward.id,
+            milestoneId: m.id,
+            title: m.title,
+            metric: m.metric,
+            threshold: m.threshold,
+            how: m.how || '',
+            earned: store.earnedBadgeIds.includes(reward.id) || claimed.has(m.id),
+            quiet: !!m.quiet,
+          });
+        }
+      }
+      return out;
+    },
+
+    /** Every sticker the roadmap can pay, with whether this reader has it. */
+    stickers() {
+      const out = [];
+      for (const m of MILESTONES) {
+        for (const reward of m.rewards) {
+          if (reward.type !== 'sticker') continue;
+          out.push({
+            id: reward.id,
+            milestoneId: m.id,
+            title: m.title,
+            metric: m.metric,
+            threshold: m.threshold,
+            how: m.how || '',
+            earned: store.earnedStickerIds.includes(reward.id),
+          });
+        }
+      }
+      return out;
     },
 
     /** The family you are furthest into, which is what the name slot shows. */
@@ -549,6 +800,24 @@
       if (id !== null && !store.earnedBadgeIds.includes(id)) return false;
       save({ equippedBadgeId: id });
       emit('yomu:progress', { reason: 'equip', state: get() });
+      return true;
+    },
+
+    /**
+     * Take a badge chosen on another of the reader's devices, earned or not.
+     *
+     * Sync's seam, and only sync's. The read lists that earned the badge over
+     * there are on their way here too, so the check equipBadge makes would
+     * only make the two devices disagree for the length of a sync cycle --
+     * which is the exact window in which the reader looks at both. Nothing
+     * is added to earnedBadgeIds: the store still says what *this* device has
+     * seen, and the shelf shows an adopted badge as equipped, not as earned.
+     */
+    adoptBadge(id) {
+      const next = typeof id === 'string' && id ? id : null;
+      if (store.equippedBadgeId === next) return false;
+      save({ equippedBadgeId: next });
+      emit('yomu:progress', { reason: 'adopt', state: get() });
       return true;
     },
 

@@ -88,6 +88,10 @@ export interface ProfileEntry {
   name?: string;
   /** A preset avatar id, e.g. "04_undead_knight_reader". Never a photo. */
   avatar?: string;
+  /** The equipped badge id, e.g. "tower-climber:3" or "century". Also a
+   *  preset: the client draws it from its own renderer and the server only
+   *  ever holds the name. Empty string clears it. */
+  badge?: string;
   updatedAt: number;
 }
 
@@ -396,7 +400,7 @@ export function mergeProfile(
      would delete the preset already there. Fall through to the older value
      instead. An empty string still passes, because clearing on purpose is a
      thing somebody is allowed to do. */
-  const pick = (field: 'name' | 'avatar', ok: (value: string) => boolean) => {
+  const pick = (field: 'name' | 'avatar' | 'badge', ok: (value: string) => boolean) => {
     for (const source of [newer, older]) {
       const value = source && source[field];
       if (typeof value === 'string' && ok(value)) return value;
@@ -408,8 +412,12 @@ export function mergeProfile(
   // A preset id, not a data URL: anything else is somebody's photo taking a
   // route it was promised it would not take.
   const avatar = pick('avatar', (value) => /^[a-z0-9_-]{0,64}$/i.test(value));
+  // A badge id has a colon in it ("tower-climber:3"), which is the one
+  // character the avatar rule does not allow, so it has its own pattern.
+  const badge = pick('badge', (value) => /^[a-z0-9:_-]{0,64}$/i.test(value));
   if (typeof name === 'string') next.name = name.slice(0, 40);
   if (typeof avatar === 'string') next.avatar = avatar;
+  if (typeof badge === 'string') next.badge = badge;
   next.updatedAt = Math.max(Number(a?.updatedAt) || 0, Number(b.updatedAt) || now);
   return next;
 }

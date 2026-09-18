@@ -559,6 +559,9 @@ const ASSETS = [
      skin-goes-last rule below is left intact. */
   { file: 'yomu-badges.css', tag: '<link rel="stylesheet" href="/yomu-badges.css">' },
   { file: 'yomu-pet.css', tag: '<link rel="stylesheet" href="/yomu-pet.css">' },
+  /* The shelf, the stickers and the Circle reactions. Its own namespace
+     (.ysh-*, .ys, .yomu-react*) and nothing the skin sets. */
+  { file: 'yomu-shelf.css', tag: '<link rel="stylesheet" href="/yomu-shelf.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
@@ -578,8 +581,17 @@ const ASSETS = [
      gated line, which looks like a smaller corpus rather than a bug. */
   { file: 'yomu-progress.js', tag: '<script src="/yomu-progress.js" defer></scr' + 'ipt>' },
   { file: 'yomu-badges.js', tag: '<script src="/yomu-badges.js" defer></scr' + 'ipt>' },
+  /* Stickers draw from nothing but their own catalogue; the shelf registers
+     the milestone badge families into the renderer above, so it must follow
+     it, and the Circle client (earlier in the chain) only ever asks for
+     these at paint time, after every deferred script has run. */
+  { file: 'yomu-stickers.js', tag: '<script src="/yomu-stickers.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-shelf.js', tag: '<script src="/yomu-shelf.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
+  /* After the pet (it borrows the sprite), the shelf (the badge drop) and
+     greet (the line). */
+  { file: 'yomu-ceremony.js', tag: '<script src="/yomu-ceremony.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */

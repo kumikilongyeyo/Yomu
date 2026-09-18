@@ -25,6 +25,10 @@
   const STATE_KEY = 'yomu.v1.circle';
   const GROUP_ID = 'yomu-circle';
   const THREAD_ID = 'yomu-thread';
+  /** Read for the equipped badge only. yomu-progress.js owns the store. */
+  const PROGRESS_KEY = 'yomu.v1.progress';
+  const COLLECTION_KEY = 'yomu.v1.collection';
+  const READING_KEY = 'yomu.v1.reading';
 
   const readJSON = (key, fallback) => {
     try {
@@ -55,11 +59,20 @@
   const display = (code) =>
     code ? 'YOMU-' + code.slice(0, 5) + '-' + code.slice(5) : '';
 
+  /** The badge beside your name, sent with every call so the circle sees
+   *  what you are wearing without a call of its own. '' means none. */
+  const equippedBadge = () => {
+    const progress = readJSON(PROGRESS_KEY, null);
+    return progress && typeof progress.equippedBadgeId === 'string' ? progress.equippedBadgeId : '';
+  };
+
   async function api(route, payload) {
     const response = await fetch('/api/circle/' + route, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: state().code, memberId: state().memberId, ...payload }),
+      body: JSON.stringify({
+        code: state().code, memberId: state().memberId, badge: equippedBadge(), ...payload,
+      }),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'That did not work.');
@@ -363,6 +376,20 @@
     head.className = 'yomu-cmt__head';
     const who = document.createElement('b');
     who.textContent = comment.name;
+    // The badge they are wearing, live from the membership -- so a badge
+    // changed today shows on a comment from last week, the way a name does
+    // not. Micro, and inside the name so a long thread stays one line per
+    // head.
+    if (comment.badge && window.YomuShelf?.el) {
+      const mark = window.YomuShelf.el(comment.badge, { variant: 'micro', size: 14 });
+      if (mark) {
+        const wrap = document.createElement('span');
+        wrap.className = 'yomu-cmt__badge';
+        wrap.title = window.YomuShelf.title(comment.badge) || '';
+        wrap.append(mark);
+        who.append(wrap);
+      }
+    }
     const when = document.createElement('span');
     when.textContent = ago(comment.at) + (comment.present ? '' : ' · left the circle');
     head.append(who, when);
@@ -373,23 +400,7 @@
     const tools = document.createElement('div');
     tools.className = 'yomu-cmt__tools';
 
-    const like = document.createElement('button');
-    like.type = 'button';
-    like.className = 'yomu-cmt__like' + (comment.likedByMe ? ' is-on' : '');
-    like.textContent = '♥' + (comment.likes ? ' ' + comment.likes : '');
-    // Who, not how many: at this size that is the more useful fact, and the
-    // server sends the names precisely so it can be shown.
-    if (comment.likedBy?.length) like.title = comment.likedBy.join(', ');
-    like.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      const context = readerContext();
-      if (!context) return;
-      try {
-        await api('like', { ...context, commentId: comment.id });
-        loadThread(context);
-      } catch (error) { note(error.message); }
-    });
-    tools.append(like);
+    tools.append(reactionsNode(comment));
 
     if (comment.mine || isOwner) {
       const remove = document.createElement('button');
@@ -409,8 +420,132 @@
     }
 
     body.append(head, text, tools);
+    if (pickerFor === comment.id) body.append(pickerNode(comment));
     item.append(face, body);
     return item;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Reactions: stickers instead of a heart
+   *
+   * A like was a counter anyone could bump. A sticker is something the
+   * reader earned by reading -- the store grants them at five chapters, a
+   * hundred, a finished title -- so the picker offers only the ones you
+   * have, and a rare one under a comment says something. One per member,
+   * replaceable, and gated exactly as likes were: you cannot react to what
+   * you cannot read.
+   * ------------------------------------------------------------------ */
+
+  /** Which comment's picker is open. One at a time; the thread is small. */
+  let pickerFor = '';
+
+  const owned = () => window.YomuStickers?.earned?.() || [];
+
+  async function reactWith(comment, sticker) {
+    const context = readerContext();
+    if (!context) return;
+    try {
+      await api('react', { ...context, commentId: comment.id, sticker });
+      pickerFor = '';
+      loadThread(context);
+    } catch (error) { note(error.message); }
+  }
+
+  function reactionsNode(comment) {
+    const box = document.createElement('div');
+    box.className = 'yomu-cmt__reactions';
+    const S = window.YomuStickers;
+    const mine = owned();
+
+    for (const group of comment.reactions || []) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'yomu-react' + (group.mine ? ' is-mine' : '');
+      const art = S?.el?.(group.sticker, { size: 20 });
+      if (art) chip.append(art);
+      chip.append(document.createTextNode(String(group.count)));
+      const info = S?.info?.(group.sticker);
+      // Who, not how many: at this size that is the more useful fact, and
+      // the server sends the names precisely so they can be shown.
+      chip.title = (info ? info.title : 'Sticker') + (group.names?.length ? ' · ' + group.names.join(', ') : '');
+      chip.setAttribute('aria-label',
+        (info ? info.title : 'Sticker') + ', ' + group.count + (group.mine ? ', yours' : ''));
+      chip.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (group.mine) { reactWith(comment, ''); return; }
+        // Joining in with a sticker you own is one tap. One you have not
+        // earned opens the picker instead, which is where it says so.
+        if (mine.includes(group.sticker)) { reactWith(comment, group.sticker); return; }
+        pickerFor = comment.id;
+        paintThread();
+      });
+      box.append(chip);
+    }
+
+    // Hearts from before stickers existed. History, not a control.
+    if (comment.likes) {
+      const old = document.createElement('span');
+      old.className = 'yomu-react__old';
+      old.textContent = '♥ ' + comment.likes;
+      if (comment.likedBy?.length) old.title = comment.likedBy.join(', ');
+      box.append(old);
+    }
+
+    const open = pickerFor === comment.id;
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'yomu-react__add';
+    add.textContent = open ? '×' : '+';
+    add.setAttribute('aria-label', open ? 'Close the sticker picker' : 'React with a sticker');
+    add.setAttribute('aria-expanded', String(open));
+    add.addEventListener('click', (event) => {
+      event.stopPropagation();
+      pickerFor = open ? '' : comment.id;
+      paintThread();
+    });
+    box.append(add);
+    return box;
+  }
+
+  function pickerNode(comment) {
+    const box = document.createElement('div');
+    box.className = 'yomu-react__picker';
+    const S = window.YomuStickers;
+    const mine = owned();
+
+    if (!S || !mine.length) {
+      const hint = document.createElement('p');
+      hint.className = 'yomu-react__hint';
+      hint.textContent = 'Stickers come from reading. Finish five chapters and your first one will be here.';
+      box.append(hint);
+      return box;
+    }
+
+    for (const id of mine) {
+      const info = S.info(id);
+      const pick = document.createElement('button');
+      pick.type = 'button';
+      pick.className = 'yomu-react__pick';
+      pick.title = info?.title || id;
+      pick.setAttribute('aria-label', 'React with ' + (info?.title || id) + (comment.myReaction === id ? ', yours now' : ''));
+      pick.setAttribute('aria-pressed', String(comment.myReaction === id));
+      pick.append(S.el(id, { size: 32 }));
+      pick.addEventListener('click', (event) => {
+        event.stopPropagation();
+        reactWith(comment, comment.myReaction === id ? '' : id);
+      });
+      box.append(pick);
+    }
+
+    if (comment.myReaction) {
+      const off = document.createElement('button');
+      off.type = 'button';
+      off.className = 'yomu-react';
+      off.textContent = 'Take mine off';
+      off.addEventListener('click', (event) => { event.stopPropagation(); reactWith(comment, ''); });
+      box.append(off);
+    }
+    return box;
   }
 
   function buildThread(context) {
@@ -594,6 +729,98 @@
     if ((Number(all[key]) || 0) >= at) return;
     all[key] = at;
     writeJSON(SEEN_KEY, all);
+    // The card's dot is answered from a cached count; having just opened
+    // the thread is exactly the moment that count went stale.
+    unreadCache.at = 0;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Series cards: the unread dot
+   *
+   * Circles rewarded you only if you remembered to look. This is the
+   * reminder: a dot on a card when its circle has comments you are far
+   * enough along to read and have not opened. One request for the whole
+   * grid, answered behind the gate on the server, cached for five minutes
+   * -- so a library of forty titles costs one round trip per visit, not
+   * forty, and a chapter you have not reached contributes nothing, not
+   * even a dot.
+   * ------------------------------------------------------------------ */
+
+  const UNREAD_TTL = 5 * 60000;
+  let unreadCache = { sig: '', at: 0, counts: {} };
+  let unreadInFlight = false;
+
+  /** seriesId -> sourceId, from the library and the reading index. Built
+   *  once per tick: the grid can hold a hundred tiles and a pass runs on
+   *  every mutation. */
+  function sourceMap() {
+    const map = new Map();
+    const collection = readJSON(COLLECTION_KEY, {}) || {};
+    for (const row of Array.isArray(collection.library) ? collection.library : []) {
+      if (row && row.id && row.sourceId && !map.has(row.id)) map.set(row.id, row.sourceId);
+    }
+    const index = readJSON(READING_KEY, {}) || {};
+    for (const record of Object.values(index)) {
+      if (record && record.seriesId && record.sourceId && !map.has(record.seriesId)) {
+        map.set(record.seriesId, record.sourceId);
+      }
+    }
+    return map;
+  }
+
+  function tickTiles() {
+    const tiles = document.querySelectorAll('.tile-card[data-series]');
+    if (!joined()) {
+      for (const dot of document.querySelectorAll('.yomu-tile__circle')) dot.remove();
+      return;
+    }
+    if (!tiles.length) return;
+
+    const sources = sourceMap();
+    const wanted = new Map();
+    for (const tile of tiles) {
+      const seriesId = tile.getAttribute('data-series');
+      const sourceId = sources.get(seriesId);
+      if (sourceId) wanted.set(sourceId + ':' + seriesId, { sourceId, seriesId });
+    }
+    if (!wanted.size) return;
+
+    const sig = [...wanted.keys()].sort().join('|');
+    const fresh = unreadCache.sig === sig && Date.now() - unreadCache.at < UNREAD_TTL;
+    if (!fresh && !unreadInFlight) {
+      unreadInFlight = true;
+      const series = [...wanted.values()].slice(0, 60)
+        .map((row) => ({ ...row, since: seenAt(row.sourceId + ':' + row.seriesId) }));
+      api('unread', { series })
+        .then((data) => { unreadCache = { sig, at: Date.now(), counts: data.counts || {} }; })
+        // A failed ask keeps the last answer and waits out the TTL rather
+        // than asking again on every mutation.
+        .catch(() => { unreadCache = { sig, at: Date.now(), counts: unreadCache.counts }; })
+        .finally(() => { unreadInFlight = false; paintTiles(sources); });
+    }
+    paintTiles(sources);
+  }
+
+  function paintTiles(sources) {
+    const map = sources || sourceMap();
+    for (const tile of document.querySelectorAll('.tile-card[data-series]')) {
+      const seriesId = tile.getAttribute('data-series');
+      const sourceId = map.get(seriesId);
+      const count = sourceId ? unreadCache.counts[sourceId + ':' + seriesId] || 0 : 0;
+      let dot = tile.querySelector('.yomu-tile__circle');
+      if (!count) { dot?.remove(); continue; }
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'yomu-tile__circle';
+        (tile.querySelector('.tile-card__cover') ?? tile).append(dot);
+      }
+      const label = count + ' new circle comment' + (count === 1 ? '' : 's');
+      if (dot.title !== label) {
+        dot.title = label;
+        dot.setAttribute('role', 'img');
+        dot.setAttribute('aria-label', label);
+      }
+    }
   }
 
   function paintSeries(context) {
@@ -664,7 +891,7 @@
 
   /* --- boot -------------------------------------------------------------- */
 
-  const pass = () => { mountGroup(); tickReader(); tickSeries(); };
+  const pass = () => { mountGroup(); tickReader(); tickSeries(); tickTiles(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pass);
   else pass();
 

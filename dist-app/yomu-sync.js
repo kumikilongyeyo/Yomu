@@ -48,6 +48,9 @@
   const READING_KEY = 'yomu.v1.reading';
   const CIRCLE_KEY = 'yomu.v1.circle';
   const AVATAR_KEY = 'yomu.v1.avatar';
+  /** Read for one field -- the equipped badge -- and never written directly:
+   *  yomu-progress.js owns that store, and its adoptBadge is the way in. */
+  const PROGRESS_KEY = 'yomu.v1.progress';
   const RESUME_PREFIX = 'yomu.v1.resume.local-account.';
 
   /** Never less than this between writes. KV's budget is a thousand a day. */
@@ -231,18 +234,23 @@
     const name = circle && typeof circle.name === 'string' ? circle.name.trim() : '';
     const saved = readJSON(AVATAR_KEY, null);
     const avatar = saved && saved.kind === 'preset' && saved.id ? String(saved.id) : '';
-    return { name, avatar };
+    // The badge is a preset id too -- a family slug and a tier, or a
+    // milestone name -- drawn by the renderer on whichever device shows it.
+    const progress = readJSON(PROGRESS_KEY, null);
+    const badge = progress && typeof progress.equippedBadgeId === 'string'
+      ? progress.equippedBadgeId : '';
+    return { name, avatar, badge };
   }
 
-  const profileSig = (p) => p.name + '\u0000' + p.avatar;
+  const profileSig = (p) => p.name + '\u0000' + p.avatar + '\u0000' + (p.badge || '');
 
   /** Null when there is nothing to say, or nothing has changed since the last
    *  acknowledged push -- a name is not worth a KV write a minute. */
   function profilePatch() {
     const mine = localProfile();
-    if (!mine.name && !mine.avatar) return null;
+    if (!mine.name && !mine.avatar && !mine.badge) return null;
     if (state().profileSig === profileSig(mine)) return null;
-    return { name: mine.name, avatar: mine.avatar, updatedAt: Date.now() };
+    return { name: mine.name, avatar: mine.avatar, badge: mine.badge, updatedAt: Date.now() };
   }
 
   /**
@@ -277,6 +285,22 @@
         writeJSON(AVATAR_KEY, { kind: 'preset', id: incoming.avatar });
         changed = true;
       }
+    }
+
+    if (typeof incoming.badge === 'string' && incoming.badge !== mine.badge) {
+      // Adopted whether or not this device has earned it: the read lists that
+      // earned it on the other device are syncing too, and until they land a
+      // badge you chose showing on one phone and not the other reads as lost.
+      // An empty string is "I took it off", and travels the same way.
+      if (window.YomuProgress?.adoptBadge) {
+        window.YomuProgress.adoptBadge(incoming.badge || null);
+      } else {
+        const progress = readJSON(PROGRESS_KEY, null);
+        if (progress && typeof progress === 'object') {
+          writeJSON(PROGRESS_KEY, { ...progress, equippedBadgeId: incoming.badge || null });
+        }
+      }
+      changed = true;
     }
 
     // Stamped even when nothing changed, so an already-matching profile is not

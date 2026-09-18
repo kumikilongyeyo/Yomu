@@ -29,10 +29,15 @@ import {
   gate,
   publicComment,
   reachedIn,
+  react,
   recordProgress,
+  sanitiseBadge,
   sanitiseName,
+  sanitiseSticker,
   sanitiseText,
   seriesKey,
+  setBadge,
+  unreadCount,
   CIRCLE_SCHEMA,
 } from './circle';
 import type { CircleDoc, Comment, SeriesThread } from './circle';
@@ -91,6 +96,7 @@ const publicCircle = (doc: CircleDoc, code: string, viewerId: string) => ({
     .map(([id, member]) => ({
       id,
       name: member.name,
+      badge: member.badge || '',
       joinedAt: member.joinedAt,
       lastSeen: member.lastSeen,
       isOwner: id === doc.ownerId,
@@ -172,6 +178,15 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
   const { code, memberId } = auth;
   let doc = auth.doc;
 
+  /* The equipped badge rides along on every authenticated call, the way the
+   * reader's position rides along on `read`. It is stored on the member, not
+   * the comment, so changing it changes it everywhere at once -- and it is
+   * only written when a route writes the circle anyway (info, read, post),
+   * because a badge is not worth a KV write of its own. */
+  const badged = setBadge(doc, memberId, sanitiseBadge(payload.badge));
+  const badgeChanged = badged !== doc;
+  doc = badged;
+
   /* Who is here. */
   if (route === 'info') {
     await writeCircle(env, code, touch(doc, memberId, now));
@@ -190,7 +205,7 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
     const chapter = Number(payload.chapter);
     const before = doc;
     doc = recordProgress(doc, memberId, key, chapter);
-    if (doc !== before) await writeCircle(env, code, touch(doc, memberId, now));
+    if (doc !== before || badgeChanged) await writeCircle(env, code, touch(doc, memberId, now));
 
     const thread = await readThread(env, code, key);
     const view = gate(thread, reachedIn(doc, memberId, key), memberId);
@@ -259,6 +274,52 @@ export async function handleCircle(request: Request, env: Env, url: URL): Promis
       : [...comment.likes, memberId];
     await writeThread(env, code, key, thread);
     return json({ comment: publicComment(comment, doc, memberId) });
+  }
+
+  /* React with a sticker. Toggling, one per member, and gated exactly as a
+   * like is: a reaction on a comment you cannot read is a way to probe it.
+   *
+   * The server does not know which stickers this member has earned -- that
+   * is on their device -- so it checks the shape and leaves "only ones you
+   * own" to the picker, which offers nothing else. What the server does
+   * enforce is the part a client cannot be trusted with: the gate. */
+  if (route === 'react') {
+    const key = seriesKey(String(payload.sourceId ?? ''), String(payload.seriesId ?? ''));
+    const id = String(payload.commentId ?? '');
+    const sticker = sanitiseSticker(payload.sticker);
+    const thread = await readThread(env, code, key);
+    const comment = thread.comments.find((c) => c.id === id);
+    if (!comment) return bad('That comment is gone.', 404);
+    if (comment.chapter > reachedIn(doc, memberId, key) && comment.memberId !== memberId) {
+      return bad('You have not reached that chapter yet.', 403);
+    }
+    if (react(comment, memberId, sticker)) await writeThread(env, code, key, thread);
+    return json({ comment: publicComment(comment, doc, memberId) });
+  }
+
+  /* How much is waiting for you, per series, in one round trip.
+   *
+   * The series card needs a dot, not a thread, and a library of forty titles
+   * must not cost forty requests on every visit to Home. Reads only -- a KV
+   * read is effectively free and this writes nothing -- and every count is
+   * taken behind the gate, so a series you have not started reports zero
+   * however lively its thread is. */
+  if (route === 'unread') {
+    const asked = Array.isArray(payload.series) ? payload.series.slice(0, 60) : [];
+    const counts: Record<string, number> = {};
+    await Promise.all(asked.map(async (row: any) => {
+      const sourceId = String(row?.sourceId ?? '');
+      const seriesId = String(row?.seriesId ?? '');
+      if (!sourceId || !seriesId) return;
+      const key = seriesKey(sourceId, seriesId);
+      const reached = reachedIn(doc, memberId, key);
+      // Nothing reached means nothing readable, so the thread is not even
+      // fetched: a count of zero is the only answer the gate allows.
+      if (reached <= 0) { counts[key] = 0; return; }
+      const thread = await readThread(env, code, key);
+      counts[key] = unreadCount(thread, reached, memberId, Number(row?.since) || 0);
+    }));
+    return json({ counts });
   }
 
   /* Delete: your own always, anyone's if you started the circle. */

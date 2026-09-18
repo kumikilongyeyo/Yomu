@@ -150,7 +150,7 @@
     .row small { display: block; margin-top: 2px; font: 400 12px/1.4 var(--uiFont); color: var(--faint); }
     .note { margin: 10px 2px 0; font: 400 11.5px/1.5 var(--uiFont); color: var(--faint); }
   </style>
-<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><script src="/yomu-progress.js" defer></script><script src="/yomu-badges.js" defer></script><script src="/yomu-pet.js" defer></script><script src="/yomu-greet.js" defer></script><script src="/yomu-mori.js" defer></script><script src="/yomu-anilist.js" defer></script><link rel="stylesheet" href="/yomu-rails.css"><script src="/yomu-rank.js" defer></script><script src="/yomu-rails.js" defer></script></head>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><script src="/yomu-progress.js" defer></script><script src="/yomu-badges.js" defer></script><script src="/yomu-pet.js" defer></script><script src="/yomu-greet.js" defer></script><script src="/yomu-mori.js" defer></script><script src="/yomu-anilist.js" defer></script><link rel="stylesheet" href="/yomu-rails.css"><script src="/yomu-rank.js" defer></script><script src="/yomu-rails.js" defer></script><link rel="stylesheet" href="/yomu-shelf.css"><script src="/yomu-stickers.js" defer></script><script src="/yomu-shelf.js" defer></script><script src="/yomu-ceremony.js" defer></script></head>
 <body>
 <main>
   <div class="top">
@@ -200,6 +200,22 @@
   <h2>Mileage</h2>
   <div class="yp-road" id="road"></div>
   <p class="note" id="road-note"></p>
+
+  <!-- The trails: milestones that are not a chapter count. Under the road
+       rather than on it, because five sources is not a distance along the
+       same line as a hundred chapters. -->
+  <h2>Trails</h2>
+  <div class="yp-road" id="trails"></div>
+  <p class="note" id="trails-note"></p>
+
+  <!-- The shelf. Earned badges and the locked ones with how to get them;
+       tap one to wear it beside your name, here, in the masthead and on
+       your circle comments. Drawn by yomu-shelf.js. -->
+  <h2>Badges</h2>
+  <div id="yomu-shelf"></div>
+
+  <h2>Stickers</h2>
+  <div id="yomu-stickers"></div>
 
   <!-- Mori. The full-size presentation lives here, which is why the floating
        companion stands down on this page rather than appearing twice. -->
@@ -500,6 +516,8 @@
 
   const road = document.getElementById('road');
   const roadNote = document.getElementById('road-note');
+  const trails = document.getElementById('trails');
+  const trailsNote = document.getElementById('trails-note');
   const companion = document.getElementById('companion');
   const picker = document.getElementById('picker');
   const pickerLabel = document.getElementById('picker-label');
@@ -517,7 +535,7 @@
    * the roadmap above them rendered perfectly.
    */
   function whenReady(then) {
-    const up = () => window.YomuProgress && window.YomuPet && window.YomuBadges;
+    const up = () => window.YomuProgress && window.YomuPet && window.YomuBadges && window.YomuShelf;
     if (up()) { then(); return; }
     let tries = 0;
     const tick = () => {
@@ -593,6 +611,35 @@
     roadNote.textContent = state.chaptersRead
       ? state.chaptersRead.toLocaleString() + ' chapters read so far.'
       : 'Stops unlock as you finish chapters.';
+  }
+
+  /** The trails, in the road's own dress: a stop is a stop. */
+  function paintTrails() {
+    const rows = window.YomuProgress.trails ? window.YomuProgress.trails() : [];
+    trails.textContent = '';
+    for (const stop of rows) {
+      const row = document.createElement('div');
+      row.className = 'yp-stop' + (stop.collected ? ' is-done' : '');
+
+      const dot = document.createElement('span');
+      dot.className = 'yp-stop__dot';
+      dot.textContent = stop.collected ? '✓' : Math.floor(stop.value) + '/' + stop.threshold;
+      row.append(dot);
+
+      const body = document.createElement('div');
+      const title = document.createElement('p');
+      title.className = 'yp-stop__title';
+      title.textContent = stop.title;
+      const sub = document.createElement('p');
+      sub.className = 'yp-stop__sub';
+      sub.textContent = stop.collected ? 'Collected · ' + stop.how : stop.how;
+      body.append(title, sub);
+      row.append(body, rewardChip(stop.rewards));
+      trails.append(row);
+    }
+    trailsNote.textContent = rows.some((r) => r.collected)
+      ? 'Finished means every chapter a saved title lists is in your read list.'
+      : 'Sources, finished titles and where they come from. Origin needs a title AniList knows.';
   }
 
   /* --- Mori --------------------------------------------------------------- */
@@ -753,19 +800,18 @@
   function paintEquipped() {
     const state = window.YomuProgress.get();
     const id = state.equippedBadgeId || '';
-    const [slug, tier] = id.split(':');
-    if (!slug || !tier || !window.YomuBadges) { equipped.hidden = true; return; }
-
-    const family = window.YomuBadges.list().find((f) => f.slug === slug);
-    if (!family) { equipped.hidden = true; return; }
+    /* Through the shelf, which knows both id shapes -- "family:tier" and a
+       milestone's plain name -- and has registered the milestone art. */
+    const art = id && window.YomuShelf ? window.YomuShelf.el(id, { variant: 'micro', size: 20 }) : null;
+    if (!art) { equipped.hidden = true; return; }
 
     equipped.textContent = '';
     equipped.hidden = false;
-    equipped.append(window.YomuBadges.el(slug, Number(tier), { variant: 'micro', size: 20 }));
+    equipped.append(art);
 
     const text = document.createElement('span');
     text.className = 'yp-title__text';
-    text.textContent = family.title + ' ' + ['I', 'II', 'III', 'IV', 'V'][tier - 1];
+    text.textContent = window.YomuShelf.title(id);
     equipped.append(text);
   }
 
@@ -774,6 +820,7 @@
   function paintAll() {
     try {
       paintRoad();
+      paintTrails();
       paintCompanion();
       paintPicker();
       paintEquipped();

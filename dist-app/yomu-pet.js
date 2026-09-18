@@ -583,6 +583,11 @@
   });
 
   on('yomu:reward', (event) => {
+    /* A stage badge arrives in the same pulse as the stage change, and
+       yomu-ceremony.js is already making an occasion of that. The toast and
+       the bubble stand down; the celebration pose does not, because it is
+       the same pose the ceremony asks for. */
+    if (event.detail?.quiet) { setState('celebrating', 3400); return; }
     setState('celebrating', 3400);
     const title = event.detail?.title || '';
     const line = window.YomuGreetings?.line?.('milestone', { title })

@@ -159,6 +159,19 @@
       'That source is being slow. I can try another.',
       'This one is struggling. There are others.',
     ],
+    /* The egg opening at fifty chapters. Said once, ever. */
+    hatch: [
+      'Oh. Hello. Was that me in there?',
+      'Fifty chapters and here I am. Good shelf.',
+      'Hatched. Now show me what you were reading.',
+    ],
+    /* A stage change. {stage} is the new stage's name. */
+    evolve: [
+      'I feel taller. New form, same shelf.',
+      '{stage} now. Keep turning pages.',
+      'That is a new me. You did that.',
+      'Look at me. A {stage}. Do not stop now.',
+    ],
   };
 
   const fromPool = (type, vars) => {

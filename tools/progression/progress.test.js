@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const SOURCE = fs.readFileSync(new URL('../../dist-app/yomu-progress.js', import.meta.url), 'utf8');
+const { MILESTONES } = await import('../../dist-app/yomu-progress.js');
 const RESUME = 'yomu.v1.resume.local-account.';
 
 /**
@@ -335,11 +336,12 @@ test('no badge is a first-class choice', async () => {
 
 /* --- the roadmap -------------------------------------------------------- */
 
-test('the roadmap draws the three stops the mockup draws', async () => {
+test('the roadmap draws the chapter stops from ten to a thousand, and nothing else', async () => {
   const { api } = boot({ storage: withChapters(38) });
   await api.refresh();
   const road = api.roadmap();
-  assert.deepEqual(plain(road.map((r) => r.threshold)), [10, 20, 50]);
+  assert.deepEqual(plain(road.map((r) => r.threshold)), [10, 20, 50, 100, 250, 500, 1000]);
+  assert.ok(road.every((r) => r.metric === 'chaptersRead'), 'trails are not on the road');
   assert.equal(road[0].collected, true);
   assert.equal(road[2].collected, false);
   assert.equal(road[2].remaining, 12);
@@ -389,4 +391,139 @@ test('a corrupt store falls back to empty rather than throwing', async () => {
   const { api } = boot({ storage });
   await api.refresh();
   assert.equal(api.get().chaptersRead, 3);
+});
+
+/* --- past fifty ---------------------------------------------------------- */
+
+test('99 -> 100 pays Century once, a badge and a sticker', async () => {
+  const storage = withChapters(99);
+  const { api, events } = boot({ storage });
+  await api.refresh();
+  assert.ok(!ids(events).includes('century'), 'not paid at 99');
+
+  storage.setItem(RESUME + 'ext-a:solo-leveling.read',
+    JSON.stringify(Array.from({ length: 100 }, (_, i) => 'ch-' + i)));
+  await api.refresh();
+  await api.refresh();
+  assert.equal(ids(events).filter((id) => id === 'century').length, 1);
+  assert.ok(api.get().earnedBadgeIds.includes('century'));
+  assert.ok(api.get().earnedStickerIds.includes('century-sticker'));
+});
+
+test('the chapter ladder pays every stop on the way to a thousand, each once', async () => {
+  const { api, events } = boot({ storage: withChapters(1000) });
+  await api.refresh();
+  const paid = ids(events);
+  for (const id of ['century', 'shelf-bender', 'tome-eater', 'living-library']) {
+    assert.equal(paid.filter((x) => x === id).length, 1, id + ' paid once');
+  }
+  assert.ok(api.get().earnedStickerIds.includes('living-library-sticker'));
+});
+
+test('stage badges arrive quietly, alongside the stage they mark', async () => {
+  const { api, events } = boot({ storage: withChapters(60) });
+  await api.refresh();
+  assert.equal(api.stageOf().level, 2, 'sixty XP is the Fledgling stage');
+  const stage = rewards(events).find((e) => e.detail.milestoneId === 'stage-fledgling');
+  assert.ok(stage, 'the Fledgling badge is paid');
+  assert.equal(stage.detail.quiet, true, 'and marked quiet for the toast');
+  const loud = rewards(events).find((e) => e.detail.milestoneId === 'book-goblin');
+  assert.equal(loud.detail.quiet, false, 'ordinary milestones are not');
+});
+
+/* --- the trails ---------------------------------------------------------- */
+
+test('five enabled sources pays Well Sourced', async () => {
+  const storage = withChapters(1);
+  const sources = Array.from({ length: 5 }, (_, i) => ({ id: 's' + i, enabled: true }));
+  storage.setItem('yomu.v1.collection', JSON.stringify({ sources: [...sources, { id: 'off', enabled: false }], library: [] }));
+  const { api, events } = boot({ storage });
+  await api.refresh();
+  assert.equal(api.get().sourcesUsed, 5);
+  assert.equal(ids(events).filter((id) => id === 'well-sourced').length, 1);
+  const trail = api.trails().find((t) => t.id === 'well-sourced');
+  assert.equal(trail.collected, true);
+});
+
+test('a saved title read to its total is finished; one with no total never is', async () => {
+  const storage = fakeStorage({
+    [RESUME + 'ext-a:short.read']: JSON.stringify(['1', '2', '3']),
+    [RESUME + 'ext-a:endless.read']: JSON.stringify(Array.from({ length: 40 }, (_, i) => String(i))),
+    'yomu.v1.collection': JSON.stringify({
+      sources: [],
+      library: [
+        { id: 'ext-a:short', sourceId: 'ext-a', title: 'Short', total: 3 },
+        { id: 'ext-a:endless', sourceId: 'ext-a', title: 'Endless' },
+        { id: 'ext-a:hidden', sourceId: 'ext-a', title: 'Hidden', total: 1, hidden: true },
+      ],
+    }),
+  });
+  const { api, events } = boot({ storage });
+  await api.refresh();
+  assert.equal(api.get().titlesCompleted, 1);
+  assert.equal(ids(events).filter((id) => id === 'finisher').length, 1);
+  assert.ok(api.get().earnedStickerIds.includes('finisher-sticker'));
+  assert.ok(!ids(events).includes('closer'));
+});
+
+test('origins are read off the AniList cache, unioned, and never shrink', async () => {
+  const cache = {
+    'solo leveling': { at: Date.now(), answer: { country: 'KR' } },
+    'berserk': { at: Date.now(), answer: { country: 'JP' } },
+    'unread manhua': { at: Date.now(), answer: { country: 'CN' } },
+  };
+  const storage = fakeStorage({
+    [RESUME + 'ext-a:sl.read']: JSON.stringify(['1']),
+    [RESUME + 'ext-a:bk.read']: JSON.stringify(['1']),
+    'yomu.v1.anilist': JSON.stringify(cache),
+    'yomu.v1.collection': JSON.stringify({
+      sources: [],
+      library: [
+        { id: 'ext-a:sl', sourceId: 'ext-a', title: 'Solo Leveling' },
+        { id: 'ext-a:bk', sourceId: 'ext-a', title: 'Berserk' },
+        // Saved, cached, and never opened: not a shore reached.
+        { id: 'ext-a:um', sourceId: 'ext-a', title: 'Unread Manhua' },
+      ],
+    }),
+  });
+  const { api, events } = boot({ storage });
+  await api.refresh();
+  assert.deepEqual(plain(api.get().origins), ['JP', 'KR']);
+  assert.ok(!ids(events).includes('three-shores'));
+
+  // The cache evicts; the shores stay reached.
+  storage.setItem('yomu.v1.anilist', JSON.stringify({}));
+  await api.refresh();
+  assert.deepEqual(plain(api.get().origins), ['JP', 'KR']);
+
+  // The third shore.
+  storage.setItem(RESUME + 'ext-a:um.read', JSON.stringify(['1']));
+  storage.setItem('yomu.v1.anilist', JSON.stringify({ 'unread manhua': cache['unread manhua'] }));
+  await api.refresh();
+  assert.deepEqual(plain(api.get().origins), ['CN', 'JP', 'KR']);
+  assert.equal(ids(events).filter((id) => id === 'three-shores').length, 1);
+});
+
+/* --- the shelf's seams ---------------------------------------------------- */
+
+test('adoptBadge equips a badge this device has not earned, without claiming it has', async () => {
+  const { api, events } = boot({ storage: withChapters(1) });
+  await api.refresh();
+  assert.equal(api.equipBadge('tower-climber:3'), false, 'equip still refuses');
+  assert.equal(api.adoptBadge('tower-climber:3'), true);
+  assert.equal(api.get().equippedBadgeId, 'tower-climber:3');
+  assert.ok(!api.get().earnedBadgeIds.includes('tower-climber:3'), 'not marked earned');
+  assert.equal(api.adoptBadge('tower-climber:3'), false, 'same again is a no-op');
+  assert.equal(api.adoptBadge(''), true, 'empty clears');
+  assert.equal(api.get().equippedBadgeId, null);
+  assert.ok(events.some((e) => e.type === 'yomu:progress' && e.detail.reason === 'adopt'));
+});
+
+test('every badge and sticker the roadmap pays has a listed id, and every trail says how', () => {
+  for (const m of MILESTONES) {
+    for (const r of m.rewards) {
+      if (r.type === 'badge' || r.type === 'sticker') assert.match(r.id, /^[a-z0-9][a-z0-9:_-]*$/, m.id);
+    }
+    if (m.metric !== 'chaptersRead' && m.metric !== 'petXp') assert.ok(m.how, m.id + ' has a how');
+  }
 });
