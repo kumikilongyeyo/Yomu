@@ -272,6 +272,18 @@
 .tile-card__hot.ytg { align-self: flex-start; }
 @container (min-width: 230px) { .tile-card__cover .freshness.ytg { padding: 6px var(--ytg-px) !important; } }
 
+/* A .ytg is a positioned box, and that is not cosmetic.
+ *
+ * The chip has no background of its own: its fill, its glow and its edge are
+ * an absolutely positioned ::after at inset 0, so the chip must be that
+ * layer's containing block. Anything that sets `position: static` on a chip
+ * -- even to stop a placement rule moving it -- sends that layer to the
+ * nearest positioned ancestor instead, where `border-radius: 999px` on a
+ * few hundred pixels paints a large ellipse across whatever is behind it,
+ * and leaves the chip itself as bare text. Use `relative` with no offsets:
+ * it lays out identically and keeps the paint where it belongs.
+ */
+
 /* --- footer, rail and series chips -------------------------------------- */
 .yomu-tile__rating.ytg { align-self: flex-start; }
 .yr-card__rating.ytg { align-self: flex-start; justify-self: start; width: max-content; margin: 2px 0 0; }
