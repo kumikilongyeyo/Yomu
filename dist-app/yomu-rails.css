@@ -1,0 +1,163 @@
+/* ====================================================================
+ * Discovery rails.
+ *
+ * Yomu's own tokens throughout, so a theme change reaches these without
+ * this file knowing a theme exists. The cover is the visual focus and
+ * everything else is deliberately quiet: a card carries a name, at most
+ * one badge, and one line of evidence.
+ * ==================================================================== */
+
+.yr-wrap { display: grid; gap: 22px; margin: 18px 0 6px; }
+
+.yr-rail { min-width: 0; }
+
+.yr-rail__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0 2px;
+}
+
+.yr-rail__title {
+  margin: 0;
+  font: 800 16px/1.2 var(--font-display, var(--font-ui, system-ui, sans-serif));
+  letter-spacing: -.015em;
+  color: var(--text, #1e1b16);
+}
+
+.yr-rail__why {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px/1.3 var(--font-ui, system-ui, sans-serif);
+  color: var(--faint, #9b9184);
+}
+
+/* --- the strip ---------------------------------------------------------- *
+ * Scrolls sideways with snap, and never makes the page scroll sideways. */
+
+.yr-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 132px;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.yr-strip::-webkit-scrollbar { display: none; }
+
+@media (max-width: 480px) { .yr-strip { grid-auto-columns: 118px; } }
+
+/* --- a card -------------------------------------------------------------- */
+
+.yr-card {
+  scroll-snap-align: start;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.yr-card__art {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-card, 16px);
+  overflow: hidden;
+  background: var(--raised, #efeade);
+  border: 1px solid var(--line, #e4ded2);
+  display: grid;
+  place-items: center;
+  transition: transform 200ms cubic-bezier(.3, 1, .5, 1);
+}
+
+.yr-card:hover .yr-card__art { transform: translateY(-2px); }
+.yr-card:focus-visible .yr-card__art { outline: 2px solid var(--accent, #b8791c); outline-offset: 2px; }
+
+.yr-card__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.yr-card__initials {
+  font: 800 22px/1 var(--font-ui, system-ui, sans-serif);
+  color: var(--faint, #9b9184);
+}
+
+.yr-card__title {
+  font: 700 12.5px/1.3 var(--font-ui, system-ui, sans-serif);
+  color: var(--text, #1e1b16);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yr-card__note {
+  font: 500 11px/1.2 var(--font-ui, system-ui, sans-serif);
+  color: var(--faint, #9b9184);
+}
+
+/* --- the badge ----------------------------------------------------------- *
+ * One word, over the cover's top-left. Backed by the ground rather than a
+ * translucent lift, because it sits on artwork that can be any colour. */
+
+.yr-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--accent, #b8791c);
+  color: var(--accentText, #fff8ec);
+  font: 800 9.5px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+
+/* --- the type switch ------------------------------------------------------ */
+
+.yr-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.yr-tabs::-webkit-scrollbar { display: none; }
+
+.yr-tab {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e4ded2);
+  background: var(--surface, #fffdfa);
+  color: var(--muted, #4a443a);
+  font: 700 13px/1 var(--font-ui, system-ui, sans-serif);
+  cursor: pointer;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+.yr-tab[aria-selected='true'] {
+  background: var(--accent, #b8791c);
+  border-color: transparent;
+  color: var(--accentText, #fff8ec);
+}
+
+.yr-loading {
+  margin: 8px 2px;
+  font: 500 12.5px/1.5 var(--font-ui, system-ui, sans-serif);
+  color: var(--faint, #9b9184);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yr-card__art, .yr-tab { transition: none; }
+  .yr-card:hover .yr-card__art { transform: none; }
+}

@@ -188,7 +188,7 @@
     .charts:not(.hidden) ~ .feed > h2 { display: none; }
 
   </style>
-<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><script src="/yomu-progress.js" defer></script><script src="/yomu-badges.js" defer></script><script src="/yomu-pet.js" defer></script><script src="/yomu-greet.js" defer></script><script src="/yomu-mori.js" defer></script><script src="/yomu-anilist.js" defer></script></head>
+<link rel="stylesheet" href="/yomu-overrides.css"><script src="/yomu-gate.js" defer></script><script src="/yomu-shell.js" defer></script><script src="/yomu-sync.js" defer></script><script src="/yomu-circle.js" defer></script><script src="/yomu-ledger.js" defer></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap"><link rel="stylesheet" href="/yomu-skin.css"><script src="/yomu-greetings.js" defer></script><link rel="stylesheet" href="/yomu-badges.css"><link rel="stylesheet" href="/yomu-pet.css"><script src="/yomu-progress.js" defer></script><script src="/yomu-badges.js" defer></script><script src="/yomu-pet.js" defer></script><script src="/yomu-greet.js" defer></script><script src="/yomu-mori.js" defer></script><script src="/yomu-anilist.js" defer></script><link rel="stylesheet" href="/yomu-rails.css"><script src="/yomu-rank.js" defer></script><script src="/yomu-rails.js" defer></script></head>
 <body>
 <main class="wrap" id="wrap">
   <div class="bar">
@@ -207,6 +207,12 @@
     <p class="lede">Search by English, or by a romanised Japanese, Korean or Chinese name —
       “Kimetsu no Yaiba” finds Demon Slayer wherever it is carried.</p>
     <section id="history" class="hidden"></section>
+
+    <!-- Rankings, above browsing by genre: "what is good right now" is a
+         better first question than "which genre am I in the mood for", and
+         the tabs below it are the only place Manga / Manhwa / Manhua is a
+         real distinction rather than a guess at a source's category. -->
+    <section id="yomu-rails-here"></section>
     <section id="genres" class="genres hidden">
       <h2>Browse by genre</h2>
       <div class="genre-tiles" id="genre-tiles"></div>

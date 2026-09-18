@@ -559,6 +559,7 @@ const ASSETS = [
      skin-goes-last rule below is left intact. */
   { file: 'yomu-badges.css', tag: '<link rel="stylesheet" href="/yomu-badges.css">' },
   { file: 'yomu-pet.css', tag: '<link rel="stylesheet" href="/yomu-pet.css">' },
+  { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
      Both are deferred, and deferred scripts run in document order. */
@@ -579,8 +580,11 @@ const ASSETS = [
   { file: 'yomu-badges.js', tag: '<script src="/yomu-badges.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
-  /* Ahead of yomu-mori.js, which asks it for recommendations. */
+  /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
+  /* The discovery engine, then the rails that draw it. */
+  { file: 'yomu-rank.js', tag: '<script src="/yomu-rank.js" defer></scr' + 'ipt>' },
+  { file: 'yomu-rails.js', tag: '<script src="/yomu-rails.js" defer></scr' + 'ipt>' },
   /* Last: it takes the pet's tap over, so the pet has to exist first. */
   { file: 'yomu-mori.js', tag: '<script src="/yomu-mori.js" defer></scr' + 'ipt>' },
   /* Last, so it overrides both the compiled palette and yomu-overrides.css on

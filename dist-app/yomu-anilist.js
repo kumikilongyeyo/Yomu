@@ -51,6 +51,7 @@ query ($search: String) {
     id
     title { romaji english native }
     genres
+    countryOfOrigin
     tags { name rank isMediaSpoiler }
     recommendations(sort: RATING_DESC, perPage: 12) {
       nodes {
@@ -133,6 +134,9 @@ query ($search: String) {
       matched: nameOf(media.title),
       tags,
       genres: Array.isArray(media.genres) ? media.genres : [],
+      /* JP / KR / CN. The only honest basis for Manga vs Manhwa vs Manhua --
+         source metadata calls half of them "webtoon" or nothing at all. */
+      country: media.countryOfOrigin || '',
       picks,
       because: tags.slice(0, 4).map((t) => t.name),
     };
