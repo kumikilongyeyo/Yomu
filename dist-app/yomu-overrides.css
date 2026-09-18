@@ -234,11 +234,13 @@
   border-bottom: 0;
 }
 /* Softly blurred dark lower edge, then the sharp gradient the copy sits on.
-   Both hang off the cover so they stay under .freshness and the footer. */
+   Both hang off the cover so they stay under .freshness and the footer.
+   Kept to the lower third: it used to start at the card's middle and took
+   half the artwork with it; the title needs the bottom quarter, no more. */
 .tile-card__cover::before {
   content: '';
   position: absolute;
-  inset: 53% -12px -12px;
+  inset: 68% -12px -12px;
   background: #101a25b3;
   filter: blur(18px);
   pointer-events: none;
@@ -247,7 +249,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #07101922 0, transparent 40%, #0c151b70 66%, #0c151bf5 100%);
+  background: linear-gradient(180deg, #07101922 0, transparent 60%, #0c151b70 80%, #0c151bf5 100%);
   pointer-events: none;
 }
 .tile-card__footer {

@@ -625,6 +625,8 @@ const ASSETS = [
   { file: 'yomu-wall.js', tag: '<script src="/yomu-wall.js" defer></scr' + 'ipt>' },
   /* Mori's diary: on-device lines when a title is finished. No model call. */
   { file: 'yomu-diary.js', tag: '<script src="/yomu-diary.js" defer></scr' + 'ipt>' },
+  /* Ratings on tiles, from the AniList cache yomu-anilist.js keeps. */
+  { file: 'yomu-ratings.js', tag: '<script src="/yomu-ratings.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */

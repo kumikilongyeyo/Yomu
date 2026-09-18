@@ -52,6 +52,7 @@ query ($search: String) {
     title { romaji english native }
     genres
     countryOfOrigin
+    averageScore
     tags { name rank isMediaSpoiler }
     recommendations(sort: RATING_DESC, perPage: 12) {
       nodes {
@@ -137,6 +138,9 @@ query ($search: String) {
       /* JP / KR / CN. The only honest basis for Manga vs Manhwa vs Manhua --
          source metadata calls half of them "webtoon" or nothing at all. */
       country: media.countryOfOrigin || '',
+      /* AniList's community score, 0-100, weighted by how many rated it.
+         null when too few have. Shown as a tile rating. */
+      score: typeof media.averageScore === 'number' ? media.averageScore : null,
       picks,
       because: tags.slice(0, 4).map((t) => t.name),
     };
@@ -149,12 +153,14 @@ query ($search: String) {
    * Never throws: a recommendation failing is a smaller thing than the page
    * it was asked from.
    */
-  async function similar(title) {
+  async function similar(title, options) {
     const key = String(title || '').trim().toLowerCase();
     if (!key) return null;
 
     const hit = cached(key);
-    if (hit) return hit;
+    /* A cached answer from before scores were asked for has no `score` key at
+       all; a caller that wants one may ask for a refresh. */
+    if (hit && !(options && options.refresh)) return hit;
 
     try {
       const response = await fetch(ENDPOINT, {
