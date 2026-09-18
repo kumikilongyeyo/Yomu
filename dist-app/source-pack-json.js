@@ -8,7 +8,7 @@
   const RAW_COMMUNITY_PACK = 'https://raw.githubusercontent.com/kumikilongyeyo/Yomu/main/dist-app/source-packs/community.json';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const COMMUNITY_SEEN_KEY = 'yomu.v1.community-pack-seen';
-  const MAX_URLS = 25;
+  const MAX_URLS = 60;
 
   function cleanUrl(value) {
     const raw = String(value || '').trim();
