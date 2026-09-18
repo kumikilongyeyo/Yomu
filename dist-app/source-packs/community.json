@@ -2,10 +2,26 @@
   "schema": "yomu.source-pack/1",
   "id": "yomu-community-core",
   "name": "Yomu Community Core",
-  "version": 8,
+  "version": 9,
   "updatedAt": "2026-09-18",
   "description": "Portable source identities only. Yomu re-resolves and re-tests every site on import before enabling it. Browser-only discoveries are not promoted into this installable pack.",
   "sources": [
+    {
+      "url": "https://www.mangaread.org/",
+      "tags": ["general", "manga", "manhwa", "manhua", "fresh-updates"]
+    },
+    {
+      "url": "https://mangaowl.io/",
+      "tags": ["general", "manga", "manhwa", "manhua", "webtoon", "fresh-updates"]
+    },
+    {
+      "url": "https://mangapark1.com/",
+      "tags": ["general", "manga", "manhwa", "manhua", "webtoon", "fresh-updates"]
+    },
+    {
+      "url": "https://www.mangago.zone/",
+      "tags": ["general", "manga", "manhwa", "webtoon", "older-titles", "fresh-updates"]
+    },
     {
       "url": "https://mangaball.net/",
       "tags": ["general", "manga", "manhwa", "manhua", "webtoon"]
