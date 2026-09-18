@@ -86,8 +86,21 @@
     origins: [],
     /** Milestone ids already paid. The guard against paying twice. */
     claimed: [],
+    /** When each was paid, so a month's wrap can say which badge it earned. */
+    claimedAt: {},
+    /**
+     * 'YYYY-MM' -> { chapters, base, titles0 }. Chapters finished in that
+     * month, a per-series snapshot of the read lists as the month began, and
+     * the finished-title count as it began. The wrap is built from these;
+     * fourteen months are kept, which is a year card and change.
+     */
+    months: {},
     /** Mirror of the derived chapter count, so a delta can be spotted. */
     seenChapters: 0,
+    /** Mirror of the per-series read counts at the last pulse. A new month
+     *  opens on this, not on the lists as they stand, or the chapter that
+     *  crossed the boundary is credited to the month before. */
+    lastReads: {},
     /** ISO day of the last chapter finished, for the streak. */
     lastReadDay: null,
     /** Bingo, reported by yomu-bingo.js: lines completed and cards filled,
@@ -475,17 +488,46 @@
 
   /* --- derivation -------------------------------------------------------- */
 
-  /** Chapters finished, counted off the app's own read lists. */
-  function deriveChapters() {
-    let total = 0;
+  /** Chapters finished per series, off the app's own read lists. */
+  function deriveReads() {
+    const reads = {};
     try {
       for (const key of Object.keys(localStorage)) {
         if (!key.startsWith(RESUME_PREFIX) || !key.endsWith('.read')) continue;
         const list = readJSON(key, []);
-        if (Array.isArray(list)) total += list.length;
+        if (Array.isArray(list)) reads[key.slice(RESUME_PREFIX.length, -'.read'.length)] = list.length;
       }
     } catch {}
+    return reads;
+  }
+
+  /** Chapters finished, counted off the app's own read lists. */
+  function deriveChapters(reads) {
+    let total = 0;
+    for (const n of Object.values(reads || deriveReads())) total += n;
     return total;
+  }
+
+  /**
+   * The month's row, opened on first sight with a snapshot of where every
+   * series stood. Attribution by snapshot rather than by event: the app has
+   * no chapter event, and a chapter that turns up in a read list in October
+   * was read in October, whichever route change noticed it.
+   */
+  function monthRow(months, month, reads) {
+    if (months[month]) return months;
+    /* A row opens on the lists as they stood at the end of the previous
+       pulse. The one exception is a store that has history but no such
+       mirror -- a device upgrading to this version -- whose first row opens
+       on the present, because history before the wrap existed is not this
+       month's. A brand-new store opens on nothing, so its first chapter is
+       its first chapter. */
+    const upgrading = store.seenChapters > 0 && !Object.keys(store.lastReads || {}).length;
+    const base = upgrading ? reads : (store.lastReads || {});
+    const next = { ...months, [month]: { chapters: 0, base: { ...base }, titles0: store.titlesCompleted } };
+    const keys = Object.keys(next).sort();
+    for (const stale of keys.slice(0, Math.max(0, keys.length - 14))) delete next[stale];
+    return next;
   }
 
   function deriveLibrary() {
@@ -584,6 +626,14 @@
    * kept. Yesterday still counts: the day is not over until you have missed
    * the whole of it.
    */
+  /** Every day something was read, with the last read day folded in for
+   *  stores written before readDays existed. */
+  function readDaysAll() {
+    const days = new Set(Array.isArray(store.readDays) ? store.readDays : []);
+    if (store.lastReadDay) days.add(store.lastReadDay);
+    return [...days].sort();
+  }
+
   function streak() {
     const last = store.lastReadDay;
     const since = last ? daysBetween(last, today()) : null;
@@ -596,7 +646,7 @@
       daysSince: since,
       /* Stores written before readDays existed have a lastReadDay and no
          list; the day it names is still a day something was read. */
-      readDays: [...new Set([...(Array.isArray(store.readDays) ? store.readDays : []), ...(last ? [last] : [])])].sort(),
+      readDays: readDaysAll(),
       /** Today has a chapter in it already. */
       today: last === today(),
     };
@@ -622,6 +672,7 @@
 
       claimed.add(milestone.id);
       paid.push(milestone);
+      patch.claimedAt = { ...(patch.claimedAt ?? store.claimedAt ?? {}), [milestone.id]: Date.now() };
 
       for (const reward of milestone.rewards) {
         if (reward.type === 'xp') {
@@ -689,11 +740,16 @@
     if (running) return;
     running = true;
     try {
-      const chapters = deriveChapters();
+      const reads = deriveReads();
+      const chapters = deriveChapters(reads);
       const library = deriveLibrary();
       const delta = chapters - store.seenChapters;
 
-      const patch = { seenChapters: chapters, chaptersRead: chapters, ...library };
+      const month = today().slice(0, 7);
+      const months = monthRow(store.months || {}, month, reads);
+      if (delta > 0) months[month] = { ...months[month], chapters: months[month].chapters + delta };
+
+      const patch = { seenChapters: chapters, chaptersRead: chapters, months, lastReads: reads, ...library };
 
       /* A negative delta means the app's read lists shrank -- a device wiped,
          or a series removed. The counter follows it down, but nothing is paid
@@ -804,6 +860,68 @@
         progress: clamp((store.chaptersRead / m.threshold) * 100, 0, 100),
         remaining: Math.max(m.threshold - store.chaptersRead, 0),
       }));
+    },
+
+    /**
+     * One month, for the wrap. Per-series chapters are the difference between
+     * the snapshot the month opened with and either the next month's snapshot
+     * or, for the current month, the read lists now. Badges are the ones paid
+     * inside the month, milestone badges only.
+     */
+    monthly(month) {
+      const key = month || today().slice(0, 7);
+      const months = store.months || {};
+      const row = months[key];
+      const keys = Object.keys(months).sort();
+      const nextKey = keys.find((k) => k > key);
+      const now = nextKey ? months[nextKey].base : deriveReads();
+      const series = [];
+      if (row) {
+        for (const [seriesId, count] of Object.entries(now)) {
+          const gained = count - (row.base[seriesId] || 0);
+          if (gained > 0) series.push({ seriesId, chapters: gained });
+        }
+        series.sort((a, b) => b.chapters - a.chapters || a.seriesId.localeCompare(b.seriesId));
+      }
+      const badges = [];
+      for (const [id, at] of Object.entries(store.claimedAt || {})) {
+        if (new Date(at).toISOString().slice(0, 7) !== key) continue;
+        const milestone = MILESTONES.find((m) => m.id === id);
+        for (const r of milestone?.rewards || []) if (r.type === 'badge') badges.push({ id: r.id, title: milestone.title, at });
+      }
+      badges.sort((a, b) => b.at - a.at);
+      const titlesNow = nextKey ? months[nextKey].titles0 : store.titlesCompleted;
+      return {
+        month: key,
+        chapters: row ? row.chapters : 0,
+        days: readDaysAll().filter((d) => d.startsWith(key)).length,
+        series,
+        titlesCompleted: row ? Math.max(0, titlesNow - row.titles0) : 0,
+        badges,
+        stage: stageOf(store.petXp).name,
+      };
+    },
+
+    /** The year: its months added up, with a per-month row for the bars. */
+    year(y) {
+      const yearKey = String(y || today().slice(0, 4));
+      const months = Object.keys(store.months || {}).filter((k) => k.startsWith(yearKey)).sort();
+      const rows = months.map((m) => api.monthly(m));
+      const series = new Map();
+      for (const row of rows) for (const s of row.series) series.set(s.seriesId, (series.get(s.seriesId) || 0) + s.chapters);
+      return {
+        year: yearKey,
+        chapters: rows.reduce((n, r) => n + r.chapters, 0),
+        days: readDaysAll().filter((d) => d.startsWith(yearKey)).length,
+        titlesCompleted: rows.reduce((n, r) => n + r.titlesCompleted, 0),
+        series: [...series].map(([seriesId, chapters]) => ({ seriesId, chapters })).sort((a, b) => b.chapters - a.chapters),
+        badges: rows.flatMap((r) => r.badges),
+        months: Array.from({ length: 12 }, (_, i) => {
+          const key = yearKey + '-' + String(i + 1).padStart(2, '0');
+          return { month: key, chapters: store.months?.[key]?.chapters || 0 };
+        }),
+        stage: stageOf(store.petXp).name,
+      };
     },
 
     /** The trails: milestones on a metric other than chapters, and not the

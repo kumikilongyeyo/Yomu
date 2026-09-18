@@ -565,6 +565,7 @@ const ASSETS = [
   { file: 'yomu-companion.css', tag: '<link rel="stylesheet" href="/yomu-companion.css">' },
   { file: 'yomu-discovery.css', tag: '<link rel="stylesheet" href="/yomu-discovery.css">' },
   { file: 'yomu-social.css', tag: '<link rel="stylesheet" href="/yomu-social.css">' },
+  { file: 'yomu-wrap.css', tag: '<link rel="stylesheet" href="/yomu-wrap.css">' },
   { file: 'yomu-rails.css', tag: '<link rel="stylesheet" href="/yomu-rails.css">' },
   { file: 'yomu-gate.js', tag: '<script src="/yomu-gate.js" defer></scr' + 'ipt>' },
   /* Ahead of the shell, which reads window.YOMU_GREETINGS synchronously.
@@ -611,6 +612,8 @@ const ASSETS = [
   { file: 'yomu-race.js', tag: '<script src="/yomu-race.js" defer></scr' + 'ipt>' },
   { file: 'yomu-heat.js', tag: '<script src="/yomu-heat.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shelfshare.js', tag: '<script src="/yomu-shelfshare.js" defer></scr' + 'ipt>' },
+  /* Year in Yomu. Reads the store and the AniList cache; draws on a canvas. */
+  { file: 'yomu-wrap.js', tag: '<script src="/yomu-wrap.js" defer></scr' + 'ipt>' },
   /* Ahead of yomu-mori.js and yomu-rank.js, which both ask it. */
   { file: 'yomu-anilist.js', tag: '<script src="/yomu-anilist.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */

@@ -590,3 +590,48 @@ test('seven days running pays Week of Pages once, and a stale seven does not', a
   clock.now += 14 * DAY;
   assert.equal(api.trails().find((t) => t.id === 'streak-month').value, 0);
 });
+
+/* --- months, for the wrap ------------------------------------------------- */
+
+test('chapters are attributed to the month they turned up in, per series', async () => {
+  const clock = { now: Date.UTC(2026, 8, 20, 12) };
+  const storage = fakeStorage();
+  const { api } = boot({ storage, clock });
+  for (let i = 0; i < 5; i++) await readOn(api, storage, clock.now + i * 3600000, clock, 'ext-a:one');
+  await readOn(api, storage, clock.now, clock, 'ext-a:two');
+  let sept = api.monthly('2026-09');
+  assert.equal(sept.chapters, 6);
+  assert.deepEqual(plain(sept.series), [{ seriesId: 'ext-a:one', chapters: 5 }, { seriesId: 'ext-a:two', chapters: 1 }]);
+  assert.equal(sept.days, 1);
+
+  // October: three more of `two`. September stays as it was.
+  clock.now = Date.UTC(2026, 9, 3, 12);
+  for (let i = 0; i < 3; i++) await readOn(api, storage, clock.now + i * 3600000, clock, 'ext-a:two');
+  const oct = api.monthly('2026-10');
+  assert.equal(oct.chapters, 3);
+  assert.deepEqual(plain(oct.series), [{ seriesId: 'ext-a:two', chapters: 3 }]);
+  sept = api.monthly('2026-09');
+  assert.equal(sept.chapters, 6, 'closed month is frozen');
+  assert.deepEqual(plain(sept.series), [{ seriesId: 'ext-a:one', chapters: 5 }, { seriesId: 'ext-a:two', chapters: 1 }]);
+
+  const year = api.year('2026');
+  assert.equal(year.chapters, 9);
+  assert.equal(year.months.length, 12);
+  assert.equal(year.months[8].chapters, 6);
+  assert.equal(year.months[9].chapters, 3);
+  assert.deepEqual(plain(year.series[0]), { seriesId: 'ext-a:one', chapters: 5 });
+  assert.equal(api.monthly('2025-01').chapters, 0, 'an unknown month is empty, not an error');
+});
+
+test('a badge paid in a month belongs to that month\'s wrap', async () => {
+  const clock = { now: Date.UTC(2026, 8, 2, 12) };
+  const storage = withChapters(9);
+  const { api } = boot({ storage, clock });
+  await api.refresh();
+  clock.now = Date.UTC(2026, 9, 2, 12);
+  await readOn(api, storage, clock.now, clock);          // 10th chapter: Page Turner
+  assert.ok(api.get().claimedAt['page-turner'] >= clock.now);
+  const oct = api.monthly('2026-10');
+  assert.deepEqual(plain(oct.badges.map((b) => b.id)), ['page-turner']);
+  assert.equal(api.monthly('2026-09').badges.length, 0);
+});
