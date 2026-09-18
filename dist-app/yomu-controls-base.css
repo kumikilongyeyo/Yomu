@@ -1,0 +1,342 @@
+/* =====================================================================
+ * Yomu controlled customisation + expanded hero
+ * Loaded after the existing Yomu look/tag system.
+ * ===================================================================== */
+
+/* ---------- customizer accordions ------------------------------------- */
+
+.yui-accordion-host {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.yui-accordion-host > .ylk__sec {
+  display: none;
+}
+
+.yui-acc {
+  overflow: clip;
+  border: 1px solid var(--line, #e4ded2);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface, #fffdfa) 86%, transparent);
+}
+
+.yui-acc__summary {
+  min-height: 52px;
+  padding: 10px 12px 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.yui-acc__summary::-webkit-details-marker { display: none; }
+
+.yui-acc__summary:hover {
+  background: color-mix(in srgb, var(--raised, #efeade) 72%, transparent);
+}
+
+.yui-acc__words {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.yui-acc__words strong {
+  font: 800 13px/1.2 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  color: var(--text, #1e1b16);
+  letter-spacing: -.01em;
+}
+
+.yui-acc__words small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--faint, #9b9184);
+}
+
+.yui-acc__chev {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  color: var(--muted, #4a443a);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.yui-acc[open] .yui-acc__chev {
+  transform: rotate(225deg);
+}
+
+.yui-acc__body {
+  padding: 0 12px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--line, #e4ded2) 70%, transparent);
+}
+
+.yui-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.yui-inner-sec.ylk__sec {
+  margin-top: 14px;
+}
+
+.yui-inner-sec > .ylk__sechead {
+  margin-bottom: 8px;
+}
+
+.yui-controls-panel {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+}
+
+.yui-preview {
+  min-height: 92px;
+  margin-bottom: 10px;
+  padding: 14px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--line, #e4ded2) 72%, transparent);
+  background:
+    radial-gradient(100% 100% at 100% 0%, #5e4b9e38, transparent 58%),
+    linear-gradient(155deg, #1c2c3a, #0a1118);
+}
+
+.yui-field {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+.yui-field__label {
+  font-size: 12.5px;
+  color: var(--muted, #4a443a);
+}
+
+.yui-select {
+  width: 100%;
+}
+
+.yui-curated-note {
+  margin: -4px 0 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--faint, #9b9184);
+}
+
+.yui-site-sample {
+  width: 100%;
+  min-height: 66px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  font: 900 18px/1 var(--font-display, var(--uiFont, system-ui, sans-serif));
+  letter-spacing: -.03em;
+  background:
+    radial-gradient(90% 130% at 10% 0%, #5377a978, transparent 58%),
+    radial-gradient(90% 130% at 90% 100%, #6b4f9c5e, transparent 58%),
+    #101923;
+}
+
+.yui-tile-sample {
+  position: relative;
+  width: 92px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--yui-tile-radius, 12px);
+  border: 1px solid #ffffff24;
+  background:
+    radial-gradient(90% 70% at 70% 15%, #8a6cc48a, transparent 55%),
+    linear-gradient(155deg, #425f78, #172633 62%, #0a1017);
+  box-shadow: var(--yui-tile-shadow, none);
+}
+
+.yui-tile-sample::after {
+  content: '';
+  position: absolute;
+  inset: 44% 0 0;
+  background: linear-gradient(transparent, #061019ed);
+}
+
+.yui-tile-sample > .ytg {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  scale: .82;
+  transform-origin: top left;
+}
+
+.yui-tile-sample__copy {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: grid;
+  gap: 1px;
+  color: #fff;
+}
+
+.yui-tile-sample__copy strong { font-size: 10px; line-height: 1.2; }
+.yui-tile-sample__copy small { font-size: 8px; color: #ffffffb8; }
+
+.yui-button-sample,
+.yui-cta-sample {
+  border: 0;
+  font: 800 12px/1 var(--uiFont, system-ui, sans-serif);
+  cursor: default;
+}
+
+.yui-preview--button {
+  grid-auto-flow: column;
+  gap: 9px;
+}
+
+.yui-button-sample {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: var(--yui-button-radius, 11px);
+  color: var(--yui-button-ink, #f4f6fa);
+  background: var(--yui-button-bg, #ffffff12);
+  border: 1px solid var(--yui-button-line, #ffffff24);
+  box-shadow: var(--yui-button-shadow, none);
+}
+
+.yui-button-sample--icon {
+  width: 38px;
+  padding: 0;
+}
+
+.yui-cta-sample {
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: var(--yui-cta-radius, 999px);
+  color: var(--yui-cta-ink, #18212a);
+  background: var(--yui-cta-bg, linear-gradient(120deg, #ffc45f, #ff9d65));
+  border: 1px solid var(--yui-cta-line, transparent);
+  box-shadow: var(--yui-cta-shadow, 0 10px 24px -16px #000c);
+}
+
+/* Existing tag controls now use curated presets only. */
+.yui-acc--tag .ylk__custom {
+  display: none !important;
+}
+
+/* ---------- controlled palette tokens ---------------------------------- */
+
+:root {
+  --yui-button-a: var(--accent, #ffc45f);
+  --yui-button-b: color-mix(in srgb, var(--accent, #ffc45f) 72%, #fff);
+  --yui-button-ink: var(--text, #f4f6fa);
+  --yui-cta-a: var(--accent, #ffc45f);
+  --yui-cta-b: color-mix(in srgb, var(--accent, #ffc45f) 68%, #ff8a65);
+  --yui-cta-ink: var(--accentText, #18212a);
+  --yui-tile-radius: 12px;
+  --yui-button-radius: 11px;
+  --yui-cta-radius: 999px;
+}
+
+:root[data-yui-button-tone='ocean'] {
+  --yui-button-a: #49c8e8;
+  --yui-button-b: #4d7ee8;
+  --yui-button-ink: #f8fcff;
+}
+:root[data-yui-button-tone='violet'] {
+  --yui-button-a: #b28cf0;
+  --yui-button-b: #7c6be8;
+  --yui-button-ink: #fff;
+}
+:root[data-yui-button-tone='jade'] {
+  --yui-button-a: #5bcfa2;
+  --yui-button-b: #23966e;
+  --yui-button-ink: #071d17;
+}
+:root[data-yui-button-tone='coral'] {
+  --yui-button-a: #ff9a91;
+  --yui-button-b: #e96663;
+  --yui-button-ink: #2c1110;
+}
+:root[data-yui-button-tone='neutral'] {
+  --yui-button-a: var(--raised, #30404b);
+  --yui-button-b: var(--surface, #17232d);
+  --yui-button-ink: var(--text, #f4f6fa);
+}
+
+:root[data-yui-cta-tone='sunset'] {
+  --yui-cta-a: #ffca66;
+  --yui-cta-b: #f06b75;
+  --yui-cta-ink: #28150f;
+}
+:root[data-yui-cta-tone='ocean'] {
+  --yui-cta-a: #65d8e9;
+  --yui-cta-b: #6684f2;
+  --yui-cta-ink: #081829;
+}
+:root[data-yui-cta-tone='violet'] {
+  --yui-cta-a: #d5a7ff;
+  --yui-cta-b: #8f70ef;
+  --yui-cta-ink: #1d1230;
+}
+:root[data-yui-cta-tone='jade'] {
+  --yui-cta-a: #82deb9;
+  --yui-cta-b: #38a97d;
+  --yui-cta-ink: #092019;
+}
+
+/* ---------- website gradient presets ----------------------------------- */
+
+:root[data-yui-site-gradient='aurora'] body,
+:root[data-yui-site-gradient='aurora'] .g-app {
+  background:
+    radial-gradient(ellipse at 4% 0%, #536b9b66, transparent 54%),
+    radial-gradient(ellipse at 96% 88%, #714f9860, transparent 52%),
+    var(--bg, #0c131b);
+}
+
+:root[data-yui-site-gradient='ocean'] body,
+:root[data-yui-site-gradient='ocean'] .g-app {
+  background:
+    radial-gradient(ellipse at 12% 0%, #176f8d5f, transparent 54%),
+    radial-gradient(ellipse at 88% 90%, #254e8066, transparent 54%),
+    var(--bg, #0c131b);
+}
+
+:root[data-yui-site-gradient='ember'] body,
+:root[data-yui-site-gradient='ember'] .g-app {
+  background:
+    radial-gradient(ellipse at 6% 0%, #9a563a42, transparent 52%),
+    radial-gradient(ellipse at 92% 88%, #7437504a, transparent 54%),
+    var(--bg, #0c131b);
+}
+
+:root[data-yui-site-gradient='violet'] body,
+:root[data-yui-site-gradient='violet'] .g-app {
+  background:
+    radial-gradient(ellipse at 8% 0%, #724d9d52, transparent 55%),
+    radial-gradient(ellipse at 94% 86%, #4655934a, transparent 52%),
+    var(--bg, #0c131b);
+}
+
+:root[data-yui-site-gradient='forest'] body,
+:root[data-yui-site-gradient='forest'] .g-app {
+  background:
+    radial-gradient(ellipse at 10% 0%, #286b5a4d, transparent 54%),
+    radial-gradient(ellipse at 90% 90%, #315c4a3f, transparent 54%),
+    var(--bg, #0c131b);
+}
