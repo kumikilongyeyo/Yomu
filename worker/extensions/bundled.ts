@@ -13,6 +13,8 @@ import webtoons from '../../extensions/sources/webtoons.json';
 import asura from '../../extensions/sources/asura.json';
 import namicomi from '../../extensions/sources/namicomi.json';
 import comick from '../../extensions/sources/comick.json';
+import xoxocomics from '../../extensions/sources/xoxocomics.json';
+import readallcomics from '../../extensions/sources/readallcomics.json';
 
 export const BUNDLED_DESCRIPTORS: Record<string, unknown> = {
   weebcentral,
@@ -21,4 +23,6 @@ export const BUNDLED_DESCRIPTORS: Record<string, unknown> = {
   asura,
   namicomi,
   comick,
+  xoxocomics,
+  readallcomics,
 };
