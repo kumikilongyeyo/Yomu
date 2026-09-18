@@ -160,14 +160,53 @@
     { href: '/settings', label: 'Settings', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 0 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.5-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4a2 2 0 0 1 4 0a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 0 1 0 4Z' },
   ];
 
-  /** The item a path belongs to. The reader and series pages sit under Home. */
+  /**
+   * The item a path belongs to. The reader and series pages sit under Home.
+   *
+   * `/discover` was missing, which is the route the app's own dock navigates
+   * to -- the sidebar spells the same destination `/find.html`, so nothing
+   * matched and Home stayed lit on the Discover screen. The audit's note about
+   * mixed `.html` and extensionless conventions is exactly this, seen from the
+   * inside: two spellings of one place, and a comparison between them.
+   * Everything Discover can reach is listed rather than inferred.
+   */
   function activeHref(pathname) {
-    if (pathname.startsWith('/find') || pathname.startsWith('/search')) return '/find.html';
+    if (pathname.startsWith('/find') || pathname.startsWith('/search')
+        || pathname.startsWith('/discover') || pathname.startsWith('/more')
+        || pathname.startsWith('/adult')) return '/find.html';
     if (pathname.startsWith('/library') || pathname.startsWith('/downloads')) return '/library';
     if (pathname.startsWith('/you')) return '/you';
     if (pathname.startsWith('/settings') || pathname.startsWith('/sources')
         || pathname.startsWith('/extensions') || pathname.startsWith('/suwayomi')) return '/settings';
     return '/';
+  }
+
+  /**
+   * Keep the lit item honest after a client-side navigation.
+   *
+   * The sidebar is built once -- it lives outside React's tree, so nothing
+   * rebuilds it -- and the active item was therefore decided at first paint
+   * and never again. Arriving anywhere by the app's own dock, which navigates
+   * with pushState, left Home lit on every screen.
+   *
+   * Change-only writes, and that is not tidiness. This runs from pass(), which
+   * a document-wide MutationObserver schedules; writing an attribute
+   * unconditionally there is a mutation that schedules the next pass, which is
+   * the microtask loop that took /sources down once already.
+   */
+  function markActive() {
+    const nav = document.getElementById(ID);
+    if (!nav) return;
+    const current = activeHref(location.pathname);
+    for (const link of nav.querySelectorAll('.yomu-sidebar__item')) {
+      const active = link.getAttribute('href') === current;
+      if (link.classList.contains('is-active') !== active) link.classList.toggle('is-active', active);
+      if (active) {
+        if (link.getAttribute('aria-current') !== 'page') link.setAttribute('aria-current', 'page');
+      } else if (link.hasAttribute('aria-current')) {
+        link.removeAttribute('aria-current');
+      }
+    }
   }
 
   function build() {
@@ -3918,6 +3957,7 @@
 
   const pass = () => {
     brandLockup();
+    markActive();
     markBusy();
     mountGreeting();
     gateFabric();
