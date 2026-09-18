@@ -3783,7 +3783,12 @@
     if (art) { face.style.backgroundImage = 'url("' + art + '")'; face.classList.add('has-image'); }
     else face.textContent = [...name][0].toUpperCase();
 
-    block.append(copy, face);
+    /* Face first. The avatar reads as the subject of the line -- it is you,
+       and the greeting is addressed to you -- so it leads rather than
+       trailing the name like a decoration. `.yomu-greet` is a plain flex row
+       with a gap and no order or auto-margin, so the DOM order is the only
+       thing that decides this. */
+    block.append(face, copy);
     masthead.prepend(block);
     // The stylesheet hides the lockup off this flag rather than guessing at
     // which masthead it is looking at.
