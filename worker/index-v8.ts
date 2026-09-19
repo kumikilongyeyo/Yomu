@@ -11,6 +11,7 @@ import {
   tryWebsiteAdaptiveResolve,
   websiteAdaptiveStatus,
 } from './website-adaptive-v82';
+import { handleSourceBeastCloud } from './source-beast-cloud';
 
 const VERSION = '8.2';
 const GENERATION = 'Universal Source Fabric';
@@ -108,8 +109,6 @@ async function resolveCore(request: Request, env: Env, url: URL): Promise<{ resp
     ? await coreResponse.clone().json().catch(() => null)
     : null;
 
-  // Proven v7/v7.5 adapters remain first choice. Website Adaptive is a fallback,
-  // not a replacement for a maintained/native implementation.
   if (corePayload?.ready === true && corePayload?.adapter) {
     return { response: coreResponse, rawInput, payload: corePayload };
   }
@@ -141,8 +140,6 @@ async function resolveCore(request: Request, env: Env, url: URL): Promise<{ resp
     return { response, rawInput, payload: merged };
   }
 
-  // Keep the compatibility layer's failure as the primary result, but attach
-  // the adaptive diagnosis so failures teach us what structural tier was tried.
   if (adaptive && corePayload && typeof corePayload === 'object') {
     const merged = {
       ...corePayload,
@@ -202,6 +199,9 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    const sourceBeast = await handleSourceBeastCloud(request, env, url);
+    if (sourceBeast) return sourceBeast;
+
     const adaptiveRuntime = await handleWebsiteAdaptiveRuntime(request, env, url);
     if (adaptiveRuntime) return adaptiveRuntime;
 
@@ -233,6 +233,12 @@ export default {
           uiChanged: false,
           testBeforeTrust: true,
         },
+        sourceBeast: {
+          mode: 'cloud',
+          provider: 'cloudflare-browser-run',
+          localHelper: false,
+          humanInTheLoop: true,
+        },
         websiteAdaptive: websiteAdaptiveStatus(),
         version: VERSION,
         generation: GENERATION,
@@ -260,6 +266,7 @@ export default {
           generation: GENERATION,
           normalizedContract: true,
           sourceForge: true,
+          sourceBeastCloud: true,
           websiteAdaptive: true,
         },
       }));
