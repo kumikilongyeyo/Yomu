@@ -50,7 +50,7 @@ jobs:
               '<link rel="stylesheet" href="/yomu-hero-plus.css">',
               '<script src="/yomu-controls.js" defer></script>',
               '<script src="/yomu-hero-plus.js" defer></script>',
-              '<script src="/source-beast-yomu.js" defer></script>',
+              '<script src="/source-beast-loader.js" defer></script>',
           ]
           changed = 0
           for path in Path('dist-app').rglob('*.html'):
@@ -110,23 +110,27 @@ jobs:
         run: npx wrangler deploy --config wrangler.jsonc
       - name: Verify live Yomu
         run: |
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/sources > /tmp/yomu-sources.html
+          set -e
+          check() { echo "Checking $1"; shift; "$@"; }
+          check sources curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/sources -o /tmp/yomu-sources.html
           grep -q 'community-pack-compact.js' /tmp/yomu-sources.html
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/add-sources.html > /tmp/yomu-add-sources.html
-          grep -q 'source-beast-yomu.js' /tmp/yomu-add-sources.html
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-yomu.js > /tmp/source-beast-yomu.js
+          check add-source curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/add-sources -o /tmp/yomu-add-sources.html
+          grep -q 'source-beast-loader.js' /tmp/yomu-add-sources.html
+          check beast-loader curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-loader.js -o /tmp/source-beast-loader.js
+          grep -q 'source-beast-yomu.js' /tmp/source-beast-loader.js
+          check beast-controller curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-yomu.js -o /tmp/source-beast-yomu.js
           grep -q 'Yomu Source Beast' /tmp/source-beast-yomu.js
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-compact.js > /tmp/community-pack-compact.js
+          check compact curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-compact.js -o /tmp/community-pack-compact.js
           grep -q 'Community Pack source' /tmp/community-pack-compact.js
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-auto-switch.js > /tmp/source-auto-switch.js
+          check auto-switch curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-auto-switch.js -o /tmp/source-auto-switch.js
           grep -q 'Find another source' /tmp/source-auto-switch.js
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-top.js > /tmp/community-pack-top.js
+          check community-top curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-top.js -o /tmp/community-pack-top.js
           grep -q 'yomu-community-pack-top' /tmp/community-pack-top.js
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js > /tmp/yomu-controls.js
+          check controls curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js -o /tmp/yomu-controls.js
           grep -q 'yomu.v1.controls' /tmp/yomu-controls.js
-          curl --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js > /tmp/yomu-hero-plus.js
+          check hero curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js -o /tmp/yomu-hero-plus.js
           grep -q 'Highest rated' /tmp/yomu-hero-plus.js
