@@ -25,18 +25,23 @@ jobs:
         run: |
           node <<'NODE'
           const url = 'https://yomu.yomuread.workers.dev/api/fabric/status';
+          const minimum = [8, 2];
+          const atLeast = (value, [wantMajor, wantMinor]) => {
+            const [major = 0, minor = 0] = String(value || '').split('.').map((part) => Number.parseInt(part, 10) || 0);
+            return major > wantMajor || (major === wantMajor && minor >= wantMinor);
+          };
           for (let i = 0; i < 24; i++) {
             try {
               const r = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
               const x = r.ok ? await r.json() : null;
-              console.log(`attempt ${i + 1}: HTTP ${r.status} version=${x?.version || '-'} forge=${!!x?.sourceForge}`);
-              if (x?.sourceForge && String(x.version || '').startsWith('8.1')) process.exit(0);
+              console.log(`attempt ${i + 1}: HTTP ${r.status} version=${x?.version || '-'} forge=${!!x?.sourceForge} adaptive=${x?.websiteAdaptive?.version || '-'}`);
+              if (x?.sourceForge && x?.websiteAdaptive && atLeast(x.version, minimum)) process.exit(0);
             } catch (e) {
               console.log(`attempt ${i + 1}: ${e.message}`);
             }
             await new Promise((resolve) => setTimeout(resolve, 10000));
           }
-          throw new Error('Source Forge v8.1 did not become live in time.');
+          throw new Error('Current Source Forge + Website Adaptive deployment did not become live in time.');
           NODE
       - name: Run 10-site acceptance gauntlet
         run: node scripts/source-forge-gauntlet.mjs
