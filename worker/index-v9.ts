@@ -40,12 +40,37 @@ async function browserCapacity(env: BrowserEnv): Promise<Response> {
   }
 }
 
+async function injectCapacityGuard(response: Response): Promise<Response> {
+  if (!response.ok) return response;
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  const js = '<script src="/source-beast-capacity-guard.js" defer></script>';
+  if (!html.includes('/source-beast-capacity-guard.js')) {
+    html = html.includes('</body>') ? html.replace('</body>', `${js}</body>`) : html + js;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('cache-control', 'no-store, max-age=0');
+  headers.set('x-yomu-entrypoint', 'v9');
+  return new Response(html, { status: response.status, headers });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === 'GET' && url.pathname === '/api/source-beast/capacity') {
       return browserCapacity(env as BrowserEnv);
     }
-    return v8.fetch(request, env);
+
+    const response = await v8.fetch(request, env);
+    if (
+      request.method === 'GET' &&
+      (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html')
+    ) {
+      return injectCapacityGuard(response);
+    }
+    return response;
   },
 };
