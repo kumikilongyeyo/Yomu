@@ -1,17 +1,18 @@
 {
   // One Worker serves both the app's files and its fetching.
   //
-  // v7.2 routes through index-v7.ts, which exposes Beast Adaptive as the
-  // production Source Fabric surface while keeping the proven older wrappers
-  // underneath as compatibility and rollback floors.
+  // v8 routes through index-v8.ts. Universal Source Fabric expands the proven
+  // v7.5 Recipe Engine rather than replacing it: repository detection,
+  // repository health/update UX and normalized v8 status sit outside the v7.5
+  // compatibility/execution floor so rollback remains straightforward.
   //
-  // `run_worker_first` is required so /sources reaches index-v7.ts before
-  // Static Assets serves the SPA shell. That lets v7.2 inject the live Source
-  // Fabric version badge into the real Sources screen on desktop and mobile.
+  // `run_worker_first` is required so /sources reaches the Worker before
+  // Static Assets serves the SPA shell. v8 injects the repository manager UI
+  // while preserving the existing exported app and source controls.
   //
   // Deploy with: npx wrangler deploy
   "name": "yomu",
-  "main": "worker/index-v7.ts",
+  "main": "worker/index-v8.ts",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist-app",
@@ -19,8 +20,8 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": true
   },
-  // Source Fabric v7.2 runtime broker. Hatchable exposes the broker under
-  // /api, so the Worker appends /v1/resolve and /v1/source/* to this base.
+  // Runtime Broker compatibility service. v8 keeps external execution behind
+  // the existing broker boundary; repository code is never eval'd in Worker.
   "vars": {
     "SOURCE_RUNTIME_URL": "https://yomu-source-runtime.hatchable.site/api"
   },
