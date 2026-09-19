@@ -2,32 +2,35 @@
   'use strict';
   if (!location.pathname.startsWith('/sources')) return;
 
-  const FALLBACK = '7.5';
   const MAX_SMART_INPUTS = 25;
-  let label = `Source Fabric · v${FALLBACK} · Recipe Engine`;
+  let version = '8.0';
+  let generation = 'Universal Source Fabric';
 
-  function apply() {
-    const kicker = document.querySelector('#yomu-source-fabric-command .sf-kicker');
-    if (!kicker) return false;
-    if (kicker.textContent !== label) kicker.textContent = label;
+  // v8 keeps technical engine/version detail out of the normal Sources
+  // hierarchy. The values remain available on the panel dataset and Advanced.
+  function applyHumanFacingStatus() {
     const panel = document.getElementById('yomu-source-fabric-command');
-    if (panel) panel.dataset.fabricVersion = label.match(/v([0-9.]+)/)?.[1] || FALLBACK;
-    return true;
+    const kicker = panel?.querySelector('.sf-kicker');
+    if (kicker && kicker.textContent !== 'Source system ready') kicker.textContent = 'Source system ready';
+    if (panel) {
+      panel.dataset.fabricVersion = version;
+      panel.dataset.fabricGeneration = generation;
+      panel.title = `Universal Source Fabric v${version} · ${generation}`;
+    }
+    return !!panel;
   }
 
   async function loadVersion() {
     try {
       const response = await fetch('/api/fabric/status', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
       const status = response.ok ? await response.json() : null;
-      if (status?.version) {
-        label = `Source Fabric · v${status.version}${status.generation ? ` · ${status.generation}` : ''}`;
-      }
+      if (status?.version) version = String(status.version);
+      if (status?.generation) generation = String(status.generation);
     } catch {}
-    apply();
+    applyHumanFacingStatus();
   }
 
   function splitSmartInput(raw) {
-    // Names may contain spaces. Only a newline or comma starts a new candidate.
     return String(raw || '')
       .split(/\r?\n|,/)
       .map((value) => value.trim())
@@ -45,9 +48,7 @@
       if (!/^https?:$/.test(url.protocol)) return '';
       url.hash = '';
       return url.toString();
-    } catch {
-      return '';
-    }
+    } catch { return ''; }
   }
 
   async function resolveMaintainedName(name) {
@@ -60,9 +61,7 @@
       const payload = await response.json().catch(() => null);
       if (!payload?.best?.baseUrl) return null;
       return payload.best;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
   function armSmartSourcePack() {
@@ -81,22 +80,20 @@
       if (run.dataset.yomuSmartBypass === '1') return;
       const entries = splitSmartInput(textarea.value);
       if (!entries.length) return;
-
       const names = entries.filter((entry) => !directUrl(entry));
-      if (!names.length) return; // Plain URLs continue through the existing fast path.
+      if (!names.length) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
-
       run.disabled = true;
-      if (summary) summary.textContent = `Resolving ${names.length} maintained source name${names.length === 1 ? '' : 's'}…`;
+      if (summary) summary.textContent = `Finding ${names.length} maintained source${names.length === 1 ? '' : 's'}…`;
 
       const resolved = await Promise.all(entries.map(async (entry) => {
         const url = directUrl(entry);
         if (url) return { input: entry, url, resolvedBy: 'url' };
         const match = await resolveMaintainedName(entry);
         return match?.baseUrl
-          ? { input: entry, url: match.baseUrl, resolvedBy: match.storeName || match.ecosystem || 'federation', name: match.name }
+          ? { input: entry, url: match.baseUrl, resolvedBy: match.storeName || match.ecosystem || 'community', name: match.name }
           : { input: entry, url: '', resolvedBy: '' };
       }));
 
@@ -105,10 +102,7 @@
       const unresolved = [];
       let namesResolved = 0;
       for (const row of resolved) {
-        if (!row.url) {
-          unresolved.push(row.input);
-          continue;
-        }
+        if (!row.url) { unresolved.push(row.input); continue; }
         let key = row.url;
         try { key = new URL(row.url).origin.toLowerCase(); } catch {}
         if (seen.has(key)) continue;
@@ -130,13 +124,10 @@
 
       if (summary) {
         summary.textContent = unresolved.length
-          ? `${namesResolved} name${namesResolved === 1 ? '' : 's'} resolved · ${unresolved.length} unresolved and skipped`
-          : `${namesResolved} maintained source name${namesResolved === 1 ? '' : 's'} resolved · testing real site URLs…`;
+          ? `${namesResolved} resolved · ${unresolved.length} unresolved and skipped`
+          : `${namesResolved} maintained source name${namesResolved === 1 ? '' : 's'} resolved · testing reader…`;
       }
 
-      // The old bulk runner still consumes canonical URLs. Feed those to it
-      // synchronously, then restore what the user actually pasted so the UI
-      // does not appear to mutate their source names.
       run.dataset.yomuSmartBypass = '1';
       try {
         run.click();
@@ -150,23 +141,20 @@
   }
 
   const observer = new MutationObserver(() => {
-    apply();
+    applyHumanFacingStatus();
     armSmartSourcePack();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      loadVersion();
-      armSmartSourcePack();
-    }, { once: true });
-  } else {
+  const start = () => {
     loadVersion();
     armSmartSourcePack();
-  }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
 
   setTimeout(() => {
-    apply();
+    applyHumanFacingStatus();
     armSmartSourcePack();
     observer.disconnect();
   }, 12000);
