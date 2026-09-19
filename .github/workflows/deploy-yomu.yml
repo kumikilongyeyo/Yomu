@@ -9,6 +9,7 @@ on:
       - 'dist-app/**'
       - 'worker/**'
       - 'extensions/**'
+      - 'scripts/source-forge-gauntlet.mjs'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
