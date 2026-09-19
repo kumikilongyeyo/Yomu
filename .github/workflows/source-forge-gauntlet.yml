@@ -1,0 +1,42 @@
+name: Source Forge gauntlet
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Yomu to Cloudflare
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gauntlet:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for Source Forge deployment
+        run: |
+          node <<'NODE'
+          const url = 'https://yomu.yomuread.workers.dev/api/fabric/status';
+          for (let i = 0; i < 24; i++) {
+            try {
+              const r = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+              const x = r.ok ? await r.json() : null;
+              console.log(`attempt ${i + 1}: HTTP ${r.status} version=${x?.version || '-'} forge=${!!x?.sourceForge}`);
+              if (x?.sourceForge && String(x.version || '').startsWith('8.1')) process.exit(0);
+            } catch (e) {
+              console.log(`attempt ${i + 1}: ${e.message}`);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 10000));
+          }
+          throw new Error('Source Forge v8.1 did not become live in time.');
+          NODE
+      - name: Run 10-site acceptance gauntlet
+        run: node scripts/source-forge-gauntlet.mjs
