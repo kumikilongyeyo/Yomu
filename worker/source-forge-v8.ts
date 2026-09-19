@@ -1,7 +1,7 @@
 /**
  * Yomu Source Forge v8
  *
- * A successful adaptive Source Fabric resolution can be promoted into a
+ * A successful non-native Source Fabric resolution can be promoted into a
  * portable source-pack entry without changing the Sources UI. The Worker keeps
  * a small, deduplicated queue in KV. The yomu-extensions repository polls the
  * queue, re-tests entries, and mirrors accepted URLs into Git.
@@ -120,9 +120,19 @@ function rootFor(input: URL, payload: AnyObject): URL {
 export function forgeEligibility(payload: AnyObject): { eligible: boolean; reason: string } {
   if (!payload || payload.ready !== true) return { eligible: false, reason: 'source-not-ready' };
   if (!payload.adapter || typeof payload.adapter !== 'object') return { eligible: false, reason: 'missing-adapter' };
-  const route = String(payload.route ?? '');
+
+  // Source packs persist only the public website identity, not executable
+  // runtime code. Therefore every Source Fabric route that already proved a
+  // usable adapter is a valid Forge candidate, whether the proof came from the
+  // adaptive HTML engine, a maintained recipe, or an isolated federated
+  // runtime. Native sources are already permanent and do not need mirroring.
+  const route = String(payload.route ?? '').trim();
+  if (!route) return { eligible: false, reason: 'missing-route' };
   if (route === 'native') return { eligible: false, reason: 'already-native' };
-  if (!/adaptive|reference-assisted/i.test(route)) return { eligible: false, reason: 'not-forge-generated' };
+  if (/browser|required-auth|auth-required|broken|exhausted|blocked|unsupported/i.test(route)) {
+    return { eligible: false, reason: 'runtime-not-portable' };
+  }
+
   const score = Number(payload.score ?? payload.adapter?.score ?? 0);
   if (!Number.isFinite(score) || score < MIN_PROMOTION_SCORE) return { eligible: false, reason: 'probe-score-too-low' };
   return { eligible: true, reason: 'ready' };
