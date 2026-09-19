@@ -74,4 +74,17 @@
   const api = { host, match, add };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.YomuSourceImport = api;
+
+  // Keep the existing importer for registry refresh callbacks (?auto=1), but
+  // hand normal Add Source submissions to the Source Beast web-source flow.
+  if (typeof document !== 'undefined' && /\/add-sources\.html$/.test(location.pathname)) {
+    const params = new URLSearchParams(location.search);
+    if (params.get('auto') !== '1' && !document.querySelector('script[data-yomu-source-beast]')) {
+      const script = document.createElement('script');
+      script.src = '/source-beast-yomu.js';
+      script.defer = true;
+      script.dataset.yomuSourceBeast = '1';
+      document.head.appendChild(script);
+    }
+  }
 })(typeof globalThis !== 'undefined' ? globalThis : this);
