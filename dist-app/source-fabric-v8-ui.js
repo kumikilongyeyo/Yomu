@@ -115,7 +115,15 @@
 
   function sourceSystemLabel() {
     const kicker = document.querySelector('#yomu-source-fabric-command .sf-kicker');
-    if (kicker) kicker.textContent = 'Source system ready';
+    // Write only what changed. Setting textContent replaces the text node,
+    // which is a childList mutation, and the observer below watches childList
+    // on the whole document and calls this -- so an unconditional write here
+    // spun the page at microtask speed for the twelve seconds before the
+    // observer disconnects, and Chrome reported /sources as unresponsive.
+    // (community-pack-top.js had the same shape, for the same reason.)
+    if (kicker && kicker.textContent !== 'Source system ready') {
+      kicker.textContent = 'Source system ready';
+    }
   }
 
   function focusAddSource() {
@@ -545,6 +553,25 @@
     catch (error) { state.status = { ok: false, error: error.message || String(error) }; }
   }
 
+  /**
+   * Put the shell back if React has thrown it away.
+   *
+   * The shell is built at DOMContentLoaded, before the app has rendered, so
+   * it lands in #root -- and hydration replaces that subtree and takes the
+   * shell with it. Built once and never re-asserted, v8's whole surface was
+   * gone by the time anyone looked at Sources.
+   *
+   * Cheap and loop-free: makeShell() returns the existing node the moment
+   * there is one, so the insert happens at most once per teardown, and the
+   * insert's own mutation finds the shell already there.
+   */
+  function ensureShell() {
+    if (document.getElementById('yomu-v8-fabric')) return;
+    makeShell();
+    updateSummary();
+    setTab(state.activeTab || 'sources');
+  }
+
   function init() {
     sourceSystemLabel();
     makeShell();
@@ -552,7 +579,7 @@
     setTab('sources');
     loadStatus();
 
-    const observer = new MutationObserver(() => sourceSystemLabel());
+    const observer = new MutationObserver(() => { ensureShell(); sourceSystemLabel(); });
     observer.observe(document.documentElement, { childList: true, subtree: true });
     setTimeout(() => observer.disconnect(), 12_000);
   }
