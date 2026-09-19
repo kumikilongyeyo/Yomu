@@ -278,6 +278,18 @@
       if (unit === '%') html.style.setProperty('--yui-' + dashed(name) + '-f', String(raw / 100));
     }
     html.setAttribute('data-yui-preset', state.preset);
+
+    /* The two appearance knobs that override the app's own surfaces are only
+       switched on when the reader has actually moved one of them. At their
+       defaults the rules they enable are no-ops on paper and were not in
+       practice: the opacity rule rewrote --surface for every panel, and the
+       blur rule replaced whatever blur the app had chosen. An untouched Yomu
+       should be exactly the Yomu it was. */
+    const tunedSurface = state.surfaceOpacity !== DEFAULTS.surfaceOpacity
+      || state.surfaceBlur !== DEFAULTS.surfaceBlur;
+    if (tunedSurface) html.setAttribute('data-yui-surface', 'tuned');
+    else html.removeAttribute('data-yui-surface');
+
     sync();
     dispatchEvent(new CustomEvent('yomu:controls', { detail: { ...state } }));
   }

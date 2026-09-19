@@ -205,16 +205,35 @@
   font-size: calc(1rem * var(--yui-density-f, 1));
 }
 
-/* Surface opacity and blur, on the things that are actually panels. --bg
-   under --surface is how this system composes an opaque raised thing, so the
-   opacity knob rides on the lift and never on the ground. */
-:root[data-yui-tile-shape] :is(.glass, .g-card, .tile-card, .stk, .mlg, .ysh-card) {
+/* Surface opacity and blur, on the things that are actually panels.
+ *
+ * Two rules here, and both were wrong in the same way the first time.
+ *
+ * The opacity knob has to start from the surface the *mode* resolved. The
+ * first version reached for `--pa-surface` -- the Paper token -- because
+ * `--surface: ...var(--surface)...` is a cycle and the browser drops it. That
+ * workaround painted every glass panel, every card and the theme toggle an
+ * opaque cream in Aurora, under text that was still near-white: the streak
+ * card, the families card, the circle card and the save buttons all went
+ * unreadable in dark mode. `--yui-surface-src` captures the resolved value at
+ * the root, where there is no cycle to have, and the override reads that.
+ *
+ * And both rules now only exist when the reader has moved those two knobs.
+ * At their defaults these were still writing -- a 100% color-mix and a 12px
+ * blur that replaced whatever the app had chosen -- so an install that never
+ * opened the sheet was still being restyled by it. yomu-controls.js sets
+ * data-yui-surface="tuned" only when one of them is off its default, which
+ * makes an untouched Yomu exactly the Yomu it was.
+ */
+:root { --yui-surface-src: var(--surface); }
+
+:root[data-yui-surface='tuned'] :is(.glass, .g-card, .tile-card, .stk, .mlg, .ysh-card) {
   --surface: color-mix(in srgb,
-    var(--pa-surface, rgba(255, 255, 255, .055)) calc(var(--yui-surface-opacity, 100) * 1%),
+    var(--yui-surface-src) calc(var(--yui-surface-opacity, 100) * 1%),
     transparent);
 }
 
-:root[data-yui-tile-shape] :is(.glass, .dock, .header-tools) {
+:root[data-yui-surface='tuned'] :is(.glass, .dock, .header-tools) {
   backdrop-filter: blur(calc(12px + var(--yui-surface-blur, 0px)));
   -webkit-backdrop-filter: blur(calc(12px + var(--yui-surface-blur, 0px)));
 }

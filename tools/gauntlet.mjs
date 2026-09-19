@@ -15,6 +15,8 @@
  *   G11 content safety           no open proxy, no unescaped injection
  *   U14 accessibility            secondary text clears WCAG AA in every
  *                                palette, not only the one anybody looked at
+ *   U7  mode integrity           no component sheet reaches for a
+ *                                mode-specific token behind the mode's back
  *
  *   node tools/gauntlet.mjs                     # against a local wrangler dev
  *   node tools/gauntlet.mjs https://yomu...     # against a deployment
@@ -224,10 +226,39 @@ async function u14() {
   }
 }
 
+/* --- U7: a component may not pick a mode for the reader ------------------ *
+ *
+ * `--pa-*` and `--au-*` are the Paper and Aurora *sources*. The mode picks
+ * between them once, in yomu-skin.css, and every component downstream is
+ * supposed to read the resolved name -- `--surface`, `--text`, `--bg`.
+ *
+ * This exists because a component sheet reached for `--pa-surface` directly,
+ * to dodge a `var()` cycle, and painted every glass panel opaque cream in
+ * Aurora with near-white text still on top: the streak card, the families
+ * card, the circle card and the save buttons all went unreadable in dark
+ * mode. The U14 gate did not catch it, because U14 checks the tokens in the
+ * palettes and this was a component reading the wrong palette on purpose.
+ *
+ * Only the two files that *define* the palettes may name those sources.
+ */
+
+const PALETTE_FILES = new Set(['yomu-skin.css', 'yomu-skins.css']);
+
+async function u7() {
+  const dir = path.join(ROOT, 'dist-app');
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.css'))) {
+    if (PALETTE_FILES.has(file)) continue;
+    const css = fs.readFileSync(path.join(dir, file), 'utf8');
+    const reaches = [...css.matchAll(/var\(\s*--(pa|au)-[a-z0-9-]+/gi)].map((m) => m[0].replace(/var\(\s*/, ''));
+    check('U7', `${file} reads the resolved tokens, not one mode's`, reaches.length === 0,
+      `${[...new Set(reaches)].join(', ')} — use --surface/--text/--bg, which the mode has already chosen`);
+  }
+}
+
 /* --- run ----------------------------------------------------------------- */
 
 const only = process.argv.slice(3).filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
-const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G11: g11, U14: u14 };
+const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G11: g11, U7: u7, U14: u14 };
 
 console.log(`\nYomu engineering gauntlet — ${BASE}\n`);
 for (const [name, fn] of Object.entries(gates)) {
