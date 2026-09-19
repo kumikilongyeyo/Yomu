@@ -17,6 +17,8 @@
  *                                palette, not only the one anybody looked at
  *   U7  mode integrity           no component sheet reaches for a
  *                                mode-specific token behind the mode's back
+ *   G10 main-thread cost         no forced layout inside a sort comparator,
+ *                                which is what locked /sources
  *
  *   node tools/gauntlet.mjs                     # against a local wrangler dev
  *   node tools/gauntlet.mjs https://yomu...     # against a deployment
@@ -255,10 +257,39 @@ async function u7() {
   }
 }
 
+/* --- G10: the shapes that lock a tab ------------------------------------- *
+ *
+ * `getBoundingClientRect()` inside a sort comparator forces a synchronous
+ * layout on every comparison -- O(n log n) reflows for one call. In
+ * source-fabric-layout.js that call ran twice per DOM mutation, from an
+ * observer watching the whole document that never disconnected, over every
+ * element under #root. It was survivable until the v8 shell enlarged that
+ * tree, and then /sources stopped responding to input at all.
+ *
+ * Measure once into a map, then sort on the numbers.
+ */
+
+const LAYOUT_READS = /getBoundingClientRect|offsetWidth|offsetHeight|offsetTop|offsetLeft|getComputedStyle|scrollHeight|scrollWidth/;
+
+async function g10() {
+  const dir = path.join(ROOT, 'dist-app');
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.js'))) {
+    const js = fs.readFileSync(path.join(dir, file), 'utf8');
+    /* A comparator is `.sort(` up to its closing brace; good enough to catch
+       the shape without parsing JavaScript. */
+    const offenders = [];
+    for (const match of js.matchAll(/\.sort\(\s*\((?:[^)]*)\)\s*=>\s*\{([\s\S]{0,400}?)\}\s*\)/g)) {
+      if (LAYOUT_READS.test(match[1])) offenders.push(match[1].trim().split('\n')[0].slice(0, 60));
+    }
+    check('G10', `${file} does not force layout inside a sort`, offenders.length === 0,
+      `${offenders.join(' | ')} — measure once into a map, then sort on the numbers`);
+  }
+}
+
 /* --- run ----------------------------------------------------------------- */
 
 const only = process.argv.slice(3).filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
-const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G11: g11, U7: u7, U14: u14 };
+const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G10: g10, G11: g11, U7: u7, U14: u14 };
 
 console.log(`\nYomu engineering gauntlet — ${BASE}\n`);
 for (const [name, fn] of Object.entries(gates)) {
