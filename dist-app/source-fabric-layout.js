@@ -15,13 +15,18 @@
 
   function label(name) {
     const wanted = name.toUpperCase();
-    return [...document.querySelectorAll('#root *')]
-      .filter((el) => directText(el).toUpperCase() === wanted)
-      .sort((a, b) => {
-        const ar = a.getBoundingClientRect();
-        const br = b.getBoundingClientRect();
-        return (ar.width * ar.height) - (br.width * br.height);
-      })[0] || null;
+    const matches = [...document.querySelectorAll('#root *')]
+      .filter((el) => directText(el).toUpperCase() === wanted);
+    if (matches.length < 2) return matches[0] || null;
+    // Measure once each, then sort on the numbers. getBoundingClientRect
+    // inside the comparator forces a synchronous layout on every comparison
+    // -- O(n log n) reflows per call, twice per pass, on a tree that grew a
+    // great deal when the v8 shell arrived.
+    const area = new Map(matches.map((el) => {
+      const box = el.getBoundingClientRect();
+      return [el, box.width * box.height];
+    }));
+    return matches.sort((a, b) => area.get(a) - area.get(b))[0] || null;
   }
 
   function renameDirectText(el, value) {
@@ -29,17 +34,34 @@
     if (node && node.textContent.trim() !== value) node.textContent = value;
   }
 
+  /** The Built In heading this panel was last parked in front of. */
+  let anchor = null;
+
   function arrange() {
     const panel = document.getElementById(PANEL_ID);
     if (!panel) return false;
+
+    // Already where it belongs: say so without touching the document.
+    //
+    // `placed` was being set and never read, so every mutation on /sources
+    // ran two full `#root` scans and a pile of forced layout -- for ever,
+    // because this observer never disconnects. On a settled page that work
+    // changes nothing, and it was enough to lock the tab once the v8 shell
+    // enlarged the tree it walks.
+    if (panel.dataset.placed === 'true'
+        && anchor && anchor.isConnected
+        && panel.isConnected
+        && panel.nextElementSibling === anchor) {
+      return true;
+    }
 
     // The main flow belongs immediately before Built In. That leaves the page
     // title and source count visible, then puts Paste → Add → Read ahead of
     // every source-management detail.
     const builtIn = label('BUILT IN');
-    if (builtIn?.parentElement && panel.parentElement !== builtIn.parentElement) {
-      builtIn.parentElement.insertBefore(panel, builtIn);
-    } else if (builtIn?.parentElement && panel.nextElementSibling !== builtIn) {
+    anchor = builtIn || null;
+    if (builtIn?.parentElement
+        && (panel.parentElement !== builtIn.parentElement || panel.nextElementSibling !== builtIn)) {
       builtIn.parentElement.insertBefore(panel, builtIn);
     }
 
