@@ -609,6 +609,10 @@ const ASSETS = [
      pages are actually in (see the insertion note further down), and a
      handshake that needed it would be broken on exactly the pages that
      matter. */
+  /* Rescues a chapter page the reader could not load, through a second
+     proxy, silently. Depends on nothing and is depended on by nothing:
+     it listens for image errors in the capture phase and rewrites a src. */
+  { file: 'yomu-page-rescue.js', tag: '<script src="/yomu-page-rescue.js" defer></scr' + 'ipt>' },
   { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
