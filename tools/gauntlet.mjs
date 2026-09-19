@@ -22,6 +22,8 @@
  *
  *   node tools/gauntlet.mjs                     # against a local wrangler dev
  *   node tools/gauntlet.mjs https://yomu...     # against a deployment
+ *   node tools/gauntlet.mjs --offline           # only the gates that read
+ *                                               # files, for CI before deploy
  *
  * Exit code is the gate: 0 is PASS, 1 is a blocked release. Every check says
  * what it wanted and what it got, because a red line that does not tell you
@@ -31,7 +33,8 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASE = (process.argv[2] || 'http://localhost:8788').replace(/\/+$/, '');
+const urlArg = process.argv.slice(2).find((a) => /^https?:\/\//.test(a));
+const BASE = (urlArg || 'http://localhost:8788').replace(/\/+$/, '');
 const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
 
 let failed = 0;
@@ -288,12 +291,27 @@ async function g10() {
 
 /* --- run ----------------------------------------------------------------- */
 
-const only = process.argv.slice(3).filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
+const args = process.argv.slice(2);
+const offline = args.includes('--offline');
+const only = args.filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
 const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G10: g10, G11: g11, U7: u7, U14: u14 };
 
-console.log(`\nYomu engineering gauntlet — ${BASE}\n`);
+/* Gates that ask a running server something. The rest read the repository,
+ * which is what makes them usable as a pre-deploy check: there is nothing to
+ * start, nothing to wait for, and no way for a flaky dev server to turn a
+ * real failure into a green build or the reverse.
+ *
+ * G1 belongs to neither list and runs in both -- it shells out to typecheck,
+ * the unit suite and the patcher, none of which need HTTP. */
+const NEEDS_SERVER = new Set(['G2', 'G3', 'G8', 'G11']);
+
+console.log(`\nYomu engineering gauntlet — ${offline ? 'offline (files only)' : BASE}\n`);
 for (const [name, fn] of Object.entries(gates)) {
   if (only.length && !only.includes(name)) continue;
+  if (offline && NEEDS_SERVER.has(name)) {
+    results.push(`SKIP  ${name}  needs a running server`);
+    continue;
+  }
   try {
     await fn();
   } catch (error) {
