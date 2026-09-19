@@ -1,5 +1,6 @@
 name: Website Adaptive diagnostic
 
+# Re-run after Yomu Source Runtime v12 Madara/challenge upgrade.
 on:
   push:
     branches:
