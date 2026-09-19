@@ -6,6 +6,11 @@
   // repository health/update UX and normalized v8 status sit outside the v7.5
   // compatibility/execution floor so rollback remains straightforward.
   //
+  // Source Forge v8.1 lives underneath the same Add Source flow. A website URL
+  // that survives catalog → chapters → reader verification is queued in KV,
+  // exposed as a portable source pack, and mirrored into yomu-extensions by a
+  // GitHub Action. The visible Sources UI does not change.
+  //
   // `run_worker_first` is required so /sources reaches the Worker before
   // Static Assets serves the SPA shell. v8 injects the repository manager UI
   // while preserving the existing exported app and source controls.
@@ -20,13 +25,16 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": true
   },
-  // Runtime Broker compatibility service. v8 keeps external execution behind
-  // the existing broker boundary; repository code is never eval'd in Worker.
+  // Runtime Broker compatibility service plus the user's Git-backed source
+  // repositories. These are public read-only URLs; no GitHub write token lives
+  // in the Worker. yomu-extensions writes itself from its own Actions token.
   "vars": {
-    "SOURCE_RUNTIME_URL": "https://yomu-source-runtime.hatchable.site/api"
+    "SOURCE_RUNTIME_URL": "https://yomu-source-runtime.hatchable.site/api",
+    "EXTENSIONS_REPO": "https://raw.githubusercontent.com/kumikilongyeyo/yomu-extensions/main",
+    "FORGE_SOURCEPACK_URL": "https://raw.githubusercontent.com/kumikilongyeyo/yomu-extensions/main/sourcepack.json"
   },
-  // Yomu Sync's store. One entry per library code, plus short-lived pairing
-  // codes and rate-limit counters that KV expires on its own.
+  // Yomu Sync's store. Source Forge also uses short-lived, namespaced KV rows
+  // for verified pending candidates. Forge rows expire automatically.
   "kv_namespaces": [
     { "binding": "SYNC", "id": "a8c9b92d33444b45a5e1875b896c51b6" }
   ]
