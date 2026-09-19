@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'worker/**'
+      - 'scripts/source-forge-gauntlet.mjs'
       - 'dist-app/add-sources.html'
       - 'dist-app/source-import.js'
       - 'dist-app/source-fabric-panel.js'
@@ -42,6 +43,7 @@ jobs:
         run: npm run typecheck
       - name: Check browser scripts
         run: |
+          node --check scripts/source-forge-gauntlet.mjs
           node --check dist-app/source-import.js
           node --check dist-app/source-fabric-panel.js
           node --check dist-app/source-fabric-bulk.js
