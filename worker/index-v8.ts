@@ -52,6 +52,25 @@ async function injectV8Ui(response: Response): Promise<Response> {
   return new Response(html, { status: response.status, headers });
 }
 
+async function injectSourceBeastUi(response: Response): Promise<Response> {
+  if (!response.ok) return response;
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  const js = '<script src="/source-beast-loader.js" defer></script>';
+  if (!html.includes('/source-beast-loader.js')) {
+    html = html.includes('</body>') ? html.replace('</body>', `${js}</body>`) : html + js;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  headers.set('cache-control', 'no-store, max-age=0');
+  headers.set('x-yomu-entrypoint', 'v8');
+  headers.set('x-yomu-source-fabric', VERSION);
+  headers.set('x-yomu-source-beast', 'web-source');
+  return new Response(html, { status: response.status, headers });
+}
+
 function jsonResponse(payload: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -244,6 +263,13 @@ export default {
           websiteAdaptive: true,
         },
       }));
+    }
+
+    if (
+      request.method === 'GET' &&
+      (url.pathname === '/add-sources' || url.pathname === '/add-sources/' || url.pathname === '/add-sources.html')
+    ) {
+      return injectSourceBeastUi(await v7.fetch(request, env));
     }
 
     if (
