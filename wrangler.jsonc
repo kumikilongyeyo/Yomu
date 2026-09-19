@@ -1,22 +1,20 @@
 {
   // One Worker serves both the app's files and its fetching.
   //
-  // v8 routes through index-v8.ts. Universal Source Fabric expands the proven
-  // v7.5 Recipe Engine rather than replacing it: repository detection,
-  // repository health/update UX and normalized v8 status sit outside the v7.5
-  // compatibility/execution floor so rollback remains straightforward.
+  // v9 wraps the v8 Source Fabric entrypoint with Browser Run capacity
+  // diagnostics so Source Beast can wait on Cloudflare's real acquisition
+  // window instead of guessing a fixed retry delay.
   //
   // Browser Run powers Source Beast's cloud-only human verification path. The
   // browser binding is authenticated by Cloudflare, so Yomu never needs a
   // localhost helper or a Browser Run API token in client-side code.
   //
   // `run_worker_first` is required so /sources reaches the Worker before
-  // Static Assets serves the SPA shell. v8 injects the repository manager UI
-  // while preserving the existing exported app and source controls.
+  // Static Assets serves the SPA shell.
   //
   // Deploy with: npx wrangler deploy
   "name": "yomu",
-  "main": "worker/index-v8.ts",
+  "main": "worker/index-v9.ts",
   "compatibility_date": "2026-09-19",
   "compatibility_flags": ["nodejs_compat"],
   "browser": {
