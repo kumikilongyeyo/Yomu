@@ -2,6 +2,40 @@
   'use strict';
   if (!/^\/sources(?:\.html)?\/?$/.test(location.pathname)) return;
 
+  // Browser Run Free allows only one new browser acquisition every ~20 seconds.
+  // Treat that short launch throttle as retryable, while keeping the separate
+  // daily browser-time quota error explicit for the user.
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const requestUrl = typeof input === 'string' ? input : String(input?.url || '');
+    const response = await nativeFetch(input, init);
+    if (!requestUrl.includes('/api/source-beast/test') || response.ok) return response;
+
+    let payload = null;
+    try { payload = await response.clone().json(); } catch {}
+    const message = String(payload?.message || payload?.error || '');
+
+    if (/browser time limit exceeded for today/i.test(message)) {
+      const headers = new Headers(response.headers);
+      headers.set('content-type', 'application/json; charset=utf-8');
+      return new Response(JSON.stringify({
+        ...(payload || {}),
+        message: 'Cloudflare Browser Run’s free daily browser allowance is used up. It resets at 00:00 UTC. This is the daily quota, not a ToonGod/source failure.',
+      }), { status: response.status, headers });
+    }
+
+    if (!/rate limit exceeded/i.test(message)) return response;
+
+    window.dispatchEvent(new CustomEvent('yomu:source-beast-rate-wait', { detail:{ seconds:21 } }));
+    await new Promise((resolve) => setTimeout(resolve, 21_000));
+    return nativeFetch(input, init);
+  };
+
+  window.addEventListener('yomu:source-beast-rate-wait', () => {
+    const status = document.querySelector('#yomu-source-fabric-command .sf-status');
+    if (status) status.innerHTML = '<span class="sf-spin"></span>Cloudflare is throttling new browser launches. Waiting ~21 seconds, then Yomu will retry automatically…';
+  });
+
   const KEYS = { repositories:'yomu.v8.repositories', updates:'yomu.v8.repository-updates' };
   const state = { repositories:read(KEYS.repositories, []), updates:read(KEYS.updates, []), status:null, active:null };
 
