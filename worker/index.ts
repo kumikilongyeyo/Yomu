@@ -24,6 +24,7 @@ import { handleCircle } from './routes-circle';
 import { handleShelf } from './routes-shelf';
 import { handleTitle } from './title';
 import { withSeriesMeta } from './series-meta';
+import { handleSeo } from './seo';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -376,6 +377,13 @@ export default {
        every title card points at, so it has to answer before any script runs
        -- see worker/title.ts. Above the asset handoff because there is no
        file by that name and the SPA fallback would otherwise swallow it. */
+    /* robots.txt and sitemap.xml. Above the asset handoff because there are
+       no such files, and the SPA fallback would answer both with HTML and a
+       200 -- which a crawler reads as "this is your robots.txt" and cannot
+       parse. */
+    const seo = handleSeo(url);
+    if (seo) return seo;
+
     if (url.pathname.startsWith('/title/')) return handleTitle(request, env, url);
 
     /* A series page gets its own title, description, cover and canonical link

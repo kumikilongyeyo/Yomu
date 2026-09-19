@@ -32,7 +32,11 @@
       "/shelf/*",
       "/sources*",
       "/discover*",
-      "/add-sources*"
+      "/add-sources*",
+      // No such files exist, so without these the asset server answers both
+      // with the SPA shell and a 200.
+      "/robots.txt",
+      "/sitemap.xml"
     ]
   },
   // Runtime Broker compatibility service plus the user's Git-backed source

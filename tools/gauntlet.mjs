@@ -19,6 +19,8 @@
  *                                mode-specific token behind the mode's back
  *   G10 main-thread cost         no forced layout inside a sort comparator,
  *                                which is what locked /sources
+ *   G14 crawlability             robots.txt and sitemap.xml are themselves,
+ *                                not the SPA shell with a 200 on it
  *
  *   node tools/gauntlet.mjs                     # against a local wrangler dev
  *   node tools/gauntlet.mjs https://yomu...     # against a deployment
@@ -260,6 +262,35 @@ async function u7() {
   }
 }
 
+/* --- G14: what a crawler is actually served ------------------------------ *
+ *
+ * `not_found_handling: "single-page-application"` answers anything unmatched
+ * with index.html and a 200. That is right for app routes and wrong for the
+ * two files a crawler asks for by name: a robots.txt full of HTML is not
+ * parseable, a sitemap.xml full of HTML is an error, and both report success.
+ * The failure is invisible from inside the app, which is why it is a gate.
+ */
+
+async function g14() {
+  const robots = await get(`${BASE}/robots.txt`);
+  check('G14', 'robots.txt is text, not the app shell', robots.status === 200
+    && (robots.headers.get('content-type') || '').includes('text/plain')
+    && !robots.body.includes('<!DOCTYPE'), `content-type ${robots.headers.get('content-type')}`);
+  check('G14', 'robots.txt points at the sitemap', /^Sitemap: https?:\/\/\S+\/sitemap\.xml$/m.test(robots.body));
+  check('G14', 'robots.txt keeps crawlers out of the reader and the API',
+    /^Disallow: \/api\/$/m.test(robots.body) && /^Disallow: \/read\/$/m.test(robots.body));
+
+  const map = await get(`${BASE}/sitemap.xml`);
+  check('G14', 'sitemap.xml is XML, not the app shell', map.status === 200
+    && (map.headers.get('content-type') || '').includes('xml')
+    && map.body.startsWith('<?xml'), `content-type ${map.headers.get('content-type')}`);
+  check('G14', 'sitemap.xml lists the reading surfaces',
+    /<loc>https?:\/\/[^<]*\/<\/loc>/.test(map.body) && map.body.includes('/find'));
+  check('G14', 'sitemap.xml does not publish provider-bound series URLs',
+    !map.body.includes('/series/'),
+    'those addresses change when a source dies; /title/ is the one that survives');
+}
+
 /* --- G10: the shapes that lock a tab ------------------------------------- *
  *
  * `getBoundingClientRect()` inside a sort comparator forces a synchronous
@@ -294,7 +325,7 @@ async function g10() {
 const args = process.argv.slice(2);
 const offline = args.includes('--offline');
 const only = args.filter((a) => /^[GU]\d+$/i.test(a)).map((a) => a.toUpperCase());
-const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G10: g10, G11: g11, U7: u7, U14: u14 };
+const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G10: g10, G11: g11, G14: g14, U7: u7, U14: u14 };
 
 /* Gates that ask a running server something. The rest read the repository,
  * which is what makes them usable as a pre-deploy check: there is nothing to
@@ -303,7 +334,7 @@ const gates = { G1: g1, G2: g2, G3: g3, G8: g8, G10: g10, G11: g11, U7: u7, U14:
  *
  * G1 belongs to neither list and runs in both -- it shells out to typecheck,
  * the unit suite and the patcher, none of which need HTTP. */
-const NEEDS_SERVER = new Set(['G2', 'G3', 'G8', 'G11']);
+const NEEDS_SERVER = new Set(['G2', 'G3', 'G8', 'G11', 'G14']);
 
 console.log(`\nYomu engineering gauntlet — ${offline ? 'offline (files only)' : BASE}\n`);
 for (const [name, fn] of Object.entries(gates)) {
