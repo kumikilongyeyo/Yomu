@@ -6,10 +6,9 @@
   // repository health/update UX and normalized v8 status sit outside the v7.5
   // compatibility/execution floor so rollback remains straightforward.
   //
-  // Source Forge v8.1 lives underneath the same Add Source flow. A website URL
-  // that survives catalog → chapters → reader verification is queued in KV,
-  // exposed as a portable source pack, and mirrored into yomu-extensions by a
-  // GitHub Action. The visible Sources UI does not change.
+  // Browser Run powers Source Beast's cloud-only human verification path. The
+  // browser binding is authenticated by Cloudflare, so Yomu never needs a
+  // localhost helper or a Browser Run API token in client-side code.
   //
   // `run_worker_first` is required so /sources reaches the Worker before
   // Static Assets serves the SPA shell. v8 injects the repository manager UI
@@ -18,7 +17,11 @@
   // Deploy with: npx wrangler deploy
   "name": "yomu",
   "main": "worker/index-v8.ts",
-  "compatibility_date": "2025-09-01",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "browser": {
+    "binding": "BROWSER"
+  },
   "assets": {
     "directory": "./dist-app",
     "binding": "ASSETS",
@@ -33,8 +36,9 @@
     "EXTENSIONS_REPO": "https://raw.githubusercontent.com/kumikilongyeyo/yomu-extensions/main",
     "FORGE_SOURCEPACK_URL": "https://raw.githubusercontent.com/kumikilongyeyo/yomu-extensions/main/sourcepack.json"
   },
-  // Yomu Sync's store. Source Forge also uses short-lived, namespaced KV rows
-  // for verified pending candidates. Forge rows expire automatically.
+  // Yomu Sync also stores short-lived Source Beast run/session metadata. Human
+  // verification happens in Browser Run; the KV rows only keep opaque session
+  // IDs and the browser state needed to reconnect the verified web source.
   "kv_namespaces": [
     { "binding": "SYNC", "id": "a8c9b92d33444b45a5e1875b896c51b6" }
   ]
