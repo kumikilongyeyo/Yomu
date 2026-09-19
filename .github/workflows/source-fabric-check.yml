@@ -11,6 +11,7 @@ on:
       - 'scripts/source-forge-gauntlet.mjs'
       - 'dist-app/add-sources.html'
       - 'dist-app/source-import.js'
+      - 'dist-app/source-beast-loader.js'
       - 'dist-app/source-beast-yomu.js'
       - 'dist-app/source-fabric-panel.js'
       - 'dist-app/source-fabric-bulk.js'
@@ -46,6 +47,7 @@ jobs:
         run: |
           node --check scripts/source-forge-gauntlet.mjs
           node --check dist-app/source-import.js
+          node --check dist-app/source-beast-loader.js
           node --check dist-app/source-beast-yomu.js
           node --check dist-app/source-fabric-panel.js
           node --check dist-app/source-fabric-bulk.js
