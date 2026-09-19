@@ -9,8 +9,9 @@
   // browser binding is authenticated by Cloudflare, so Yomu never needs a
   // localhost helper or a Browser Run API token in client-side code.
   //
-  // `run_worker_first` is required so /sources reaches the Worker before
-  // Static Assets serves the SPA shell.
+  // Only routes that actually need Worker logic run Worker-first. Normal app
+  // files, images, CSS and JS are served directly by Cloudflare Static Assets,
+  // avoiding an unnecessary Worker invocation on every asset request.
   //
   // Deploy with: npx wrangler deploy
   "name": "yomu",
@@ -24,7 +25,15 @@
     "directory": "./dist-app",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": true
+    "run_worker_first": [
+      "/api/*",
+      "/title/*",
+      "/series/*",
+      "/shelf/*",
+      "/sources*",
+      "/discover*",
+      "/add-sources*"
+    ]
   },
   // Runtime Broker compatibility service plus the user's Git-backed source
   // repositories. These are public read-only URLs; no GitHub write token lives
