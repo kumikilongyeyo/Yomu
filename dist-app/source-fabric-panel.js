@@ -1,49 +1,56 @@
 (() => {
   'use strict';
-  if (!location.pathname.startsWith('/sources')) return;
+  if (!/^\/sources(?:\.html)?\/?$/.test(location.pathname)) return;
 
   const PANEL_ID = 'yomu-source-fabric-command';
   const COLLECTION_KEY = 'yomu.v1.collection';
+  const REPOSITORIES_KEY = 'yomu.v8.repositories';
+  const UPDATES_KEY = 'yomu.v8.repository-updates';
 
   const css = document.createElement('style');
   css.textContent = `
-    #${PANEL_ID}{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;position:relative;z-index:4;margin:0 0 22px;padding:18px;border:1px solid var(--line,#263747);border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--surface,#111b25) 94%,var(--accent,#ffc15a) 6%),var(--surface,#111b25));box-shadow:0 18px 55px rgba(0,0,0,.14);color:var(--text,#f7f8fa)}
+    #${PANEL_ID}{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;position:relative;z-index:4;margin:0 0 18px;padding:18px;border:1px solid var(--line,#263747);border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--surface,#111b25) 96%,var(--accent,#ffc15a) 4%),var(--surface,#111b25));box-shadow:0 18px 55px rgba(0,0,0,.12);color:var(--text,#f7f8fa)}
     #${PANEL_ID} *{box-sizing:border-box}
     #${PANEL_ID} .sf-kicker{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--dim,#8297aa);margin-bottom:5px}
-    #${PANEL_ID} .sf-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
     #${PANEL_ID} h2{font-size:22px;line-height:1.08;letter-spacing:-.025em;margin:0}
-    #${PANEL_ID} .sf-copy{font-size:12.5px;line-height:1.45;color:var(--muted,#91a8bb);margin:5px 0 0;max-width:650px}
-    #${PANEL_ID} .sf-remote{flex:none;border:1px solid color-mix(in srgb,#7fe3a7 40%,var(--line,#263747));border-radius:999px;padding:6px 9px;font-size:10.5px;color:#91e4ad;background:rgba(80,190,120,.06);white-space:nowrap}
-    #${PANEL_ID} .sf-form{display:flex;gap:9px;margin-top:14px}
-    #${PANEL_ID} input{flex:1;min-width:0;height:48px;padding:0 14px;border-radius:13px;border:1px solid var(--line,#263747);background:var(--bg,#09111a);color:var(--text,#f7f8fa);font:inherit;font-size:15px;outline:none}
+    #${PANEL_ID} .sf-copy{font-size:12.5px;line-height:1.45;color:var(--muted,#91a8bb);margin:5px 0 0;max-width:720px}
+    #${PANEL_ID} .sf-form{display:flex;gap:9px;margin-top:14px;align-items:flex-end}
+    #${PANEL_ID} .sf-field{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px}
+    #${PANEL_ID} label{font-size:11px;font-weight:750;color:var(--muted,#91a8bb)}
+    #${PANEL_ID} input{width:100%;min-width:0;height:48px;padding:0 14px;border-radius:13px;border:1px solid var(--line,#263747);background:var(--bg,#09111a);color:var(--text,#f7f8fa);font:inherit;font-size:15px;outline:none}
     #${PANEL_ID} input:focus{border-color:color-mix(in srgb,var(--accent,#ffc15a) 70%,var(--line,#263747));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#ffc15a) 12%,transparent)}
-    #${PANEL_ID} button,#${PANEL_ID} a.sf-button{height:48px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:0 19px;background:var(--accent,#ffc15a);color:var(--accentText,#0c131b);font:inherit;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap}
+    #${PANEL_ID} button{height:48px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:0 22px;background:var(--accent,#ffc15a);color:var(--accentText,#0c131b);font:inherit;font-weight:800;cursor:pointer;white-space:nowrap}
     #${PANEL_ID} button:disabled{opacity:.55;cursor:wait}
-    #${PANEL_ID} .sf-pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
-    #${PANEL_ID} .sf-step{min-height:48px;border:1px solid var(--hairline,var(--line,#263747));border-radius:12px;padding:8px 10px;color:var(--dim,#8297aa);font-size:10.5px;line-height:1.3}
-    #${PANEL_ID} .sf-step b{display:block;font-size:11.5px;color:var(--text,#f7f8fa);margin-bottom:1px}
-    #${PANEL_ID} .sf-step.active{border-color:color-mix(in srgb,var(--accent,#ffc15a) 55%,var(--line,#263747));background:color-mix(in srgb,var(--accent,#ffc15a) 7%,transparent)}
-    #${PANEL_ID} .sf-step.done b{color:#91e4ad}#${PANEL_ID} .sf-step.bad b{color:#ff8a81}
-    #${PANEL_ID} .sf-status{min-height:19px;margin-top:10px;font-size:12px;color:var(--muted,#91a8bb)}
+    #${PANEL_ID} .sf-status{min-height:20px;margin-top:10px;font-size:12px;line-height:1.45;color:var(--muted,#91a8bb)}
     #${PANEL_ID} .sf-spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.18);border-top-color:var(--accent,#ffc15a);border-radius:50%;animation:sfspin .7s linear infinite;margin-right:7px;vertical-align:-2px}@keyframes sfspin{to{transform:rotate(360deg)}}
-    #${PANEL_ID} .sf-result{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline,var(--line,#263747))}#${PANEL_ID} .sf-result.show{display:block}
-    #${PANEL_ID} .sf-result-row{display:flex;align-items:center;justify-content:space-between;gap:12px}#${PANEL_ID} .sf-result strong{font-size:16px}#${PANEL_ID} .sf-result p{margin:3px 0 0;color:var(--muted,#91a8bb);font-size:12px;line-height:1.4}
-    #${PANEL_ID} .sf-chip{display:inline-flex;border:1px solid var(--line,#263747);border-radius:999px;padding:4px 8px;font-size:10px;color:var(--dim,#8297aa);margin:6px 5px 0 0}
     #${PANEL_ID} .sf-ok{color:#91e4ad}#${PANEL_ID} .sf-bad{color:#ff8a81}
-    #${PANEL_ID} details{margin-top:10px;font-size:11px;color:var(--dim,#8297aa)}#${PANEL_ID} summary{cursor:pointer;color:var(--muted,#91a8bb);font-weight:650}
-    @media(max-width:700px){#${PANEL_ID}{margin:0 0 16px;padding:15px;border-radius:17px}#${PANEL_ID} .sf-head{display:block}#${PANEL_ID} .sf-remote{display:inline-flex;margin-top:8px}#${PANEL_ID} .sf-form{flex-direction:column}#${PANEL_ID} button{width:100%}#${PANEL_ID} .sf-pipe{grid-template-columns:1fr 1fr 1fr}#${PANEL_ID} .sf-step{padding:7px;min-height:44px}#${PANEL_ID} .sf-step span{display:none}}
+    #${PANEL_ID} .sf-result{display:none;margin-top:11px;padding:11px 12px;border:1px solid var(--hairline,var(--line,#263747));border-radius:13px;background:color-mix(in srgb,var(--bg,#09111a) 62%,transparent)}#${PANEL_ID} .sf-result.show{display:block}
+    #${PANEL_ID} .sf-result strong{font-size:14px}#${PANEL_ID} .sf-result p{margin:3px 0 0;color:var(--muted,#91a8bb);font-size:12px;line-height:1.4}
+    #${PANEL_ID} .sf-chip{display:inline-flex;border:1px solid var(--line,#263747);border-radius:999px;padding:4px 8px;font-size:10px;color:var(--dim,#8297aa);margin:7px 5px 0 0}
+    #${PANEL_ID} details{margin-top:10px;font-size:11px;color:var(--dim,#8297aa)}#${PANEL_ID} summary{cursor:pointer;color:var(--muted,#91a8bb);font-weight:700}
+    #${PANEL_ID} .sf-advanced{padding-top:7px;line-height:1.5;white-space:pre-wrap}
+    @media(max-width:700px){#${PANEL_ID}{padding:15px;border-radius:17px}#${PANEL_ID} .sf-form{flex-direction:column;align-items:stretch}#${PANEL_ID} button{width:100%}}
   `;
   document.head.append(css);
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const readJson = (key, fallback) => { try { const value = JSON.parse(localStorage.getItem(key) || 'null'); return value ?? fallback; } catch { return fallback; } };
+  const writeJson = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
   const adultAllowed = () => { try { return localStorage.getItem('yomu.v1.adult') === 'on'; } catch { return false; } };
 
-  function cleanUrl(value) {
-    const raw = value.trim();
-    if (!raw) throw new Error('Paste a website link first.');
-    const u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'https://' + raw);
-    if (!/^https?:$/.test(u.protocol) || u.username || u.password) throw new Error('Use a normal public http/https website link.');
-    return u.toString();
+  function normalizeInput(value) {
+    const raw = String(value || '').trim();
+    if (!raw) throw new Error('Paste a website URL or GitHub repository.');
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'https://' + raw);
+    if (!/^https?:$/.test(url.protocol) || url.username || url.password) throw new Error('Use a normal public http/https URL.');
+    url.hash = '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (host === 'github.com') {
+      if (parts.length < 2) throw new Error('Paste a GitHub repository URL, for example github.com/owner/repository.');
+      return { kind: 'repository', value: url.toString() };
+    }
+    return { kind: 'website', value: url.toString() };
   }
 
   function collectionAdd(extension) {
@@ -85,16 +92,81 @@
     return body.series.length;
   }
 
+  function recordRepository(repository) {
+    const repositories = readJson(REPOSITORIES_KEY, []);
+    const index = repositories.findIndex((row) => row.repositoryUrl === repository.repositoryUrl || row.id === repository.id);
+    const now = new Date().toISOString();
+    let record;
+    if (index >= 0) {
+      record = { ...repositories[index], ...repository, lastChecked:now, lastError:'' };
+      repositories[index] = record;
+    } else {
+      record = { ...repository, autoUpdate:repository.trust !== 'custom-unverified', paused:false, updateState:'current', lastChecked:now, lastKnownGood:null, lastError:'' };
+      repositories.push(record);
+    }
+    writeJson(REPOSITORIES_KEY, repositories);
+    const updates = readJson(UPDATES_KEY, []);
+    updates.unshift({ id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`, repositoryId:record.id, repositoryName:record.name, type:index >= 0 ? 'refreshed' : 'added', message:index >= 0 ? 'Repository registration refreshed.' : 'Repository registered. Sources are discoverable and can be enabled from Yomu.', at:now });
+    writeJson(UPDATES_KEY, updates.slice(0,80));
+    document.dispatchEvent(new CustomEvent('yomu:repositories-changed', { detail:{ repository:record } }));
+    return { record, existed:index >= 0 };
+  }
+
+  async function addRepository(url, setProgress) {
+    setProgress('Detecting repository format and source manifest…');
+    const response = await fetch('/api/fabric/repositories/detect', {
+      method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({input:url}), cache:'no-store', signal:AbortSignal.timeout(30000),
+    });
+    const payload = await response.json().catch(()=>({}));
+    if (!response.ok || payload.ok === false || !payload.repository) throw new Error(payload.error || `Repository check returned HTTP ${response.status}.`);
+    setProgress('Repository verified. Adding it to Yomu…');
+    const saved = recordRepository(payload.repository);
+    return { saved, repository:payload.repository };
+  }
+
+  async function addWebsite(url, setProgress) {
+    setProgress('Finding the best source engine…');
+    const registryResponse = await fetch('/api/ext/sources', {cache:'no-store',signal:AbortSignal.timeout(20000)});
+    if (!registryResponse.ok) throw new Error('Could not load Yomu sources.');
+    const registry = await registryResponse.json();
+    let extension = hostMatch(url, registry.extensions || []);
+    let resolution = null;
+
+    if (!extension) {
+      setProgress('Testing this website with Source Fabric…');
+      const response = await fetch('/api/fabric/resolve', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url}),cache:'no-store',signal:AbortSignal.timeout(45000)});
+      resolution = await response.json().catch(()=>({error:`HTTP ${response.status}`}));
+      if (!response.ok) throw new Error(resolution.error || `HTTP ${response.status}`);
+      if (!resolution.ready || !resolution.adapter) {
+        const error = new Error(resolution.message || 'Yomu could not prove a complete reader path yet.');
+        error.evidence = resolution.evidence || [];
+        throw error;
+      }
+      extension = resolution.adapter;
+    }
+
+    setProgress('Checking catalog, chapters, and reader pages…');
+    const count = await verify(extension);
+    setProgress('Reader path verified. Adding source…');
+    const changed = collectionAdd(extension);
+    return { extension, resolution, count, changed };
+  }
+
   function panel() {
     const el = document.createElement('section');
     el.id = PANEL_ID;
+    el.dataset.addSource = 'true';
     el.innerHTML = `
-      <div class="sf-head"><div><div class="sf-kicker">Source Fabric · v5</div><h2>Add any reading source</h2><p class="sf-copy">Paste a manga, manhwa, manhua or webtoon site. Yomu finds the engine, tests it, then adds it as a normal source.</p></div><span class="sf-remote">● Remote · desktop optional</span></div>
-      <form class="sf-form"><input aria-label="Website or series URL" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://kagane.to" /><button type="submit">Add source</button></form>
-      <div class="sf-pipe"><div class="sf-step" data-step="find"><b>1 · Find</b><span>Pick engine</span></div><div class="sf-step" data-step="test"><b>2 · Test</b><span>Check reader</span></div><div class="sf-step" data-step="add"><b>3 · Add</b><span>Enable in Yomu</span></div></div>
-      <div class="sf-status">Ready. Paste a site above.</div>
-      <div class="sf-result"><div class="sf-result-row"><div><strong></strong><p></p><div class="sf-tags"></div></div></div></div>
-      <details><summary>Advanced fallback</summary><div style="padding-top:7px">If a site blocks the remote runtime or needs a normal interactive browser, desktop Forge remains available as a fallback. It is no longer the normal path.</div></details>`;
+      <div class="sf-kicker">Sources</div>
+      <h2>Add source</h2>
+      <p class="sf-copy">Paste a reading website or a GitHub source repository. Yomu detects what it is, tests it, and handles the engine choice automatically.</p>
+      <form class="sf-form">
+        <div class="sf-field"><label for="yomu-universal-source">Website URL or GitHub repository</label><input id="yomu-universal-source" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://example.com or https://github.com/owner/repo" /></div>
+        <button type="submit">Add</button>
+      </form>
+      <div class="sf-status">One box. Website or repository.</div>
+      <div class="sf-result"><strong></strong><p></p><div class="sf-tags"></div></div>
+      <details><summary>Advanced details</summary><div class="sf-advanced">Native adapters are checked first. Unsupported websites fall back to Source Fabric. GitHub repository URLs use the repository detector. Runtime and diagnostics stay hidden here unless you need them.</div></details>`;
     return el;
   }
 
@@ -107,7 +179,7 @@
       if (!/(auto|scroll)/.test(style.overflowY)) continue;
       const rect = el.getBoundingClientRect();
       if (rect.width < 280 || rect.height < 250) continue;
-      const text = (el.textContent || '').slice(0,400);
+      const text = (el.textContent || '').slice(0,500);
       const s = (/Sources/i.test(text)?4:0) + (rect.width>600?2:0) + (el.scrollHeight>el.clientHeight?1:0);
       if (s > score) { score = s; best = el; }
     }
@@ -130,60 +202,58 @@
     const strong = result.querySelector('strong');
     const note = result.querySelector('p');
     const tags = result.querySelector('.sf-tags');
-    const step = (name,state='') => { const x=p.querySelector(`[data-step="${name}"]`); x.className='sf-step'+(state?' '+state:''); };
-    const reset = () => ['find','test','add'].forEach((x)=>step(x));
+    const details = p.querySelector('.sf-advanced');
     const spinning = (text) => { status.innerHTML='<span class="sf-spin"></span>'+escapeHtml(text); };
+    const setResult = (title, copy, rows=[]) => {
+      strong.textContent = title;
+      note.textContent = copy;
+      tags.innerHTML = rows.filter(Boolean).map((x)=>`<span class="sf-chip">${escapeHtml(x)}</span>`).join('');
+      result.classList.add('show');
+    };
 
     const preset = new URLSearchParams(location.search).get('url');
     if (preset) input.value = preset;
+    if (location.hash === '#add-source' || preset) setTimeout(() => input.focus(), 80);
+    document.addEventListener('yomu:focus-add-source', () => { p.scrollIntoView({behavior:'smooth',block:'center'}); input.focus(); });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      result.classList.remove('show');
       let target;
-      try { target = cleanUrl(input.value); } catch (error) { status.innerHTML='<span class="sf-bad">'+escapeHtml(error.message)+'</span>'; return; }
-      button.disabled = true; result.classList.remove('show'); reset(); step('find','active'); spinning('Finding the strongest engine…');
-      let resolution = null;
+      try { target = normalizeInput(input.value); }
+      catch (error) { status.innerHTML='<span class="sf-bad">'+escapeHtml(error.message)+'</span>'; return; }
+
+      button.disabled = true;
+      button.textContent = 'Adding…';
       try {
-        const registryResponse = await fetch('/api/ext/sources', {cache:'no-store',signal:AbortSignal.timeout(20000)});
-        if (!registryResponse.ok) throw new Error('Could not load Yomu sources.');
-        const registry = await registryResponse.json();
-        let extension = hostMatch(target, registry.extensions || []);
-
-        if (!extension) {
-          const response = await fetch('/api/fabric/resolve', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:target}),cache:'no-store',signal:AbortSignal.timeout(45000)});
-          resolution = await response.json().catch(()=>({error:`HTTP ${response.status}`}));
-          if (!response.ok) throw new Error(resolution.error || `HTTP ${response.status}`);
-          if (!resolution.ready || !resolution.adapter) {
-            step('find','done'); step('test','bad');
-            status.innerHTML='<span class="sf-bad">'+escapeHtml(resolution.message || 'This site needs a specialist adapter.')+'</span>';
-            strong.textContent='Not added'; note.textContent=resolution.message || 'Yomu could not prove a complete catalog → chapter → page path.';
-            tags.innerHTML=(resolution.evidence||[]).map((e)=>`<span class="sf-chip">${escapeHtml(e.ecosystem)} · ${escapeHtml(e.name||e.id||'implementation')}</span>`).join('');
-            result.classList.add('show'); return;
-          }
-          extension = resolution.adapter;
+        if (target.kind === 'repository') {
+          const { saved, repository } = await addRepository(target.value, spinning);
+          status.innerHTML='<span class="sf-ok">✓ Repository added.</span>';
+          setResult(repository.name || 'Repository added', saved.existed ? 'Already registered — Yomu refreshed its repository data.' : 'Repository registered. Its sources are now discoverable in Yomu.', [repository.ecosystem, Number.isFinite(Number(repository.sourceCount)) ? `${Number(repository.sourceCount).toLocaleString()} sources` : '', repository.trust]);
+          details.textContent = `Repository: ${repository.repositoryUrl || target.value}\nRuntime: ${repository.runtimeClass || 'automatic'}\nCompatibility: ${repository.compatibility || 'detected automatically'}`;
+        } else {
+          const added = await addWebsite(target.value, spinning);
+          status.innerHTML='<span class="sf-ok">✓ Source added.</span> '+escapeHtml(added.extension.name)+' is ready in Yomu.';
+          setResult(added.extension.name, added.changed ? 'Added successfully. Refreshing your source list…' : 'Already enabled. Refreshing your source list…', [added.extension.runtime || 'Yomu adapter', added.extension.engine || '', `${added.count} titles sampled`]);
+          details.textContent = `Input: ${target.value}\nRuntime: ${added.extension.runtime || 'native adapter'}\nEngine: ${added.extension.engine || 'automatic'}${Number.isFinite(added.resolution?.score) ? `\nResolve score: ${added.resolution.score}/100` : ''}`;
+          setTimeout(()=>location.reload(),900);
         }
-
-        step('find','done'); step('test','active'); spinning('Testing browse and reader endpoint…');
-        const count = await verify(extension);
-        step('test','done'); step('add','active'); spinning('Adding source to Yomu…');
-        const changed = collectionAdd(extension);
-        step('add','done');
-        status.innerHTML='<span class="sf-ok">✓ Ready.</span> '+escapeHtml(extension.name)+' is now a Yomu source.';
-        strong.textContent=extension.name; note.textContent=changed?'Added successfully. Reloading the source list…':'Already enabled. Refreshing the source list…';
-        const tagRows=[extension.runtime||'Yomu adapter',extension.engine||'',Number.isFinite(resolution?.score)?resolution.score+'/100':'',count+' titles sampled'].filter(Boolean);
-        tags.innerHTML=tagRows.map((x)=>`<span class="sf-chip">${escapeHtml(x)}</span>`).join('');
-        result.classList.add('show');
-        setTimeout(()=>location.reload(),1100);
       } catch (error) {
-        const active=[...p.querySelectorAll('.sf-step')].find((x)=>x.classList.contains('active'));
-        if(active){active.classList.remove('active');active.classList.add('bad')}
         status.innerHTML='<span class="sf-bad">'+escapeHtml(error.message || error)+'</span>';
-        strong.textContent='Could not add source'; note.textContent=error.message || String(error); tags.innerHTML=''; result.classList.add('show');
-      } finally { button.disabled=false; }
+        const evidence = Array.isArray(error.evidence) ? error.evidence.map((e)=>`${e.ecosystem || 'implementation'} · ${e.name || e.id || 'found'}`) : [];
+        setResult('Could not add yet', error.message || String(error), evidence);
+        details.textContent = `Input: ${target.value}\nType: ${target.kind}\nError: ${error.message || String(error)}`;
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Add';
+      }
     });
   }
 
   mount();
   let timer = null;
-  new MutationObserver(() => { if (timer) clearTimeout(timer); timer=setTimeout(mount,80); }).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(() => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(mount, 80);
+  }).observe(document.documentElement,{childList:true,subtree:true});
 })();
