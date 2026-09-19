@@ -6,8 +6,13 @@ import {
   handleForgeRoute,
   queueResolvedSource,
 } from './source-forge-v8';
+import {
+  handleWebsiteAdaptiveRuntime,
+  tryWebsiteAdaptiveResolve,
+  websiteAdaptiveStatus,
+} from './website-adaptive-v82';
 
-const VERSION = '8.1';
+const VERSION = '8.2';
 const GENERATION = 'Universal Source Fabric';
 
 async function rewriteJson(response: Response, mutate: (payload: any) => any): Promise<Response> {
@@ -47,33 +52,116 @@ async function injectV8Ui(response: Response): Promise<Response> {
   return new Response(html, { status: response.status, headers });
 }
 
-async function testForgeSite(request: Request, env: Env, url: URL): Promise<Response> {
+function jsonResponse(payload: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store, max-age=0',
+      'x-yomu-entrypoint': 'v8',
+      'x-yomu-source-fabric': VERSION,
+      ...extraHeaders,
+    },
+  });
+}
+
+async function resolveCore(request: Request, env: Env, url: URL): Promise<{ response: Response; rawInput: string; payload: any }> {
   if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Use POST with {url}.' }), {
-      status: 405,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-    });
-  }
-  const body = await request.json().catch(() => ({} as any));
-  const input = String((body as any)?.url ?? (body as any)?.input ?? '').trim();
-  if (!input) {
-    return new Response(JSON.stringify({ error: 'Missing website URL.' }), {
-      status: 400,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-    });
+    const response = await v7.fetch(request, env);
+    const payload = response.headers.get('content-type')?.includes('application/json')
+      ? await response.clone().json().catch(() => null)
+      : null;
+    return { response, rawInput: '', payload };
   }
 
-  const target = new URL('/api/fabric/resolve', url.origin);
-  const probeRequest = new Request(target.toString(), {
+  const bodyText = await request.text();
+  let body: any = {};
+  try { body = bodyText ? JSON.parse(bodyText) : {}; } catch {}
+  const rawInput = String(body?.url ?? body?.input ?? '').trim();
+
+  const coreRequest = new Request(url.toString(), {
+    method: 'POST',
+    headers: request.headers,
+    body: bodyText,
+  });
+  const coreResponse = await v7.fetch(coreRequest, env);
+  const corePayload: any = coreResponse.headers.get('content-type')?.includes('application/json')
+    ? await coreResponse.clone().json().catch(() => null)
+    : null;
+
+  // Proven v7/v7.5 adapters remain first choice. Website Adaptive is a fallback,
+  // not a replacement for a maintained/native implementation.
+  if (corePayload?.ready === true && corePayload?.adapter) {
+    return { response: coreResponse, rawInput, payload: corePayload };
+  }
+  if (!rawInput) return { response: coreResponse, rawInput, payload: corePayload };
+
+  const adaptive = await tryWebsiteAdaptiveResolve(rawInput, url.origin).catch(() => null);
+  if (adaptive?.ready === true && adaptive?.adapter) {
+    const evidence = Array.isArray(corePayload?.evidence) ? corePayload.evidence : [];
+    const merged = {
+      ...(corePayload && typeof corePayload === 'object' ? corePayload : {}),
+      ...adaptive,
+      evidence: [
+        ...evidence,
+        {
+          ecosystem: 'website-adaptive',
+          framework: adaptive?.plan?.framework,
+          baseUrl: adaptive?.plan?.baseUrl,
+          learnedSeriesSegments: adaptive?.plan?.seriesSegments?.slice?.(0, 8),
+        },
+      ],
+      fabric: {
+        ...(corePayload?.fabric ?? {}),
+        version: VERSION,
+        generation: GENERATION,
+        websiteAdaptive: true,
+      },
+    };
+    const response = jsonResponse(merged, 200, { 'x-yomu-website-adaptive': VERSION });
+    return { response, rawInput, payload: merged };
+  }
+
+  // Keep the compatibility layer's failure as the primary result, but attach
+  // the adaptive diagnosis so failures teach us what structural tier was tried.
+  if (adaptive && corePayload && typeof corePayload === 'object') {
+    const merged = {
+      ...corePayload,
+      websiteAdaptive: {
+        route: adaptive.route ?? null,
+        failureKind: adaptive.failureKind ?? null,
+        framework: adaptive?.plan?.framework ?? adaptive?.probe?.framework ?? null,
+        message: adaptive.message ?? null,
+        probe: adaptive.probe ?? null,
+      },
+    };
+    return { response: jsonResponse(merged, coreResponse.status || 200), rawInput, payload: merged };
+  }
+
+  return { response: coreResponse, rawInput, payload: corePayload };
+}
+
+async function testForgeSite(request: Request, env: Env, url: URL): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Use POST with {url}.' }, 405, { 'x-yomu-source-forge': '1' });
+  }
+  const bodyText = await request.text();
+  let body: any = {};
+  try { body = bodyText ? JSON.parse(bodyText) : {}; } catch {}
+  const input = String(body?.url ?? body?.input ?? '').trim();
+  if (!input) return jsonResponse({ error: 'Missing website URL.' }, 400, { 'x-yomu-source-forge': '1' });
+
+  const probeRequest = new Request(new URL('/api/fabric/resolve', url.origin).toString(), {
     method: 'POST',
     headers: { 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ url: input }),
   });
-  const response = await v7.fetch(probeRequest, env);
-  const payload: any = await response.clone().json().catch(() => ({ ready: false, error: `Probe returned HTTP ${response.status}.` }));
+  const resolved = await resolveCore(probeRequest, env, new URL(probeRequest.url));
+  const payload: any = resolved.payload ?? { ready: false, error: `Probe returned HTTP ${resolved.response.status}.` };
   const eligibility = forgeEligibility(payload);
-  return new Response(JSON.stringify({
-    ok: response.ok,
+
+  return jsonResponse({
+    ok: resolved.response.ok,
     input,
     ready: payload?.ready === true,
     forgeable: eligibility.eligible,
@@ -81,25 +169,22 @@ async function testForgeSite(request: Request, env: Env, url: URL): Promise<Resp
     route: payload?.route ?? null,
     score: Number(payload?.score ?? payload?.adapter?.score ?? 0),
     confidence: payload?.confidence ?? null,
-    failureKind: payload?.failureKind ?? null,
-    message: payload?.message ?? payload?.error ?? null,
+    failureKind: payload?.failureKind ?? payload?.websiteAdaptive?.failureKind ?? null,
+    message: payload?.message ?? payload?.error ?? payload?.websiteAdaptive?.message ?? null,
     strategy: payload?.probe?.strategy ?? payload?.adapter?.strategy ?? null,
-    catalogCount: Number(payload?.probe?.catalogCount ?? 0),
-    chapterCount: Number(payload?.probe?.chapterCount ?? 0),
-    pages: Number(payload?.probe?.pages ?? 0),
-  }), {
-    status: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store, max-age=0',
-      'x-yomu-source-forge': '1',
-    },
-  });
+    framework: payload?.plan?.framework ?? payload?.websiteAdaptive?.framework ?? null,
+    catalogCount: Number(payload?.probe?.catalogCount ?? payload?.websiteAdaptive?.probe?.catalogCount ?? 0),
+    chapterCount: Number(payload?.probe?.chapterCount ?? payload?.websiteAdaptive?.probe?.chapterCount ?? 0),
+    pages: Number(payload?.probe?.pages ?? payload?.probe?.pageCount ?? payload?.websiteAdaptive?.probe?.pages ?? 0),
+  }, 200, { 'x-yomu-source-forge': '1' });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    const adaptiveRuntime = await handleWebsiteAdaptiveRuntime(request, env, url);
+    if (adaptiveRuntime) return adaptiveRuntime;
 
     if (url.pathname === '/api/fabric/forge/test') {
       return testForgeSite(request, env, url);
@@ -122,37 +207,31 @@ export default {
           role: 'compatibility-and-execution-floor',
         },
         sourceForge: {
-          version: 1,
+          version: 2,
           automaticPromotion: true,
           liveSourcePack: '/api/fabric/forge/sourcepack.json',
           gitMirror: (env as any).FORGE_SOURCEPACK_URL || 'https://raw.githubusercontent.com/kumikilongyeyo/yomu-extensions/main/sourcepack.json',
           uiChanged: false,
           testBeforeTrust: true,
         },
+        websiteAdaptive: websiteAdaptiveStatus(),
         version: VERSION,
         generation: GENERATION,
       }));
     }
 
     if (url.pathname === '/api/fabric/resolve') {
-      const requestCopy = request.clone();
-      const body: any = request.method === 'POST' ? await requestCopy.json().catch(() => ({})) : {};
-      const rawInput = String(body?.url ?? body?.input ?? '').trim();
-      const response = await v7.fetch(request, env);
-
+      const resolved = await resolveCore(request, env, url);
       let forge: any = { queued: false, reason: 'resolver-did-not-return-json' };
-      if (response.headers.get('content-type')?.includes('application/json')) {
-        const payload: any = await response.clone().json().catch(() => null);
-        if (payload && rawInput) {
-          try {
-            forge = await queueResolvedSource(env, rawInput, payload);
-          } catch (error: any) {
-            forge = { queued: false, reason: `queue-error: ${String(error?.message ?? error).slice(0, 240)}` };
-          }
+      if (resolved.payload && resolved.rawInput) {
+        try {
+          forge = await queueResolvedSource(env, resolved.rawInput, resolved.payload);
+        } catch (error: any) {
+          forge = { queued: false, reason: `queue-error: ${String(error?.message ?? error).slice(0, 240)}` };
         }
       }
 
-      return rewriteJson(response, (payload) => ({
+      return rewriteJson(resolved.response, (payload) => ({
         ...payload,
         forge,
         fabric: {
@@ -162,6 +241,7 @@ export default {
           generation: GENERATION,
           normalizedContract: true,
           sourceForge: true,
+          websiteAdaptive: true,
         },
       }));
     }
