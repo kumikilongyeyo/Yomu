@@ -1,13 +1,15 @@
 const base = (process.env.YOMU_URL || 'https://yomu.yomuread.workers.dev').replace(/\/+$/, '');
 
-// Ten ordinary source websites from Yomu's existing community pack. None of
-// these are required to be native adapters; the acceptance condition is that
-// the normal Add Source resolver proves a reader path and queues the website for
-// the Git-backed Source Forge pack.
+// Ten real source websites spanning maintained recipes, common WordPress/Madara
+// layouts and generic adaptive HTML. ToonGod intentionally replaces one of the
+// previous easy passes so the 8/10 bar now measures the new adaptation tier too.
+// None of these are required to be native adapters: PASS means the normal Add
+// Source resolver proves catalog → chapters → reader pages and Source Forge is
+// willing to queue the public website identity for the Git-backed source pack.
 const sites = [
   'https://www.mangaread.org/',
-  'https://mangaowl.io/',
   'https://mangapark1.com/',
+  'https://www.toongod.org/',
   'https://www.zinmanga.net/',
   'https://mangapill.com/',
   'https://www.mangabats.com/',
@@ -22,7 +24,7 @@ async function resolve(url) {
     method: 'POST',
     headers: { 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ url }),
-    signal: AbortSignal.timeout(55_000),
+    signal: AbortSignal.timeout(65_000),
   });
   const text = await response.text();
   let body;
@@ -46,13 +48,14 @@ for (const site of sites) {
       route: result.route || null,
       score: Number(result.score || 0),
       strategy: result?.probe?.strategy || result?.adapter?.strategy || null,
-      reason: result?.forge?.reason || result.failureKind || result.error || null,
+      framework: result?.plan?.framework || result?.websiteAdaptive?.framework || null,
+      reason: result?.forge?.reason || result.failureKind || result.error || result?.websiteAdaptive?.message || null,
       ms: Date.now() - started,
     };
     rows.push(row);
-    console.log(`${pass ? 'PASS' : 'FAIL'} ${site} route=${row.route || '-'} score=${row.score} queued=${queued} ${row.reason || ''}`);
+    console.log(`${pass ? 'PASS' : 'FAIL'} ${site} route=${row.route || '-'} score=${row.score} framework=${row.framework || '-'} queued=${queued} ${row.reason || ''}`);
   } catch (error) {
-    const row = { site, pass: false, ready: false, queued: false, route: null, score: 0, reason: error?.message || String(error), ms: Date.now() - started };
+    const row = { site, pass: false, ready: false, queued: false, route: null, score: 0, framework: null, reason: error?.message || String(error), ms: Date.now() - started };
     rows.push(row);
     console.log(`FAIL ${site} ${row.reason}`);
   }
@@ -68,7 +71,7 @@ const verdict = passed >= 8
       ? 'REALIGN'
       : 'REWORK-SEVERE';
 
-console.log('\nSOURCE FORGE GAUNTLET');
+console.log('\nSOURCE FORGE WEBSITE-ADAPTATION GAUNTLET');
 console.log(JSON.stringify({ passed, failed, total: rows.length, verdict, rows }, null, 2));
 
 if (passed < 8) {
