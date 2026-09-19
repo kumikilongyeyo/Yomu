@@ -133,6 +133,23 @@ export function metaTags(meta: SeriesMeta, origin: string): string {
     if (content) out.push(`<meta property="${property}" content="${escapeAttr(content)}">`);
   }
   out.push(`<link rel="canonical" href="${escapeAttr(origin + meta.canonical)}">`);
+
+  /* Structured data, so a search engine can tell this is a book rather than
+     guessing from a title tag. Only the fields the provider actually gave --
+     schema.org will happily accept invented ones and they are still a lie. */
+  const ld: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Book',
+    name: meta.title,
+    url: origin + meta.canonical,
+  };
+  if (meta.description) ld.description = meta.description;
+  if (meta.cover) ld.image = absolute(meta.cover);
+  out.push(
+    '<script type="application/ld+json">'
+    + JSON.stringify(ld).replace(/</g, '\\u003c')
+    + '</scr' + 'ipt>',
+  );
   return out.join('');
 }
 
