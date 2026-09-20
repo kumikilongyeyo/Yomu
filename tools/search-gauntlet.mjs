@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const V3 = fs.readFileSync(path.join(ROOT, 'dist-app/yomu-search-v3.js'), 'utf8');
 const WORKFLOW = fs.readFileSync(path.join(ROOT, '.github/workflows/deploy-yomu.yml'), 'utf8');
+const OPTIMIZER_PATH = path.join(ROOT, 'scripts/optimize-export.py');
+const OPTIMIZER = fs.existsSync(OPTIMIZER_PATH) ? fs.readFileSync(OPTIMIZER_PATH, 'utf8') : '';
+const DEPLOY_SURFACE = `${WORKFLOW}\n${OPTIMIZER}`;
 const FIND = fs.readFileSync(path.join(ROOT, 'dist-app/find.html'), 'utf8');
 const BASE = process.argv.slice(2).find((x) => /^https?:\/\//.test(x))?.replace(/\/+$/, '') || '';
 const rows = [];
@@ -32,14 +35,18 @@ gate('8. unreadable junk is never shown', /#results \.shelf-line/.test(V3) && /#
 gate('9. missing covers repair themselves', /FALLBACK_COVER = '\/brand\/yomu-loader-ink\.webp'/.test(V3) && /addEventListener\('error'/.test(V3) && /findCover\(/.test(V3), 'Blank blue cards are a release blocker.');
 gate('10. Google-style text typeahead is real', /setTimeout\(run, 120\)/.test(V3) && /SUGGEST_TIMEOUT = 750/.test(V3) && /ArrowDown/.test(V3) && /ArrowUp/.test(V3) && /Escape/.test(V3) && /yv3-suggest-title/.test(V3), 'Suggestions must appear while typing and work from the keyboard.');
 
-// Structural checks shared by several gates: injection order and legacy page evidence.
-const injected = /<script src=\"\/yomu-search-v3\.js\"/.test(WORKFLOW);
-if (!injected) {
+// Structural release contract: Search V3 may be injected by the workflow
+// directly or by the route-aware export optimizer invoked by that workflow.
+const optimizerIsCalled = /python3?\s+scripts\/optimize-export\.py/.test(WORKFLOW);
+const routeAwareSearch = /yomu-search-v3\.js/.test(DEPLOY_SURFACE)
+  && /find\.html/.test(OPTIMIZER || WORKFLOW)
+  && /search\.html/.test(OPTIMIZER || WORKFLOW);
+if (!(optimizerIsCalled && routeAwareSearch)) {
   const g = rows.find((x) => x.name.startsWith('1.'));
-  g.ok = false; g.detail += ' Deploy workflow does not inject yomu-search-v3.js.';
+  g.ok = false;
+  g.detail += ' Deploy path does not prove route-aware yomu-search-v3.js injection for /find and /search.';
 }
 if (!/class=\"shelf-line\"|shelf-line/.test(FIND)) {
-  // Not a failure: if find.html later deletes the legacy shelf itself, V3 remains harmless.
   console.log('NOTE  legacy unreadable shelf already absent from find.html.');
 }
 
@@ -60,20 +67,19 @@ async function fetchTextWithRetry(url, mustContain, tries = 6) {
 
 if (BASE) {
   try {
-    // Cloudflare asset propagation can lag the deploy command by a few seconds.
-    // Retry the exact user-facing page and asset instead of turning eventual
-    // consistency into a fake product regression.
     const [find, js] = await Promise.all([
       fetchTextWithRetry(`${BASE}/find?q=nano%20machine`, 'yomu-search-v3.js'),
       fetchTextWithRetry(`${BASE}/yomu-search-v3.js`, 'Yomu Search V3'),
     ]);
     if (!find.ok || !js.ok) {
       const g = rows.find((x) => x.name.startsWith('1.'));
-      g.ok = false; g.detail += ` Live verification failed after retries (${find.status}/${js.status}).`;
+      g.ok = false;
+      g.detail += ` Live verification failed after retries (${find.status}/${js.status}).`;
     }
   } catch (error) {
     const g = rows.find((x) => x.name.startsWith('1.'));
-    g.ok = false; g.detail += ` Live verification threw: ${error?.message || error}`;
+    g.ok = false;
+    g.detail += ` Live verification threw: ${error?.message || error}`;
   }
 }
 
