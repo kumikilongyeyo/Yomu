@@ -49,7 +49,11 @@ jobs:
               '<link rel="stylesheet" href="/yomu-controls-components.css">',
               '<link rel="stylesheet" href="/yomu-hero-plus.css">',
               '<script src="/yomu-controls.js" defer></script>',
-              '<script src="/yomu-live-catalog.js" defer></script>',
+              # These must be in every exported HTML file, not only Worker-first
+              # routes. Search and Reader are static-asset routes, which is why
+              # the reliability layer previously never ran there.
+              '<script src="/yomu-source-reliability.js" defer></script>',
+              '<script src="/yomu-source-ux-v2.js" defer></script>',
               '<script src="/yomu-catalog-fix.js" defer></script>',
               '<script src="/yomu-hero-plus.js" defer></script>',
               '<script src="/source-beast-loader.js" defer></script>',
@@ -118,16 +122,33 @@ jobs:
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
-          # HTML assets can be a few seconds behind the just-uploaded script at the edge.
-          # Retry the page itself, not only failed HTTP requests, until the new helper is linked.
-          for i in 1 2 3 4 5 6; do
-            if grep -q 'yomu-live-catalog.js' /tmp/yomu-sources.html; then break; fi
-            sleep 3
-            curl -L --fail --silent --show-error https://yomu.yomuread.workers.dev/sources -o /tmp/yomu-sources.html
-          done
-          grep -q 'yomu-live-catalog.js' /tmp/yomu-sources.html
+          grep -q 'yomu-source-reliability.js' /tmp/yomu-sources.html
+          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-sources.html
           grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
+
+          # Search and Reader are served as static assets, so explicitly prove
+          # the merged-source layer and loader are linked there too. This guards
+          # against the exact regression where Sources looked configured while
+          # Search still queried only the shared registry.
+          check search-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
+          for i in 1 2 3 4 5 6; do
+            if grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html && grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html; then break; fi
+            sleep 3
+            curl -L --fail --silent --show-error https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
+          done
+          grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html
+          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html
+
+          check reader-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/read/yomu-smoke -o /tmp/yomu-reader.html
+          grep -q 'yomu-source-reliability.js' /tmp/yomu-reader.html
+          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
+
+          check source-ux curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js -o /tmp/yomu-source-ux-v2.js
+          grep -q 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
+          check reliability curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-reliability.js -o /tmp/yomu-source-reliability.js
+          grep -q 'Yomu Source Reliability Layer' /tmp/yomu-source-reliability.js
+
           check add-source curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/add-sources -o /tmp/yomu-add-sources.html
           grep -q 'source-beast-loader.js' /tmp/yomu-add-sources.html
           check beast-loader curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-loader.js -o /tmp/source-beast-loader.js
@@ -142,8 +163,6 @@ jobs:
           grep -q 'yomu-community-pack-top' /tmp/community-pack-top.js
           check controls curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js -o /tmp/yomu-controls.js
           grep -q 'yomu.v1.controls' /tmp/yomu-controls.js
-          check live-catalog curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-live-catalog.js -o /tmp/yomu-live-catalog.js
-          grep -q 'Live catalog glue' /tmp/yomu-live-catalog.js
           check catalog-fix curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-catalog-fix.js -o /tmp/yomu-catalog-fix.js
           grep -q 'Catalog truth layer' /tmp/yomu-catalog-fix.js
           check hero curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js -o /tmp/yomu-hero-plus.js
