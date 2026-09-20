@@ -3,8 +3,12 @@
  *
  * Keeps two browser-only truths aligned with the server catalog:
  *  - Discover is a rotating deck instead of replaying the same ordering forever.
- *  - API sources already enabled on this device still participate in Search even
- *    when they are not part of the Worker's shared extension registry yet.
+ *  - Every enabled API source on this device participates in Search, even when
+ *    it is not part of the Worker's shared extension registry yet.
+ *
+ * IMPORTANT: there is intentionally NO arbitrary source-count cap here. A user
+ * who enabled 53 sources expects Search to search all 53. Fan-out is controlled
+ * with a small concurrency pool instead of silently dropping sources.
  */
 (() => {
   'use strict';
@@ -12,6 +16,7 @@
   const COLLECTION_KEY = 'yomu.v1.collection';
   const ROTATION_KEY = 'yomu.v1.discoverRotation';
   const previousFetch = window.fetch.bind(window);
+  const LOCAL_SEARCH_CONCURRENCY = 6;
   let registryMemo = null;
   let registryMemoAt = 0;
 
@@ -74,8 +79,6 @@
         label: String(source.label || source.name || id),
         api,
       });
-      // Keep a bad old profile from turning one keystroke into an unbounded fanout.
-      if (out.length >= 16) break;
     }
     return out;
   }
@@ -106,13 +109,32 @@
         cache: 'no-store',
         signal: AbortSignal.timeout(12000),
       });
-      if (!response.ok) return null;
+      if (!response.ok) return { source, series: [], ok: false };
       const body = await response.json().catch(() => null);
-      if (!Array.isArray(body?.series)) return null;
-      return { source, series: body.series };
+      if (!Array.isArray(body?.series)) return { source, series: [], ok: false };
+      return { source, series: body.series, ok: true };
     } catch {
-      return null;
+      return { source, series: [], ok: false };
     }
+  }
+
+  async function searchWithPool(sources, query) {
+    if (!sources.length) return [];
+    const results = new Array(sources.length);
+    let cursor = 0;
+    const worker = async () => {
+      while (true) {
+        const index = cursor++;
+        if (index >= sources.length) return;
+        results[index] = await searchOne(sources[index], query);
+      }
+    };
+    const workers = Array.from(
+      { length: Math.min(LOCAL_SEARCH_CONCURRENCY, sources.length) },
+      () => worker(),
+    );
+    await Promise.all(workers);
+    return results;
   }
 
   function mergeDeviceSearch(payload, batches) {
@@ -124,12 +146,12 @@
       if (key && !byTitle.has(key)) byTitle.set(key, row);
     }
 
-    let joined = 0;
+    let responded = 0;
     for (const batch of batches) {
       if (!batch) continue;
-      joined += 1;
+      if (batch.ok) responded += 1;
       const providerId = providerIdFor(batch.source.id);
-      for (const item of batch.series) {
+      for (const item of batch.series || []) {
         if (!item?.id || !item?.title) continue;
         const key = normalize(item.title);
         if (!key) continue;
@@ -160,12 +182,17 @@
       }
     }
 
+    // "providersTotal" now reflects every enabled source we actually scheduled,
+    // not an arbitrary first-16 slice. "providersTried" counts scheduled calls;
+    // response health is kept separately so a dead source cannot look "missing".
+    const attempted = batches.length;
     return {
       ...payload,
       series: rows,
-      providersTried: Number(payload.providersTried || 0) + joined,
-      providersTotal: Number(payload.providersTotal || 0) + batches.length,
-      deviceSourcesJoined: joined,
+      providersTried: Number(payload.providersTried || 0) + attempted,
+      providersTotal: Number(payload.providersTotal || 0) + attempted,
+      deviceSourcesAttempted: attempted,
+      deviceSourcesResponded: responded,
     };
   }
 
@@ -196,10 +223,6 @@
     const body = await response.clone().json().catch(() => null);
     if (!Array.isArray(body?.series) || body.series.length < 2) return response;
 
-    // Keep the whole candidate pool, but give every refresh a new deterministic
-    // deck. If the UI only renders the first N cards, the visible set changes as
-    // soon as the merged provider pool is larger than N; otherwise the order
-    // still changes rather than appearing frozen.
     const seed = (nextRotation() ^ Math.floor(Date.now() / 30000)) >>> 0;
     const series = seededShuffle(body.series, seed);
     const headers = new Headers(response.headers);
@@ -233,15 +256,12 @@
       const query = target.searchParams.get('q')?.trim() || '';
       if (!query) return previousFetch(input, init);
 
-      // Server registry + any locally enabled APIs run together. The local list
-      // is deliberately limited to sources the Worker does not already know,
-      // so this fixes the split-brain case without double-hitting every source.
       const sourcePromise = deviceOnlyApiSources();
       const basePromise = previousFetch(input, init);
       const [base, sources] = await Promise.all([basePromise, sourcePromise]);
       if (!base.ok || !sources.length) return base;
 
-      const batches = await Promise.all(sources.map((source) => searchOne(source, query)));
+      const batches = await searchWithPool(sources, query);
       const payload = await base.clone().json().catch(() => null);
       const merged = mergeDeviceSearch(payload, batches);
       if (!merged) return base;
@@ -251,7 +271,8 @@
       headers.delete('content-encoding');
       headers.set('content-type', 'application/json; charset=utf-8');
       headers.set('cache-control', 'no-store, max-age=0');
-      headers.set('x-yomu-device-sources', String(merged.deviceSourcesJoined || 0));
+      headers.set('x-yomu-device-sources-attempted', String(merged.deviceSourcesAttempted || 0));
+      headers.set('x-yomu-device-sources-responded', String(merged.deviceSourcesResponded || 0));
       return new Response(JSON.stringify(merged), {
         status: base.status,
         statusText: base.statusText,
