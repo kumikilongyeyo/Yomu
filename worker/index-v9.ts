@@ -111,6 +111,14 @@ export default {
       const type = response.headers.get('content-type') ?? '';
       if (response.ok && type.includes('text/html')) {
         const scripts = ['/yomu-source-reliability.js'];
+
+        // /read/:chapter is an SPA fallback route. Sending it Worker-first lets
+        // us keep index.html lean while restoring only the reader helpers that
+        // dynamic chapter pages actually need.
+        if (url.pathname.startsWith('/read/') || url.pathname.startsWith('/series/')) {
+          scripts.push('/yomu-source-ux-v2.js', '/source-auto-switch.js');
+        }
+
         if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') {
           scripts.push('/source-beast-capacity-guard.js');
         }
