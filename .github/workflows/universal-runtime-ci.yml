@@ -62,6 +62,55 @@ jobs:
             http://127.0.0.1:18080/api/v1/extensions/install)"
           test "$admin_code" = "403"
 
+      - name: Execute a real Mihon extension
+        env:
+          KEIYOUSHI_REPO: https://github.com/keiyoushi/extensions/raw/repo/index.pb
+        run: |
+          set -euo pipefail
+          trap 'docker logs yomu-runtime-ci || true' ERR
+
+          # Ask miwayomi to parse the current Keiyoushi protobuf catalogue.
+          curl -fsS -u yomu:ci-only-password \
+            --get --data-urlencode "url=${KEIYOUSHI_REPO}" \
+            http://127.0.0.1:18080/api/v1/extensions/repo \
+            -o /tmp/keiyoushi.json
+
+          apk="$(jq -r '[.extensions[] | select(((.name | ascii_downcase) | contains("mangadex")) and (.nsfw == false))][0].apk // empty' /tmp/keiyoushi.json)"
+          test -n "$apk"
+          echo "Selected Keiyoushi canary extension: $apk"
+
+          # Installation stays on the operator-only loopback port; Caddy blocks this publicly.
+          payload="$(jq -nc --arg repo "$KEIYOUSHI_REPO" --arg apk "$apk" '{repoUrl:$repo,apk:$apk}')"
+          docker exec yomu-runtime-ci curl -fsS \
+            -X POST -H 'content-type: application/json' \
+            --data "$payload" \
+            http://127.0.0.1:4567/api/v1/extensions/install \
+            | tee /tmp/install.json
+          jq -e '.ok == true' /tmp/install.json >/dev/null
+
+          # The installed APK/JAR must materialize as a real manga source.
+          curl -fsS -u yomu:ci-only-password \
+            http://127.0.0.1:18080/api/v1/sources \
+            -o /tmp/sources.json
+          source_id="$(python3 - <<'PY'
+          import json
+          with open('/tmp/sources.json', encoding='utf-8') as f:
+              payload = json.load(f)
+          for source in payload.get('manga', []):
+              if 'mangadex' in source.get('name', '').lower():
+                  print(source['id'])
+                  break
+          PY
+          )"
+          test -n "$source_id"
+          echo "Loaded MangaDex source id: $source_id"
+
+          # Finally execute the source's own popular-manga logic through miwayomi.
+          curl -fsS -u yomu:ci-only-password \
+            "http://127.0.0.1:18080/api/v1/manga/${source_id}/popular?page=1" \
+            -o /tmp/mangadex-popular.json
+          jq -e '.mangas | type == "array" and length > 0' /tmp/mangadex-popular.json >/dev/null
+
       - name: Container logs
         if: always()
         run: docker logs yomu-runtime-ci || true
