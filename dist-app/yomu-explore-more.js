@@ -10,7 +10,6 @@
   if (window.__YomuExploreMore) return;
   window.__YomuExploreMore = true;
 
-  const MARK = '/brand/yomu-icon.svg';
   const FALLBACK = '/brand/yomu-loader-ink.webp';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const NAMI = /(?:^|[^a-z])nami[\s._-]*comi(?:[^a-z]|$)|namicomi/i;
@@ -46,19 +45,19 @@
     style.id = 'yomu-explore-more-css';
     style.textContent = `
 .yr-rail__head{display:flex!important;align-items:baseline!important;gap:10px!important}
-.yr-rail__head .yomu-rail-more{margin-left:auto;flex:none}
-.yomu-rail-more,.yomu-search-more{
+.yr-rail__head .yomu-rail-more,.yomu-generic-more{margin-left:auto;flex:none}
+.yomu-rail-more,.yomu-generic-more,.yomu-search-more{
   min-height:34px;padding:0 13px;border:1px solid var(--accentLine,#ffc45f66);
   border-radius:999px;background:var(--accentSoft,#ffc45f1f);color:var(--accent,#ffc45f);
   font:800 11px/1 var(--uiFont,system-ui);cursor:pointer
 }
-.yomu-rail-more:hover,.yomu-search-more:hover{background:color-mix(in srgb,var(--accentSoft,#ffc45f1f) 72%,var(--accent,#ffc45f) 28%)}
-.yomu-rail-more:disabled,.yomu-search-more:disabled{opacity:.55;cursor:wait}
-.yomu-rail-more:focus-visible,.yomu-search-more:focus-visible{outline:2px solid var(--accent,#ffc45f);outline-offset:3px}
+.yomu-rail-more:hover,.yomu-generic-more:hover,.yomu-search-more:hover{background:color-mix(in srgb,var(--accentSoft,#ffc45f1f) 72%,var(--accent,#ffc45f) 28%)}
+.yomu-rail-more:disabled,.yomu-generic-more:disabled,.yomu-search-more:disabled{opacity:.55;cursor:wait}
+.yomu-rail-more:focus-visible,.yomu-generic-more:focus-visible,.yomu-search-more:focus-visible{outline:2px solid var(--accent,#ffc45f);outline-offset:3px}
 .yomu-search-more-wrap{grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:10px;padding:14px 0 4px}
 .yomu-search-more-note{color:var(--dim,#8fa0b4);font:600 11px/1.35 var(--uiFont,system-ui)}
 .yomu-search-more-hit .tile-art{background:var(--raised,#25333e)}
-@media(max-width:620px){.yomu-rail-more,.yomu-search-more{min-height:40px}}
+@media(max-width:620px){.yomu-rail-more,.yomu-generic-more,.yomu-search-more{min-height:40px}}
 `;
     document.head.append(style);
   }
@@ -162,6 +161,28 @@
       button.addEventListener('click', () => moreRail(section, button, config));
       head.append(button);
     }
+
+    // Some Home shelves predate YomuRank and are not .yr-rail nodes (notably
+    // Popular right now). They still get an obvious More affordance. It opens
+    // Discover at the matching rail instead of mutating a React-owned strip.
+    for (const heading of document.querySelectorAll('h2')) {
+      const config = RAILS[norm(heading.textContent)];
+      if (!config) continue;
+      const section = heading.closest('section,div');
+      if (!section || section.classList.contains('yr-rail') || section.dataset.yomuGenericMore) continue;
+      section.dataset.yomuGenericMore = '1';
+      const holder = heading.parentElement || section;
+      holder.style.display ||= 'flex';
+      holder.style.alignItems ||= 'baseline';
+      holder.style.gap ||= '10px';
+      const button = el('button', 'yomu-generic-more', 'More');
+      button.type = 'button';
+      button.setAttribute('aria-label', `Explore more ${heading.textContent || 'titles'}`);
+      button.addEventListener('click', () => {
+        location.href = `/find?browse=${encodeURIComponent(config.id)}`;
+      });
+      holder.append(button);
+    }
   }
 
   function collectionSources() {
@@ -175,6 +196,10 @@
       try {
         const u = new URL(String(raw), location.origin);
         if (!/^https?:$/.test(u.protocol)) continue;
+        const apiLike = row.kind === 'api' || /^yomuext-|^mihon-/.test(String(row.id || ''))
+          || /fabric|extension|suwayomi/i.test(String(row.runtime || row.category || row.kind || ''))
+          || /\/api\//i.test(u.pathname);
+        if (!apiLike) continue;
         u.hash = ''; u.search = '';
         if (!u.pathname.endsWith('/')) u.pathname += '/';
         const api = u.toString();
@@ -266,7 +291,7 @@
           if (!item?.id || !item?.title || existing.has(norm(item.title))) continue;
           bySource.push({ item, source: batch.source });
           existing.add(norm(item.title));
-          if (++kept >= 3) break; // fair mix: one source never floods a segment.
+          if (++kept >= 3) break;
         }
       }
       const rows = bySource.slice(0, SEARCH_SEGMENT);
@@ -282,9 +307,21 @@
     grid.append(wrap);
   }
 
+  function focusBrowseRail() {
+    const wanted = new URLSearchParams(location.search).get('browse');
+    if (!wanted) return;
+    const section = [...document.querySelectorAll('.yr-rail')].find((node) => railConfig(node)?.id === wanted);
+    if (!section || section.dataset.yomuBrowseFocused) return;
+    section.dataset.yomuBrowseFocused = '1';
+    section.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
   function sync() {
     bindRails();
-    if (/\/(?:find|search)(?:\.html)?\/?$/.test(location.pathname)) ensureSearchFooter();
+    if (/\/(?:find|search)(?:\.html)?\/?$/.test(location.pathname)) {
+      ensureSearchFooter();
+      focusBrowseRail();
+    }
   }
 
   installCss();
