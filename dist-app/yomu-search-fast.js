@@ -10,8 +10,8 @@
     : wrappedFetch;
   const COLLECTION_KEY = 'yomu.v1.collection';
   const SUGGEST_KEY = 'yomu.v1.searchSuggest';
-  const QUERY_TIMEOUT_MS = 2200;
-  const ALIAS_TIMEOUT_MS = 1200;
+  const QUERY_TIMEOUT_MS = 1600;
+  const ALIAS_TIMEOUT_MS = 800;
   const FAST_LANE_TIMEOUT_MS = 1800;
   const SUGGEST_TIMEOUT_MS = 900;
   const CONCURRENCY = 8;
@@ -107,15 +107,14 @@
     const s = document.createElement('style');
     s.id = 'yomu-search-fast-css';
     s.textContent = `
-/* Never blank the app for ordinary network work. The old loader still exists,
-   but is now a tiny non-blocking status pill and only becomes visible after a
-   half-second, so fast actions produce no loader at all. */
+/* Normal network work never takes over the screen. */
 #yomu-load{position:fixed!important;inset:auto 18px calc(18px + env(safe-area-inset-bottom,0px)) auto!important;width:auto!important;height:auto!important;display:block!important;place-items:unset!important;padding:7px 10px!important;border:1px solid var(--line,#263747)!important;border-radius:999px!important;background:color-mix(in srgb,var(--bg,#070b10) 90%,transparent)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;box-shadow:0 8px 28px rgba(0,0,0,.2)!important;color:var(--text,#f5f7fa)!important;opacity:0!important;pointer-events:none!important;transform:translateY(5px)!important;transition:opacity .12s ease 0s,transform .12s ease 0s!important;z-index:2147483600!important}
 #yomu-load.on{opacity:.96!important;transform:translateY(0)!important;pointer-events:none!important;transition-delay:.55s!important}
 #yomu-load .yl-card{width:auto!important;display:flex!important;align-items:center!important;gap:7px!important;text-align:left!important}.yl-book{width:25px!important;height:19px!important;flex:0 0 25px!important}.yl-book i,.yl-book b,.yl-book em{top:3px!important;width:11px!important;height:14px!important;border-radius:2px 2px 4px 4px!important}.yl-book i{left:1px!important}.yl-book b,.yl-book em{right:1px!important}.yl-brand{font:850 11px/1 Archivo,-apple-system,sans-serif!important}.yl-title,.yl-detail,.yl-track,.yl-count{display:none!important}
-#yomu-fast-search{margin:10px 0 16px;color:var(--text,#f5f7fa)}.yfs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}.yfs-title{font:800 11px/1.2 Archivo,-apple-system,sans-serif}.yfs-meta{font:700 9px/1.2 Archivo,-apple-system,sans-serif;color:var(--muted,#91a8bb);white-space:nowrap}.yfs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}.yfs-card{min-width:0;min-height:168px;border:1px solid var(--line,#263747);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface,#111b25) 68%,transparent);position:relative;transition:opacity .16s,transform .16s,border-color .16s}.yfs-card.is-done{min-height:0}.yfs-card.is-miss{opacity:.35;min-height:64px}.yfs-card.is-miss .yfs-wait{min-height:64px}.yfs-wait{min-height:168px;display:grid;place-items:center;text-align:center;padding:12px;box-sizing:border-box}.yfs-logo{width:30px;height:30px;display:block;margin:0 auto 7px;animation:yfsPulse 1s ease-in-out infinite}.yfs-source{font:800 9px/1.2 Archivo,-apple-system,sans-serif}.yfs-state{margin-top:4px;color:var(--muted,#91a8bb);font:650 8.5px/1.25 Archivo,-apple-system,sans-serif}.yfs-link{display:block;color:inherit;text-decoration:none;height:100%}.yfs-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:var(--surface,#111b25);display:block}.yfs-copy{padding:7px 8px 8px}.yfs-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:800 10px/1.25 Archivo,-apple-system,sans-serif}.yfs-from{margin-top:3px;color:var(--muted,#91a8bb);font:700 8px/1.2 Archivo,-apple-system,sans-serif}.yfs-card.is-hit{border-color:color-mix(in srgb,var(--accent,#ffc45f) 42%,var(--line,#263747))}.yfs-card.is-hit:hover{transform:translateY(-2px)}
+/* Source checking is one compact status strip. It never creates fake poster cards. */
+#yomu-fast-search{margin:10px 0 16px;color:var(--text,#f5f7fa)}.yfs-head{display:flex;align-items:center;gap:8px;min-height:28px;padding:5px 8px;border:1px solid var(--line,#263747);border-radius:999px;background:color-mix(in srgb,var(--surface,#111b25) 68%,transparent);width:max-content;max-width:100%;box-sizing:border-box}.yfs-mini{width:15px;height:15px;flex:0 0 15px;animation:yfsPulse 1s ease-in-out infinite}.yfs-title{font:800 10px/1.2 Archivo,-apple-system,sans-serif;white-space:nowrap}.yfs-meta{font:700 9px/1.2 Archivo,-apple-system,sans-serif;color:var(--muted,#91a8bb);white-space:nowrap}.yfs-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:9px}.yfs-grid.has-hits{display:grid}.yfs-card{min-width:0;border:1px solid var(--line,#263747);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface,#111b25) 68%,transparent);position:relative;transition:transform .16s,border-color .16s}.yfs-link{display:block;color:inherit;text-decoration:none;height:100%}.yfs-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:var(--surface,#111b25);display:block}.yfs-copy{padding:7px 8px 8px}.yfs-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:800 10px/1.25 Archivo,-apple-system,sans-serif}.yfs-from{margin-top:3px;color:var(--muted,#91a8bb);font:700 8px/1.2 Archivo,-apple-system,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.yfs-card.is-hit{border-color:color-mix(in srgb,var(--accent,#ffc45f) 42%,var(--line,#263747))}.yfs-card.is-hit:hover{transform:translateY(-2px)}
 #yomu-search-suggest{position:fixed;z-index:2147483590;max-height:min(420px,54vh);overflow:auto;border:1px solid var(--line,#263747);border-radius:13px;background:color-mix(in srgb,var(--bg,#070b10) 97%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 45px rgba(0,0,0,.28);padding:6px;box-sizing:border-box;color:var(--text,#f5f7fa)}#yomu-search-suggest[hidden]{display:none!important}.yss-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;color:inherit;text-decoration:none;cursor:pointer}.yss-row:hover,.yss-row.active{background:color-mix(in srgb,var(--surface,#172433) 82%,transparent)}.yss-cover{width:30px;height:42px;border-radius:5px;object-fit:cover;background:var(--surface,#111b25);flex:0 0 auto}.yss-copy{min-width:0}.yss-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 11px/1.2 Archivo,-apple-system,sans-serif}.yss-meta{margin-top:3px;color:var(--muted,#91a8bb);font:650 9px/1.2 Archivo,-apple-system,sans-serif}
-@keyframes yfsPulse{0%,100%{transform:scale(.92);opacity:.45}50%{transform:scale(1.06);opacity:1}}@media(max-width:640px){.yfs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#yomu-load{right:12px!important;bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}}@media(prefers-reduced-motion:reduce){.yfs-logo{animation:none}.yfs-card{transition:none}}
+@keyframes yfsPulse{0%,100%{transform:scale(.92);opacity:.45}50%{transform:scale(1.06);opacity:1}}@media(max-width:640px){.yfs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#yomu-load{right:12px!important;bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}.yfs-title{max-width:130px;overflow:hidden;text-overflow:ellipsis}.yfs-head{width:100%;justify-content:flex-start}.yfs-meta{margin-left:auto}}@media(prefers-reduced-motion:reduce){.yfs-mini{animation:none}.yfs-card{transition:none}}
 `;
     document.head.append(s);
   }
@@ -177,16 +176,15 @@
       const r = await baseFetch(u.toString(), { cache: 'no-store', signal: controller.signal });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
-      const rows = (Array.isArray(j?.data) ? j.data : []).map(mangaDexRow)
+      return (Array.isArray(j?.data) ? j.data : []).map(mangaDexRow)
         .sort((a, b) => score(b, query) - score(a, query));
-      return rows;
     } finally {
       clearTimeout(timer);
       if (signal) signal.removeEventListener('abort', abort);
     }
   }
 
-  function mountPanel(id, query, sources) {
+  function mountPanel(id, sources) {
     const create = () => {
       if (id !== runId) return null;
       document.getElementById('yomu-fast-search')?.remove();
@@ -196,19 +194,11 @@
       const panel = document.createElement('section');
       panel.id = 'yomu-fast-search'; panel.dataset.run = String(id);
       const head = document.createElement('div'); head.className = 'yfs-head';
-      const title = document.createElement('div'); title.className = 'yfs-title'; title.textContent = 'Checking more sources';
-      const meta = document.createElement('div'); meta.className = 'yfs-meta'; meta.textContent = `0 / ${sources.length} checked`;
-      head.append(title, meta);
+      const logo = document.createElement('img'); logo.className = 'yfs-mini'; logo.src = '/brand/yomu-mark.svg'; logo.alt = '';
+      const title = document.createElement('div'); title.className = 'yfs-title'; title.textContent = 'Checking sources';
+      const meta = document.createElement('div'); meta.className = 'yfs-meta'; meta.textContent = `0 / ${sources.length}`;
+      head.append(logo, title, meta);
       const grid = document.createElement('div'); grid.className = 'yfs-grid';
-      for (const source of sources) {
-        const card = document.createElement('article'); card.className = 'yfs-card'; card.dataset.sourceId = source.id;
-        const wait = document.createElement('div'); wait.className = 'yfs-wait';
-        const inner = document.createElement('div');
-        const logo = document.createElement('img'); logo.className = 'yfs-logo'; logo.src = '/brand/yomu-mark.svg'; logo.alt = 'Yomu';
-        const name = document.createElement('div'); name.className = 'yfs-source'; name.textContent = source.label;
-        const state = document.createElement('div'); state.className = 'yfs-state'; state.textContent = 'Searching…';
-        inner.append(logo, name, state); wait.append(inner); card.append(wait); grid.append(card);
-      }
       panel.append(head, grid);
       if (form?.nextSibling) parent.insertBefore(panel, form.nextSibling); else parent.append(panel);
       return panel;
@@ -217,17 +207,22 @@
   }
   function panelFor(id) { const p = document.getElementById('yomu-fast-search'); return p?.dataset.run === String(id) ? p : null; }
   function updateMeta(id, done, total, hits) {
-    const meta = panelFor(id)?.querySelector('.yfs-meta');
-    if (meta) meta.textContent = `${done} / ${total} checked · ${hits} match${hits === 1 ? '' : 'es'}`;
+    const panel = panelFor(id); if (!panel) return;
+    const meta = panel.querySelector('.yfs-meta');
+    if (meta) meta.textContent = `${done} / ${total}${hits ? ` · ${hits} match${hits === 1 ? '' : 'es'}` : ''}`;
   }
-  function markMiss(id, source, text) {
-    const card = panelFor(id)?.querySelector(`.yfs-card[data-source-id="${CSS.escape(source.id)}"]`); if (!card) return;
-    card.classList.add('is-miss'); const state = card.querySelector('.yfs-state'); if (state) state.textContent = text;
-    setTimeout(() => { if (id === runId && card.isConnected) card.remove(); }, 900);
-  }
+  function markMiss() { /* misses belong in the count, not in the title grid */ }
   function markHit(id, source, item) {
-    const card = panelFor(id)?.querySelector(`.yfs-card[data-source-id="${CSS.escape(source.id)}"]`); if (!card) return;
-    card.className = 'yfs-card is-done is-hit'; card.textContent = '';
+    const panel = panelFor(id); if (!panel) return;
+    const grid = panel.querySelector('.yfs-grid'); if (!grid) return;
+    const titleKey = normalize(item?.title);
+    const existing = [...grid.querySelectorAll('.yfs-card')].find((node) => node.dataset.titleKey === titleKey);
+    if (existing) {
+      const from = existing.querySelector('.yfs-from');
+      if (from && !from.textContent.split(' · ').includes(source.label)) from.textContent += ` · ${source.label}`;
+      return;
+    }
+    const card = document.createElement('article'); card.className = 'yfs-card is-hit'; card.dataset.titleKey = titleKey;
     const a = document.createElement('a'); a.className = 'yfs-link';
     const bound = { ...item, seriesId: String(item.id), sourceId: source.id, sourceName: source.label, providers: [{ id: source.providerId, name: source.label, kind: 'extension', seriesId: String(item.id) }] };
     a.href = `/series/${encodeURIComponent(item.id)}?source=${encodeURIComponent(source.id)}`;
@@ -237,7 +232,7 @@
     const copy = document.createElement('div'); copy.className = 'yfs-copy';
     const name = document.createElement('div'); name.className = 'yfs-name'; name.textContent = String(item.title || 'Untitled');
     const from = document.createElement('div'); from.className = 'yfs-from'; from.textContent = source.label;
-    copy.append(name, from); a.append(cover, copy); card.append(a);
+    copy.append(name, from); a.append(cover, copy); card.append(a); grid.append(card); grid.classList.add('has-hits');
   }
 
   async function searchSource(source, query, aliases) {
@@ -269,8 +264,9 @@
     };
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, Math.max(1, sources.length)) }, runner));
     if (id !== runId) return;
-    const title = panelFor(id)?.querySelector('.yfs-title');
-    if (title) title.textContent = hits ? 'More source matches' : 'Other sources checked';
+    const panel = panelFor(id), title = panel?.querySelector('.yfs-title');
+    if (title) title.textContent = hits ? 'More source matches' : 'Sources checked';
+    if (!hits && panel) setTimeout(() => { if (id === runId && panel.isConnected) panel.remove(); }, 900);
   }
   function startProgressiveSearch(query, body) {
     const id = ++runId, sources = enabledSources();
@@ -279,7 +275,7 @@
     const top = [...(body?.series || [])].sort((a, b) => score(b, query) - score(a, query))[0];
     const aliases = [top?.title, ...(top?.altTitles || [])].map(String).filter((x) => x && normalize(x) !== normalize(query)).slice(0, 1);
     if (!missing.length) { document.getElementById('yomu-fast-search')?.remove(); return; }
-    mountPanel(id, query, missing); streamSources(id, query, missing, aliases).catch(() => {});
+    mountPanel(id, missing); streamSources(id, query, missing, aliases).catch(() => {});
   }
 
   function readSuggestCache(query) {
@@ -374,8 +370,6 @@
     try { rows = await quickMangaDex(query, { limit: 14, timeout: FAST_LANE_TIMEOUT_MS, signal: controller.signal }); }
     catch (e) { if (controller.signal.aborted) throw e; }
 
-    // Never make Search wait for every provider. The fast lane returns the first
-    // useful result set now; enabled sources continue as independent tile jobs.
     const body = {
       series: rows,
       providersTried: rows.length ? 1 : 0,
@@ -388,7 +382,7 @@
     setTimeout(() => startProgressiveSearch(query, body), 0);
     return new Response(JSON.stringify(body), {
       status: 200,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store, max-age=0', 'x-yomu-progressive-search': '2' },
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store, max-age=0', 'x-yomu-progressive-search': '3' },
     });
   };
 
