@@ -47,3 +47,8 @@ html[data-yomu-full-library='1'] .yl-library--home .yl-controls{display:none}
   .yl-source-count{display:inline;margin-top:8px}
   .yl-filter{min-height:44px}
 }
+
+/* The genre disclosure. Visibly an action rather than another genre, so a
+   reader does not read "More genres" as a genre called More. */
+.yl-filter--more{border-style:dashed;color:var(--accent,#ffc45f);border-color:var(--accentLine,#ffc45f66)}
+.yl-filter--more:hover{background:var(--accentSoft,#ffc45f1f)}

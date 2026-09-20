@@ -81,6 +81,38 @@ test('a category filter survives several loads', async ({ page, baseURL }) => {
   expect(notes.every((note) => /manhwa/i.test(note)), 'every loaded title matches the filter').toBe(true);
 });
 
+test('More genres discloses in place without destroying results', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await page.goto(DISCOVER, { waitUntil: 'domcontentloaded' });
+  await page.locator(`#yomu-library-explorer ${LIVE_CARD}`).first().waitFor({ timeout: 45_000 });
+
+  const manhwa = page.locator('#yomu-library-explorer [data-yl-type="manhwa"]');
+  await manhwa.click();
+  await expect(manhwa).toHaveAttribute('aria-pressed', 'true');
+  await page.locator(`#yomu-library-explorer ${LIVE_CARD}`).first().waitFor({ timeout: 45_000 });
+
+  const chips = page.locator('#yomu-library-explorer [data-yl-genre]');
+  const before = { chips: await chips.count(), cards: await page.locator(`#yomu-library-explorer ${LIVE_CARD}`).count() };
+
+  const disclose = page.locator('#yomu-library-explorer [data-yl-genres-more]');
+  await expect(disclose, 'exactly one disclosure').toHaveCount(1);
+  await expect(disclose).toHaveAttribute('aria-expanded', 'false');
+  await disclose.click();
+
+  await expect(disclose).toHaveAttribute('aria-expanded', 'true');
+  expect(await chips.count(), 'more genres are exposed').toBeGreaterThan(before.chips);
+  await page.waitForTimeout(700);
+  expect(await page.locator(`#yomu-library-explorer ${LIVE_CARD}`).count(), 'results are untouched').toBe(before.cards);
+  await expect(manhwa, 'the active type survives the disclosure').toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#yomu-library-explorer [data-yomu-pager]')).toHaveCount(1);
+
+  // And it collapses again without touching results.
+  await disclose.click();
+  await expect(disclose).toHaveAttribute('aria-expanded', 'false');
+  expect(await chips.count()).toBe(before.chips);
+  expect(await page.locator(`#yomu-library-explorer ${LIVE_CARD}`).count()).toBe(before.cards);
+});
+
 test('back navigation returns warm, with one control per surface', async ({ page, baseURL }) => {
   await seed(page, { baseURL });
   await gotoHome(page);

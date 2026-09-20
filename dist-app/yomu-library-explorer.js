@@ -18,7 +18,15 @@
     ['manhua', 'Manhua'],
     ['completed', 'Completed'],
   ];
+  /* The chip row is intentionally short: eight genres is a row a reader can
+     read, and the rest are one press away rather than a wall. Revealing them
+     changes nothing that is loaded -- it is a disclosure, not a filter. */
   const GENRES = ['Action', 'Fantasy', 'Romance', 'Martial arts', 'Reincarnation', 'Isekai', 'Historical', 'Comedy'];
+  const MORE_GENRES = [
+    'Adventure', 'Drama', 'Slice of life', 'Mystery', 'Horror', 'Psychological',
+    'Sci-fi', 'Supernatural', 'Sports', 'School life', 'Villainess', 'Regression',
+    'Cultivation', 'Tragedy', 'Josei', 'Seinen',
+  ];
   const browser = typeof document !== 'undefined';
   if (!browser) return;
 
@@ -199,14 +207,42 @@
       button.addEventListener('click', () => setType(id));
       row.append(button);
     }
-    for (const genre of GENRES) {
+    const genreChip = (genre) => {
       const button = el('button', 'yl-filter', genre);
       button.type = 'button';
       button.dataset.ylGenre = genre;
-      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-pressed', String(current.genre === genre));
       button.addEventListener('click', () => setGenre(genre));
-      row.append(button);
-    }
+      return button;
+    };
+    for (const genre of GENRES) row.append(genreChip(genre));
+
+    /* The disclosure. Pressing it reveals the rest of the genres in place and
+       loads nothing: whatever is on screen stays on screen, and the active
+       type and genre stay active. Only choosing a genre changes results. */
+    const disclose = el('button', 'yl-filter yl-filter--more', 'More genres');
+    disclose.type = 'button';
+    disclose.dataset.ylGenresMore = '1';
+    disclose.setAttribute('aria-expanded', 'false');
+    disclose.setAttribute('aria-label', `Show ${MORE_GENRES.length} more genres`);
+    disclose.addEventListener('click', () => {
+      const expanded = disclose.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        for (const node of row.querySelectorAll('[data-yl-genre-extra]')) node.remove();
+        disclose.setAttribute('aria-expanded', 'false');
+        disclose.textContent = 'More genres';
+        return;
+      }
+      for (const genre of MORE_GENRES) {
+        const chip = genreChip(genre);
+        chip.dataset.ylGenreExtra = '1';
+        row.append(chip);
+      }
+      disclose.setAttribute('aria-expanded', 'true');
+      disclose.textContent = 'Fewer genres';
+      row.append(disclose);
+    });
+    row.append(disclose);
     return row;
   }
 

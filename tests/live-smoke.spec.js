@@ -77,29 +77,28 @@ test('the deployed Home has one More per rail and one card system', async ({ pag
   if (sourceCards > 0) expect(responding, `${sourceCards} source cards on screen`).toBeGreaterThan(0);
   expect(enabled).toBeGreaterThan(0);
 
-  expect(errors, errors.join('\n')).toEqual([]);
-});
-
-test('the deployed More appends in place', async ({ page, baseURL }) => {
-  test.setTimeout(120_000);
-  await seedLive(page, baseURL);
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await page.locator('.yr-rail').first().waitFor({ timeout: 60_000 });
-  await page.waitForTimeout(2500);
-
-  const rail = page.locator('.yr-rail').first();
+  // More, on the same page load. The rails read AniList from the browser and
+  // AniList rate-limits per IP, so a second load just to press a button is a
+  // second chance to be throttled for no extra coverage.
+  const rail = rails.first();
   const pager = rail.locator('[data-yomu-pager]');
-  await expect(pager).toHaveCount(1);
   const before = await rail.locator(CARD).count();
   const url = page.url();
 
   await pager.click();
   await expect(pager).toHaveText(/More|End|Retry/, { timeout: 40_000 });
-  if ((await pager.innerText()).trim() !== 'Retry') {
+  const label = (await pager.innerText()).trim();
+  if (label !== 'Retry') {
     await expect.poll(async () => rail.locator(CARD).count(), { timeout: 40_000 }).toBeGreaterThan(before);
+  } else {
+    // AniList throttled the page-2 request. The contract that matters is that
+    // the failure stayed on one control and took nothing off the screen.
+    expect(await rail.locator(CARD).count()).toBe(before);
   }
   expect(page.url(), 'More must not navigate on production either').toBe(url);
-  await expect(rail.locator('[data-yomu-pager]')).toHaveCount(1);
+  await expect(rail.locator('[data-yomu-pager]'), 'still one control after a press').toHaveCount(1);
+
+  expect(errors, errors.join('\n')).toEqual([]);
 });
 
 test('the deployed assets are the canonical ones', async ({ page, baseURL }) => {
