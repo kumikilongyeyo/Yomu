@@ -43,18 +43,33 @@ if (!/class=\"shelf-line\"|shelf-line/.test(FIND)) {
   console.log('NOTE  legacy unreadable shelf already absent from find.html.');
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function fetchTextWithRetry(url, mustContain, tries = 6) {
+  let last = { status: 0, text: '' };
+  for (let i = 0; i < tries; i += 1) {
+    try {
+      const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(6000), cache: 'no-store' });
+      const text = await response.text();
+      last = { status: response.status, text };
+      if (response.ok && (!mustContain || text.includes(mustContain))) return { ok: true, status: response.status, text };
+    } catch {}
+    if (i < tries - 1) await sleep(1500);
+  }
+  return { ok: false, ...last };
+}
+
 if (BASE) {
-  const timeout = (ms) => AbortSignal.timeout(ms);
   try {
+    // Cloudflare asset propagation can lag the deploy command by a few seconds.
+    // Retry the exact user-facing page and asset instead of turning eventual
+    // consistency into a fake product regression.
     const [find, js] = await Promise.all([
-      fetch(`${BASE}/find`, { redirect: 'follow', signal: timeout(6000) }),
-      fetch(`${BASE}/yomu-search-v3.js`, { signal: timeout(6000) }),
+      fetchTextWithRetry(`${BASE}/find?q=nano%20machine`, 'yomu-search-v3.js'),
+      fetchTextWithRetry(`${BASE}/yomu-search-v3.js`, 'Yomu Search V3'),
     ]);
-    const [findText, jsText] = await Promise.all([find.text(), js.text()]);
-    const liveOk = find.ok && js.ok && findText.includes('yomu-search-v3.js') && jsText.includes('Yomu Search V3');
-    if (!liveOk) {
+    if (!find.ok || !js.ok) {
       const g = rows.find((x) => x.name.startsWith('1.'));
-      g.ok = false; g.detail += ` Live verification failed (${find.status}/${js.status}).`;
+      g.ok = false; g.detail += ` Live verification failed after retries (${find.status}/${js.status}).`;
     }
   } catch (error) {
     const g = rows.find((x) => x.name.startsWith('1.'));
