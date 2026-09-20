@@ -13,12 +13,15 @@ on:
       - 'scripts/source-forge-gauntlet.mjs'
       - 'tools/gauntlet.mjs'
       - 'tools/search-gauntlet.mjs'
+      - 'tools/library-gauntlet.mjs'
+      - 'tools/uiux-gauntlet.mjs'
       - 'tools/progression/**'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/deploy-yomu.yml'
       - '.github/workflows/source-forge-gauntlet.yml'
+      - '.github/workflows/library-uiux-check.yml'
 
 permissions:
   contents: read
@@ -30,7 +33,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,6 +51,12 @@ jobs:
 
       - name: Search UX gauntlet (10/10)
         run: node tools/search-gauntlet.mjs
+
+      - name: Full-source Library gauntlet (10/10 only)
+        run: node tools/library-gauntlet.mjs
+
+      - name: Library UI UX gauntlet (10/10 only)
+        run: node tools/uiux-gauntlet.mjs
 
       # Accept either a raw Cloudflare token or a secret pasted as
       # "Bearer <token>". The latter used to become "Bearer Bearer <token>"
@@ -113,6 +122,17 @@ jobs:
           fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-search-v3.js' /tmp/yomu-find.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-find.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-find.html
+          grep -q 'yomu-library-engine.js' /tmp/yomu-find.html
+          grep -q 'yomu-library-explorer.js' /tmp/yomu-find.html
+
+          fetch_until home-page 'https://yomu.yomuread.workers.dev/' 'yomu-library-engine.js' /tmp/yomu-home.html
+          grep -q 'yomu-mori-chat.js' /tmp/yomu-home.html
+          grep -q 'yomu-mori-drag.js' /tmp/yomu-home.html
+
+          fetch_until library-engine 'https://yomu.yomuread.workers.dev/yomu-library-engine.js' 'Yomu Library Engine' /tmp/yomu-library-engine.js
+          fetch_until library-explorer 'https://yomu.yomuread.workers.dev/yomu-library-explorer.js' 'Full-source browsing surface' /tmp/yomu-library-explorer.js
+          fetch_until mori-chat 'https://yomu.yomuread.workers.dev/yomu-mori-chat.js' 'Mori Chat' /tmp/yomu-mori-chat.js
+          fetch_until mori-drag 'https://yomu.yomuread.workers.dev/yomu-mori-drag.js' "minimized + puck" /tmp/yomu-mori-drag.js
 
           fetch_until search-page 'https://yomu.yomuread.workers.dev/search' 'yomu-search-v3.js' /tmp/yomu-search.html
           fetch_until reader-page 'https://yomu.yomuread.workers.dev/read/yomu-smoke' 'yomu-source-reliability.js' /tmp/yomu-reader.html
@@ -131,6 +151,12 @@ jobs:
 
       - name: Search UX gauntlet against production (10/10)
         run: node tools/search-gauntlet.mjs https://yomu.yomuread.workers.dev
+
+      - name: Full-source Library gauntlet against production (10/10 only)
+        run: node tools/library-gauntlet.mjs https://yomu.yomuread.workers.dev
+
+      - name: Library UI UX gauntlet against production (10/10 only)
+        run: node tools/uiux-gauntlet.mjs https://yomu.yomuread.workers.dev
 
       - name: Roll back failed production release
         if: ${{ failure() && steps.deploy.outcome == 'success' }}
