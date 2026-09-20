@@ -12,6 +12,7 @@ import {
   websiteAdaptiveStatus,
 } from './website-adaptive-v82';
 import { handleSourceBeastCloud } from './source-beast-cloud';
+import { repairWebsiteAdaptiveSearch } from './search-recovery';
 
 const VERSION = '8.2';
 const GENERATION = 'Universal Source Fabric';
@@ -203,7 +204,7 @@ export default {
     if (sourceBeast) return sourceBeast;
 
     const adaptiveRuntime = await handleWebsiteAdaptiveRuntime(request, env, url);
-    if (adaptiveRuntime) return adaptiveRuntime;
+    if (adaptiveRuntime) return repairWebsiteAdaptiveSearch(request, url, adaptiveRuntime);
 
     if (url.pathname === '/api/fabric/forge/test') {
       return testForgeSite(request, env, url);
