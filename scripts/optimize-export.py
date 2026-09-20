@@ -18,6 +18,15 @@ COMMON = [
     '<link rel="stylesheet" href="/yomu-controls-base.css">',
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',
+    '<link rel="stylesheet" href="/yomu-mori-chat.css">',
+    '<script src="/yomu-mori-drag.js" defer></script>',
+    '<script src="/yomu-mori-chat.js" defer></script>',
+]
+
+LIBRARY = [
+    '<link rel="stylesheet" href="/yomu-library.css">',
+    '<script src="/yomu-library-engine.js" defer></script>',
+    '<script src="/yomu-library-explorer.js" defer></script>',
 ]
 
 CATALOG = [
@@ -26,6 +35,7 @@ CATALOG = [
     '<link rel="stylesheet" href="/yomu-hero-plus.css">',
     '<script src="/yomu-catalog-fix.js" defer></script>',
     '<script src="/yomu-hero-plus.js" defer></script>',
+    *LIBRARY,
 ]
 
 SEARCH = [
@@ -38,6 +48,7 @@ SEARCH = [
     '<script src="/yomu-source-ux-v2.js" defer></script>',
     '<script src="/yomu-search-fast.js" defer></script>',
     '<script src="/yomu-catalog-fix.js" defer></script>',
+    *LIBRARY,
 ]
 
 READER = [
@@ -130,9 +141,21 @@ def optimize(path: Path) -> tuple[bool, int, int]:
 def assert_release_contract() -> None:
     for required in ("find.html", "search.html"):
         text = (DIST / required).read_text(encoding="utf-8")
-        for needle in ("/yomu-search-v3.js", "/yomu-source-reliability.js", "/yomu-source-ux-v2.js"):
+        for needle in (
+            "/yomu-search-v3.js",
+            "/yomu-source-reliability.js",
+            "/yomu-source-ux-v2.js",
+            "/yomu-library-engine.js",
+            "/yomu-library-explorer.js",
+            "/yomu-library.css",
+        ):
             if needle not in text:
                 raise SystemExit(f"optimizer contract failed: {required} missing {needle}")
+
+    home = (DIST / "index.html").read_text(encoding="utf-8")
+    for needle in ("/yomu-library-engine.js", "/yomu-library-explorer.js", "/yomu-library.css"):
+        if needle not in home:
+            raise SystemExit(f"optimizer contract failed: index.html missing {needle}")
 
     reader = DIST / "read" / "[chapterId].html"
     if reader.exists():
@@ -145,6 +168,10 @@ def assert_release_contract() -> None:
         text = path.read_text(encoding="utf-8")
         if "</head>" in text and 'id="yomu-boot-paint"' not in text:
             raise SystemExit(f"optimizer contract failed: {path} missing first-paint guard")
+        if "</head>" in text:
+            for needle in ("/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
+                if needle not in text:
+                    raise SystemExit(f"optimizer contract failed: {path} missing {needle}")
 
 
 def main() -> None:
