@@ -1,23 +1,17 @@
 /**
- * The 18+ gate, for the screens Yomu compiles.
+ * Browser-side compatibility layer for Expo-built Yomu screens.
  *
- * find.html and suwayomi-setup.html are hand-written and handle this themselves.
- * Settings, the series page and the reader are Expo output, and the Expo project
- * was never handed over, so the toggle and the veil are added from outside.
+ * Until the Expo source is available this file owns three small pieces of UI
+ * glue that have to survive React re-renders:
+ *   1. the 18+ settings entry and adult-media veil;
+ *   2. removal of the obsolete duplicate "Find and add sources" shortcut;
+ *   3. federation of locally-added Source Fabric APIs into global catalog search.
  *
- * Two jobs:
- *   1. A "Show 18+" row in Settings, so the switch lives where a switch belongs
- *      rather than only on the pages that happen to be hand-written.
- *   2. Blur covers and pages of a title known to be adult, until tapped.
- *
- * What counts as adult is never guessed from the picture. It comes from the
- * provider: a MangaDex erotica/pornographic rating, a Comick content_rating, or
- * a source the extension registry marks nsfw. find.html records the titles it
- * knows about as you open them, so the series page and reader can act on the
- * same fact without asking again.
- *
- * When the Expo source turns up this belongs in its Settings screen and its
- * image components; delete this file then.
+ * The third item fixes an important split-brain bug: /sources could successfully
+ * add a dynamic web source to this browser's collection, while /api/catalog/search
+ * only knew the server registry. A source could therefore say "Added" and still
+ * never appear as a readable provider in Search. Local API sources now join the
+ * same search response immediately, without waiting for Source Forge's Git mirror.
  */
 (() => {
   'use strict';
@@ -25,6 +19,7 @@
   const ADULT_KEY = 'yomu.v1.adult';
   const TITLES_KEY = 'yomu.v1.adultTitles';
   const BLUR_KEY = 'yomu.v1.adultBlur';
+  const COLLECTION_KEY = 'yomu.v1.collection';
   const VEIL = 'data-yomu-veil';
   const BADGE = 'data-yomu-veil-badge';
 
@@ -44,10 +39,213 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * Settings: a switch where a switch belongs
+   * Local Source Fabric -> global catalog search
+   * ------------------------------------------------------------------ */
+
+  const baseFetch = window.fetch.bind(window);
+
+  function collectionSources() {
+    try {
+      const collection = JSON.parse(localStorage.getItem(COLLECTION_KEY) || 'null');
+      return Array.isArray(collection?.sources) ? collection.sources : [];
+    } catch { return []; }
+  }
+
+  function localCatalogSources() {
+    const seen = new Set();
+    const out = [];
+    for (const source of collectionSources()) {
+      if (!source || source.enabled === false || source.kind !== 'api') continue;
+      // Only sources created by Source Fabric belong in this bridge. Ordinary
+      // registry extensions are already part of the server catalog.
+      if (String(source.category || '') !== 'Source Fabric') continue;
+      const api = String(source.url || '').trim();
+      if (!/^https?:\/\//i.test(api)) continue;
+      const key = api.replace(/\/+$/, '/');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: String(source.id || ''),
+        label: String(source.label || source.name || 'Local source'),
+        api: key,
+      });
+      // A browser with dozens of old experiments should not turn one search
+      // into an unbounded fan-out. Eight is already more than the UI can show.
+      if (out.length >= 8) break;
+    }
+    return out;
+  }
+
+  function normalizedTitle(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[’'`]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\b(the|a|an|of|and|manga|manhwa|manhua|webtoon|comic|official|colou?red?|color|season|part|vol(ume)?|novel|remake|fan\s?colou?red)\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function providerIdFor(sourceId) {
+    const id = String(sourceId || '');
+    return id.startsWith('yomuext-') ? `ext:${id.slice(8)}` : id;
+  }
+
+  async function searchOneLocalSource(source, query) {
+    try {
+      const endpoint = new URL('search', source.api);
+      endpoint.searchParams.set('q', query);
+      endpoint.searchParams.set('page', '1');
+      const response = await baseFetch(endpoint.toString(), {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!response.ok) return null;
+      const body = await response.json().catch(() => null);
+      if (!body || !Array.isArray(body.series)) return null;
+      return { source, series: body.series };
+    } catch {
+      return null;
+    }
+  }
+
+  function mergeLocalSearch(payload, batches, query) {
+    if (!payload || !Array.isArray(payload.series)) return null;
+    const rows = payload.series.map((row, index) => ({ ...row, __yomuOrder: index }));
+    const byTitle = new Map();
+    for (const row of rows) {
+      const key = normalizedTitle(row?.title);
+      if (key && !byTitle.has(key)) byTitle.set(key, row);
+    }
+
+    let touched = false;
+    let successfulSources = 0;
+    for (const batch of batches) {
+      if (!batch) continue;
+      successfulSources += 1;
+      const providerId = providerIdFor(batch.source.id);
+      for (const item of batch.series) {
+        if (!item || !item.id || !item.title) continue;
+        const key = normalizedTitle(item.title);
+        if (!key) continue;
+        const provider = {
+          id: providerId,
+          name: batch.source.label,
+          kind: 'extension',
+          seriesId: String(item.id),
+        };
+        const existing = byTitle.get(key);
+        if (existing) {
+          const providers = Array.isArray(existing.providers) ? existing.providers : [];
+          if (!providers.some((p) => String(p?.id || '') === providerId)) {
+            existing.providers = [...providers, provider];
+            touched = true;
+          }
+          // Local adapters sometimes have the cover/metadata the discovery
+          // provider lacks. Fill blanks only; never overwrite canonical data.
+          existing.cover ||= item.cover;
+          existing.author ||= item.author;
+          existing.synopsis ||= item.synopsis;
+          existing.category ||= item.category;
+          existing.status ||= item.status;
+          existing.year ||= item.year;
+          if (!existing.altTitles?.length && Array.isArray(item.altTitles)) existing.altTitles = item.altTitles;
+        } else {
+          const fresh = { ...item, providers: [provider], __yomuOrder: rows.length };
+          rows.push(fresh);
+          byTitle.set(key, fresh);
+          touched = true;
+        }
+      }
+    }
+
+    if (!touched) return null;
+
+    const wanted = normalizedTitle(query);
+    const score = (row) => {
+      const names = [row?.title, ...(Array.isArray(row?.altTitles) ? row.altTitles : [])]
+        .map(normalizedTitle)
+        .filter(Boolean);
+      let best = 0;
+      for (const name of names) {
+        if (name === wanted) best = Math.max(best, 4);
+        else if (name.startsWith(wanted) || wanted.startsWith(name)) best = Math.max(best, 3);
+        else if (name.includes(wanted) || wanted.includes(name)) best = Math.max(best, 2);
+      }
+      return best;
+    };
+    rows.sort((a, b) => score(b) - score(a) || a.__yomuOrder - b.__yomuOrder);
+    for (const row of rows) delete row.__yomuOrder;
+
+    return {
+      ...payload,
+      series: rows,
+      providersTried: Number(payload.providersTried || 0) + successfulSources,
+      providersTotal: Number(payload.providersTotal || 0) + batches.length,
+      localSourcesJoined: successfulSources,
+    };
+  }
+
+  window.fetch = async (input, init) => {
+    let target;
+    try {
+      const raw = typeof input === 'string' || input instanceof URL
+        ? input
+        : (input && typeof input.url === 'string' ? input.url : '');
+      target = new URL(String(raw || ''), location.href);
+    } catch {
+      return baseFetch(input, init);
+    }
+
+    const method = String(init?.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+    const isCatalogSearch = method === 'GET'
+      && target.origin === location.origin
+      && target.pathname === '/api/catalog/search';
+    if (!isCatalogSearch) return baseFetch(input, init);
+
+    const query = target.searchParams.get('q')?.trim() || '';
+    const localSources = query ? localCatalogSources() : [];
+    if (!localSources.length) return baseFetch(input, init);
+
+    // Run the server catalog and the browser-local sources together so adding
+    // local sources does not add their latency serially to every search.
+    const basePromise = baseFetch(input, init);
+    const localPromise = Promise.all(localSources.map((source) => searchOneLocalSource(source, query)));
+    const [response, batches] = await Promise.all([basePromise, localPromise]);
+    if (!response.ok) return response;
+
+    const payload = await response.clone().json().catch(() => null);
+    const merged = mergeLocalSearch(payload, batches, query);
+    if (!merged) return response;
+
+    const headers = new Headers(response.headers);
+    headers.delete('content-length');
+    headers.delete('content-encoding');
+    headers.set('content-type', 'application/json; charset=utf-8');
+    headers.set('cache-control', 'no-store, max-age=0');
+    headers.set('x-yomu-local-sources', String(merged.localSourcesJoined || 0));
+    return new Response(JSON.stringify(merged), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  };
+
+  /* ------------------------------------------------------------------ *
+   * Settings
    * ------------------------------------------------------------------ */
 
   const SETTINGS_ROW_ID = 'yomu-adult-setting';
+
+  function removeObsoleteSourceShortcut() {
+    if (!location.pathname.startsWith('/settings')) return;
+    for (const row of document.querySelectorAll('button.setting-link')) {
+      const heading = row.querySelector('.row-copy h3');
+      if (String(heading?.textContent || '').trim() === 'Find and add sources') row.remove();
+    }
+  }
 
   function buildSettingsRow() {
     const label = document.createElement('div');
@@ -118,9 +316,9 @@
 
     // A chapter id usually carries its series as a leading segment or as the
     // reader's own prefix, which is what the worker derives sourceSeriesId from.
-    const read = location.pathname.match(/^\/read\/([^/?#]+)/);
-    if (read) {
-      const chapterId = decodeURIComponent(read[1]);
+    const readMatch = location.pathname.match(/^\/read\/([^/?#]+)/);
+    if (readMatch) {
+      const chapterId = decodeURIComponent(readMatch[1]);
       const head = chapterId.split(/[:/]/)[0];
       return head ? `${source}:${head}` : null;
     }
@@ -130,15 +328,7 @@
   let veilThisScreen = false;
   let revealed = false;
 
-  /**
-   * Whether a parent is a wrapper around this image or just the row it sits in.
-   *
-   * The badge has to go on the parent -- a filter blurs an element's own
-   * pseudo-elements, so a badge on the blurred thing would be unreadable -- but
-   * only when the parent actually hugs the image. A chapter row is mostly text
-   * with a thumbnail at one end, and a badge pinned to its far corner points at
-   * nothing.
-   */
+  /** Whether a parent hugs an image closely enough to carry the veil badge. */
   function wrapsTightly(parent, el) {
     if (!parent) return false;
     const p = parent.getBoundingClientRect();
@@ -152,11 +342,7 @@
     veilThisScreen = !!key && adultTitles().has(key) && blurAdult();
     const on = veilThisScreen && !revealed;
 
-    // Two shapes to cover: the reader wraps each page in a div around an <img>,
-    // while the series page and the grids paint .cover elements with a CSS
-    // background-image and no <img> at all.
     const media = new Set([...document.images, ...document.querySelectorAll('.cover')]);
-
     for (const el of document.querySelectorAll(`[${VEIL}]`)) if (!media.has(el)) el.removeAttribute(VEIL);
     for (const el of document.querySelectorAll(`[${BADGE}]`)) el.removeAttribute(BADGE);
 
@@ -186,12 +372,7 @@
   );
 
   /* ------------------------------------------------------------------ *
-   * Keeping up with the app
-   *
-   * These screens are React, so the settings row can be removed by a re-render
-   * and the reader mounts pages as you scroll. One observer covers both, and a
-   * URL check resets the veil when the route changes under a client-side
-   * navigation.
+   * Keep compatibility DOM in sync with React
    * ------------------------------------------------------------------ */
 
   let lastUrl = location.href;
@@ -201,6 +382,7 @@
       lastUrl = location.href;
       revealed = false;
     }
+    removeObsoleteSourceShortcut();
     mountSettingsRow();
     applyVeil();
   }
@@ -208,7 +390,7 @@
   const start = () => {
     tick();
     new MutationObserver(() => {
-      // Cheap: both jobs are idempotent and bail early when there is nothing to do.
+      // All jobs are idempotent and bail early when there is nothing to do.
       tick();
     }).observe(document.body, { childList: true, subtree: true });
   };
