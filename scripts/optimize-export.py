@@ -18,6 +18,7 @@ COMMON = [
     '<link rel="stylesheet" href="/yomu-controls-base.css">',
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',
+    '<script src="/yomu-loading-policy.js" defer></script>',
     '<link rel="stylesheet" href="/yomu-mori-chat.css">',
     '<script src="/yomu-mori-drag.js" defer></script>',
     '<script src="/yomu-mori-chat.js" defer></script>',
@@ -148,19 +149,20 @@ def assert_release_contract() -> None:
             "/yomu-library-engine.js",
             "/yomu-library-explorer.js",
             "/yomu-library.css",
+            "/yomu-loading-policy.js",
         ):
             if needle not in text:
                 raise SystemExit(f"optimizer contract failed: {required} missing {needle}")
 
     home = (DIST / "index.html").read_text(encoding="utf-8")
-    for needle in ("/yomu-library-engine.js", "/yomu-library-explorer.js", "/yomu-library.css"):
+    for needle in ("/yomu-library-engine.js", "/yomu-library-explorer.js", "/yomu-library.css", "/yomu-loading-policy.js"):
         if needle not in home:
             raise SystemExit(f"optimizer contract failed: index.html missing {needle}")
 
     reader = DIST / "read" / "[chapterId].html"
     if reader.exists():
         text = reader.read_text(encoding="utf-8")
-        for needle in ("/yomu-source-reliability.js", "/yomu-source-ux-v2.js"):
+        for needle in ("/yomu-source-reliability.js", "/yomu-source-ux-v2.js", "/yomu-loading-policy.js"):
             if needle not in text:
                 raise SystemExit(f"optimizer contract failed: reader missing {needle}")
 
@@ -169,7 +171,7 @@ def assert_release_contract() -> None:
         if "</head>" in text and 'id="yomu-boot-paint"' not in text:
             raise SystemExit(f"optimizer contract failed: {path} missing first-paint guard")
         if "</head>" in text:
-            for needle in ("/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
+            for needle in ("/yomu-loading-policy.js", "/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
                 if needle not in text:
                     raise SystemExit(f"optimizer contract failed: {path} missing {needle}")
 
