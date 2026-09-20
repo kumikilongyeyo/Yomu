@@ -1,0 +1,67 @@
+name: Library and UI UX 10 of 10 gate
+
+on:
+  push:
+    branches:
+      - feature/full-source-library-2026-09-20
+    paths:
+      - 'dist-app/yomu-library*'
+      - 'dist-app/yomu-mori-chat*'
+      - 'dist-app/yomu-mori-drag.js'
+      - 'scripts/optimize-export.py'
+      - 'tools/library-gauntlet.mjs'
+      - 'tools/uiux-gauntlet.mjs'
+      - 'tools/gauntlet.mjs'
+      - 'tools/search-gauntlet.mjs'
+      - 'package.json'
+      - '.github/workflows/library-uiux-check.yml'
+  pull_request:
+    paths:
+      - 'dist-app/**'
+      - 'scripts/optimize-export.py'
+      - 'tools/library-gauntlet.mjs'
+      - 'tools/uiux-gauntlet.mjs'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  strict-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Syntax check new browser and gate code
+        run: |
+          node --check dist-app/yomu-library-engine.js
+          node --check dist-app/yomu-library-explorer.js
+          node --check dist-app/yomu-mori-drag.js
+          node --check dist-app/yomu-mori-chat.js
+          node --check tools/library-gauntlet.mjs
+          node --check tools/uiux-gauntlet.mjs
+          python3 -m py_compile scripts/optimize-export.py
+
+      - name: Optimize the exact release export
+        run: python3 scripts/optimize-export.py
+
+      - name: Worker typecheck
+        run: npm run typecheck
+
+      - name: Existing engineering release gate
+        run: node tools/gauntlet.mjs --offline
+
+      - name: Existing Search 10 of 10 gate
+        run: node tools/search-gauntlet.mjs
+
+      - name: Full-source Library 10 of 10 gate
+        run: node tools/library-gauntlet.mjs
+
+      - name: Library UI UX 10 of 10 gate
+        run: node tools/uiux-gauntlet.mjs
