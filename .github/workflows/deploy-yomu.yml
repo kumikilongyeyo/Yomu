@@ -37,7 +37,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    # The runtime gauntlet and the loading benchmark run before the upload, so
+    # the job is a browser run now rather than a grep over files.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
