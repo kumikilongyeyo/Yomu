@@ -11,6 +11,7 @@ const libraryCss = read('dist-app/yomu-library.css');
 const chat = read('dist-app/yomu-mori-chat.js');
 const chatCss = read('dist-app/yomu-mori-chat.css');
 const drag = read('dist-app/yomu-mori-drag.js');
+const petCss = read('dist-app/yomu-pet.css');
 const optimizer = read('scripts/optimize-export.py');
 const results = [];
 const gate = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
@@ -91,10 +92,12 @@ gate('U8 Mori plus puck is genuinely draggable',
   && /stopImmediatePropagation/.test(drag));
 
 // U9 — floating helpers may not create an invisible click-eating viewport.
+// CSS formatting is irrelevant to the property: the pet's root must pass
+// clicks through, and the chat itself must not be a 100vw/100vh hit target.
 gate('U9 overlays do not swallow the page',
   /#yomu-mori-chat\{position:fixed/.test(chatCss)
-  && !/width:100vw[^}]*height:100vh|inset:0[^}]*pointer-events:auto/i.test(chatCss)
-  && /pointer-events:none/.test(read('dist-app/yomu-pet.css')));
+  && !/width:\s*100vw[^}]*height:\s*100vh|inset:\s*0[^}]*pointer-events:\s*auto/i.test(chatCss)
+  && /\.yp-root\s*\{[^}]*pointer-events:\s*none/s.test(petCss));
 
 // U10 — release injection, theme tokens, and mobile touch targets must survive
 // production optimization, not only exist as orphan files in git.
