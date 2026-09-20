@@ -25,6 +25,11 @@
      the hand-written Discover page has its own .tile. Rail cards carry a
      score of their own and draw it themselves. */
   const SHAPES = [
+    /* The canonical card (yomu-titlecard.js): rails, the full library, and
+       everything More appends. A row that arrived with a score already wears
+       its chip -- with this same class, so the loop below sees it and does not
+       add a second one -- and a row that arrived without one gets looked up. */
+    { tile: '.yt-card', title: '.yt-card__title', host: '.yt-card__art' },
     { tile: '.tile-card', title: '.tile-card__title', host: '.tile-card__footer' },
     { tile: '.tile', title: '.tile-copy .t', host: '.tile-copy' },
     /* The shelf tile: the Library grid and the app's own Search results. Its
@@ -122,8 +127,13 @@
         const title = tile.querySelector(shape.title)?.textContent?.trim();
         const footer = tile.querySelector(shape.host);
         if (!title || !footer) continue;
-        const { text, known } = scoreFor(title);
         let mark = footer.querySelector('.' + CLASS);
+        /* A canonical card that arrived with a score of its own already wears
+           the chip, and that score is as good as the one this file would look
+           up -- both are AniList's. Removing it while the lookup is pending is
+           how the rating blinked out of the library grid. */
+        if (mark?.dataset.ytOwned === '1') continue;
+        const { text, known } = scoreFor(title);
         if (!known) { enqueue(title); mark?.remove(); continue; }
         if (!text) { mark?.remove(); continue; }
         if (mark && mark.dataset.score === text) continue;

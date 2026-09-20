@@ -43,63 +43,21 @@
   let mountedFor = '';
   let current = { mode: 'popular', type: 'all', genre: '' };
   const responding = new Set();
+  /* Titles already on screen for this view, so a prefetched segment and a
+     progressive row can never draw the same card twice. */
+  const painted = new Set();
 
   function routeName() {
     return isHome() ? 'home' : isDiscover() ? 'discover' : '';
   }
 
-  function canonicalHref(item) {
-    if (window.YomuOpenTitle?.canonicalHref) return window.YomuOpenTitle.canonicalHref(item);
-    return '/search?q=' + encodeURIComponent(item.title || '');
-  }
-
-  function card(item) {
-    const node = el('a', 'yl-card');
-    node.href = canonicalHref(item);
-    node.setAttribute('aria-label', item.title || 'Open title');
-
-    if (item.cover) {
-      const img = el('img', 'yl-card__art');
-      img.src = item.cover;
-      img.alt = '';
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      node.append(img);
-    }
-
-    const providers = Array.isArray(item.providers) ? item.providers : [];
-    const primary = providers[0]?.name || item.__firstSource || 'Yomu';
-    const badge = el('span', 'yl-card__source');
-    badge.append(el('b', null, primary));
-    if (providers.length > 1) badge.append(el('span', null, `+${providers.length - 1}`));
-    node.append(badge);
-
-    const copy = el('span', 'yl-card__copy');
-    copy.append(el('span', 'yl-card__title', item.title || 'Untitled'));
-    const metadata = [item.category, item.status].filter(Boolean).slice(0, 2);
-    if (metadata.length) {
-      const meta = el('span', 'yl-card__meta');
-      meta.append(el('span', null, metadata.join(' · ')));
-      copy.append(meta);
-    }
-    node.append(copy);
-
-    const target = {
-      ...item,
-      title: item.title,
-      providers,
-      anilistId: item.anilistId,
-    };
-    if (window.YomuOpenTitle?.bind) window.YomuOpenTitle.bind(node, target);
-    return node;
-  }
-
-  function skeleton() {
-    const node = el('div', 'yl-skeleton');
-    node.setAttribute('aria-hidden', 'true');
-    node.dataset.yomuSkeleton = '1';
-    return node;
-  }
+  /* The library used to draw its own card -- cover-filled, title over the
+     artwork, source pill top-left, no rating at all. Next to Home's rail cards
+     that read as a different product, which is Figure 3 of the recovery spec.
+     There is one renderer now (yomu-titlecard.js) and this file passes it a
+     row. */
+  const card = (item) => window.YomuTitleCard.create(item, { source: true });
+  const skeleton = () => window.YomuTitleCard.skeleton();
 
   function showSkeletons(count = 5) {
     for (let i = 0; i < count; i += 1) grid.append(skeleton());
@@ -111,22 +69,53 @@
 
   function updateFoot(message) {
     if (status) status.textContent = message;
-    if (more) {
-      more.disabled = loading;
-      more.hidden = !hasMore && !loading;
-      more.textContent = loading ? 'Loading…' : 'Load 10 more';
-    }
   }
 
+  /**
+   * The counter, and only what is true.
+   *
+   * `responding` is the union of what the engine can prove answered (including
+   * the warm rows this render came from) and what this page has heard on the
+   * health channel. A card on screen carrying a source's name is itself proof
+   * that the source responded, so the two can never disagree in the direction
+   * that produced Figure 3.
+   */
   function updateSourceCount(total) {
     if (!sourceCount) return;
+    const engine = window.YomuLibraryEngine;
+    const live = new Set(responding);
+    try { for (const id of engine?.respondingIds?.() || []) live.add(id); } catch {}
+    const count = Math.min(live.size, Number(total) || live.size);
     sourceCount.replaceChildren();
-    const strong = el('strong', null, String(total || 0));
-    sourceCount.append(strong, document.createTextNode(` enabled source${total === 1 ? '' : 's'} · ${responding.size} responding`));
+    sourceCount.append(
+      el('strong', null, String(total || 0)),
+      document.createTextNode(` enabled source${total === 1 ? '' : 's'} · ${count} responding`),
+    );
+    sourceCount.dataset.responding = String(count);
   }
 
-  function params() {
-    return { ...current, count: SEGMENT };
+  function params(extra) {
+    return { ...current, count: SEGMENT, ...extra };
+  }
+
+  /**
+   * Paint a row the moment the engine has it.
+   *
+   * The segment used to arrive as one array when the last source in the wave
+   * finished, so ten ready covers waited on one slow provider. The engine
+   * hands rows over as they land now; each one replaces a skeleton in place,
+   * which keeps the grid the same height throughout and means nothing on
+   * screen moves when the next one arrives.
+   */
+  function paintRow(item) {
+    if (!grid) return;
+    const key = String(item?.title || '').trim().toLowerCase();
+    if (!key || painted.has(key)) return;
+    painted.add(key);
+    const ghost = grid.querySelector('[data-yomu-skeleton]');
+    const node = card(item);
+    if (ghost) ghost.replaceWith(node);
+    else grid.append(node);
   }
 
   async function loadMore({ reset = false } = {}) {
@@ -136,22 +125,26 @@
     if (reset) {
       engine.resetView(current);
       grid.textContent = '';
+      painted.clear();
       hasMore = true;
     }
     showSkeletons(reset ? SEGMENT : Math.min(5, SEGMENT));
     updateFoot('Loading the next titles from your enabled sources…');
 
     try {
-      const result = await engine.next(params());
-      clearSkeletons();
+      const result = await engine.next(params({ onRow: paintRow }));
       hasMore = result.hasMore !== false;
+      for (const id of result.responding || []) responding.add(String(id));
       updateSourceCount(result.sourceCount || result.sources?.length || 0);
-      for (const item of result.items || []) grid.append(card(item));
+      /* Most rows are already on screen from paintRow; this catches a prefetched
+         segment, which was resolved before this call could hand over a painter. */
+      for (const item of result.items || []) paintRow(item);
+      clearSkeletons();
 
-      if (!(result.items || []).length && !grid.querySelector('.yl-card')) {
+      if (!(result.items || []).length && !grid.querySelector('.yt-card')) {
         grid.append(el('div', 'yl-empty', 'No matching titles answered yet. Try another category or load again while slower sources catch up.'));
       }
-      const count = grid.querySelectorAll('.yl-card').length;
+      const count = grid.querySelectorAll('.yt-card:not(.yt-card--skeleton)').length;
       updateFoot(hasMore
         ? `${count} titles loaded · more are ready as you scroll`
         : `${count} titles loaded · every responding source is exhausted`);
@@ -168,6 +161,10 @@
     } finally {
       loading = false;
       updateFoot(status?.textContent || 'Ready');
+      /* The auto-load and the first segment do not go through the pager's
+         click path, so the control is told where the view ended up. */
+      if (!hasMore) more?.end();
+      else if (!more?.busy()) more?.reset(more.page);
     }
   }
 
@@ -230,7 +227,7 @@
 
     if (kind === 'discover') root.append(controls());
 
-    grid = el('div', 'yl-grid');
+    grid = el('div', 'yl-grid yt-grid');
     grid.setAttribute('aria-live', 'polite');
     grid.setAttribute('aria-busy', 'false');
     root.append(grid);
@@ -239,10 +236,20 @@
     status = el('span', 'yl-status', 'Preparing your source library…');
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
-    more = el('button', 'yl-more', 'Load 10 more');
-    more.type = 'button';
-    more.addEventListener('click', () => loadMore());
-    foot.append(status, more);
+    foot.append(status);
+    /* One owner for this surface's pagination, the same module the rails and
+       search use. The near-viewport auto-load below presses this very control
+       rather than running a second loader beside it. */
+    more = window.YomuPager?.claim(foot, {
+      key: 'library',
+      scope: 'library',
+      label: 'Load 10 more',
+      aria: 'Load ten more titles from your enabled sources',
+      onMore: async () => {
+        await loadMore();
+        return hasMore;
+      },
+    }) || null;
     root.append(foot);
 
     sentinel = el('div', 'yl-sentinel');
@@ -300,6 +307,7 @@
       mountedFor = kind;
       current = { mode: 'popular', type: 'all', genre: '' };
       responding.clear();
+      painted.clear();
       hasMore = true;
       section = build(kind);
       at.parentNode.insertBefore(section, at);
@@ -309,7 +317,11 @@
       }
 
       observer = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting) && hasMore && !loading) loadMore();
+        if (!entries.some((entry) => entry.isIntersecting) || !hasMore || loading) return;
+        /* Press the one control rather than starting a parallel load: the
+           label, the in-flight guard and the retry state stay in one place. */
+        if (more?.button && !more.busy()) more.button.click();
+        else loadMore();
       }, { rootMargin: '700px 0px 700px 0px', threshold: 0.01 });
       observer.observe(sentinel);
       loadMore({ reset: true });

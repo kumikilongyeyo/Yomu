@@ -1,0 +1,36 @@
+{
+  "rails": [
+    {
+      "title": "Popular right now",
+      "controls": [
+        "yomu-rail-more|More",
+        "yomu-generic-more|More"
+      ]
+    },
+    {
+      "title": "Trending now",
+      "controls": [
+        "yomu-rail-more|More",
+        "yomu-generic-more|More"
+      ]
+    },
+    {
+      "title": "Hidden gems",
+      "controls": [
+        "yomu-rail-more|More",
+        "yomu-generic-more|More"
+      ]
+    }
+  ],
+  "railControlCounts": [
+    2,
+    2,
+    2
+  ],
+  "canonicalCards": 0,
+  "legacyLibraryCards": 10,
+  "legacyRailCards": 54,
+  "genericMore": 3,
+  "sourceCounter": "11 enabled sources · 8 responding",
+  "respondingClaim": 8
+}

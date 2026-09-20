@@ -195,31 +195,48 @@ body.yomu-search-v3 #results .shelf-line,body.yomu-search-v3 #results .tile[disa
     return FALLBACK_COVER;
   }
 
+  /* Search results are the canonical card (yomu-titlecard.js), the same one
+     Home's rails, the full library and Discover's feeds draw. This file used
+     to build a cover-filled `.tile` of its own, which is how a title found by
+     search stopped looking like the same title on the home page. */
   function existingTiles() {
     const map = new Map();
-    for (const tile of document.querySelectorAll('#results .tile:not([disabled])')) {
-      const title = tile.querySelector('.tile-copy .t')?.textContent?.trim();
+    for (const tile of document.querySelectorAll('#results .yt-card:not(.yt-card--disabled)')) {
+      const title = tile.querySelector('.yt-card__title')?.textContent?.trim();
       if (title) map.set(norm(title), tile);
     }
     return map;
   }
+  /** A second source carrying the same title joins the provenance slot. */
   function mergeSourceIntoTile(tile, label) {
-    const small = tile?.querySelector('.tile-copy small'); if (!small || !label) return;
-    const names = small.textContent.split('·').map((x) => x.trim()).filter(Boolean);
-    if (!names.some((x) => norm(x) === norm(label))) names.push(label);
-    small.textContent = names.slice(0, 4).join(' · ') + (names.length > 4 ? ` · +${names.length - 4}` : '');
+    const slot = tile?.querySelector('.yt-card__source');
+    if (!slot || !label) return;
+    const names = String(slot.title || slot.querySelector('b')?.textContent || '')
+      .split('·').map((x) => x.trim()).filter(Boolean);
+    if (names.some((x) => norm(x) === norm(label))) return;
+    names.push(label);
+    slot.title = names.join(' · ');
+    slot.replaceChildren();
+    const lead = document.createElement('b'); lead.textContent = names[0];
+    slot.append(lead);
+    if (names.length > 1) {
+      const rest = document.createElement('span'); rest.textContent = `+${names.length - 1}`;
+      slot.append(rest);
+    }
   }
   function makeTile(item, source) {
-    const tile = document.createElement('button'); tile.type = 'button'; tile.className = 'tile yv3-hit';
-    const art = document.createElement('span'); art.className = 'tile-art';
-    const img = document.createElement('img'); img.alt = ''; img.loading = 'lazy'; img.src = findCover(item);
-    img.addEventListener('error', () => { if (!img.src.endsWith('yomu-loader-ink.webp')) img.src = FALLBACK_COVER; }, { once: true });
-    art.append(img);
-    const copy = document.createElement('span'); copy.className = 'tile-copy';
-    const t = document.createElement('span'); t.className = 't'; t.textContent = String(item.title || 'Untitled');
-    const sm = document.createElement('small'); sm.textContent = source.label;
-    copy.append(t, sm); tile.append(art, copy);
-    tile.addEventListener('click', () => { location.href = `/series/${encodeURIComponent(item.id)}?source=${encodeURIComponent(source.id)}`; });
+    const tile = window.YomuTitleCard.create(
+      { ...item, cover: findCover(item), providers: [{ id: source.id, name: source.label, seriesId: item.id }] },
+      {
+        href: `/series/${encodeURIComponent(item.id)}?source=${encodeURIComponent(source.id)}`,
+        source: true,
+        onOpen: (event) => {
+          event.preventDefault();
+          location.href = `/series/${encodeURIComponent(item.id)}?source=${encodeURIComponent(source.id)}`;
+        },
+      },
+    );
+    tile.classList.add('yv3-hit');
     return tile;
   }
   function makeWait(source, run) {
@@ -229,8 +246,8 @@ body.yomu-search-v3 #results .shelf-line,body.yomu-search-v3 #results .tile[disa
     return n;
   }
   function scrubUnreadable() {
-    document.querySelectorAll('#results .shelf-line,#results .tile[disabled]').forEach((n) => n.remove());
-    document.querySelectorAll('#results .tile-art img').forEach((img) => {
+    document.querySelectorAll('#results .shelf-line,#results .tile[disabled],#results .yt-card--disabled').forEach((n) => n.remove());
+    document.querySelectorAll('#results .yt-card__img,#results .tile-art img').forEach((img) => {
       if (img.dataset.yv3Repair) return; img.dataset.yv3Repair = '1';
       img.addEventListener('error', () => { if (!img.src.endsWith('yomu-loader-ink.webp')) img.src = FALLBACK_COVER; });
     });

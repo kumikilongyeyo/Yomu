@@ -16,3 +16,8 @@ dist/
 # Local Source Forge dependencies/state
 tools/source-forge/node_modules/
 tools/source-forge/.cache/
+
+# Runtime gauntlet output. The report is a CI artifact; the committed evidence
+# lives in docs/recovery/.
+playwright-report/
+test-results/

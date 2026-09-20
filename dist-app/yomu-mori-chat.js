@@ -174,55 +174,108 @@
     return true;
   }
 
+  /* --- the fused recommender ------------------------------------------------ *
+   *
+   * Four free signals, and they used to be a fallback chain: ask AniList's
+   * reader recommendations, and only if that came back short ask the taste
+   * engine, and only if *that* came back short ask the public charts. Whichever
+   * one answered first decided the whole list, so a reader with one finished
+   * title got six look-alikes of it and nothing else.
+   *
+   * They are asked together now and merged by weight. A title that several
+   * signals agree on rises; one signal alone is still enough to be suggested,
+   * with the reason that put it there. Nothing is invented and nothing is paid
+   * for: reader-voted recommendations, this device's own reading history,
+   * AniList's public charts, and the reader's own enabled sources.
+   *
+   * The last signal is also the tie-breaker that matters: a recommendation the
+   * enabled sources can actually open beats one the reader would have to go
+   * and find, so titles the library engine knows are lifted.
+   */
+  const SIGNAL_WEIGHT = { similar: 3.2, taste: 2.4, chart: 1.4, sources: 1.1 };
+
+  function fuse(signals) {
+    const byTitle = new Map();
+    for (const { rows, kind, why } of signals) {
+      const seenHere = new Set();
+      for (const [index, row] of (rows || []).entries()) {
+        const name = String(row?.title || '').trim();
+        const key = name.toLowerCase();
+        if (!name || seenHere.has(key)) continue;
+        seenHere.add(key);
+        /* Position matters inside a signal but must not swamp agreement
+           between signals: the tenth pick of two lists beats the first of one. */
+        const weight = SIGNAL_WEIGHT[kind] * (1 - Math.min(index, 20) / 28);
+        const hit = byTitle.get(key);
+        if (hit) {
+          hit.score += weight;
+          hit.reasons.add(why);
+          /* Keep the richest copy of the row: one signal has the cover, another
+             has the providers that make it openable. */
+          hit.row = { ...row, ...hit.row };
+          if (row.cover && !hit.row.cover) hit.row.cover = row.cover;
+          if (row.providers?.length && !hit.row.providers?.length) hit.row.providers = row.providers;
+        } else {
+          byTitle.set(key, { row, score: weight, reasons: new Set([why]) });
+        }
+      }
+    }
+    return [...byTitle.values()]
+      .sort((a, b) => b.score - a.score)
+      .map((hit) => ({ ...hit.row, __why: [...hit.reasons].filter(Boolean)[0] || '', __agree: hit.reasons.size }));
+  }
+
   async function recommend(type = 'all') {
     lastIntent = { kind: 'recommend', type };
     setBusy(true);
     try {
       const seed = seedTitle();
-      let rows = [];
-      let reason = '';
+      const ask = async (kind, why, run) => {
+        try { return { kind, why, rows: (await run()) || [] }; }
+        catch { return { kind, why, rows: [] }; }
+      };
 
-      // Strongest free signal: a title this reader actually spent time with.
-      if (seed && window.YomuAniList?.similar) {
-        try {
-          const similar = await window.YomuAniList.similar(seed);
-          rows.push(...(similar?.picks || []).filter((row) => typeMatches(row, type)));
-          reason = `Based on your reading of ${seed}`;
-        } catch {}
-      }
-
-      // Then the local taste engine. It uses saved titles, finished chapters,
-      // recent interactions and public AniList community data — no API key.
-      if (rows.length < 6 && window.YomuRank?.forYou) {
-        try {
-          const rail = await window.YomuRank.forYou(12);
-          rows.push(...(rail?.items || []).filter((row) => typeMatches(row, type)));
-          reason ||= rail?.why || 'Based on your on-device reading taste';
-        } catch {}
-      }
-
-      // Cold-start / type-specific floor: public popularity + trending, then
-      // Yomu's enabled-source engine so the answer remains openable.
-      if (rows.length < 6 && window.YomuRank?.rails) {
-        try {
+      const signals = await Promise.all([
+        // Reader-voted "if you liked X". The strongest free signal there is.
+        ask('similar', seed ? `Because you read ${seed}` : '', async () => {
+          if (!seed || !window.YomuAniList?.similar) return [];
+          return (await window.YomuAniList.similar(seed))?.picks || [];
+        }),
+        // This device's own taste profile: saved titles, finished chapters,
+        // recent interactions. Never uploaded.
+        ask('taste', 'Matches what you have been reading', async () => {
+          if (!window.YomuRank?.forYou) return [];
+          const rail = await window.YomuRank.forYou(14);
+          return rail?.items || [];
+        }),
+        // Public community charts, so a cold start still has an answer.
+        ask('chart', 'Highly read right now', async () => {
+          if (!window.YomuRank?.rails) return [];
           const global = await window.YomuRank.rails(['popular', 'trending', 'top'], type, 12);
-          rows.push(...(global?.trending || []), ...(global?.popular || []), ...(global?.top || []));
-          reason ||= 'Public reader popularity and trending signals';
-        } catch {}
-      }
-      if (rows.length < 6 && window.YomuLibraryEngine) {
-        try {
-          const segment = await window.YomuLibraryEngine.next({ type, count: 10, mode: 'popular' });
-          rows.push(...(segment.items || []));
-          reason ||= 'Popular titles from your enabled sources';
-        } catch {}
-      }
+          return [...(global?.trending || []), ...(global?.popular || []), ...(global?.top || [])];
+        }),
+        // Titles the reader's own enabled sources are carrying.
+        ask('sources', 'Carried by your enabled sources', async () => {
+          if (!window.YomuLibraryEngine) return [];
+          const segment = await window.YomuLibraryEngine.next({ type, count: 12, mode: 'popular' });
+          return segment.items || [];
+        }),
+      ]);
+
+      const already = new Set([...library().map((row) => String(row.title || '').toLowerCase())]);
+      const rows = fuse(signals)
+        .filter((row) => typeMatches(row, type))
+        .filter((row) => !already.has(String(row.title || '').toLowerCase()));
 
       setBusy(false);
       if (!rows.length) {
         bubble('mori', 'I could not get a clean recommendation set right now. Your sources may still be waking up — try “popular” or “surprise me”.');
         return;
       }
+      const agreed = rows.filter((row) => row.__agree > 1).length;
+      const reason = agreed
+        ? `${agreed} of these came up in more than one signal · your reading + public data + your sources`
+        : rows[0].__why || 'Your reading and public community data';
       bubble('mori', type === 'all' ? 'Here’s what I’d put in front of you next.' : `Here are ${type} picks I’d put in front of you next.`, reason);
       showPicks(rows, reason);
     } catch {
@@ -320,8 +373,215 @@
     }
   }
 
+  /* --- what Mori knows about one title -------------------------------------- *
+   *
+   * Three questions a reader actually asks -- who made this, how many chapters
+   * are there, when is the next one -- answered from two free sources that
+   * already exist in this app, with the evidence named.
+   *
+   * AniList knows the staff, the declared chapter total and the publication
+   * status. The reader's own enabled sources know what has actually been
+   * released and when, which is the only honest basis for "next release":
+   * manga has no published schedule, so the answer is the observed cadence of
+   * the last releases and it is labelled as an estimate. A field neither
+   * source gives is left out rather than guessed.
+   */
+  const FACTS_QUERY = `
+query ($search: String) {
+  Media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+    id
+    title { english romaji native }
+    chapters
+    volumes
+    status
+    averageScore
+    genres
+    startDate { year }
+    coverImage { large }
+    description(asHtml: false)
+    staff(perPage: 6, sort: RELEVANCE) { edges { role node { name { full } } } }
+  }
+}`;
+
+  const factsCache = new Map();
+
+  async function anilistFacts(title) {
+    const key = String(title || '').trim().toLowerCase();
+    if (!key) return null;
+    if (factsCache.has(key)) return factsCache.get(key);
+    const task = (async () => {
+      try {
+        const response = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ query: FACTS_QUERY, variables: { search: title } }),
+          signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(7000) : undefined,
+        });
+        if (!response.ok) return null;
+        const body = await response.json();
+        return body?.data?.Media || null;
+      } catch { return null; }
+    })();
+    factsCache.set(key, task);
+    return task;
+  }
+
+  /** What the reader's own sources have actually published. */
+  async function releaseLedger(title) {
+    try {
+      const url = new URL('/api/catalog/chapters', location.origin);
+      url.searchParams.set('title', title);
+      const response = await fetch(url.toString(), {
+        signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(9000) : undefined,
+      });
+      if (!response.ok) return null;
+      const body = await response.json();
+      return Array.isArray(body?.rows) ? body : null;
+    } catch { return null; }
+  }
+
+  const DAY = 86400000;
+  const when = (ms) => new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  const ago = (ms) => {
+    const days = Math.round((Date.now() - ms) / DAY);
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 31) return `${days} days ago`;
+    const months = Math.round(days / 30);
+    return months < 24 ? `${months} month${months === 1 ? '' : 's'} ago` : `${Math.round(days / 365)} years ago`;
+  };
+
+  /**
+   * The observed release cadence, as a median gap.
+   *
+   * Median rather than mean because one six-month hiatus in an otherwise
+   * weekly series would otherwise say "the next chapter is due in July".
+   */
+  function cadence(rows) {
+    const dates = rows.map((row) => Number(row.publishedAt)).filter((n) => Number.isFinite(n) && n > 0)
+      .sort((a, b) => b - a).slice(0, 12);
+    if (dates.length < 3) return null;
+    const gaps = [];
+    for (let i = 1; i < dates.length; i += 1) gaps.push(dates[i - 1] - dates[i]);
+    gaps.sort((a, b) => a - b);
+    const middle = gaps.length >> 1;
+    const median = gaps.length % 2 ? gaps[middle] : Math.round((gaps[middle - 1] + gaps[middle]) / 2);
+    return { latest: dates[0], median, samples: dates.length };
+  }
+
+  const staffOf = (media, roles) => (media?.staff?.edges || [])
+    .filter((edge) => roles.test(String(edge?.role || '')))
+    .map((edge) => edge?.node?.name?.full)
+    .filter(Boolean);
+
+  async function titleFacts(rawTitle, question) {
+    const title = String(rawTitle || '').trim();
+    lastIntent = { kind: 'facts', query: title, type: 'all', question };
+    if (!title) {
+      bubble('mori', 'Name the title and I will look it up — “who wrote Vinland Saga”, “how many chapters in Berserk”, “when is the next chapter of One Piece”.');
+      return;
+    }
+    setBusy(true);
+    const [media, ledger] = await Promise.all([anilistFacts(title), releaseLedger(title)]);
+    setBusy(false);
+
+    const name = media?.title?.english || media?.title?.romaji || media?.title?.native || title;
+    const rows = ledger?.rows || [];
+    const beat = cadence(rows);
+    const lines = [];
+    const evidence = [];
+
+    if (question === 'author' || question === 'all') {
+      const writers = staffOf(media, /story|writer|author|original/i);
+      const artists = staffOf(media, /art|illustrat/i);
+      if (writers.length || artists.length) {
+        const same = writers.length && artists.length && writers[0] === artists[0];
+        lines.push(same
+          ? `${name} is written and drawn by ${writers[0]}.`
+          : [writers.length ? `Story: ${writers.slice(0, 2).join(', ')}` : '', artists.length ? `Art: ${artists.slice(0, 2).join(', ')}` : '']
+            .filter(Boolean).join(' · '));
+        evidence.push('AniList staff credits');
+      } else if (question === 'author') {
+        lines.push(`AniList does not list a credited author for ${name}, and I will not guess one.`);
+      }
+    }
+
+    if (question === 'chapters' || question === 'all') {
+      const published = rows.length;
+      const declared = Number(media?.chapters) || 0;
+      if (published) {
+        const highest = rows.map((row) => Number(row.number)).filter(Number.isFinite).sort((a, b) => b - a)[0];
+        lines.push(`Your sources carry ${published} chapter${published === 1 ? '' : 's'}${highest ? `, up to chapter ${highest}` : ''}.`);
+        evidence.push(`${(ledger.sources || []).filter((s) => s.ok).length} of your sources answered`);
+      }
+      if (declared) {
+        lines.push(`AniList lists ${declared} chapter${declared === 1 ? '' : 's'} in total${media.status === 'RELEASING' ? ' so far' : ''}.`);
+        evidence.push('AniList');
+      }
+      if (!published && !declared && question === 'chapters') {
+        lines.push(`Neither your sources nor AniList gave me a chapter count for ${name}.`);
+      }
+    }
+
+    if (question === 'next' || question === 'all') {
+      if (beat) {
+        const days = Math.max(1, Math.round(beat.median / DAY));
+        const due = beat.latest + beat.median;
+        const latestRow = rows.find((row) => Number(row.publishedAt) === beat.latest);
+        lines.push(`Latest release: ${latestRow?.label ? `chapter ${latestRow.label}` : 'the newest chapter'}, ${ago(beat.latest)}.`);
+        lines.push(due < Date.now()
+          ? `Releases have been running about every ${days} day${days === 1 ? '' : 's'}, so the next one is already overdue.`
+          : `Releases have been running about every ${days} day${days === 1 ? '' : 's'}, so the next is due around ${when(due)}.`);
+        evidence.push(`estimated from the last ${beat.samples} releases · not a publisher schedule`);
+      } else if (question === 'next') {
+        lines.push(media?.status === 'FINISHED'
+          ? `${name} is finished, so there is no next chapter.`
+          : `I do not have enough dated releases for ${name} to estimate the next one, and manga has no published schedule to quote.`);
+      }
+    }
+
+    if (question === 'all' && media?.description) {
+      lines.push(String(media.description).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 320));
+      evidence.push('AniList synopsis');
+    }
+
+    if (!lines.length) {
+      bubble('mori', `I could not verify anything about “${title}” from AniList or your enabled sources. Try “find ${title}” to see what carries it.`);
+      return;
+    }
+
+    bubble('mori', lines.join('\n'), [...new Set(evidence)].join(' · '));
+    if (media) {
+      showPicks([{
+        title: name,
+        cover: media.coverImage?.large || '',
+        anilistId: media.id,
+        score: media.averageScore ?? null,
+        genres: media.genres || [],
+        year: media.startDate?.year ?? null,
+        status: media.status || '',
+      }], 'Open this title');
+    }
+  }
+
+  function customize() {
+    const look = window.YomuLook;
+    if (!look?.open) {
+      bubble('mori', 'The look sheet is not loaded on this page. Open Yomu’s home screen and ask me again.');
+      return;
+    }
+    bubble('mori', 'Opening the look sheet — colours, tags, tile shape and light/dark all live there.');
+    close();
+    look.open();
+  }
+
   function help() {
-    bubble('mori', 'Try: “show my library”, “continue reading”, “recommend manhwa”, “popular manga”, “trending”, “surprise me”, or “find <title>”. I only recommend titles backed by your library, public community data, or Yomu sources.');
+    bubble('mori', [
+      'Library: “show my library”, “continue reading”.',
+      'Picks: “recommend manhwa”, “popular manga”, “trending”, “hidden gems”, “surprise me”.',
+      'Titles: “find <title>”, “who wrote <title>”, “how many chapters in <title>”, “when is the next chapter of <title>”, “tell me about <title>”.',
+      'Yomu: “customize” opens the look sheet.',
+    ].join('\n'), 'Everything is answered from your reading, your enabled sources, or public community data — no paid model');
   }
 
   async function handle(raw) {
@@ -338,15 +598,39 @@
       return recommend(lastIntent.type || type);
     }
     if (/\b(help|what can you do|commands?)\b/.test(lower)) return help();
+    if (/\b(customi[sz]e|look sheet|change the (?:colours?|colors?|theme|look)|appearance settings)\b/.test(lower)) return customize();
     if (/\b(my library|show.*library|my shelf|saved titles?)\b/.test(lower)) return showLibrary();
     if (/\b(continue|resume|keep reading|where was i)\b/.test(lower)) return continueReading();
+
+    /* Title questions come before the chart intents, because "when is the next
+       chapter of Most Read Manhwa" must not be answered with a chart. Each
+       pattern names the title in its capture group; nothing is answered about
+       a title Mori was not given. */
+    const facts = [
+      [/\bwho\s+(?:wrote|writes|drew|draws|made|makes|is\s+the\s+(?:author|artist|writer|mangaka)\s+(?:of|for))\s+(.+)/i, 'author'],
+      [/\b(?:author|artist|mangaka|writer)\s+(?:of|for)\s+(.+)/i, 'author'],
+      [/\bhow\s+many\s+chapters?\s+(?:are\s+there\s+)?(?:does\s+|in\s+|of\s+|for\s+|has\s+)?(.+?)\s*(?:have)?\??$/i, 'chapters'],
+      [/\bchapter\s+count\s+(?:of|for)\s+(.+)/i, 'chapters'],
+      [/\bwhen\s+(?:is|does|will)\s+(?:the\s+)?next\s+(?:chapter|release|update|episode)\s*(?:of|for|come\s+out\s+for)?\s*(.+?)\s*\??$/i, 'next'],
+      [/\bnext\s+(?:chapter|release|update)\s+(?:of|for)\s+(.+)/i, 'next'],
+      [/\b(?:tell me about|what\s+is|what's)\s+(.+?)\s*(?:about)?\s*\??$/i, 'all'],
+    ];
+    for (const [pattern, question] of facts) {
+      const hit = text.match(pattern);
+      if (hit?.[1]) {
+        const name = hit[1].replace(/[?!.]+$/, '').trim();
+        if (name && !/^(this|it|that|yomu)$/i.test(name)) return titleFacts(name, question);
+      }
+    }
+
     if (/\b(trending|hot right now|moving fastest)\b/.test(lower)) return publicChart('trending', type);
     if (/\b(popular|most read|top reads?)\b/.test(lower)) return publicChart('popular', type);
+    if (/\b(hidden gems?|underrated|overlooked)\b/.test(lower)) return publicChart('gems', type);
     if (/\b(surprise|random|wild card)\b/.test(lower)) return surprise(type);
     const find = text.match(/\b(?:find|search(?: for)?|look up)\s+(.+)/i);
     if (find) return searchTitles(find[1].trim());
     if (/\b(recommend|suggest|what should i read|read next|give me.*(?:manga|manhwa|manhua))\b/.test(lower) || type !== 'all') return recommend(type);
-    bubble('mori', 'I’m the library/recommendation side of Yomu, not a general chatbot. Ask me for your library, a title search, what to continue, or what to read next.');
+    bubble('mori', 'I handle your library, your sources and the titles in them. Ask me what to read, what to continue, who wrote something, how many chapters it has, when the next one is due — or say “customize” to open the look sheet. “help” lists the lot.');
   }
 
   function place() {
@@ -424,6 +708,13 @@
       button.addEventListener('click', () => handle(command));
       quick.append(button);
     }
+    /* The look sheet, one press away. It is the one thing in this panel that
+       is not a question, so it goes at the end and says so. */
+    const look = el('button', 'mc-chip mc-chip--action', 'Customize Yomu');
+    look.type = 'button';
+    look.setAttribute('aria-label', 'Open the Yomu look sheet');
+    look.addEventListener('click', customize);
+    quick.append(look);
     root.append(quick);
 
     const form = el('form', 'mc-form');
@@ -453,8 +744,16 @@
     panel = build();
     document.body.append(panel);
     place();
-    bubble('mori', 'Yo. I handle your library and recommendations now. Ask me what to read, what to continue, or search a title.', 'No paid AI call · recommendations are grounded in your data and public/source catalogs');
-    input?.focus();
+    bubble('mori', 'Yo. I handle your library, your sources and the titles in them. Ask what to read, who wrote something, how many chapters it has, or when the next one is due.', 'No paid AI call · answers come from your reading, your enabled sources and public community data');
+    /* Focus the field on a pointer device only. On a touch screen it opens the
+       keyboard and -- with any field under 16px -- zooms the page in, for a
+       tap whose whole intent was "show me the panel". The field is one tap
+       away and the panel itself takes focus so Escape and Tab still work. */
+    if (matchMedia('(pointer: fine)').matches) input?.focus();
+    else {
+      panel.tabIndex = -1;
+      panel.focus({ preventScroll: true });
+    }
     return true;
   }
 

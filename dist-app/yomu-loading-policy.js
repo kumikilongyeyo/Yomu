@@ -37,7 +37,7 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
 
 /* Search/source placeholders use one quiet card-sized skeleton language. */
 .yv3-wait{min-width:0!important;min-height:0!important;aspect-ratio:2/3!important;
-  border-radius:13px!important;overflow:hidden!important;background:var(--raised,#25333e)!important;
+  border-radius:var(--yt-radius,16px)!important;overflow:hidden!important;background:var(--raised,#25333e)!important;
   border:1px solid var(--line,#263747)!important;display:block!important;position:relative!important}
 .yv3-wait::before{content:'';position:absolute;inset:0;transform:translateX(-100%);
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
@@ -61,7 +61,10 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
 
   function hasUsableContent() {
     const strongSelectors = [
-      '.yl-card', '.yr-card', '.tile-card', '#results .tile:not([disabled])',
+      /* `.yl-card` used to be listed here and it was never a title card: it is
+         the loader's own card (yomu-source-ux-v2.js), so the loader counted
+         itself as content. The canonical title card is `.yt-card`. */
+      '.yt-card:not(.yt-card--skeleton)', '.tile-card', '#results .tile:not([disabled])',
       '.hero-carousel img', '.hero-pagination', '.home-grid .tile',
       '[data-chapter-page] img', '[data-reader-page] img', '.chapter-page img',
       '.reader img', '.reader-page img', '.webtoon-reader img',
@@ -74,7 +77,7 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
 
     // A stable skeleton is already useful paint. Do not cover it with another
     // loader just because its data request is still running.
-    for (const node of document.querySelectorAll('.yl-skeleton,.yv3-wait,[data-yomu-skeleton]')) {
+    for (const node of document.querySelectorAll('.yt-card--skeleton,.yv3-wait,[data-yomu-skeleton]')) {
       if (visible(node)) return true;
     }
 

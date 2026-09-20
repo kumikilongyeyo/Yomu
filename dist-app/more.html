@@ -91,7 +91,7 @@
   </div>
 
   <p class="meta" id="meta"></p>
-  <div id="results" class="grid"></div>
+  <div id="results" class="grid yt-grid"></div>
   <p class="empty" id="empty" hidden></p>
 </main>
 
@@ -142,49 +142,21 @@
      bibliography, the author for a look-alike, where the name is the news. */
   const facts = (t) => (kind === 'alike' && t.author ? t.author : [t.year, t.status].filter(Boolean).join(' · '));
 
+  /* The same card as Home, Discover and the full library: yomu-titlecard.js.
+     This page used to hand-build a cover-filled tile of its own, which is one
+     of the four renderers the recovery pass collapsed into one. */
   function tile(t) {
-    const a = document.createElement('a');
-    a.className = 'tile';
-    /* Every tile here is a MangaDex title, which is the source the rows come
-       from; the same route the series page's own rail tiles take. */
-    a.href = '/series/' + encodeURIComponent(t.id) + '?source=mangadex';
-    a.title = t.title;
-
-    const art = document.createElement('div');
-    art.className = 'tile-art';
-    if (t.cover) {
-      const img = document.createElement('img');
-      img.src = t.cover;
-      img.alt = '';
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      art.append(img);
-    }
-
-    const tags = document.createElement('div');
-    tags.className = 'tags';
-    if (/^completed$/i.test(t.status || '')) {
-      const T = window.YomuTags;
-      const chip = T && T.chip
-        ? T.chip('completed', 'Completed', { size: 'xs' })
-        : Object.assign(document.createElement('img'), { src: '/tags/completed.svg', alt: 'Completed' });
-      chip.setAttribute('role', 'img');
-      chip.setAttribute('aria-label', 'Completed');
-      tags.append(chip);
-    }
-
-    const copy = document.createElement('div');
-    copy.className = 'tile-copy';
-    const title = document.createElement('span');
-    title.className = 't';
-    title.textContent = t.title;
-    const small = document.createElement('small');
-    small.textContent = facts(t);
-    small.title = small.textContent;
-    copy.append(title, small);
-
-    a.append(art, tags, copy);
-    return a;
+    const node = window.YomuTitleCard.create(
+      { ...t, providers: [{ id: 'mangadex', name: 'MangaDex', seriesId: t.id }] },
+      {
+        href: '/series/' + encodeURIComponent(t.id) + '?source=mangadex',
+        source: false,
+        note: facts(t),
+        badge: /^completed$/i.test(t.status || '') ? 'Completed' : null,
+      },
+    );
+    node.title = t.title;
+    return node;
   }
 
   $('meta').textContent = 'Asking MangaDex…';

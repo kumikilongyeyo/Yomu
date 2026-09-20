@@ -15,6 +15,14 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist-app"
 
 COMMON = [
+    # The canonical TitleCard and the single pagination owner. Every surface
+    # that draws a title or pages one depends on these two, so they are wired
+    # on every page rather than per route -- and not deferred: a renderer that
+    # arrives after its caller is a card that silently does not render and a
+    # rail that silently has no More button. Both files are small and local.
+    '<link rel="stylesheet" href="/yomu-titlecard.css">',
+    '<script src="/yomu-titlecard.js"></script>',
+    '<script src="/yomu-pager.js"></script>',
     '<link rel="stylesheet" href="/yomu-controls-base.css">',
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',
@@ -181,7 +189,14 @@ def assert_release_contract() -> None:
         if "</head>" in text and 'id="yomu-boot-paint"' not in text:
             raise SystemExit(f"optimizer contract failed: {path} missing first-paint guard")
         if "</head>" in text:
-            for needle in ("/yomu-loading-policy.js", "/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
+            for needle in (
+                "/yomu-loading-policy.js", "/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js",
+                # A page that draws a title without the canonical card, or pages
+                # one without the single pagination owner, is the regression
+                # this release exists to remove. It is a failed build, not a
+                # degraded page.
+                "/yomu-titlecard.js", "/yomu-titlecard.css", "/yomu-pager.js",
+            ):
                 if needle not in text:
                     raise SystemExit(f"optimizer contract failed: {path} missing {needle}")
 

@@ -17,6 +17,9 @@ on:
       - 'tools/uiux-gauntlet.mjs'
       - 'tools/performance-gauntlet.mjs'
       - 'tools/progression/**'
+      - 'tools/bench-library.mjs'
+      - 'tests/**'
+      - 'playwright.config.js'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -61,6 +64,30 @@ jobs:
 
       - name: Performance and loading gauntlet (10/10 only)
         run: node tools/performance-gauntlet.mjs
+
+      # The gates above read source files. These two drive the real export in a
+      # real browser, because a release that greps clean and renders two More
+      # buttons is the failure mode this suite exists to stop.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Runtime gauntlet (every viewport, no failures allowed)
+        run: npx playwright test
+
+      - name: Loading benchmark against the release budgets
+        run: node tools/bench-library.mjs --candidate ./dist-app --runs 5
+
+      - name: Upload runtime gauntlet evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yomu-runtime-gauntlet
+          path: |
+            playwright-report/
+            docs/recovery/benchmark.json
+            docs/recovery/benchmark.csv
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Check Cloudflare credentials
         env:
@@ -123,6 +150,14 @@ jobs:
           fetch_until performance 'https://yomu.yomuread.workers.dev/yomu-performance.js' 'Yomu performance fast lane' /tmp/yomu-performance.js
           fetch_until loading-policy 'https://yomu.yomuread.workers.dev/yomu-loading-policy.js' 'Yomu loading visibility policy' /tmp/yomu-loading-policy.js
           fetch_until explore-more 'https://yomu.yomuread.workers.dev/yomu-explore-more.js' 'Yomu progressive exploration controls' /tmp/yomu-explore-more.js
+          fetch_until titlecard 'https://yomu.yomuread.workers.dev/yomu-titlecard.js' 'Yomu canonical TitleCard' /tmp/yomu-titlecard.js
+          fetch_until titlecard-css 'https://yomu.yomuread.workers.dev/yomu-titlecard.css' 'yt-card__art' /tmp/yomu-titlecard.css
+          fetch_until pager 'https://yomu.yomuread.workers.dev/yomu-pager.js' 'Yomu pagination ownership' /tmp/yomu-pager.js
+          # The legacy second control must not be on the live origin at all.
+          if grep -q 'yomu-generic-more' /tmp/yomu-explore-more.js; then
+            echo '::error::The live explore-more still builds the duplicate More control.'
+            exit 1
+          fi
 
           # Wait on a marker unique to the federated-library release before
           # running one-shot helper greps, avoiding stale-edge races.
@@ -141,6 +176,11 @@ jobs:
           grep -q 'yomu-explore-more.js' /tmp/yomu-home.html
           grep -q 'yomu-mori-chat.js' /tmp/yomu-home.html
           grep -q 'yomu-mori-drag.js' /tmp/yomu-home.html
+          grep -q 'yomu-titlecard.js' /tmp/yomu-home.html
+          grep -q 'yomu-titlecard.css' /tmp/yomu-home.html
+          grep -q 'yomu-pager.js' /tmp/yomu-home.html
+          grep -q 'yomu-titlecard.js' /tmp/yomu-find.html
+          grep -q 'yomu-pager.js' /tmp/yomu-find.html
 
           fetch_until library-engine 'https://yomu.yomuread.workers.dev/yomu-library-engine.js' 'Yomu Library Engine' /tmp/yomu-library-engine.js
           fetch_until library-explorer 'https://yomu.yomuread.workers.dev/yomu-library-explorer.js' 'Full-source browsing surface' /tmp/yomu-library-explorer.js

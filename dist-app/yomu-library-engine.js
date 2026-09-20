@@ -19,6 +19,15 @@
   const CACHE_KEY = 'yomu.v1.libraryEngine';
   const CACHE_MS = 5 * 60 * 1000;
   const CONCURRENCY = 5;
+  /* The first wave of a cold view opens wider: nothing is cached, nothing is
+     queued, and every extra source in flight is another chance that the
+     segment is complete before the slow ones answer. Later waves settle back
+     to CONCURRENCY so browsing does not keep 8 sockets busy. */
+  const FIRST_WAVE_CONCURRENCY = 8;
+  /* No single wave may hold the visible batch longer than this. Stragglers
+     keep running and land in their own queue for the next segment. */
+  const WAVE_BUDGET_MS = 2600;
+  const WAVE_TIMEOUT = Symbol('wave-timeout');
   const DEFAULT_SEGMENT = 10;
   const BLOCKED_SOURCE = /(?:^|[^a-z])nami[\s._-]*comi(?:[^a-z]|$)|namicomi/i;
   const OFFICIAL_SOURCE = /manga\s*plus|mangaplus|viz|webtoon|tapas|tappytoon|lezhin|kakao|naver|official/i;
@@ -171,6 +180,35 @@
     return state;
   }
 
+  /**
+   * Which sources have actually answered.
+   *
+   * The explorer used to count only live `ok` health events, which made the
+   * counter lie in the one case it mattered: a warm revisit. The cache serves
+   * the first segment, nothing is fetched, no event fires, and the page reads
+   * "43 enabled sources · 0 responding" underneath ten source-backed covers.
+   * That is Figure 3 of the recovery spec, and it is a telemetry bug, not a
+   * source bug.
+   *
+   * A source is responding when its data is what the reader is looking at:
+   * it answered a page this session, it has rows queued, or rows it served
+   * earlier are in the catalog this render came from. Sources the reader has
+   * since disabled do not count, however warm their rows are.
+   */
+  function respondingIds(list) {
+    const enabled = new Set((list || sourceMemo || []).map((source) => source.id));
+    const ids = new Set();
+    for (const [key, state] of states) {
+      const id = key.slice(0, key.lastIndexOf('|'));
+      if (!enabled.has(id)) continue;
+      if (state.failures === 0 && (state.page > 1 || state.queue.length)) ids.add(id);
+    }
+    for (const row of catalog) {
+      for (const id of row.__sourceIds || []) if (enabled.has(id)) ids.add(id);
+    }
+    return ids;
+  }
+
   function sourceCategoryHint(source) {
     const text = `${source.label || ''} ${source.id || ''}`.toLowerCase();
     if (/manhwa|korean/.test(text)) return 'manhwa';
@@ -269,7 +307,10 @@
         const endpoint = endpointFor(source, mode, state.page);
         const response = await baseFetch(endpoint.toString(), {
           cache: 'no-store',
-          signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(14_000) : undefined,
+          /* A backstop, not the thing a reader waits for: the wave stops
+             waiting at WAVE_BUDGET_MS and this only decides when a hopeless
+             request gives its slot back. */
+          signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(9000) : undefined,
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const body = await response.json().catch(() => null);
@@ -307,20 +348,6 @@
     })();
     inFlight.set(key, task);
     return task;
-  }
-
-  async function withPool(items, run, concurrency = CONCURRENCY) {
-    const results = new Array(items.length);
-    let cursor = 0;
-    const worker = async () => {
-      while (true) {
-        const index = cursor++;
-        if (index >= items.length) return;
-        results[index] = await run(items[index], index);
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
-    return results;
   }
 
   function matches(row, type, genre) {
@@ -387,17 +414,26 @@
     };
     const key = viewKey(opts);
     const seen = deliveredFor(key);
+    /* Rows are handed over the moment they exist rather than at the end of the
+       segment, so the grid fills in front of the reader instead of appearing
+       all at once when the slowest provider is done. A caller that does not
+       care gets the same array back at the end either way. */
+    const onRow = typeof raw.onRow === 'function' ? (row) => { try { raw.onRow(row); } catch {} } : () => {};
     let out = availableFromCatalog(opts, opts.count);
+    for (const row of out) onRow(row);
     const list = await sources();
-    if (!list.length) return { items: out, hasMore: false, sources: [], sourceCount: 0 };
+    if (!list.length) return { items: out, hasMore: false, sources: [], sourceCount: 0, responding: [], respondingCount: 0 };
 
     // Each wave visits new sources before returning to one already visited.
     // This is what makes source #31 actually appear instead of the first five
     // refilling the screen forever.
     const requestBudget = Math.max(list.length * 2, opts.count * 2);
     let requests = 0;
+    let wavesRun = 0;
     while (out.length < opts.count && requests < requestBudget) {
-      const needed = Math.min(CONCURRENCY, list.length, opts.count - out.length || 1);
+      const width = wavesRun === 0 ? FIRST_WAVE_CONCURRENCY : CONCURRENCY;
+      wavesRun += 1;
+      const needed = Math.min(width, list.length, Math.max(opts.count - out.length, 1));
       const wave = [];
       for (let i = 0; i < needed; i += 1) {
         const source = list[sourceCursor % list.length];
@@ -406,16 +442,21 @@
       }
       requests += wave.length;
 
-      await withPool(wave, async (source) => {
-        const state = stateFor(source, opts.mode);
-        if (!state.queue.length && !state.exhausted) await fetchSourcePage(source, opts.mode);
-        return state;
-      });
-
-      // Pull at most one new title from each source per pass. The remaining
-      // page stays queued for later segments, which gives the next source a
-      // turn without throwing useful fetched data away.
-      for (const source of wave) {
+      /**
+       * The wave settles one source at a time, not all at once.
+       *
+       * This used to `await withPool(wave)` -- every request in the wave had
+       * to finish before a single title could be taken from any of them, so
+       * the segment was as slow as its slowest member and a provider sitting
+       * on its timeout held ten ready covers off the screen. Racing them and
+       * draining each as it lands is what "paint the first useful segment and
+       * continue filling progressively" actually means.
+       *
+       * Nothing is thrown away. A source that answers after the wave is over
+       * still resolves into its own queue through the in-flight map, and the
+       * next segment finds it already fetched.
+       */
+      const drain = (source) => {
         const state = stateFor(source, opts.mode);
         while (state.queue.length) {
           const row = state.queue.shift();
@@ -423,17 +464,60 @@
           const titleKey = normalize(row.title);
           if (!titleKey || seen.has(titleKey) || out.some((x) => normalize(x.title) === titleKey)) continue;
           out.push(row);
-          break;
+          onRow(row);
+          return true;
         }
-        if (out.length >= opts.count) break;
+        return false;
+      };
+
+      /**
+       * Finish the segment from pages already in hand.
+       *
+       * One row per source per pass is the fair-mix rule, and taken literally
+       * it means the tenth card waits for the tenth source -- so a provider
+       * that answers in 2.6s decided when ten ready covers appeared, even
+       * though four other sources had twenty-four rows each sitting in the
+       * catalog. Fairness is already enforced by fairMix()'s 40% cap, so the
+       * remainder is filled from what has arrived and the stragglers get
+       * their turn in the next segment instead of holding this one.
+       */
+      const topUp = () => {
+        if (out.length >= opts.count) return;
+        for (const row of availableFromCatalog(opts, opts.count - out.length)) {
+          if (out.some((x) => normalize(x.title) === normalize(row.title))) continue;
+          out.push(row);
+          onRow(row);
+          if (out.length >= opts.count) return;
+        }
+      };
+
+      const pending = new Map();
+      for (const source of new Set(wave)) {
+        const state = stateFor(source, opts.mode);
+        if (state.queue.length || state.exhausted) { drain(source); continue; }
+        pending.set(source, fetchSourcePage(source, opts.mode).then(() => source, () => source));
       }
+
+      /* One wave cannot outlive the segment budget either. A straggler keeps
+         running; it just stops being something the reader waits for. */
+      let deadline = null;
+      const clock = new Promise((resolve) => { deadline = setTimeout(() => resolve(WAVE_TIMEOUT), WAVE_BUDGET_MS); });
+      while (pending.size && out.length < opts.count) {
+        const winner = await Promise.race([...pending.values(), clock]);
+        if (winner === WAVE_TIMEOUT) break;
+        pending.delete(winner);
+        drain(winner);
+        topUp();
+      }
+      clearTimeout(deadline);
+      topUp();
 
       // A duplicate may have merged a new provider into an old canonical row.
       // Fill any remaining holes from everything already fetched.
       if (out.length < opts.count) {
         const fill = availableFromCatalog(opts, opts.count - out.length);
         for (const row of fill) {
-          if (!out.some((x) => normalize(x.title) === normalize(row.title))) out.push(row);
+          if (!out.some((x) => normalize(x.title) === normalize(row.title))) { out.push(row); onRow(row); }
           if (out.length >= opts.count) break;
         }
       }
@@ -451,7 +535,8 @@
       return !state.exhausted || state.queue.length > 0;
     });
 
-    const result = { items: out, hasMore, sources: list, sourceCount: list.length };
+    const responding = [...respondingIds(list)];
+    const result = { items: out, hasMore, sources: list, sourceCount: list.length, responding, respondingCount: responding.length };
     dispatchEvent(new CustomEvent('yomu:library-segment', { detail: { ...result, options: opts } }));
     return result;
   }
@@ -529,6 +614,7 @@
     prefetch,
     loadNext,
     resetView,
+    respondingIds,
     stats,
     normalize,
     matches,

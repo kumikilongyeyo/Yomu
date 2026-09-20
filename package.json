@@ -6,6 +6,10 @@
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit --pretty false",
     "test": "node --test tools/progression/*.test.js",
+    "gauntlet:runtime": "playwright test",
+    "gauntlet:runtime:install": "playwright install --with-deps chromium",
+    "bench": "node tools/bench-library.mjs",
+    "evidence": "node tools/recovery-evidence.mjs after",
     "gauntlet": "node tools/gauntlet.mjs",
     "gauntlet:library": "node tools/library-gauntlet.mjs",
     "gauntlet:uiux": "node tools/uiux-gauntlet.mjs",
@@ -17,6 +21,7 @@
   "devDependencies": {
     "@cloudflare/puppeteer": "^1.4.0",
     "@cloudflare/workers-types": "^5.20260914.1",
+    "@playwright/test": "^1.63.0",
     "typescript": "^5.8.3",
     "wrangler": "^4.0.0"
   }

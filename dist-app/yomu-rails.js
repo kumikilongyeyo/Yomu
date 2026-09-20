@@ -40,70 +40,34 @@
    * Deliberately not the app's own tile component: that one is React's and
    * wants a source-bound series id, which a ranked title does not have yet.
    *
-   * It used to route into search for exactly that reason, and that was the
-   * wrong destination: clicking one named title and being handed a list to
-   * find it in again is the app asking the reader to finish its job.
-   * yomu-open-title.js resolves the title to a source that can actually serve
-   * pages and opens the Yomu series screen; the href stays pointed at search
-   * so a middle click still lands somewhere, and so does a click made before
-   * the resolver has loaded.
+   * It is also no longer a card this file draws. yomu-titlecard.js owns the
+   * shape -- cover, badge, rating corner, title clamp, fallback, skeleton --
+   * for every surface outside the bundle, because four hand-built renderers is
+   * how Home and the full library stopped agreeing (Figure 3 of the recovery
+   * spec). This file decides what a rail *is*; the card decides what a card
+   * looks like.
+   *
+   * It used to route into search, and that was the wrong destination: clicking
+   * one named title and being handed a list to find it in again is the app
+   * asking the reader to finish its job. yomu-open-title.js resolves the title
+   * to a source that can actually serve pages; the href stays pointed at
+   * search so a middle click still lands somewhere.
    *
    * The AniList id travels with it. dedupe() carries `anilistId` through the
    * catalog, so the resolver can match on an id rather than on a name.
    */
 
   function card(item, badge) {
-    const node = el('a', 'yr-card');
-    const target = { title: item.title, anilistId: item.id };
-    node.href = '/search?q=' + encodeURIComponent(item.title);
-    node.setAttribute('aria-label', item.title);
-
-    const art = el('div', 'yr-card__art');
-    if (item.cover) {
-      const img = el('img');
-      img.src = item.cover;
-      img.alt = '';
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      art.append(img);
-    } else {
-      /* No cover is common on a fresh title and must not leave a hole. */
-      art.append(el('span', 'yr-card__initials', initials(item.title)));
-    }
-
-    if (badge) art.append(el('span', 'yr-badge', badge));
-    node.append(art);
-    node.append(el('span', 'yr-card__title', item.title));
-
-    /* The rating, as the same ★ chip the grid tiles wear, over the art's
-       bottom-right corner -- the corner it takes on every tile shape
-       (yomu-tags.css) -- then one line of evidence under the title. Only when
-       there is real evidence: a score of null or a vote count of zero says
-       nothing and is left off. */
-    /* One formatter, in yomu-ratings.js, so a rail card and a grid tile can
-       never disagree about how many decimals a score carries. */
-    const text = window.YomuRatings?.formatScore
-      ? window.YomuRatings.formatScore(item.score)
-      : (item.score ? (Math.round(item.score) / 10).toFixed(1) : null);
-    if (text) {
-      const rating = window.YomuTags?.chip
-        ? window.YomuTags.chip('rating', text, { size: 'xs' })
-        : el('span', null, '★ ' + text);
-      rating.classList.add('yr-card__rating');
-      rating.title = text + ' / 10 on AniList';
-      rating.setAttribute('aria-label', 'Rated ' + text + ' out of 10 on AniList');
-      art.append(rating);
-    }
-    if (item.votes) node.append(el('span', 'yr-card__note', item.votes.toLocaleString() + ' readers'));
-
-    const noteClick = () => { window.YomuRank?.note?.('RECOMMENDATION_CLICK', item.title); };
-    if (window.YomuOpenTitle?.bind) window.YomuOpenTitle.bind(node, target, noteClick);
-    else node.addEventListener('click', noteClick);
-    return node;
+    return window.YomuTitleCard.create(
+      { ...item, anilistId: item.anilistId ?? item.id },
+      {
+        badge: badge || null,
+        source: false,
+        note: item.votes ? `${Number(item.votes).toLocaleString()} readers` : '',
+        onClick: () => { window.YomuRank?.note?.('RECOMMENDATION_CLICK', item.title); },
+      },
+    );
   }
-
-  const initials = (title) =>
-    String(title || '?').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
 
   /** Which badge, if any, a rail's cards wear. One word, never two. */
   const BADGE = {

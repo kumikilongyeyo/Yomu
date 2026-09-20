@@ -2,8 +2,9 @@
 /** Strict Yomu performance/loading release gate. Exactly 10/10 or block. */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const BASE = (process.argv.slice(2).find((x) => /^https?:\/\//.test(x)) || '').replace(/\/+$/, '');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const perf = read('dist-app/yomu-performance.js');
@@ -94,8 +95,11 @@ gate('P9 global loader is blank-page-only and background-silent',
   && /data-yomu-blank-loading='1'\] #yomu-load\.on/.test(loading)
   && /requested && !hasUsableContent\(\)/.test(loading)
   && /\.reader img/.test(loading)
-  && /\.yl-card/.test(loading)
-  && /\.yl-skeleton/.test(loading)
+  // `.yl-card` used to be listed here as a title card and is in fact the
+  // loader's own card, so the loader counted itself as content. The canonical
+  // title card and its skeleton are what "usable" means now.
+  && /\.yt-card:not\(\.yt-card--skeleton\)/.test(loading)
+  && /\.yt-card--skeleton/.test(loading)
   && /\.yv3-wait/.test(loading));
 
 // P10 — exploration itself must stay progressive: rails and search both expose
@@ -106,12 +110,17 @@ const liveMore = await live('/yomu-explore-more.js');
 const liveFind = await live('/find?q=nano%20machine');
 gate('P10 segmented More controls and live production wiring',
   /More results/.test(more)
-  && /railPages/.test(more)
+  // Rail page state belongs to the one pager that owns the rail now, not to a
+  // WeakMap this file keeps beside a second control.
+  && /YomuPager\.claim\(head/.test(more)
   && /searchPages/.test(more)
   && /\|\| 2/.test(more)
   && /SEARCH_CONCURRENCY\s*=\s*8/.test(more)
   && /namicomi/i.test(more)
+  && !/yomu-generic-more/.test(more)
   && /yomu-explore-more\.js/.test(optimizer)
+  && /yomu-pager\.js/.test(optimizer)
+  && /yomu-titlecard\.js/.test(optimizer)
   && (!BASE || (
     livePerf?.ok && liveLoading?.ok && liveMore?.ok && liveFind?.ok
     && /SOURCE_BUDGET_MS/.test(livePerf.text)

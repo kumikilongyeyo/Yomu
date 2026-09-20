@@ -8,8 +8,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const BASE = (process.argv.slice(2).find((x) => /^https?:\/\//.test(x)) || '').replace(/\/+$/, '');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const engine = read('dist-app/yomu-library-engine.js');
@@ -57,13 +58,15 @@ gate('L3 NamiComi is excluded from browse',
   /BLOCKED_SOURCE/.test(engine) && /nami/.test(engine) && /namicomi/i.test(engine) && /blocked\(raw\)/.test(engine),
   'the exclusion must survive source renames / URL forms');
 
-// L4 — fan-out is bounded so 40 added sources cannot produce 40 simultaneous
-// fetches and turn the browser into a space heater.
-gate('L4 multi-source fan-out is concurrency bounded',
+// L4 — fan-out is bounded in two dimensions: how many sources are in flight,
+// and how long the reader waits for them. Forty added sources must not produce
+// forty simultaneous fetches, and one slow source must not own the segment.
+gate('L4 multi-source fan-out is concurrency bounded and time bounded',
   /const CONCURRENCY = [2-8];/.test(engine)
-  && /withPool\(/.test(engine)
-  && /Math\.min\(concurrency, items\.length\)/.test(engine),
-  'expected a small worker pool');
+  && /const FIRST_WAVE_CONCURRENCY = [2-9];/.test(engine)
+  && /WAVE_BUDGET_MS/.test(engine)
+  && /Promise\.race\(/.test(engine),
+  'expected a bounded wave width and a bounded wave wait');
 
 // L5 — each source owns a real page cursor and advances it. Page 1 forever is
 // not an infinite library.
@@ -94,7 +97,7 @@ gate('L7 visible segments enforce provider diversity',
 // time, skeletons, explicit load button, and viewport prefetch.
 gate('L8 progressive library keeps loading beyond the first shelf',
   /const SEGMENT = 10;/.test(explorer)
-  && /yl-skeleton/.test(explorer)
+  && /YomuTitleCard\.skeleton/.test(explorer)
   && /Load 10 more/.test(explorer)
   && /IntersectionObserver/.test(explorer)
   && /rootMargin: '700px/.test(explorer)
@@ -113,9 +116,11 @@ gate('L9 full-library type and genre exploration exists',
 // L10 — the reader can see that federation is real, and one dead source does
 // not kill the rest of the library.
 gate('L10 source provenance and failure isolation are visible',
-  /yl-card__source/.test(explorer)
+  /\{ source: true \}/.test(explorer)
+  && /yt-card__source/.test(read('dist-app/yomu-titlecard.js'))
   && /enabled source/.test(explorer)
   && /responding/.test(explorer)
+  && /respondingIds/.test(engine)
   && /state\.failures \+= 1/.test(engine)
   && /return \[\];/.test(engine)
   && (!BASE || (/yomu-library-engine\.js/.test(home?.text || '') && /yomu-library-engine\.js/.test(find?.text || ''))),

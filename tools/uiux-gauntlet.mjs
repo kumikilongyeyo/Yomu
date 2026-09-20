@@ -2,12 +2,17 @@
 /** Strict UI/UX release gate for the expanded library and Mori. 10/10 only. */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const BASE = (process.argv.slice(2).find((x) => /^https?:\/\//.test(x)) || '').replace(/\/+$/, '');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const explorer = read('dist-app/yomu-library-explorer.js');
 const libraryCss = read('dist-app/yomu-library.css');
+// The cards, the grid and the skeleton live in the canonical TitleCard now.
+const cardJs = read('dist-app/yomu-titlecard.js');
+const cardCss = read('dist-app/yomu-titlecard.css');
+const pagerJs = read('dist-app/yomu-pager.js');
 const chat = read('dist-app/yomu-mori-chat.js');
 const chatCss = read('dist-app/yomu-mori-chat.css');
 const drag = read('dist-app/yomu-mori-drag.js');
@@ -31,16 +36,22 @@ const liveChat = await live('/yomu-mori-chat.js');
 
 // U1 — loading reserves card geometry rather than flashing empty space.
 gate('U1 loading has stable tile skeletons and status',
-  /yl-skeleton/.test(explorer) && /showSkeletons/.test(explorer)
+  /YomuTitleCard\.skeleton/.test(explorer) && /showSkeletons/.test(explorer)
   && /role', 'status'/.test(explorer) && /aria-live/.test(explorer)
-  && /aspect-ratio:2\/3/.test(libraryCss));
+  && /yt-card--skeleton/.test(cardCss)
+  && /aspect-ratio: 2 \/ 3/.test(cardCss)
+  // The skeleton and the finished card share one fixed body height, which is
+  // what makes them the same box. tests/parity.spec.js measures it for real.
+  && /--yt-body/.test(cardCss));
 
-// U2 — auto-load is enhancement, not the only control.
-gate('U2 infinite loading has an explicit accessible fallback',
+// U2 — auto-load is enhancement, not the only control, and there is exactly
+// one control: yomu-pager.js owns it and removes competitors.
+gate('U2 infinite loading has one explicit accessible control',
   /IntersectionObserver/.test(explorer)
   && /Load 10 more/.test(explorer)
-  && /more\.type = 'button'/.test(explorer)
-  && /more\.addEventListener\('click'/.test(explorer));
+  && /YomuPager\?\.claim\(/.test(explorer)
+  && /button\.type = 'button'/.test(pagerJs)
+  && /for \(const node of existing\) node\.remove\(\)/.test(pagerJs));
 
 // U3 — controls and cards have keyboard semantics/focus treatment.
 gate('U3 keyboard navigation remains first-class',
@@ -51,18 +62,18 @@ gate('U3 keyboard navigation remains first-class',
 
 // U4 — responsive density changes instead of squeezing desktop cards onto phones.
 gate('U4 responsive card density covers desktop tablet mobile',
-  /repeat\(5,minmax\(0,1fr\)\)/.test(libraryCss)
-  && /max-width:1180px/.test(libraryCss)
-  && /max-width:820px/.test(libraryCss)
-  && /max-width:620px/.test(libraryCss)
-  && /repeat\(2,minmax\(0,1fr\)\)/.test(libraryCss));
+  /repeat\(5, minmax\(0, 1fr\)\)/.test(cardCss)
+  && /max-width: 1180px/.test(cardCss)
+  && /max-width: 820px/.test(cardCss)
+  && /max-width: 620px/.test(cardCss)
+  && /repeat\(2, minmax\(0, 1fr\)\)/.test(cardCss));
 
 // U5 — motion is optional and expensive off-screen card work is deferred.
 gate('U5 motion and paint cost respect the device',
-  /prefers-reduced-motion:reduce/.test(libraryCss)
-  && /content-visibility:auto/.test(libraryCss)
-  && /loading = 'lazy'/.test(explorer)
-  && /decoding = 'async'/.test(explorer));
+  /prefers-reduced-motion: reduce/.test(cardCss)
+  && /content-visibility: auto/.test(cardCss)
+  && /loading = 'lazy'/.test(cardJs)
+  && /decoding = 'async'/.test(cardJs));
 
 // U6 — Mori is a proper dialog with Escape, focus management and quick actions.
 gate('U6 Mori chat has dialog and focus discipline',

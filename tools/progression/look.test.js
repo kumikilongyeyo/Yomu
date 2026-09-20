@@ -87,9 +87,16 @@ test('the stylesheet carries a hook for every knob the sheet drives', () => {
   assert.ok(/\.yr-card__art\s*>\s*\.yr-card__rating/.test(css), 'the rail card rating sits over the art');
 });
 
-test('the rail card puts its rating into the art, and the shell fills search from the URL', () => {
+test('the canonical card puts its rating into the art, and the shell fills search from the URL', () => {
+  /* The rail no longer builds its own card -- yomu-titlecard.js draws every
+     title Yomu renders outside the bundle -- so this is asserted where the
+     rating is actually appended. The rail card still carries the `.yr-card*`
+     aliases the customizer and the chip layer address. */
+  const card = read('../../dist-app/yomu-titlecard.js');
+  assert.ok(card.includes('art.append(rating)'), 'rating into the card art');
+  assert.ok(card.includes("'yr-card__rating'"), 'and keeps the rail alias the theme layers target');
   const rails = read('../../dist-app/yomu-rails.js');
-  assert.ok(rails.includes('art.append(rating)'), 'rating into .yr-card__art');
+  assert.ok(/YomuTitleCard\.create/.test(rails), 'the rail uses the canonical renderer');
   const shell = read('../../dist-app/yomu-shell.js');
   assert.ok(shell.includes('function prefillSearch()'), 'prefill exists');
   assert.ok(/prefillSearch\(\);/.test(shell), 'and runs in the pass');

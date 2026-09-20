@@ -33,6 +33,9 @@
   line-height: 0;
   /* The sprite sheets are pixel art; anything else is a blurry pet. */
   -webkit-tap-highlight-color: transparent;
+  /* A tap on Mori opens Mori. It is never the first half of a double-tap
+     zoom, and the browser must not hold the tap back to find that out. */
+  touch-action: manipulation;
 }
 
 .yp-pet:active { cursor: grabbing; }
@@ -64,6 +67,9 @@
 
 .yp-puck {
   pointer-events: auto;
+  /* A tap on Mori opens Mori. It is never the first half of a double-tap
+     zoom, and the browser must not wait to find that out. */
+  touch-action: manipulation;
   width: 28px;
   height: 28px;
   flex: none;

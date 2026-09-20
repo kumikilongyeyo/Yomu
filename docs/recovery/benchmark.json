@@ -1,0 +1,300 @@
+{
+  "baseline": {
+    "label": "baseline",
+    "dist": "C:\\Users\\Klyde\\Downloads\\Claude-shit\\yomu\\yomu-baseline\\dist-app",
+    "runs": 7,
+    "profile": {
+      "baseLatency": 40,
+      "latency": {
+        "alpha": 2600,
+        "bravo": 2200,
+        "delta": 180,
+        "echo": 120,
+        "foxtrot": 240,
+        "golf": 90,
+        "hotel": 300,
+        "india": 150,
+        "juliet": 200,
+        "mangadex": 260
+      },
+      "fail": {
+        "charlie": true
+      }
+    },
+    "metrics": {
+      "ttf1": {
+        "median": 2869,
+        "p95": 2883,
+        "samples": [
+          2878,
+          2869,
+          2869,
+          2883,
+          2877,
+          2865,
+          2864
+        ]
+      },
+      "ttf10": {
+        "median": 2876,
+        "p95": 2890,
+        "samples": [
+          2890,
+          2870,
+          2870,
+          2884,
+          2878,
+          2876,
+          2865
+        ]
+      },
+      "segmentComplete": {
+        "median": 2936,
+        "p95": 2958,
+        "samples": [
+          2939,
+          2944,
+          2958,
+          2923,
+          2903,
+          2936,
+          2895
+        ]
+      },
+      "searchFirst": {
+        "median": 125,
+        "p95": 230,
+        "samples": [
+          194,
+          230,
+          106,
+          123,
+          120,
+          125,
+          130
+        ]
+      },
+      "searchFill": {
+        "median": 191,
+        "p95": 261,
+        "samples": [
+          215,
+          261,
+          131,
+          183,
+          191,
+          191,
+          202
+        ]
+      },
+      "warmRevisit": {
+        "median": 66,
+        "p95": 78,
+        "samples": [
+          63,
+          65,
+          66,
+          78,
+          70,
+          66,
+          74
+        ]
+      },
+      "longTasks": {
+        "median": 58,
+        "p95": 63,
+        "samples": [
+          58,
+          57,
+          63,
+          59,
+          58,
+          59,
+          58
+        ]
+      },
+      "layoutShift": {
+        "median": 0.7303,
+        "p95": 0.7303,
+        "samples": [
+          0.4188,
+          0.7303,
+          0.4202,
+          0.7303,
+          0.7303,
+          0.7303,
+          0.4202
+        ]
+      },
+      "cards": {
+        "median": 10,
+        "p95": 10,
+        "samples": [
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ]
+      }
+    }
+  },
+  "candidate": {
+    "label": "candidate",
+    "dist": "C:\\Users\\Klyde\\Downloads\\Claude-shit\\yomu\\yomu-recovery\\dist-app",
+    "runs": 7,
+    "profile": {
+      "baseLatency": 40,
+      "latency": {
+        "alpha": 2600,
+        "bravo": 2200,
+        "delta": 180,
+        "echo": 120,
+        "foxtrot": 240,
+        "golf": 90,
+        "hotel": 300,
+        "india": 150,
+        "juliet": 200,
+        "mangadex": 260
+      },
+      "fail": {
+        "charlie": true
+      }
+    },
+    "metrics": {
+      "ttf1": {
+        "median": 406,
+        "p95": 411,
+        "samples": [
+          411,
+          401,
+          408,
+          409,
+          406,
+          403,
+          405
+        ]
+      },
+      "ttf10": {
+        "median": 469,
+        "p95": 472,
+        "samples": [
+          472,
+          462,
+          470,
+          471,
+          469,
+          464,
+          467
+        ]
+      },
+      "segmentComplete": {
+        "median": 496,
+        "p95": 507,
+        "samples": [
+          507,
+          491,
+          496,
+          497,
+          494,
+          471,
+          498
+        ]
+      },
+      "searchFirst": {
+        "median": 162,
+        "p95": 170,
+        "samples": [
+          170,
+          162,
+          166,
+          162,
+          162,
+          166,
+          133
+        ]
+      },
+      "searchFill": {
+        "median": 170,
+        "p95": 174,
+        "samples": [
+          174,
+          166,
+          174,
+          170,
+          170,
+          174,
+          147
+        ]
+      },
+      "warmRevisit": {
+        "median": 73,
+        "p95": 78,
+        "samples": [
+          71,
+          73,
+          74,
+          73,
+          78,
+          78,
+          73
+        ]
+      },
+      "longTasks": {
+        "median": 57,
+        "p95": 59,
+        "samples": [
+          57,
+          57,
+          56,
+          56,
+          56,
+          59,
+          59
+        ]
+      },
+      "layoutShift": {
+        "median": 0.0004,
+        "p95": 0.0004,
+        "samples": [
+          0.0004,
+          0.0004,
+          0.0004,
+          0.0004,
+          0.0004,
+          0.0004,
+          0.0004
+        ]
+      },
+      "cards": {
+        "median": 10,
+        "p95": 10,
+        "samples": [
+          10,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ]
+      }
+    }
+  },
+  "comparison": {
+    "ttf1Ratio": 0.142,
+    "ttf10Ratio": 0.163,
+    "segmentCompleteRatio": 0.169,
+    "searchFirstRatio": 1.296,
+    "searchFillRatio": 0.89,
+    "warmRevisitRatio": 1.106,
+    "warmRevisitMs": 73,
+    "layoutShift": 0.0004,
+    "ttf10PassesTwoX": true,
+    "warmRevisitUnder250ms": true,
+    "noVisibleLayoutShift": true,
+    "pass": true
+  }
+}

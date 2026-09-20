@@ -18,8 +18,15 @@
 .mc-picks{display:grid;gap:6px;margin:7px 0 11px}.mc-pick{display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;align-items:center;width:100%;min-height:52px;padding:6px;border:1px solid var(--line,#263747);border-radius:11px;background:var(--surface,#17232d);color:var(--text,#f4f6fa);text-align:left;cursor:pointer}.mc-pick:hover{border-color:var(--accentLine,#ffc45f66);background:var(--raised,#25333e)}.mc-pick__art{width:38px;height:48px;border-radius:7px;object-fit:cover;background:var(--raised,#25333e)}.mc-pick__text{min-width:0}.mc-pick__text strong{display:block;font-size:10.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mc-pick__text span{display:block;margin-top:3px;color:var(--dim,#8fa0b4);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .mc-quick{display:flex;gap:6px;overflow-x:auto;padding:8px 10px;border-top:1px solid var(--line,#263747);scrollbar-width:none}.mc-quick::-webkit-scrollbar{display:none}.mc-chip{flex:none;min-height:34px;padding:0 10px;border:1px solid var(--line,#263747);border-radius:999px;background:var(--surface,#17232d);color:var(--muted,#a8b6c7);font:750 10px/1 var(--uiFont,system-ui);cursor:pointer}.mc-chip:hover{border-color:var(--accentLine,#ffc45f66);color:var(--text,#f4f6fa)}
+.mc-close,.mc-chip,.mc-send,.mc-pick,.mc-input{touch-action:manipulation}
+/* The one chip that is an action rather than a question. */
+.mc-chip--action{border-color:var(--accentLine,#ffc45f66);background:var(--accentSoft,#ffc45f1f);color:var(--accent,#ffc45f)}
+.mc-chip--action:hover{background:color-mix(in srgb,var(--accentSoft,#ffc45f1f) 72%,var(--accent,#ffc45f) 28%);color:var(--accent,#ffc45f)}
 .mc-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:9px 10px 10px}.mc-input{min-width:0;height:40px;padding:0 11px;border:1px solid var(--line,#263747);border-radius:11px;background:var(--bg,#0c131b);color:var(--text,#f4f6fa);font:500 12px/1 var(--uiFont,system-ui)}.mc-input::placeholder{color:var(--faint,#738397)}.mc-send{height:40px;padding:0 13px;border:0;border-radius:11px;background:var(--accent,#ffc45f);color:var(--accentText,#18212a);font:850 10.5px/1 var(--uiFont,system-ui);cursor:pointer}.mc-send:disabled{opacity:.55;cursor:wait}
 .mc-thinking{display:inline-flex;gap:4px;align-items:center}.mc-thinking i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:mc-bob .75s ease-in-out infinite}.mc-thinking i:nth-child(2){animation-delay:.12s}.mc-thinking i:nth-child(3){animation-delay:.24s}@keyframes mc-bob{50%{transform:translateY(-3px);opacity:.55}}
 
-@media(max-width:620px){#yomu-mori-chat{width:min(340px,calc(100vw - 16px));border-radius:16px}.mc-input,.mc-send{height:44px}.mc-chip{min-height:40px}}
+@media(max-width:620px){#yomu-mori-chat{width:min(340px,calc(100vw - 16px));border-radius:16px}.mc-input,.mc-send{height:44px}.mc-chip{min-height:40px}
+/* 16px exactly: anything smaller makes mobile Safari zoom the page in when
+   the field takes focus, which is what "clicking Mori zooms in" was. */
+.mc-input{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.mc-thinking i{animation:none}}

@@ -202,7 +202,7 @@
   </div>
 
   <p class="meta" id="meta"></p>
-  <div id="results" class="grid"></div>
+  <div id="results" class="grid yt-grid"></div>
 
   <div id="suggest">
     <p class="lede">Search by English, or by a romanised Japanese, Korean or Chinese name —
@@ -312,7 +312,15 @@
     return out;
   }
 
-  /** One result tile. Shared by search results and the suggestion rows. */
+  /**
+   * One result tile. Shared by search results and the suggestion rows.
+   *
+   * The card itself is yomu-titlecard.js -- the same renderer Home's rails and
+   * the full-source library use. Discover drawing its own cover-filled tile is
+   * half of why the surfaces stopped matching (Figure 3 of the recovery spec),
+   * so this function's job is now provider ranking and openability, not
+   * geometry.
+   */
   function buildTile(entry, have) {
     // Readable first, then enabled on this device; the catalog already put
     // the best-ranked provider first within each group.
@@ -327,50 +335,21 @@
     const best = ranked[0] ?? null;
     const readable = !!best && canRead(appSourceId(best.id));
 
-    const tile = document.createElement('button');
-    tile.type = 'button';
-    tile.className = 'tile';
-
-    const art = document.createElement('div');
-    art.className = 'tile-art';
-    if (entry.cover) {
-      const img = document.createElement('img');
-      img.src = entry.cover;
-      // The adjacent title supplies the accessible name.
-      img.alt = '';
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      art.append(img);
-    }
-
-    const tags = document.createElement('div');
-    tags.className = 'tags';
-    for (const badge of badgesFor(entry)) {
-      const img = document.createElement('img');
-      img.src = badge.src;
-      img.alt = badge.alt;
-      tags.append(img);
-    }
-
-    const copy = document.createElement('div');
-    copy.className = 'tile-copy';
-    const title = document.createElement('span');
-    title.className = 't';
-    title.textContent = entry.title;
-    const sources = document.createElement('small');
-    sources.textContent = ranked.map((p) => p?.name).filter(Boolean).join(' · ');
-    sources.title = sources.textContent;
-    copy.append(title, sources);
-
-    tile.append(art, tags, copy);
-
-    if (readable && best) {
-      tile.addEventListener('click', () => open(best.seriesId, appSourceId(best.id)));
-      tile.title = `${entry.title} — read on ${best.name}`;
-    } else {
-      tile.disabled = true;
-      tile.title = `${entry.title} — no enabled source can serve this title yet`;
-    }
+    const tile = window.YomuTitleCard.create(
+      { ...entry, providers: ranked },
+      {
+        badge: badgesFor(entry)[0]?.alt || null,
+        source: ranked.length > 0,
+        disabled: !readable,
+        href: readable && best ? `/series/${encodeURIComponent(best.seriesId)}?source=${encodeURIComponent(appSourceId(best.id))}` : undefined,
+        onOpen: readable && best
+          ? (event) => { event.preventDefault(); open(best.seriesId, appSourceId(best.id)); }
+          : undefined,
+      },
+    );
+    tile.title = readable && best
+      ? `${entry.title} — read on ${best.name}`
+      : `${entry.title} — no enabled source can serve this title yet`;
     return tile;
   }
 
@@ -530,7 +509,7 @@
         const heading = document.createElement('h2');
         heading.textContent = title;
         const grid = document.createElement('div');
-        grid.className = 'grid';
+        grid.className = 'grid yt-grid';
         for (const entry of entries) grid.append(buildTile(entry, have));
         box.append(heading, grid);
         box.classList.remove('hidden');

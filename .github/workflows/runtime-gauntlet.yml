@@ -1,0 +1,82 @@
+name: Runtime gauntlet
+
+# Every pull request drives the real export in a real browser on every
+# viewport the recovery spec requires, and measures the loading path against
+# the branch it is merging into. The static gauntlets stay -- they are cheap
+# and they catch wiring -- but they are no longer the only thing between a
+# duplicate control and production.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yomu-runtime-gauntlet-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gauntlet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Optimize exported HTML
+        run: python3 scripts/optimize-export.py
+
+      - name: Static release gates
+        run: |
+          node tools/gauntlet.mjs --offline
+          node tools/search-gauntlet.mjs
+          node tools/library-gauntlet.mjs
+          node tools/uiux-gauntlet.mjs
+          node tools/performance-gauntlet.mjs
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Runtime gauntlet (every required viewport)
+        run: npx playwright test
+
+      - name: Prepare the baseline tree
+        id: baseline
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$base" ]; then base="$(git rev-parse origin/main)"; fi
+          echo "Benchmark baseline: $base"
+          git worktree add --detach /tmp/yomu-baseline "$base"
+          # The baseline is measured with its own release wiring.
+          ( cd /tmp/yomu-baseline && python3 scripts/optimize-export.py )
+          echo "dist=/tmp/yomu-baseline/dist-app" >> "$GITHUB_OUTPUT"
+
+      - name: Loading benchmark against the base branch
+        run: node tools/bench-library.mjs --baseline "${{ steps.baseline.outputs.dist }}" --candidate ./dist-app --runs 7
+
+      - name: Recovery evidence screenshots
+        if: ${{ always() }}
+        run: node tools/recovery-evidence.mjs after || true
+
+      - name: Upload gauntlet evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yomu-runtime-gauntlet-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            docs/recovery/
+          retention-days: 14
+          if-no-files-found: ignore

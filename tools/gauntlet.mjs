@@ -34,10 +34,11 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const urlArg = process.argv.slice(2).find((a) => /^https?:\/\//.test(a));
 const BASE = (urlArg || 'http://localhost:8788').replace(/\/+$/, '');
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 let failed = 0;
 let passed = 0;
@@ -61,7 +62,10 @@ const get = async (url, init) => {
 async function g1() {
   const run = (cmd, args) => {
     try {
-      execFileSync(cmd, args, { cwd: ROOT, stdio: 'pipe' });
+      /* `npm` is npm.cmd on Windows and execFile will not find it without a
+         shell. CI is Linux, but a gate a developer cannot run locally is a
+         gate that gets ignored. */
+      execFileSync(cmd, args, { cwd: ROOT, stdio: 'pipe', shell: process.platform === 'win32' });
       return null;
     } catch (error) {
       return (error.stdout?.toString() || '') + (error.stderr?.toString() || '') || error.message;

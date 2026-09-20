@@ -1,0 +1,33 @@
+{
+  "rails": [
+    {
+      "title": "Popular right now",
+      "controls": [
+        "yt-more|More"
+      ]
+    },
+    {
+      "title": "Trending now",
+      "controls": [
+        "yt-more|More"
+      ]
+    },
+    {
+      "title": "Hidden gems",
+      "controls": [
+        "yt-more|More"
+      ]
+    }
+  ],
+  "railControlCounts": [
+    1,
+    1,
+    1
+  ],
+  "canonicalCards": 64,
+  "legacyLibraryCards": 0,
+  "legacyRailCards": 0,
+  "genericMore": 0,
+  "sourceCounter": "11 enabled sources · 8 responding",
+  "respondingClaim": 8
+}

@@ -196,7 +196,7 @@
 
 /* Chips over artwork take frost, not fill, as the pack advises; and the
    focus ring is the page ink so it shows on Paper. */
-.tile-card .ytg, .tile .ytg, .yr-card .ytg { --ytg-frost: .16; --ytg-ring: var(--text, #1e1b16); }
+.tile-card .ytg, .tile .ytg, .yr-card .ytg, .yt-card .ytg { --ytg-frost: .16; --ytg-ring: var(--text, #1e1b16); }
 
 /* A label that has to give way does so with an ellipsis, not by running
    under the save control. */
@@ -370,8 +370,13 @@
   margin-right: var(--yomu-rating-pull); margin-bottom: var(--yomu-rating-pull);
 }
 
-/* The rail card's rating, over the art's bottom-right corner. */
-.yr-card__art > .yr-card__rating.ytg {
+/* The canonical title card's rating, over the art's bottom-right corner --
+   the same corner as every shape above. `.yr-card__rating` is the alias the
+   card still carries for the customizer; `.yomu-tile__rating` is the chip
+   yomu-ratings.js appends when a row arrived without a score of its own. */
+.yr-card__art > .yr-card__rating.ytg,
+.yt-card__art > .yt-card__rating.ytg,
+.yt-card__art > .yomu-tile__rating.ytg {
   position: absolute; right: var(--yomu-rating-inset); bottom: var(--yomu-rating-inset); z-index: 2;
   margin: 0; width: auto; pointer-events: none;
 }
