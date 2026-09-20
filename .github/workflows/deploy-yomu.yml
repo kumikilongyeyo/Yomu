@@ -119,10 +119,13 @@ jobs:
           }
 
           fetch_until search-v3 'https://yomu.yomuread.workers.dev/yomu-search-v3.js' 'Yomu Search V3' /tmp/yomu-search-v3.js
-          fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-search-v3.js' /tmp/yomu-find.html
+          # Wait on a marker unique to this release before running one-shot grep
+          # checks. Waiting on search-v3 can accept the previous deployment and
+          # race Cloudflare propagation immediately after wrangler returns.
+          fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-library-engine.js' /tmp/yomu-find.html
+          grep -q 'yomu-search-v3.js' /tmp/yomu-find.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-find.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-find.html
-          grep -q 'yomu-library-engine.js' /tmp/yomu-find.html
           grep -q 'yomu-library-explorer.js' /tmp/yomu-find.html
 
           fetch_until home-page 'https://yomu.yomuread.workers.dev/' 'yomu-library-engine.js' /tmp/yomu-home.html
