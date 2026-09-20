@@ -49,6 +49,7 @@ jobs:
               '<link rel="stylesheet" href="/yomu-controls-components.css">',
               '<link rel="stylesheet" href="/yomu-hero-plus.css">',
               '<script src="/yomu-controls.js" defer></script>',
+              '<script src="/yomu-live-catalog.js" defer></script>',
               '<script src="/yomu-catalog-fix.js" defer></script>',
               '<script src="/yomu-hero-plus.js" defer></script>',
               '<script src="/source-beast-loader.js" defer></script>',
@@ -117,6 +118,7 @@ jobs:
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
+          grep -q 'yomu-live-catalog.js' /tmp/yomu-sources.html
           grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
           check add-source curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/add-sources -o /tmp/yomu-add-sources.html
@@ -133,6 +135,8 @@ jobs:
           grep -q 'yomu-community-pack-top' /tmp/community-pack-top.js
           check controls curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js -o /tmp/yomu-controls.js
           grep -q 'yomu.v1.controls' /tmp/yomu-controls.js
+          check live-catalog curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-live-catalog.js -o /tmp/yomu-live-catalog.js
+          grep -q 'Live catalog glue' /tmp/yomu-live-catalog.js
           check catalog-fix curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-catalog-fix.js -o /tmp/yomu-catalog-fix.js
           grep -q 'Catalog truth layer' /tmp/yomu-catalog-fix.js
           check hero curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js -o /tmp/yomu-hero-plus.js
