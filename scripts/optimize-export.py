@@ -18,6 +18,7 @@ COMMON = [
     '<link rel="stylesheet" href="/yomu-controls-base.css">',
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',
+    '<script src="/yomu-loading-policy.js" defer></script>',
     '<link rel="stylesheet" href="/yomu-mori-chat.css">',
     '<script src="/yomu-mori-drag.js" defer></script>',
     '<script src="/yomu-mori-chat.js" defer></script>',
@@ -30,18 +31,21 @@ LIBRARY = [
 ]
 
 CATALOG = [
+    '<script src="/yomu-performance.js" defer></script>',
     '<script src="/source-auto-switch.js" defer></script>',
     '<script src="/community-pack-top.js" defer></script>',
     '<link rel="stylesheet" href="/yomu-hero-plus.css">',
     '<script src="/yomu-catalog-fix.js" defer></script>',
     '<script src="/yomu-hero-plus.js" defer></script>',
     *LIBRARY,
+    '<script src="/yomu-explore-more.js" defer></script>',
 ]
 
 SEARCH = [
+    # Search V3 captures window.fetch immediately, so the performance fast lane
+    # must exist first on search routes rather than arriving later as defer.
+    '<script src="/yomu-performance.js"></script>',
     '<script src="/source-auto-switch.js" defer></script>',
-    # Deliberately synchronous: /find can issue its first request while the
-    # document is still parsing, so V3 has to capture native fetch first.
     '<script src="/yomu-search-v3.js"></script>',
     '<script src="/yomu-search-fast-bootstrap.js" defer></script>',
     '<script src="/yomu-source-reliability.js" defer></script>',
@@ -49,9 +53,11 @@ SEARCH = [
     '<script src="/yomu-search-fast.js" defer></script>',
     '<script src="/yomu-catalog-fix.js" defer></script>',
     *LIBRARY,
+    '<script src="/yomu-explore-more.js" defer></script>',
 ]
 
 READER = [
+    '<script src="/yomu-performance.js" defer></script>',
     '<script src="/source-auto-switch.js" defer></script>',
     '<script src="/yomu-source-reliability.js" defer></script>',
     '<script src="/yomu-source-ux-v2.js" defer></script>',
@@ -142,25 +148,31 @@ def assert_release_contract() -> None:
     for required in ("find.html", "search.html"):
         text = (DIST / required).read_text(encoding="utf-8")
         for needle in (
+            "/yomu-performance.js",
             "/yomu-search-v3.js",
             "/yomu-source-reliability.js",
             "/yomu-source-ux-v2.js",
             "/yomu-library-engine.js",
             "/yomu-library-explorer.js",
+            "/yomu-explore-more.js",
             "/yomu-library.css",
+            "/yomu-loading-policy.js",
         ):
             if needle not in text:
                 raise SystemExit(f"optimizer contract failed: {required} missing {needle}")
 
     home = (DIST / "index.html").read_text(encoding="utf-8")
-    for needle in ("/yomu-library-engine.js", "/yomu-library-explorer.js", "/yomu-library.css"):
+    for needle in (
+        "/yomu-performance.js", "/yomu-library-engine.js", "/yomu-library-explorer.js",
+        "/yomu-explore-more.js", "/yomu-library.css", "/yomu-loading-policy.js"
+    ):
         if needle not in home:
             raise SystemExit(f"optimizer contract failed: index.html missing {needle}")
 
     reader = DIST / "read" / "[chapterId].html"
     if reader.exists():
         text = reader.read_text(encoding="utf-8")
-        for needle in ("/yomu-source-reliability.js", "/yomu-source-ux-v2.js"):
+        for needle in ("/yomu-performance.js", "/yomu-source-reliability.js", "/yomu-source-ux-v2.js", "/yomu-loading-policy.js"):
             if needle not in text:
                 raise SystemExit(f"optimizer contract failed: reader missing {needle}")
 
@@ -169,7 +181,7 @@ def assert_release_contract() -> None:
         if "</head>" in text and 'id="yomu-boot-paint"' not in text:
             raise SystemExit(f"optimizer contract failed: {path} missing first-paint guard")
         if "</head>" in text:
-            for needle in ("/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
+            for needle in ("/yomu-loading-policy.js", "/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js"):
                 if needle not in text:
                     raise SystemExit(f"optimizer contract failed: {path} missing {needle}")
 
