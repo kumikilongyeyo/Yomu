@@ -296,7 +296,8 @@
   window.fetch = async (input, init) => {
     const target = requestTarget(input);
     if (!target || requestMethod(input, init) !== 'GET') return wrappedFetch(input, init);
-    if (target.origin !== location.origin || target.pathname !== '/api/catalog/search' || !target.searchParams.get('q')?.trim()) {
+    const searchPage = location.pathname === '/search' || location.pathname === '/search/';
+    if (!searchPage || target.origin !== location.origin || target.pathname !== '/api/catalog/search' || !target.searchParams.get('q')?.trim()) {
       return wrappedFetch(input, init);
     }
 
