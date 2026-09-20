@@ -9,8 +9,11 @@ on:
       - 'dist-app/**'
       - 'worker/**'
       - 'extensions/**'
+      - 'scripts/optimize-export.py'
       - 'scripts/source-forge-gauntlet.mjs'
+      - 'tools/gauntlet.mjs'
       - 'tools/search-gauntlet.mjs'
+      - 'tools/progression/**'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -36,53 +39,16 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Typecheck Worker
-        run: npm run typecheck
+
+      - name: Optimize exported HTML
+        run: python3 scripts/optimize-export.py
+
+      - name: Engineering gauntlet (offline release gate)
+        run: node tools/gauntlet.mjs --offline
+
       - name: Search UX gauntlet (10/10)
         run: node tools/search-gauntlet.mjs
-      - name: Inject route helpers into exported HTML
-        run: |
-          python - <<'PY'
-          from pathlib import Path
 
-          tags = [
-              '<script src="/source-auto-switch.js" defer></script>',
-              '<script src="/community-pack-top.js" defer></script>',
-              '<link rel="stylesheet" href="/yomu-controls-base.css">',
-              '<link rel="stylesheet" href="/yomu-controls-components.css">',
-              '<link rel="stylesheet" href="/yomu-hero-plus.css">',
-              '<script src="/yomu-controls.js" defer></script>',
-              # Search V3 is intentionally non-deferred. /find starts its first
-              # query from an inline script while HTML is still parsing, so V3
-              # must own fetch before that request can hit the slow all-source
-              # wrappers. It re-installs itself at DOMContentLoaded after the
-              # deferred reliability helpers have run.
-              '<script src="/yomu-search-v3.js"></script>',
-              '<script src="/yomu-search-fast-bootstrap.js" defer></script>',
-              # These must be in every exported HTML file, not only Worker-first
-              # routes. Search and Reader are static-asset routes, which is why
-              # the reliability layer previously never ran there.
-              '<script src="/yomu-source-reliability.js" defer></script>',
-              '<script src="/yomu-source-ux-v2.js" defer></script>',
-              '<script src="/yomu-search-fast.js" defer></script>',
-              '<script src="/yomu-catalog-fix.js" defer></script>',
-              '<script src="/yomu-hero-plus.js" defer></script>',
-              '<script src="/source-beast-loader.js" defer></script>',
-          ]
-          changed = 0
-          for path in Path('dist-app').rglob('*.html'):
-              text = path.read_text(encoding='utf-8')
-              if '</head>' not in text:
-                  continue
-              original = text
-              for tag in tags:
-                  if tag not in text:
-                      text = text.replace('</head>', tag + '</head>', 1)
-              if text != original:
-                  path.write_text(text, encoding='utf-8')
-                  changed += 1
-          print(f'Injected route helpers into {changed} HTML files.')
-          PY
       # Accept either a raw Cloudflare token or a secret pasted as
       # "Bearer <token>". The latter used to become "Bearer Bearer <token>"
       # here and Cloudflare rejected it as Authorization header code 6111.
@@ -119,10 +85,13 @@ jobs:
 
           printf 'CLOUDFLARE_API_TOKEN=%s\n' "$token" >> "$GITHUB_ENV"
           echo "Token can read the account. Deploying."
+
       - name: Deploy production Worker and static assets
+        id: deploy
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --config wrangler.jsonc
+
       - name: Verify live Yomu
         run: |
           set -e
@@ -140,9 +109,6 @@ jobs:
             return 1
           }
 
-          # Verify the actual search surface and its new controller. Do not gate
-          # Search on /sources carrying the same script: /find is the product
-          # surface the reader uses and is the regression we are preventing.
           fetch_until search-v3 'https://yomu.yomuread.workers.dev/yomu-search-v3.js' 'Yomu Search V3' /tmp/yomu-search-v3.js
           fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-search-v3.js' /tmp/yomu-find.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-find.html
@@ -152,10 +118,24 @@ jobs:
           fetch_until reader-page 'https://yomu.yomuread.workers.dev/read/yomu-smoke' 'yomu-source-reliability.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
 
-          # Core helper assets must still be available after the search patch.
           fetch_until reliability 'https://yomu.yomuread.workers.dev/yomu-source-reliability.js' 'Yomu Source Reliability Layer' /tmp/yomu-source-reliability.js
           fetch_until source-ux 'https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js' 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
           fetch_until controls 'https://yomu.yomuread.workers.dev/yomu-controls.js' 'yomu.v1.controls' /tmp/yomu-controls.js
           fetch_until source-beast 'https://yomu.yomuread.workers.dev/source-beast-yomu.js' 'Yomu Source Beast' /tmp/source-beast-yomu.js
+          fetch_until service-worker 'https://yomu.yomuread.workers.dev/sw.js' "SHELL_VERSION = 'v3'" /tmp/yomu-sw.js
+          grep -q 'navigationPreload' /tmp/yomu-sw.js
+          grep -q 'staleWhileRevalidate' /tmp/yomu-sw.js
+
+      - name: Full engineering gauntlet against production
+        run: node tools/gauntlet.mjs https://yomu.yomuread.workers.dev
+
       - name: Search UX gauntlet against production (10/10)
         run: node tools/search-gauntlet.mjs https://yomu.yomuread.workers.dev
+
+      - name: Roll back failed production release
+        if: ${{ failure() && steps.deploy.outcome == 'success' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo 'Release validation failed. Rolling Yomu back to the previously deployed Worker version.'
+          npx wrangler rollback --config wrangler.jsonc --message 'Automated rollback: Yomu release gauntlet failed'
