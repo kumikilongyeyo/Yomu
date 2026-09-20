@@ -28,6 +28,7 @@
     "run_worker_first": [
       "/api/*",
       "/title/*",
+      "/read/*",
       "/series/*",
       "/shelf/*",
       "/sources*",
