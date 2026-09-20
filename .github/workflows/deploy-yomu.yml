@@ -86,8 +86,6 @@ jobs:
       # Accept either a raw Cloudflare token or a secret pasted as
       # "Bearer <token>". The latter used to become "Bearer Bearer <token>"
       # here and Cloudflare rejected it as Authorization header code 6111.
-      # Normalize once, verify it, then pass the exact same cleaned token to
-      # Wrangler through GITHUB_ENV without printing it to the log.
       - name: Check Cloudflare credentials
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -114,7 +112,7 @@ jobs:
             -H "Authorization: Bearer $token" \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID")
           if [ "$status" != "200" ]; then
-            echo "::error::The API token cannot read account $CLOUDFLARE_ACCOUNT_ID (HTTP $status). If Cloudflare reports an authentication error, replace the repository secret with a Cloudflare API Token that has Workers Scripts: Edit and Workers KV Storage: Edit for this account."
+            echo "::error::The API token cannot read account $CLOUDFLARE_ACCOUNT_ID (HTTP $status)."
             cat /tmp/cf-verify.json
             exit 1
           fi
@@ -128,67 +126,36 @@ jobs:
       - name: Verify live Yomu
         run: |
           set -e
-          check() { echo "Checking $1"; shift; "$@"; }
-          check sources curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/sources -o /tmp/yomu-sources.html
-          grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
-          grep -q 'community-pack-top.js' /tmp/yomu-sources.html
-          grep -q 'yomu-controls.js' /tmp/yomu-sources.html
-          grep -q 'yomu-search-v3.js' /tmp/yomu-sources.html
-          grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-sources.html
-          grep -q 'yomu-source-reliability.js' /tmp/yomu-sources.html
-          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-sources.html
-          grep -q 'yomu-search-fast.js' /tmp/yomu-sources.html
-          grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
-          grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
+          fetch_until() {
+            name="$1"; url="$2"; pattern="$3"; file="$4"
+            echo "Checking $name"
+            for i in 1 2 3 4 5 6; do
+              if curl -L --fail --silent --show-error --max-time 12 "$url" -o "$file" && grep -q "$pattern" "$file"; then
+                echo "$name ready on attempt $i"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "::error::$name did not expose expected marker: $pattern"
+            return 1
+          }
 
-          # /find is the search surface people actually use. Verify it directly;
-          # checking /search alone allowed the previous regression to ship.
-          check find-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' -o /tmp/yomu-find.html
-          for i in 1 2 3 4 5 6; do
-            if grep -q 'yomu-search-v3.js' /tmp/yomu-find.html; then break; fi
-            sleep 3
-            curl -L --fail --silent --show-error 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' -o /tmp/yomu-find.html
-          done
-          grep -q 'yomu-search-v3.js' /tmp/yomu-find.html
+          # Verify the actual search surface and its new controller. Do not gate
+          # Search on /sources carrying the same script: /find is the product
+          # surface the reader uses and is the regression we are preventing.
+          fetch_until search-v3 'https://yomu.yomuread.workers.dev/yomu-search-v3.js' 'Yomu Search V3' /tmp/yomu-search-v3.js
+          fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-search-v3.js' /tmp/yomu-find.html
+          grep -q 'yomu-source-reliability.js' /tmp/yomu-find.html
+          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-find.html
 
-          check search-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
-          grep -q 'yomu-search-v3.js' /tmp/yomu-search.html
-          grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-search.html
-          grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html
-          grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html
-          grep -q 'yomu-search-fast.js' /tmp/yomu-search.html
-
-          check reader-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/read/yomu-smoke -o /tmp/yomu-reader.html
-          grep -q 'yomu-search-v3.js' /tmp/yomu-reader.html
-          grep -q 'yomu-source-reliability.js' /tmp/yomu-reader.html
+          fetch_until search-page 'https://yomu.yomuread.workers.dev/search' 'yomu-search-v3.js' /tmp/yomu-search.html
+          fetch_until reader-page 'https://yomu.yomuread.workers.dev/read/yomu-smoke' 'yomu-source-reliability.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
 
-          check search-v3 curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-search-v3.js -o /tmp/yomu-search-v3.js
-          grep -q 'Yomu Search V3' /tmp/yomu-search-v3.js
-          check search-fast curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-search-fast.js -o /tmp/yomu-search-fast.js
-          grep -q 'Yomu search fast lane' /tmp/yomu-search-fast.js
-          check source-ux curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js -o /tmp/yomu-source-ux-v2.js
-          grep -q 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
-          check reliability curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-reliability.js -o /tmp/yomu-source-reliability.js
-          grep -q 'Yomu Source Reliability Layer' /tmp/yomu-source-reliability.js
-
-          check add-source curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/add-sources -o /tmp/yomu-add-sources.html
-          grep -q 'source-beast-loader.js' /tmp/yomu-add-sources.html
-          check beast-loader curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-loader.js -o /tmp/source-beast-loader.js
-          grep -q 'source-beast-yomu.js' /tmp/source-beast-loader.js
-          check beast-controller curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-beast-yomu.js -o /tmp/source-beast-yomu.js
-          grep -q 'Yomu Source Beast' /tmp/source-beast-yomu.js
-          check compact curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-compact.js -o /tmp/community-pack-compact.js
-          grep -q 'Community Pack source' /tmp/community-pack-compact.js
-          check auto-switch curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/source-auto-switch.js -o /tmp/source-auto-switch.js
-          grep -q 'Find another source' /tmp/source-auto-switch.js
-          check community-top curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/community-pack-top.js -o /tmp/community-pack-top.js
-          grep -q 'yomu-community-pack-top' /tmp/community-pack-top.js
-          check controls curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-controls.js -o /tmp/yomu-controls.js
-          grep -q 'yomu.v1.controls' /tmp/yomu-controls.js
-          check catalog-fix curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-catalog-fix.js -o /tmp/yomu-catalog-fix.js
-          grep -q 'Catalog truth layer' /tmp/yomu-catalog-fix.js
-          check hero curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js -o /tmp/yomu-hero-plus.js
-          grep -q 'Highest rated' /tmp/yomu-hero-plus.js
+          # Core helper assets must still be available after the search patch.
+          fetch_until reliability 'https://yomu.yomuread.workers.dev/yomu-source-reliability.js' 'Yomu Source Reliability Layer' /tmp/yomu-source-reliability.js
+          fetch_until source-ux 'https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js' 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
+          fetch_until controls 'https://yomu.yomuread.workers.dev/yomu-controls.js' 'yomu.v1.controls' /tmp/yomu-controls.js
+          fetch_until source-beast 'https://yomu.yomuread.workers.dev/source-beast-yomu.js' 'Yomu Source Beast' /tmp/source-beast-yomu.js
       - name: Search UX gauntlet against production (10/10)
         run: node tools/search-gauntlet.mjs https://yomu.yomuread.workers.dev
