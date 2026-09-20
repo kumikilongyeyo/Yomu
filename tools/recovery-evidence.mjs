@@ -17,6 +17,10 @@ import { collection, anilistMedia } from '../tests/fixtures/catalog.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'docs', 'recovery');
 const phase = (process.argv[2] || 'after').replace(/[^a-z]/g, '') || 'after';
+/* `YOMU_DIST=../yomu-baseline/dist-app node tools/recovery-evidence.mjs before`
+   captures the "before" half from the tree it actually came from, so the pair
+   is reproducible by anyone with the two checkouts rather than only by whoever
+   happened to run it before the edit. */
 
 function anilistBody(query) {
   const aliases = [...String(query).matchAll(/(\w+)\s*:\s*Page\(/g)].map((m) => m[1]);
@@ -50,23 +54,40 @@ await page.goto(origin + '/', { waitUntil: 'domcontentloaded' });
 await page.locator('.yr-rail').first().waitFor({ timeout: 45_000 }).catch(() => {});
 await page.waitForTimeout(6000);
 
-const summary = await page.evaluate(() => {
+const READ = () => {
   const rails = [...document.querySelectorAll('.yr-rail')].map((rail) => ({
     title: rail.querySelector('.yr-rail__title')?.textContent?.trim(),
     controls: [...rail.querySelectorAll('button')].map((b) => `${b.className}|${b.textContent.trim()}`),
   }));
-  const counter = document.querySelector('.yl-source-count')?.textContent?.trim() || '';
+  const counter = document.querySelector('.yl-source-count')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+  /* `.yl-card` inside #yomu-load is the loader's own card, not a title. */
+  const legacy = [...document.querySelectorAll('.yl-card')].filter((n) => !n.closest('#yomu-load'));
   return {
     rails,
     railControlCounts: rails.map((r) => r.controls.length),
-    canonicalCards: document.querySelectorAll('.yt-card').length,
-    legacyLibraryCards: document.querySelectorAll('.yl-card').length,
-    legacyRailCards: document.querySelectorAll('.yr-card:not(.yt-card)').length,
+    canonicalCards: document.querySelectorAll('.yt-card:not(.yt-card--skeleton)').length,
+    legacyLibraryCards: legacy.length,
     genericMore: document.querySelectorAll('.yomu-generic-more').length,
     sourceCounter: counter,
     respondingClaim: Number((counter.match(/(\d+)\s+responding/) || [])[1] ?? -1),
+    sourceBackedCards: document.querySelectorAll('[data-yt-source]').length + legacy.length,
   };
-});
+};
+
+const summary = await page.evaluate(READ);
+
+/* The warm revisit, because that is the visit the source counter used to lie
+   on: the cache serves the segment, nothing is fetched, no health event fires.
+   A cold load alone would show the bug fixed that was never visible. */
+await page.goto(origin + '/find', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(1500);
+await page.goto(origin + '/', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(6000);
+summary.warmRevisit = await page.evaluate(READ);
+const warmShot = page.locator('#yomu-library-explorer');
+if (await warmShot.count()) await warmShot.first().screenshot({ path: path.join(OUT, `${phase}-warm-library.png`) });
+await page.goto(origin + '/', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(6000);
 
 const rails = page.locator('.yr-wrap');
 if (await rails.count()) await rails.first().screenshot({ path: path.join(OUT, `${phase}-rails.png`) });

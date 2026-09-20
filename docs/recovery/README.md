@@ -84,16 +84,47 @@ as "usable content". The library explorer no longer uses that name.
 |---|---|---|
 | Home rails | `before-rails.png` | `after-rails.png` |
 | Full library | `before-full-library.png` | `after-full-library.png` |
+| Full library, warm revisit | `before-warm-library.png` | `after-warm-library.png` |
 | Whole page | `before-home.png` | `after-home.png` |
 | DOM counts | `before-summary.json` | `after-summary.json` |
 
-Regenerate either with `node tools/recovery-evidence.mjs before|after`. Both
-runs drive the fixture app with the same seeding the runtime gauntlet uses.
+Both halves are reproducible from the two checkouts:
+
+```bash
+YOMU_DIST=../yomu-baseline/dist-app node tools/recovery-evidence.mjs before
+node tools/recovery-evidence.mjs after
+```
+
+Cold load:
 
 ```
 before: railControlCounts [2,2,2]  canonicalCards 0   legacyLibraryCards 10  genericMore 3
 after:  railControlCounts [1,1,1]  canonicalCards 64  legacyLibraryCards 0   genericMore 0
 ```
+
+Warm revisit — the visit the counter lied on, which a cold load alone would
+never have shown:
+
+```
+before: "11 enabled sources · 0 responding"   with 10 source-backed cards on screen
+after:  "11 enabled sources · 6 responding"   with 10 source-backed cards on screen
+```
+
+### Render paths and controls removed
+
+| removed | replaced by |
+|---|---|
+| `bindRails()`'s generic `h2` pass and `.yomu-generic-more` (navigated to `/find?browse=`) | `YomuPager.claim()` on the rail head |
+| `.yomu-rail-more` and its `railPages` WeakMap | the pager's own `page` cursor |
+| `.yl-card` / `.yl-card__source` / `.yl-card__copy` renderer and CSS in the library explorer | `YomuTitleCard.create()` |
+| `.yl-skeleton` and its CSS | `YomuTitleCard.skeleton()` |
+| `.yl-grid` CSS | `.yt-grid` |
+| `.yl-more` button and CSS | the pager's `.yt-more` |
+| `makeTile()`'s `.tile` DOM in `yomu-search-v3.js` | `YomuTitleCard.create()` |
+| `buildTile()`'s `.tile` DOM in `find.html`, `tile()`'s in `more.html` | `YomuTitleCard.create()` |
+| `searchTile()` in `yomu-explore-more.js` | `YomuTitleCard.create()` |
+| `withPool()` in the library engine (dead after the wave rewrite) | the raced wave in `loadNext()` |
+| `installCss()`'s injected `<style>` in `yomu-explore-more.js` | `yomu-titlecard.css` |
 
 ---
 
