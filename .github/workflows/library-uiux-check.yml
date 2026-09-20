@@ -1,16 +1,21 @@
-name: Library and UI UX 10 of 10 gate
+name: Library UI UX and Performance 10 of 10 gate
 
 on:
   push:
     branches:
       - feature/full-source-library-2026-09-20
+      - perf/more-buttons-2x-loading-2026-09-20
     paths:
       - 'dist-app/yomu-library*'
       - 'dist-app/yomu-mori-chat*'
       - 'dist-app/yomu-mori-drag.js'
+      - 'dist-app/yomu-loading-policy.js'
+      - 'dist-app/yomu-performance.js'
+      - 'dist-app/yomu-explore-more.js'
       - 'scripts/optimize-export.py'
       - 'tools/library-gauntlet.mjs'
       - 'tools/uiux-gauntlet.mjs'
+      - 'tools/performance-gauntlet.mjs'
       - 'tools/gauntlet.mjs'
       - 'tools/search-gauntlet.mjs'
       - 'package.json'
@@ -21,6 +26,7 @@ on:
       - 'scripts/optimize-export.py'
       - 'tools/library-gauntlet.mjs'
       - 'tools/uiux-gauntlet.mjs'
+      - 'tools/performance-gauntlet.mjs'
       - 'package.json'
 
 permissions:
@@ -38,14 +44,18 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Syntax check new browser and gate code
+      - name: Syntax check browser and gate code
         run: |
           node --check dist-app/yomu-library-engine.js
           node --check dist-app/yomu-library-explorer.js
           node --check dist-app/yomu-mori-drag.js
           node --check dist-app/yomu-mori-chat.js
+          node --check dist-app/yomu-loading-policy.js
+          node --check dist-app/yomu-performance.js
+          node --check dist-app/yomu-explore-more.js
           node --check tools/library-gauntlet.mjs
           node --check tools/uiux-gauntlet.mjs
+          node --check tools/performance-gauntlet.mjs
           python3 -m py_compile scripts/optimize-export.py
 
       - name: Optimize the exact release export
@@ -65,3 +75,6 @@ jobs:
 
       - name: Library UI UX 10 of 10 gate
         run: node tools/uiux-gauntlet.mjs
+
+      - name: Performance and loading 10 of 10 gate
+        run: node tools/performance-gauntlet.mjs
