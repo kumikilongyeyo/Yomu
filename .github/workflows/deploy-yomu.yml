@@ -49,11 +49,15 @@ jobs:
               '<link rel="stylesheet" href="/yomu-controls-components.css">',
               '<link rel="stylesheet" href="/yomu-hero-plus.css">',
               '<script src="/yomu-controls.js" defer></script>',
+              # Search captures fetch before the two slow all-source wrappers,
+              # then installs its progressive fast-path after those wrappers.
+              '<script src="/yomu-search-fast-bootstrap.js" defer></script>',
               # These must be in every exported HTML file, not only Worker-first
               # routes. Search and Reader are static-asset routes, which is why
               # the reliability layer previously never ran there.
               '<script src="/yomu-source-reliability.js" defer></script>',
               '<script src="/yomu-source-ux-v2.js" defer></script>',
+              '<script src="/yomu-search-fast.js" defer></script>',
               '<script src="/yomu-catalog-fix.js" defer></script>',
               '<script src="/yomu-hero-plus.js" defer></script>',
               '<script src="/source-beast-loader.js" defer></script>',
@@ -122,8 +126,10 @@ jobs:
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
+          grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-sources.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-sources.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-sources.html
+          grep -q 'yomu-search-fast.js' /tmp/yomu-sources.html
           grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
 
@@ -133,17 +139,21 @@ jobs:
           # Search still queried only the shared registry.
           check search-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
           for i in 1 2 3 4 5 6; do
-            if grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html && grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html; then break; fi
+            if grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html && grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html && grep -q 'yomu-search-fast.js' /tmp/yomu-search.html; then break; fi
             sleep 3
             curl -L --fail --silent --show-error https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
           done
+          grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-search.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html
+          grep -q 'yomu-search-fast.js' /tmp/yomu-search.html
 
           check reader-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/read/yomu-smoke -o /tmp/yomu-reader.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
 
+          check search-fast curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-search-fast.js -o /tmp/yomu-search-fast.js
+          grep -q 'Yomu progressive search' /tmp/yomu-search-fast.js
           check source-ux curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js -o /tmp/yomu-source-ux-v2.js
           grep -q 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
           check reliability curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-reliability.js -o /tmp/yomu-source-reliability.js
