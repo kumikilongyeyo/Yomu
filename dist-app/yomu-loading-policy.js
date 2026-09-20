@@ -12,7 +12,6 @@
   window.__YomuLoadingPolicy = true;
 
   const STYLE_ID = 'yomu-loading-policy-css';
-  const ROOT_FLAG = 'yomuBlankLoading';
 
   function installCss() {
     if (document.getElementById(STYLE_ID)) return;
@@ -61,8 +60,6 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
   }
 
   function hasUsableContent() {
-    // Real reading/content surfaces first. Once any of these exist, every
-    // subsequent fetch is background work and the global loader stays gone.
     const strongSelectors = [
       '.yl-card', '.yr-card', '.tile-card', '#results .tile:not([disabled])',
       '.hero-carousel img', '.hero-pagination', '.home-grid .tile',
@@ -75,13 +72,12 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
       for (const node of nodes) if (visible(node)) return true;
     }
 
-    // Skeletons/placeholders count as usable paint too: if the reader can see
-    // a stable layout, covering it with another loader is worse than helpful.
+    // A stable skeleton is already useful paint. Do not cover it with another
+    // loader just because its data request is still running.
     for (const node of document.querySelectorAll('.yl-skeleton,.yv3-wait,[data-yomu-skeleton]')) {
       if (visible(node)) return true;
     }
 
-    // Generic fallback for routes whose React markup has no stable class.
     const root = document.querySelector('.g-main,main,[role="main"]');
     if (!root || !visible(root)) return false;
     const text = String(root.innerText || '').replace(/\s+/g, ' ').trim();
@@ -107,16 +103,34 @@ html[data-yomu-blank-loading='1'] #yomu-load::after{width:30px!important;height:
     if (!raf) raf = requestAnimationFrame(sync);
   }
 
+  function watchLoader() {
+    loader = document.getElementById('yomu-load');
+    if (!loader) return;
+    new MutationObserver(schedule).observe(loader, {
+      attributes: true,
+      attributeFilter: ['class', 'hidden', 'style']
+    });
+  }
+
   installCss();
   const start = () => {
-    loader = document.getElementById('yomu-load');
+    watchLoader();
     schedule();
-    new MutationObserver(schedule).observe(document.documentElement, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ['class', 'hidden', 'style', 'src']
-    });
+
+    // React/source surfaces can replace content, but observing child-list only
+    // is far cheaper than watching every image/class/style mutation while the
+    // reader scrolls through hundreds of pages.
+    new MutationObserver(() => {
+      if (!loader?.isConnected) watchLoader();
+      schedule();
+    }).observe(document.body, { childList: true, subtree: true });
+
+    // Image completion can turn a blank reader into usable content without a
+    // child-list mutation, so listen to load in capture phase instead.
+    document.addEventListener('load', (event) => {
+      if (event.target instanceof HTMLImageElement) schedule();
+    }, true);
+
     addEventListener('pageshow', schedule);
     addEventListener('popstate', schedule);
     addEventListener('hashchange', schedule);
