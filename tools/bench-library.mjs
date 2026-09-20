@@ -36,8 +36,19 @@ import { anilistMedia, collection } from '../tests/fixtures/catalog.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'docs', 'recovery');
 
-/** Both card systems, so one harness can measure both trees. */
-const CARD = '.yt-card:not(.yt-card--skeleton), .yl-card';
+/**
+ * Both card systems, so one harness can measure both trees -- and scoped, so
+ * it measures the same thing on each.
+ *
+ * `.yl-card` is not only the baseline's library card: it is also the global
+ * loader's own card (yomu-source-ux-v2.js), which exists in the DOM on search
+ * and reader routes. An unscoped selector therefore timed the *loader*
+ * appearing on the baseline and a real search result on the candidate, and
+ * reported the candidate as 1.9x slower at finding a title. It was comparing
+ * two different events.
+ */
+const CARD = '.yt-card:not(.yt-card--skeleton), #yomu-library-explorer .yl-card';
+const SEARCH_CARD = '#results .yt-card:not(.yt-card--skeleton), #results .tile:not([disabled])';
 
 /* The fixed network profile. Two providers well past any sane wave budget,
    one dead, the rest healthy but not instant. */
@@ -148,8 +159,8 @@ async function runOnce(browser, origin) {
   // Search: first usable result, then the first cross-source addition on top
   // of it. Both are "how long until this is useful", not "until it is done".
   await page.goto(origin + '/find?q=dungeon', { waitUntil: 'commit' });
-  const searchFirst = await measure(`#results ${CARD}`, 1);
-  const searchFill = await measure(`#results ${CARD}`, 6);
+  const searchFirst = await measure(SEARCH_CARD, 1);
+  const searchFill = await measure(SEARCH_CARD, 6);
 
   // Warm revisit: same context, so localStorage and the engine cache survive.
   await page.goto(origin + '/', { waitUntil: 'commit' });

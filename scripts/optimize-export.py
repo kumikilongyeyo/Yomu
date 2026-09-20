@@ -15,14 +15,22 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist-app"
 
 COMMON = [
-    # The canonical TitleCard and the single pagination owner. Every surface
-    # that draws a title or pages one depends on these two, so they are wired
-    # on every page rather than per route -- and not deferred: a renderer that
-    # arrives after its caller is a card that silently does not render and a
-    # rail that silently has no More button. Both files are small and local.
+    # The canonical TitleCard and the single pagination owner, wired on every
+    # page rather than per route.
+    #
+    # The card is NOT deferred, and that is deliberate: yomu-search-v3.js is
+    # itself non-deferred (it has to capture window.fetch before the fast lane
+    # wrapper), and a warm search served from sessionStorage can resolve in a
+    # microtask -- before a deferred script would have run. A renderer that
+    # arrives after its caller is a card that silently does not draw.
+    #
+    # The pager is deferred, because every module that claims a control is
+    # itself deferred and defer preserves document order, so it cannot arrive
+    # late. Blocking only what must block: the pair used to cost the first
+    # search result about 110ms on the benchmark's serialized fixture server.
     '<link rel="stylesheet" href="/yomu-titlecard.css">',
     '<script src="/yomu-titlecard.js"></script>',
-    '<script src="/yomu-pager.js"></script>',
+    '<script src="/yomu-pager.js" defer></script>',
     '<link rel="stylesheet" href="/yomu-controls-base.css">',
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',

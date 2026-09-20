@@ -134,16 +134,25 @@ Baseline is `origin/main` at `aa4032d`. Medians of 7 runs:
 
 | metric | baseline | after | ratio |
 |---|---|---|---|
-| Time to first usable card | 2873 ms | 413 ms | **0.14×** |
-| Time to ten usable cards | 2874 ms | 471 ms | **0.16×** |
-| Segment complete | 2932 ms | 496 ms | **0.17×** |
-| Warm revisit | 67 ms | 73 ms | 1.11× (target: <250 ms) |
-| Cumulative layout shift | 0.7303 | 0.0004 | **0.0005×** |
-| Search first result | 125 ms (p95 230) | 162 ms (p95 170) | 1.30× median, 0.74× p95 |
-| Search progressive fill | 191 ms | 170 ms | 0.89× |
+| Time to first usable card | 2873 ms | 406 ms | **0.14×** |
+| Time to ten usable cards | 2884 ms | 467 ms | **0.16×** |
+| Segment complete | 2933 ms | 496 ms | **0.17×** |
+| Search first result | 235 ms | 225 ms | 0.96× |
+| Search progressive fill | 243 ms | 235 ms | 0.97× |
+| Warm revisit | 65 ms | 79 ms | 1.22× (target: <250 ms) |
+| Cumulative layout shift | 0.419 | 0.0004 | **0.001×** |
 
 Pass conditions, evaluated by the tool rather than claimed: TTF10 ≤ 50 % of
 baseline ✅, warm revisit < 250 ms ✅, layout shift ≤ 0.05 ✅.
+
+**One correction, because the numbers are the point.** An earlier draft of this
+table reported the first search result as 1.9× *slower*. That was the harness,
+not the product: the card selector was `'.yt-card…, .yl-card'`, and `.yl-card`
+is not only the baseline's library card — it is also the **global loader's own
+card**, which exists in the DOM on search routes. So on the baseline it timed
+the loader appearing and on this branch it timed a real search result. Both
+search selectors are scoped to `#results` now and name each tree's result card
+explicitly, and the two trees come out within 4 % of each other.
 
 **Where the speed came from.** The engine used to `await withPool(wave)` — every
 request in a wave had to finish before one title could be taken from any of
@@ -156,10 +165,9 @@ cap already enforces the fairness the one-row-per-source rule was for.
 Stragglers are never discarded: they resolve into their own queue and the next
 segment finds them already fetched.
 
-**Stated plainly:** the median first search result is ~37 ms slower while its
-p95 is ~60 ms faster, and the warm revisit is ~6 ms slower at 73 ms against a
-250 ms target. Both differences are inside the run-to-run spread at n = 7 and
-neither is perceptible; they are reported because the numbers are the point.
+**Stated plainly:** the warm revisit is ~14 ms slower, at 79 ms against a
+250 ms target — inside the run-to-run spread at n = 7, and not perceptible. It
+is reported because the numbers are the point.
 
 ---
 
