@@ -118,6 +118,13 @@ jobs:
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
+          # HTML assets can be a few seconds behind the just-uploaded script at the edge.
+          # Retry the page itself, not only failed HTTP requests, until the new helper is linked.
+          for i in 1 2 3 4 5 6; do
+            if grep -q 'yomu-live-catalog.js' /tmp/yomu-sources.html; then break; fi
+            sleep 3
+            curl -L --fail --silent --show-error https://yomu.yomuread.workers.dev/sources -o /tmp/yomu-sources.html
+          done
           grep -q 'yomu-live-catalog.js' /tmp/yomu-sources.html
           grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
