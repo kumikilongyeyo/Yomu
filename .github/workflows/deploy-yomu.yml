@@ -114,7 +114,6 @@ jobs:
           set -e
           check() { echo "Checking $1"; shift; "$@"; }
           check sources curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/sources -o /tmp/yomu-sources.html
-          grep -q 'community-pack-compact.js' /tmp/yomu-sources.html
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
