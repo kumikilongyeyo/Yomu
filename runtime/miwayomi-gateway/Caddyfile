@@ -1,0 +1,15 @@
+:{$PORT:8080} {
+    encode zstd gzip
+
+    basic_auth {
+        {$YOMU_RUNTIME_USER} {$YOMU_RUNTIME_PASSWORD_HASH}
+    }
+
+    @writeAdmin {
+        method POST PUT PATCH DELETE
+        path /api/v1/extensions/* /api/v1/sources/*/prefs /api/v1/favorites* /api/v1/watch*
+    }
+    respond @writeAdmin "Runtime administration is not exposed through the Yomu reader gateway." 403
+
+    reverse_proxy 127.0.0.1:{$MIWAYOMI_PORT:4567}
+}
