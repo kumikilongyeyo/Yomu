@@ -1,6 +1,17 @@
 (() => {
   'use strict';
-  if (!/^\/sources(?:\.html)?\/?$/.test(location.pathname)) return;
+
+  /**
+   * Checked on every mount, not once at load.
+   *
+   * Yomu routes client-side, so `location.pathname` at load says where the
+   * browser happened to land, not where the reader is now. Returning here
+   * meant the panel never appeared when Sources was reached from inside the
+   * app -- only after a manual reload, which an installed Home Screen app
+   * cannot do. It also meant the panel, once mounted, followed the reader onto
+   * every other screen, because nothing ever asked the question again.
+   */
+  const onSourcesRoute = () => /^\/sources(?:\.html)?\/?$/.test(location.pathname);
 
   const PANEL_ID = 'yomu-source-fabric-command';
   const COLLECTION_KEY = 'yomu.v1.collection';
@@ -230,6 +241,12 @@
   }
 
   function mount() {
+    if (!onSourcesRoute()) {
+      // Left Sources. Take the panel with us; every other Source Fabric
+      // surface is anchored to it and goes at the same time.
+      document.getElementById(PANEL_ID)?.remove();
+      return;
+    }
     if (document.getElementById(PANEL_ID)) return;
     const surface = findScrollSurface();
     if (!surface) return;
@@ -384,8 +401,11 @@
 
   mount();
   let timer = null;
-  new MutationObserver(() => {
+  const schedule = () => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(mount, 80);
-  }).observe(document.documentElement,{childList:true,subtree:true});
+  };
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  // A route change on its own may move no DOM this observer can see.
+  window.addEventListener('yomu:route', schedule);
 })();

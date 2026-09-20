@@ -659,6 +659,13 @@ const ASSETS = [
   /* One resolver for "what happens when I click a title", ahead of every
      surface that draws one. Fetches nothing until something is clicked. */
   { file: 'yomu-open-title.js', tag: '<script src="/yomu-open-title.js" defer></scr' + 'ipt>' },
+  /* Source Fabric is listed only in sources.html, and Yomu routes client-side,
+     so reaching Sources from inside the app never loaded it -- a reload was
+     the only way in, and an installed Home Screen app has no reload button.
+     This belongs on every page precisely because it is the page that does not
+     have Source Fabric that needs to be able to fetch it. Order-independent:
+     it reads location on its own and loads what it needs. */
+  { file: 'yomu-fabric-route.js', tag: '<script src="/yomu-fabric-route.js" defer></scr' + 'ipt>' },
   /* The discovery engine, then the rails that draw it. */
   { file: 'yomu-rank.js', tag: '<script src="/yomu-rank.js" defer></scr' + 'ipt>' },
   { file: 'yomu-rails.js', tag: '<script src="/yomu-rails.js" defer></scr' + 'ipt>' },

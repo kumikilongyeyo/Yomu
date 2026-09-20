@@ -1,6 +1,8 @@
 (() => {
   'use strict';
-  if (!/^\/sources(?:\.html)?\/?$/.test(location.pathname)) return;
+
+  /** Asked on every mount: Yomu routes client-side. See source-fabric-panel.js. */
+  const onSourcesRoute = () => /^\/sources(?:\.html)?\/?$/.test(location.pathname);
 
   // Browser Run Free allows only one new browser acquisition every ~20 seconds.
   // Treat that short launch throttle as retryable, while keeping the separate
@@ -77,6 +79,7 @@
   async function checkAll(control){ const list=state.repositories.filter((repo)=>!repo.paused); if(!list.length)return; const original=control.textContent; control.disabled=true; for(let i=0;i<list.length;i+=1){control.textContent=`Checking ${i+1}/${list.length}…`;await checkRepository(list[i].id,null);} control.disabled=false; control.textContent=original; render(); }
 
   function mount(){
+    if(!onSourcesRoute()){document.getElementById('yomu-v8-fabric-compact')?.remove();return;}
     if(document.getElementById('yomu-v8-fabric-compact'))return;
     const anchor=document.getElementById('yomu-source-fabric-command'); if(!anchor?.parentNode)return;
     const shell=el('section'); shell.id='yomu-v8-fabric-compact';
@@ -108,5 +111,8 @@
 
   document.addEventListener('yomu:repositories-changed',()=>{state.repositories=read(KEYS.repositories,[]);if(state.active==='repositories')render();});
   mount();
-  let timer=null;new MutationObserver(()=>{if(timer)clearTimeout(timer);timer=setTimeout(mount,80);}).observe(document.documentElement,{childList:true,subtree:true});
+  let timer=null;
+  const schedule=()=>{if(timer)clearTimeout(timer);timer=setTimeout(mount,80);};
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('yomu:route', schedule);
 })();
