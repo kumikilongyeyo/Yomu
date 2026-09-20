@@ -135,13 +135,10 @@
     const age = row ? Date.now() - Number(row.at || 0) : Infinity;
 
     if (row && age <= FRESH_MS) {
-      // Warm navigation/search: paint now, refresh without blocking the user.
       network(key, input, init, true).catch(() => {});
       return Promise.resolve(cachedResponse(row, 'fresh'));
     }
     if (row && age <= STALE_MS) {
-      // A stale title list is dramatically more useful than a blank grid while
-      // a source wakes up. Revalidation replaces it for the next interaction.
       network(key, input, init, true).catch(() => {});
       return Promise.resolve(cachedResponse(row, 'stale'));
     }
@@ -171,6 +168,10 @@
       try {
         const u = new URL(String(raw), location.origin);
         if (!/^https?:$/.test(u.protocol)) continue;
+        const apiLike = row.kind === 'api' || /^yomuext-|^mihon-/.test(String(row.id || ''))
+          || /fabric|extension|suwayomi/i.test(String(row.runtime || row.category || row.kind || ''))
+          || /\/api\//i.test(u.pathname);
+        if (!apiLike) continue;
         u.hash = ''; u.search = '';
         if (!u.pathname.endsWith('/')) u.pathname += '/';
         const api = u.toString();
@@ -194,8 +195,6 @@
     }).catch(() => {});
   }
 
-  // quicklink-style destination prefetch: only visible/near-visible title links,
-  // only on connections where speculative traffic is appropriate.
   const prefetchedLinks = new Set();
   function prefetchHref(href) {
     try {
