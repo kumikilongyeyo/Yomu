@@ -15,6 +15,7 @@ on:
       - 'tools/search-gauntlet.mjs'
       - 'tools/library-gauntlet.mjs'
       - 'tools/uiux-gauntlet.mjs'
+      - 'tools/performance-gauntlet.mjs'
       - 'tools/progression/**'
       - 'wrangler.jsonc'
       - 'package.json'
@@ -58,9 +59,9 @@ jobs:
       - name: Library UI UX gauntlet (10/10 only)
         run: node tools/uiux-gauntlet.mjs
 
-      # Accept either a raw Cloudflare token or a secret pasted as
-      # "Bearer <token>". The latter used to become "Bearer Bearer <token>"
-      # here and Cloudflare rejected it as Authorization header code 6111.
+      - name: Performance and loading gauntlet (10/10 only)
+        run: node tools/performance-gauntlet.mjs
+
       - name: Check Cloudflare credentials
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -119,16 +120,25 @@ jobs:
           }
 
           fetch_until search-v3 'https://yomu.yomuread.workers.dev/yomu-search-v3.js' 'Yomu Search V3' /tmp/yomu-search-v3.js
-          # Wait on a marker unique to this release before running one-shot grep
-          # checks. Waiting on search-v3 can accept the previous deployment and
-          # race Cloudflare propagation immediately after wrangler returns.
+          fetch_until performance 'https://yomu.yomuread.workers.dev/yomu-performance.js' 'Yomu performance fast lane' /tmp/yomu-performance.js
+          fetch_until loading-policy 'https://yomu.yomuread.workers.dev/yomu-loading-policy.js' 'Yomu loading visibility policy' /tmp/yomu-loading-policy.js
+          fetch_until explore-more 'https://yomu.yomuread.workers.dev/yomu-explore-more.js' 'Yomu progressive exploration controls' /tmp/yomu-explore-more.js
+
+          # Wait on a marker unique to the federated-library release before
+          # running one-shot helper greps, avoiding stale-edge races.
           fetch_until find-page 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' 'yomu-library-engine.js' /tmp/yomu-find.html
+          grep -q 'yomu-performance.js' /tmp/yomu-find.html
+          grep -q 'yomu-loading-policy.js' /tmp/yomu-find.html
+          grep -q 'yomu-explore-more.js' /tmp/yomu-find.html
           grep -q 'yomu-search-v3.js' /tmp/yomu-find.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-find.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-find.html
           grep -q 'yomu-library-explorer.js' /tmp/yomu-find.html
 
           fetch_until home-page 'https://yomu.yomuread.workers.dev/' 'yomu-library-engine.js' /tmp/yomu-home.html
+          grep -q 'yomu-performance.js' /tmp/yomu-home.html
+          grep -q 'yomu-loading-policy.js' /tmp/yomu-home.html
+          grep -q 'yomu-explore-more.js' /tmp/yomu-home.html
           grep -q 'yomu-mori-chat.js' /tmp/yomu-home.html
           grep -q 'yomu-mori-drag.js' /tmp/yomu-home.html
 
@@ -139,6 +149,8 @@ jobs:
 
           fetch_until search-page 'https://yomu.yomuread.workers.dev/search' 'yomu-search-v3.js' /tmp/yomu-search.html
           fetch_until reader-page 'https://yomu.yomuread.workers.dev/read/yomu-smoke' 'yomu-source-reliability.js' /tmp/yomu-reader.html
+          grep -q 'yomu-loading-policy.js' /tmp/yomu-reader.html
+          grep -q 'yomu-performance.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
 
           fetch_until reliability 'https://yomu.yomuread.workers.dev/yomu-source-reliability.js' 'Yomu Source Reliability Layer' /tmp/yomu-source-reliability.js
@@ -160,6 +172,9 @@ jobs:
 
       - name: Library UI UX gauntlet against production (10/10 only)
         run: node tools/uiux-gauntlet.mjs https://yomu.yomuread.workers.dev
+
+      - name: Performance and loading gauntlet against production (10/10 only)
+        run: node tools/performance-gauntlet.mjs https://yomu.yomuread.workers.dev
 
       - name: Roll back failed production release
         if: ${{ failure() && steps.deploy.outcome == 'success' }}
