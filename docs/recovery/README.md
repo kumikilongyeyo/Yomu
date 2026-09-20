@@ -163,6 +163,19 @@ neither is perceptible; they are reported because the numbers are the point.
 
 ---
 
+### Deliberately not converted
+
+`adult.html` still draws its own tile. It is an 18+-gated page whose covers are
+concealed on purpose — a mature badge over a blurred cover is a different
+treatment, not drift — and it is outside the four surfaces the spec names
+(Home, Discover, Search, Full Library). It is listed here so nobody reads its
+absence as an oversight.
+
+The React bundle's own `.title-card` (in-app Library and Search) is likewise
+untouched: it is compiled into the Expo bundle, whose source is not in this
+repository. The chip layer in `yomu-tags.css` already gives it the same rating
+corner as the canonical card.
+
 ## 5. Known, pre-existing, and not introduced here
 
 **React hydration warning (#418).** The Expo bundle raises one recoverable

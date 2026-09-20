@@ -50,9 +50,18 @@
   border-radius: var(--yt-radius);
   background: var(--raised, #efeade);
   transition: transform 200ms cubic-bezier(.3, 1, .5, 1);
-  /* Off-screen cards in a long library do not pay for layout or paint. */
+}
+
+/* Off-screen cards in a long library do not pay for layout or paint.
+ *
+ * Only in the grid, and only with `auto` sizes. A rail is a horizontal strip
+ * whose height is its cards' height, so a guessed intrinsic size there makes
+ * the strip the wrong height until the cards scroll into view. `auto <length>`
+ * keeps the last real measurement instead of the guess, and the guess is only
+ * used before a card has ever been rendered. */
+.yt-grid > .yt-card > .yt-card__art {
   content-visibility: auto;
-  contain-intrinsic-size: 190px 285px;
+  contain-intrinsic-size: auto 190px auto 285px;
 }
 
 .yt-card:hover .yt-card__art { transform: translateY(-2px); }
