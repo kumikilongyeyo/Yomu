@@ -494,7 +494,14 @@
       const pending = new Map();
       for (const source of new Set(wave)) {
         const state = stateFor(source, opts.mode);
-        if (state.queue.length || state.exhausted) { drain(source); continue; }
+        if (state.queue.length || state.exhausted) {
+          /* Only while the segment still has room. Draining every already-warm
+             source in the wave regardless would push past `count`, and the
+             trim at the end would then drop rows the caller has already been
+             handed and painted. */
+          if (out.length < opts.count) drain(source);
+          continue;
+        }
         pending.set(source, fetchSourcePage(source, opts.mode).then(() => source, () => source));
       }
 
@@ -510,17 +517,9 @@
         topUp();
       }
       clearTimeout(deadline);
+      /* Also covers the case a duplicate merged a new provider into an old
+         canonical row rather than adding one. */
       topUp();
-
-      // A duplicate may have merged a new provider into an old canonical row.
-      // Fill any remaining holes from everything already fetched.
-      if (out.length < opts.count) {
-        const fill = availableFromCatalog(opts, opts.count - out.length);
-        for (const row of fill) {
-          if (!out.some((x) => normalize(x.title) === normalize(row.title))) { out.push(row); onRow(row); }
-          if (out.length >= opts.count) break;
-        }
-      }
 
       if (wave.every((source) => stateFor(source, opts.mode).exhausted && !stateFor(source, opts.mode).queue.length)) {
         const anyMore = list.some((source) => !stateFor(source, opts.mode).exhausted || stateFor(source, opts.mode).queue.length);
