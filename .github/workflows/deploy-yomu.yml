@@ -10,6 +10,7 @@ on:
       - 'worker/**'
       - 'extensions/**'
       - 'scripts/source-forge-gauntlet.mjs'
+      - 'tools/search-gauntlet.mjs'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -37,6 +38,8 @@ jobs:
         run: npm ci
       - name: Typecheck Worker
         run: npm run typecheck
+      - name: Search UX gauntlet (10/10)
+        run: node tools/search-gauntlet.mjs
       - name: Inject route helpers into exported HTML
         run: |
           python - <<'PY'
@@ -49,8 +52,12 @@ jobs:
               '<link rel="stylesheet" href="/yomu-controls-components.css">',
               '<link rel="stylesheet" href="/yomu-hero-plus.css">',
               '<script src="/yomu-controls.js" defer></script>',
-              # Search captures fetch before the two slow all-source wrappers,
-              # then installs its progressive fast-path after those wrappers.
+              # Search V3 is intentionally non-deferred. /find starts its first
+              # query from an inline script while HTML is still parsing, so V3
+              # must own fetch before that request can hit the slow all-source
+              # wrappers. It re-installs itself at DOMContentLoaded after the
+              # deferred reliability helpers have run.
+              '<script src="/yomu-search-v3.js"></script>',
               '<script src="/yomu-search-fast-bootstrap.js" defer></script>',
               # These must be in every exported HTML file, not only Worker-first
               # routes. Search and Reader are static-asset routes, which is why
@@ -126,6 +133,7 @@ jobs:
           grep -q 'source-auto-switch.js' /tmp/yomu-sources.html
           grep -q 'community-pack-top.js' /tmp/yomu-sources.html
           grep -q 'yomu-controls.js' /tmp/yomu-sources.html
+          grep -q 'yomu-search-v3.js' /tmp/yomu-sources.html
           grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-sources.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-sources.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-sources.html
@@ -133,27 +141,32 @@ jobs:
           grep -q 'yomu-catalog-fix.js' /tmp/yomu-sources.html
           grep -q 'yomu-hero-plus.js' /tmp/yomu-sources.html
 
-          # Search and Reader are served as static assets, so explicitly prove
-          # the merged-source layer and loader are linked there too. This guards
-          # against the exact regression where Sources looked configured while
-          # Search still queried only the shared registry.
-          check search-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
+          # /find is the search surface people actually use. Verify it directly;
+          # checking /search alone allowed the previous regression to ship.
+          check find-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' -o /tmp/yomu-find.html
           for i in 1 2 3 4 5 6; do
-            if grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html && grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html && grep -q 'yomu-search-fast.js' /tmp/yomu-search.html; then break; fi
+            if grep -q 'yomu-search-v3.js' /tmp/yomu-find.html; then break; fi
             sleep 3
-            curl -L --fail --silent --show-error https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
+            curl -L --fail --silent --show-error 'https://yomu.yomuread.workers.dev/find?q=nano%20machine' -o /tmp/yomu-find.html
           done
+          grep -q 'yomu-search-v3.js' /tmp/yomu-find.html
+
+          check search-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/search -o /tmp/yomu-search.html
+          grep -q 'yomu-search-v3.js' /tmp/yomu-search.html
           grep -q 'yomu-search-fast-bootstrap.js' /tmp/yomu-search.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-search.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-search.html
           grep -q 'yomu-search-fast.js' /tmp/yomu-search.html
 
           check reader-page curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/read/yomu-smoke -o /tmp/yomu-reader.html
+          grep -q 'yomu-search-v3.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-reliability.js' /tmp/yomu-reader.html
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-reader.html
 
+          check search-v3 curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-search-v3.js -o /tmp/yomu-search-v3.js
+          grep -q 'Yomu Search V3' /tmp/yomu-search-v3.js
           check search-fast curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-search-fast.js -o /tmp/yomu-search-fast.js
-          grep -q 'Yomu progressive search' /tmp/yomu-search-fast.js
+          grep -q 'Yomu search fast lane' /tmp/yomu-search-fast.js
           check source-ux curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-ux-v2.js -o /tmp/yomu-source-ux-v2.js
           grep -q 'Yomu merged-source loading' /tmp/yomu-source-ux-v2.js
           check reliability curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-source-reliability.js -o /tmp/yomu-source-reliability.js
@@ -177,3 +190,5 @@ jobs:
           grep -q 'Catalog truth layer' /tmp/yomu-catalog-fix.js
           check hero curl -L --fail --silent --show-error --retry 5 --retry-delay 3 https://yomu.yomuread.workers.dev/yomu-hero-plus.js -o /tmp/yomu-hero-plus.js
           grep -q 'Highest rated' /tmp/yomu-hero-plus.js
+      - name: Search UX gauntlet against production (10/10)
+        run: node tools/search-gauntlet.mjs https://yomu.yomuread.workers.dev
