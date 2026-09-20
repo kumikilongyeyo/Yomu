@@ -1,15 +1,20 @@
-FROM ghcr.io/miwayomi/miwayomi:latest AS miwayomi
 FROM caddy:2-alpine AS caddy
 
 FROM eclipse-temurin:21-jre
+
+ARG MIWAYOMI_VERSION=0.2.9
+ARG MIWAYOMI_SHA256=475b95dabaaca9f283263a5eafa12bec3580b658caae70407ae227ae4fa0e9b7
 
 WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl tini \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fL --retry 3 \
+      "https://github.com/miwayomi/miwayomi/releases/download/v${MIWAYOMI_VERSION}/miwayomi-all.jar" \
+      -o /app/miwayomi-all.jar \
+    && echo "${MIWAYOMI_SHA256}  /app/miwayomi-all.jar" | sha256sum -c -
 
-COPY --from=miwayomi /app/miwayomi-all.jar /app/miwayomi-all.jar
 COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY entrypoint.sh /entrypoint.sh
