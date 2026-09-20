@@ -14,15 +14,58 @@ permissions:
   contents: read
 
 jobs:
-  docker-build:
+  runtime-smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: ./runtime/miwayomi-gateway
-          push: false
-          tags: yomu-miwayomi-runtime:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
+      - name: Build runtime image
+        run: docker build -t yomu-miwayomi-runtime:ci ./runtime/miwayomi-gateway
+
+      - name: Boot runtime
+        run: |
+          docker run -d \
+            --name yomu-runtime-ci \
+            -p 18080:8080 \
+            -e YOMU_RUNTIME_USER=yomu \
+            -e YOMU_RUNTIME_PASSWORD=ci-only-password \
+            -e FLARESOLVERR_URL= \
+            yomu-miwayomi-runtime:ci
+
+      - name: Verify auth and JVM health
+        run: |
+          set -euo pipefail
+          trap 'docker logs yomu-runtime-ci || true' ERR
+
+          # Public access must stay closed.
+          for attempt in $(seq 1 90); do
+            code="$(curl -sS -o /tmp/public-health.txt -w '%{http_code}' http://127.0.0.1:18080/api/v1/health || true)"
+            if [ "$code" = "401" ]; then
+              break
+            fi
+            if [ "$attempt" = "90" ]; then
+              echo "Gateway never reached the expected authenticated state; last HTTP code: $code"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Authenticated access must reach miwayomi and report healthy.
+          curl -fsS -u yomu:ci-only-password http://127.0.0.1:18080/api/v1/health | tee /tmp/runtime-health.json
+          grep -q '"status":"ok"' /tmp/runtime-health.json
+          grep -q '"service":"miwayomi"' /tmp/runtime-health.json
+
+          # Reader gateway must reject executable extension administration.
+          admin_code="$(curl -sS -u yomu:ci-only-password -o /tmp/admin.txt -w '%{http_code}' \
+            -X POST -H 'content-type: application/json' \
+            --data '{"repoUrl":"https://example.invalid/index.json","apk":"nope.apk"}' \
+            http://127.0.0.1:18080/api/v1/extensions/install)"
+          test "$admin_code" = "403"
+
+      - name: Container logs
+        if: always()
+        run: docker logs yomu-runtime-ci || true
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f yomu-runtime-ci || true
