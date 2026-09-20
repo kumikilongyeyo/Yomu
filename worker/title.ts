@@ -39,6 +39,13 @@ const BLIND = new Set(['comick']);
 /** How long a browser may reuse a resolution. A binding can change. */
 const CACHE = 'private, max-age=300';
 
+/**
+ * How long one provider gets to answer before it is treated as not carrying
+ * the title. Generous next to a warm provider (~1.5s) and far short of the
+ * Worker's own budget, which is the thing being protected.
+ */
+const PROVIDER_TIMEOUT_MS = 6_000;
+
 export const slugify = (name: string): string =>
   String(name || '')
     .toLowerCase()
@@ -105,14 +112,24 @@ export async function handleTitle(request: Request, env: Env, url: URL): Promise
 
   try {
     const adult = url.searchParams.get('adult') === '1';
-    const providers = (await buildProviders(env, url.origin, adult, false))
+    // buildProviders(env, origin, includeSuwayomi, adult). Suwayomi is off here
+    // because this route filters it out anyway -- asking for it only bought a
+    // round trip to somebody's home server before discarding the answer.
+    const providers = (await buildProviders(env, url.origin, false, adult))
       .filter((p) => p.kind !== 'suwayomi');
 
+    /* Every provider is asked at once and the slowest one used to set the
+       latency of the whole redirect, with nothing to stop a wedged source from
+       holding the request until the Worker ran out of budget -- which
+       Cloudflare answers with an HTML error 1102 page instead of the 302. A
+       provider that has not answered inside the deadline simply did not carry
+       this title. */
+    const deadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), PROVIDER_TIMEOUT_MS));
     const batches = await Promise.all(
       providers.map(async (provider) => {
         try {
-          const result = await provider.extension.search(name, 1);
-          return { provider, series: result.series };
+          const result = await Promise.race([provider.extension.search(name, 1), deadline]);
+          return { provider, series: result?.series ?? [] };
         } catch {
           return { provider, series: [] };
         }
