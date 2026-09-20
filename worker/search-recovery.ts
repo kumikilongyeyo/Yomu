@@ -5,8 +5,24 @@ type WebsitePlan = {
   nsfw?: boolean;
 };
 
-const TIMEOUT_MS = 8_000;
-const MAX_HTML = 2_500_000;
+const TIMEOUT_MS = 6_000;
+/**
+ * How much of a search page is worth reading.
+ *
+ * This runs inside a Worker with a CPU budget, and every byte here is walked by
+ * the anchor scanner below. 2.5MB of HTML on a link-dense directory is tens of
+ * thousands of anchors and seconds of CPU -- enough to exceed the Worker's
+ * limit, which Cloudflare answers with an HTML error 1102 page. The client then
+ * reports that page as a JSON parse error ("the string did not match the
+ * expected pattern" in Safari), so an over-eager recovery here surfaced as
+ * "Search failed" on the reader's screen. A search page puts its results near
+ * the top; 600KB reaches them on every site tested and bounds the worst case.
+ */
+const MAX_HTML = 600_000;
+/** Anchors examined per page. A results page needs far fewer than this. */
+const MAX_ANCHORS = 3_000;
+/** Wall-clock budget for the whole recovery, across every candidate URL. */
+const BUDGET_MS = 9_000;
 const UA = 'Mozilla/5.0 (compatible; Yomu-Search-Recovery/1.0; +https://yomu.yomuread.workers.dev)';
 
 function decodeJsonToken<T>(token: string): T | null {
@@ -31,10 +47,12 @@ function normalizedHost(value: string): string {
   try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); } catch { return ''; }
 }
 
-function sameSource(candidate: string, root: string): boolean {
-  const a = normalizedHost(candidate);
-  const b = normalizedHost(root);
+function hostsMatch(a: string, b: string): boolean {
   return Boolean(a && b && (a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`)));
+}
+
+function sameSource(candidate: string, root: string): boolean {
+  return hostsMatch(normalizedHost(candidate), normalizedHost(root));
 }
 
 function cleanText(value: string): string {
@@ -52,11 +70,19 @@ function cleanText(value: string): string {
     .trim();
 }
 
-function attr(tag: string, name: string): string {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const quoted = tag.match(new RegExp(`\\b${escaped}\\s*=\\s*(["'])(.*?)\\1`, 'i'));
+/**
+ * The href of one `<a>`, from its attribute text.
+ *
+ * Precompiled: this used to build two RegExp objects per call and was called
+ * once per anchor on the page, which is most of the CPU this file ever spent.
+ */
+const HREF_QUOTED = /\bhref\s*=\s*(["'])(.*?)\1/i;
+const HREF_BARE = /\bhref\s*=\s*([^\s>]+)/i;
+
+function hrefOf(attrs: string): string {
+  const quoted = HREF_QUOTED.exec(attrs);
   if (quoted?.[2]) return quoted[2].replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'");
-  const bare = tag.match(new RegExp(`\\b${escaped}\\s*=\\s*([^\\s>]+)`, 'i'));
+  const bare = HREF_BARE.exec(attrs);
   return String(bare?.[1] || '').replace(/&amp;/gi, '&');
 }
 
@@ -72,15 +98,19 @@ function normalizeTitle(value: string): string {
     .trim();
 }
 
-function titleRelevant(title: string, query: string): boolean {
+/** `query` is already normalised -- normalizeTitle runs NFKD and is not cheap. */
+function titleMatchesNormalizedQuery(title: string, b: string): boolean {
   const a = normalizeTitle(title);
-  const b = normalizeTitle(query);
   if (!a || !b) return false;
   if (a === b || a.includes(b) || b.includes(a)) return true;
   const words = new Set(a.split(' ').filter((x) => x.length > 1));
   const queryWords = b.split(' ').filter((x) => x.length > 1);
   if (!queryWords.length) return false;
   return queryWords.filter((word) => words.has(word)).length / queryWords.length >= 0.72;
+}
+
+function titleRelevant(title: string, query: string): boolean {
+  return titleMatchesNormalizedQuery(title, normalizeTitle(query));
 }
 
 function isSeriesPath(target: URL, plan: WebsitePlan): boolean {
@@ -93,18 +123,36 @@ function isSeriesPath(target: URL, plan: WebsitePlan): boolean {
   return /\/(?:webtoons?|mangas?|manhwas?|manhuas?|comics?|series|titles?|novels?|books?|stories?|projects?|works?)\//i.test(target.pathname);
 }
 
-function parseRows(html: string, pageUrl: string, plan: WebsitePlan, query: string): any[] {
-  const root = String(plan.baseUrl || '');
+const ANCHOR = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+
+/**
+ * Title links on one search page.
+ *
+ * The order of the tests matters more than any one of them: every anchor on a
+ * page runs the first test, and only a handful reach the last. Cheapest first,
+ * so the expensive work (URL parsing, tag stripping, NFKD normalisation) only
+ * ever runs on anchors that could plausibly be a title.
+ */
+function parseRows(html: string, pageUrl: string, plan: WebsitePlan, normalizedQuery: string): any[] {
+  const rootHost = normalizedHost(String(plan.baseUrl || ''));
   const rows: any[] = [];
   const seen = new Set<string>();
-  for (const match of html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) {
-    const href = attr(`<a ${match[1]}>`, 'href');
-    if (!href || href.startsWith('#') || /^(?:javascript:|mailto:|tel:)/i.test(href)) continue;
+  let scanned = 0;
+
+  ANCHOR.lastIndex = 0;
+  for (let match = ANCHOR.exec(html); match; match = ANCHOR.exec(html)) {
+    if (++scanned > MAX_ANCHORS) break;
+
+    const href = hrefOf(match[1]);
+    if (!href || href.charCodeAt(0) === 35 /* # */ || /^(?:javascript:|mailto:|tel:)/i.test(href)) continue;
+
     let target: URL;
     try { target = new URL(href, pageUrl); } catch { continue; }
-    if (!sameSource(target.toString(), root) || !isSeriesPath(target, plan)) continue;
+    if (!hostsMatch(normalizedHost(target.href), rootHost) || !isSeriesPath(target, plan)) continue;
+
     const title = cleanText(match[2] || '');
-    if (!titleRelevant(title, query)) continue;
+    if (!titleMatchesNormalizedQuery(title, normalizedQuery)) continue;
+
     target.hash = '';
     const canonical = target.toString();
     if (seen.has(canonical)) continue;
@@ -127,17 +175,23 @@ async function searchSite(plan: WebsitePlan, query: string): Promise<any[]> {
   try { root = new URL(rootRaw); } catch { return []; }
   if (!['https:', 'http:'].includes(root.protocol) || root.username || root.password) return [];
 
+  const escaped = encodeURIComponent(query);
   const candidates = [
-    new URL(`/search/?search=${encodeURIComponent(query)}`, root),
-    new URL(`/search?search=${encodeURIComponent(query)}`, root),
-    new URL(`/?search=${encodeURIComponent(query)}`, root),
-    new URL(`/search/?keyword=${encodeURIComponent(query)}`, root),
-    new URL(`/search?keyword=${encodeURIComponent(query)}`, root),
-    new URL(`/search/?query=${encodeURIComponent(query)}`, root),
+    new URL(`/search/?search=${escaped}`, root),
+    new URL(`/search?search=${escaped}`, root),
+    new URL(`/?search=${escaped}`, root),
+    new URL(`/search/?keyword=${escaped}`, root),
+    new URL(`/search?keyword=${escaped}`, root),
+    new URL(`/search/?query=${escaped}`, root),
   ];
 
+  const normalizedQuery = normalizeTitle(query);
+  const deadline = Date.now() + BUDGET_MS;
   let best: any[] = [];
   for (const candidate of candidates) {
+    // Six sequential fetches of a multi-megabyte page is how this exceeded the
+    // Worker's limits. The budget is the stop, not the candidate count.
+    if (Date.now() >= deadline) break;
     try {
       const response = await fetch(candidate.toString(), {
         redirect: 'follow',
@@ -154,9 +208,11 @@ async function searchSite(plan: WebsitePlan, query: string): Promise<any[]> {
       if (!sameSource(finalUrl, root.toString())) continue;
       const html = (await response.text()).slice(0, MAX_HTML);
       if (/cf-chl-|challenge-platform|checking your browser|just a moment\.\.\.|g-recaptcha|hcaptcha|turnstile-wrapper|captcha-container/i.test(html.slice(0, 140_000))) continue;
-      const rows = parseRows(html, finalUrl, plan, query);
+      const rows = parseRows(html, finalUrl, plan, normalizedQuery);
       if (rows.length > best.length) best = rows;
-      if (best.some((row) => normalizeTitle(row.title) === normalizeTitle(query))) break;
+      // A candidate that answered with title links is the site's search page.
+      // Parsing the remaining five spends CPU to confirm what is already known.
+      if (best.length) break;
     } catch {}
   }
   return best;
