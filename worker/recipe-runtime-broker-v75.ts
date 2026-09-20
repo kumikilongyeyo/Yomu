@@ -155,7 +155,7 @@ async function discoverKeiyoushiByHost(targetUrl: string): Promise<any[]> {
         storeId: 'mihon-keiyoushi',
         name: build.name || slug,
         id: slug,
-        package: `keiyoushi.${lang}.${slug}`,
+        package: `eu.kanade.tachiyomi.extension.${lang}.${slug}`,
         baseUrl: build.baseUrl,
         language: build.language || lang,
         version: build.version,
@@ -242,12 +242,20 @@ export async function upgradeWithRemoteRecipe(
     version: row.version,
     discoveredBy: row.discoveredBy,
   }));
+  const runtimeRoute = String(remote.route ?? (remote.runtime === 'miwayomi-apk' ? 'mihon-apk-runtime' : 'remote-recipe'));
   const remoteEvidence = remote.recipe ? {
     ecosystem: 'remote-recipe-runtime',
     store: 'Yomu Source Runtime',
     name: remote.recipe.name,
     family: remote.recipe.family,
     sourceFiles: remote.recipe.sourceFiles,
+  } : remote.source ? {
+    ecosystem: remote.runtime === 'miwayomi-apk' ? 'mihon-apk-runtime' : 'remote-runtime',
+    store: 'Yomu Source Runtime',
+    name: remote.source.name,
+    id: remote.source.id,
+    package: remote.source.pkg,
+    language: remote.source.lang,
   } : undefined;
   const mergedEvidence = [...evidence, ...discoveryEvidence, ...(remoteEvidence ? [remoteEvidence] : [])];
 
@@ -256,7 +264,7 @@ export async function upgradeWithRemoteRecipe(
       ...payload,
       ok: true,
       ready: true,
-      route: 'remote-recipe',
+      route: runtimeRoute,
       confidence: remote.confidence ?? 'high',
       score: remote.score ?? 99,
       adapter: remote.adapter,
@@ -264,12 +272,15 @@ export async function upgradeWithRemoteRecipe(
       remoteRecipe: remote.recipe,
       remoteProbe: remote.probe,
       evidence: mergedEvidence,
-      message: remote.message ?? 'The maintained recipe passed through Yomu Remote Recipe Runtime.',
+      message: remote.message ?? (remote.runtime === 'miwayomi-apk'
+        ? 'The maintained Mihon/Aniyomi extension matched an installed executable runtime source.'
+        : 'The maintained recipe passed through Yomu Remote Recipe Runtime.'),
       fabric: {
         ...(payload.fabric ?? {}),
         version: VERSION,
-        generation: 'Recipe Engine',
-        remoteRecipeRuntime: true,
+        generation: remote.runtime === 'miwayomi-apk' ? 'Executable Extension Runtime' : 'Recipe Engine',
+        remoteRecipeRuntime: remote.runtime !== 'miwayomi-apk',
+        executableExtensionRuntime: remote.runtime === 'miwayomi-apk',
         sourceRepositoryHostDiscovery: true,
       },
     });
@@ -280,34 +291,15 @@ export async function upgradeWithRemoteRecipe(
       ...payload,
       ok: true,
       ready: false,
-      route: 'recipe-browser-required',
+      route: 'browser-required',
       browserRequired: true,
-      confidence: 'high',
-      score: 0,
-      runtime: 'browser',
-      remoteRecipe: remote.recipe,
-      evidence: mergedEvidence,
-      message: remote.message ?? 'The maintained upstream recipe explicitly requires browser/WebView state.',
-      fabric: {
-        ...(payload.fabric ?? {}),
-        version: VERSION,
-        generation: 'Recipe Engine',
-        remoteRecipeRuntime: true,
-        sourceRepositoryHostDiscovery: true,
-      },
-    });
-  }
-
-  if (Array.isArray(remote.failures) && remote.failures.length) {
-    return json({
-      ...payload,
-      ok: true,
-      ready: false,
-      route: 'remote-recipe-exhausted',
+      confidence: 'medium',
+      score: Math.max(Number(payload.score ?? 0), Number(remote.score ?? 74)),
       runtime: remote.runtime ?? 'hatchable-browser-recipe',
-      remoteFailures: remote.failures,
+      remoteRecipe: remote.recipe,
+      remoteProbe: remote.probe,
       evidence: mergedEvidence,
-      message: remote.message ?? 'The maintained recipe compiled, but the remote reader gauntlet did not pass.',
+      message: remote.message ?? 'The maintained recipe needs a browser-capable executor before Yomu can safely use it.',
       fabric: {
         ...(payload.fabric ?? {}),
         version: VERSION,
