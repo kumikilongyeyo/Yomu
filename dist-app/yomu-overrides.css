@@ -2455,3 +2455,24 @@ html[data-yomu-src="expanded"] .yomu-src-more::after { transform: rotate(90deg);
 #yomu-chapter-jump[data-empty] { border-color: #f2887d80; }
 #yomu-chapter-jump::-webkit-search-cancel-button { filter: grayscale(1) opacity(.6); }
 .yomu-list-pad { pointer-events: none; }
+
+/* ---------------------------------------------------------------------------
+ * Room for the dock.
+ *
+ * .g-app is the scroller (height:100dvh; overflow-y:auto) and the dock is
+ * position:fixed, 76px tall, at bottom:calc(18px + safe-area) -- but nothing
+ * reserved room for it, so a page's last content sits underneath. That is
+ * cosmetic until the last thing is a control: the library's "Load 10 more"
+ * measures visible, enabled and stable and still cannot be tapped, because the
+ * dock takes the pointer. CI caught it at 390px, where the two-column grid puts
+ * the pager at the very bottom of a long scroll.
+ *
+ * padding-bottom gives the scroller somewhere to go; scroll-padding-bottom is
+ * what keeps scrollIntoView -- and keyboard focus, and Playwright -- from
+ * parking an element in the dock's lap.
+ * ------------------------------------------------------------------------- */
+.g-app {
+  --yomu-dock-clearance: calc(76px + 18px + 16px + env(safe-area-inset-bottom));
+  padding-bottom: var(--yomu-dock-clearance);
+  scroll-padding-bottom: var(--yomu-dock-clearance);
+}
