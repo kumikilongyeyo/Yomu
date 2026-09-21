@@ -55,16 +55,71 @@
     catch { return false; }
   };
 
+  /**
+   * One key per work, across sources that disagree about its name.
+   *
+   * Sources do not answer with a clean title. They answer with whatever their
+   * page says, which in the wild is a rating stuck on the front, a status in
+   * brackets on the end, or -- from at least one adapter -- the whole metadata
+   * line. A real search for "nano machine" came back as three separate cards:
+   *
+   *     "9.3 Nano Machine"                                  (asurascans)
+   *     "Nano Machine (END)"                                (webnovel)
+   *     "Nano Machine Author(S): Updating Chapters 330-..." (Mgeko)
+   *
+   * That is one book, and the reader should get one card wearing "+2". So the
+   * rating, the bracketed status and the metadata tail come off before the key
+   * is taken.
+   */
   function normalize(value) {
     return String(value || '')
       .toLowerCase()
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[’'`]/g, '')
+      /* A leading score: "9.3 Nano Machine", "[8.7] Nano Machine". */
+      .replace(/^\s*[\[(]?\d{1,2}(?:[.,]\d)?[\])]?\s+(?=[a-z])/, '')
+      /* Everything from the point a source started printing its own metadata. */
+      .replace(/\b(?:author\s*\(?s\)?|artist\s*\(?s\)?|status|genres?|updating|last\s+updated|rating)\b[\s\S]*$/i, ' ')
       .replace(/[^a-z0-9]+/g, ' ')
       .replace(/\b(the|a|an|of|and|manga|manhwa|manhua|webtoon|comic|official|colou?red?|color|season|part|vol(?:ume)?|novel|remake|fan\s?colou?red)\b/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  /**
+   * Words that are a source talking about a book rather than part of its name.
+   *
+   * Used only to decide whether one normalized title is the same work as a
+   * longer one starting with it. "Nano Machine End" is; "Solo Leveling
+   * Ragnarok" is not, because `ragnarok` is not in here -- and that matters,
+   * because it is a different book.
+   */
+  const TAIL_NOISE = /^(?:end|ended|ongoing|complete|completed|finished|hiatus|raw|raws|eng|english|li|updating|chapters?|ch|new|latest|full|hd|free|read|online|scan|scans|\d+|days?|hours?|minutes?|ago)$/;
+
+  function isNoiseTail(tail) {
+    const words = tail.split(' ').filter(Boolean);
+    return words.length > 0 && words.length <= 8 && words.every((word) => TAIL_NOISE.test(word));
+  }
+
+  /**
+   * The key an incoming title should merge into.
+   *
+   * Exact match first. Failing that, a known work whose key is a prefix of
+   * this one (or the other way round) where everything after the prefix is
+   * noise. Conservative on purpose: a sequel's name is not noise, so a sequel
+   * keeps its own card.
+   */
+  function mergeKey(key) {
+    if (!key) return '';
+    if (canonical.has(key)) return key;
+    if (key.length < 8) return key;
+    for (const known of canonical.keys()) {
+      if (known.length < 8) continue;
+      if (key.startsWith(known + ' ') && isNoiseTail(key.slice(known.length + 1))) return known;
+      if (known.startsWith(key + ' ') && isNoiseTail(known.slice(key.length + 1))) return known;
+    }
+    return key;
   }
 
   function canonicalApi(value) {
@@ -241,7 +296,7 @@
   function mergeItem(source, item) {
     if (!item?.id || !item?.title || blocked(source)) return null;
     if (!adultAllowed() && item.nsfw) return null;
-    const key = normalize(item.title);
+    const key = mergeKey(normalize(item.title));
     if (!key) return null;
     const provider = makeProvider(source, item);
     let row = canonical.get(key);

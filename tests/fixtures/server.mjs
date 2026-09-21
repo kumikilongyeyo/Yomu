@@ -248,6 +248,26 @@ export async function startFixtureServer({ port = 0 } = {}) {
     if (url.pathname === '/__fixture/collection') {
       return json(res, collection(origin, { includeNami: url.searchParams.get('nami') !== '0' }));
     }
+    if (url.pathname === '/community-picks.json') {
+      /* A fixed community file, so Mori's community signal and its chooser are
+         assertions rather than whatever CI last collected. */
+      return json(res, {
+        schema: 'yomu.community-picks/1',
+        generatedAt: '2026-09-20T04:10:00.000Z',
+        sources: {
+          anilist: { ok: true, rows: 120, label: 'AniList', about: 'Community score and readership' },
+          mangaupdates: { ok: true, rows: 80, label: 'MangaUpdates', about: 'Reader ratings, weighted by vote count' },
+          myanimelist: { ok: true, rows: 40, label: 'MyAnimeList', about: 'MAL rankings and favourites, via Jikan' },
+          reddit: { ok: false, rows: 0, label: 'Reddit', about: 'Mentions counted across recommendation threads', error: 'no REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set' },
+        },
+        counts: { works: 240, picks: 3 },
+        picks: [
+          { title: 'Community Consensus Saga', cover: '/fixtures/cover.svg?t=cc', anilistId: 7001, score: 88, category: 'manhwa', year: 2020, agree: 3, total: 5.1, signals: { anilist: { strength: 0.9, note: 'Rated highly by AniList readers' }, mangaupdates: { strength: 0.8, note: '9.1/10 from 4,200 MangaUpdates readers' }, myanimelist: { strength: 0.7, note: 'High on MyAnimeList' } } },
+          { title: 'Only MangaUpdates Likes This', cover: '', anilistId: null, score: null, category: 'manhua', year: 2019, agree: 1, total: 0.8, signals: { mangaupdates: { strength: 0.8, note: '8.8/10 from 900 MangaUpdates readers' } } },
+          { title: 'Only AniList Likes This', cover: '', anilistId: 7003, score: 80, category: 'manga', year: 2021, agree: 1, total: 0.7, signals: { anilist: { strength: 0.7, note: 'Widely read on AniList' } } },
+        ],
+      });
+    }
     if (url.pathname.startsWith('/api/')) return api(req, res, url, origin);
     if (url.pathname === '/fixtures/cover.svg') {
       res.writeHead(200, { 'content-type': 'image/svg+xml', 'cache-control': 'no-store' });

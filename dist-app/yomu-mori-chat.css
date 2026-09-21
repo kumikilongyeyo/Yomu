@@ -30,3 +30,15 @@
    the field takes focus, which is what "clicking Mori zooms in" was. */
 .mc-input{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.mc-thinking i{animation:none}}
+
+/* The community chooser: one switch per reading community, with the evidence
+   for each beside it. A community that did not answer says why. */
+.mc-sources{display:grid;gap:5px;margin:7px 0 11px}
+.mc-source{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;padding:8px 9px;border:1px solid var(--line,#263747);border-radius:11px;background:var(--surface,#17232d);cursor:pointer}
+.mc-source:hover{border-color:var(--accentLine,#ffc45f66)}
+.mc-source input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--accent,#ffc45f);cursor:pointer}
+.mc-source input:disabled{cursor:not-allowed}
+.mc-source:has(input:disabled){opacity:.6;cursor:not-allowed}
+.mc-source__text{min-width:0}
+.mc-source__text strong{display:block;font:800 10.5px/1.25 var(--uiFont,system-ui);color:var(--text,#f4f6fa)}
+.mc-source__text span{display:block;margin-top:2px;font:600 9px/1.35 var(--uiFont,system-ui);color:var(--dim,#8fa0b4)}

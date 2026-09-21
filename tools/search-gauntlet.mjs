@@ -32,7 +32,19 @@ gate('5. warm searches are cached', /CACHE_MS = 10 \* 60 \* 1000/.test(V3) && /c
 gate('6. fullscreen loader is forbidden', /#yomu-load\{position:fixed!important;inset:auto/.test(V3) && /body\.yomu-search-v3 #yomu-load\{display:none!important\}/.test(V3), 'Search may use local progress only; the app must never disappear behind an overlay.');
 gate('7. Yomu mark replaces spinner', /body\.yomu-search-v3 \.field \.spin/.test(V3) && /yomu-icon\.svg/.test(V3), 'Use the brand mark animation, not a generic circular spinner.');
 gate('8. unreadable junk is never shown', /#results \.shelf-line/.test(V3) && /#results \.tile\[disabled\]/.test(V3) && /scrubUnreadable/.test(V3), 'If no source can open it, it does not belong in Search results.');
-gate('9. missing covers repair themselves', /FALLBACK_COVER = '\/brand\/yomu-loader-ink\.webp'/.test(V3) && /addEventListener\('error'/.test(V3) && /findCover\(/.test(V3), 'Blank blue cards are a release blocker.');
+/* The old rule was "a missing cover becomes the brand graphic", and the brand
+   graphic then filled a 2:3 card -- a result with no artwork came back as a
+   large logo, three of them in a row. The rule now is that a missing cover
+   becomes the canonical card's own compact fallback: the title's initials, at
+   text size, with no request. Blank blue cards are still a release blocker;
+   poster-sized logos are one too. */
+gate('9. missing covers fall back to the compact card mark',
+  !/FALLBACK_COVER/.test(V3)
+  && /addEventListener\('error'/.test(V3)
+  && /findCover\(/.test(V3)
+  && /yt-card__fallback/.test(V3)
+  && /yt-card__fallback/.test(fs.readFileSync(path.join(ROOT, 'dist-app/yomu-titlecard.js'), 'utf8')),
+  'Blank cards and poster-sized logos are both release blockers.');
 gate('10. Google-style text typeahead is real', /setTimeout\(run, 120\)/.test(V3) && /SUGGEST_TIMEOUT = 750/.test(V3) && /ArrowDown/.test(V3) && /ArrowUp/.test(V3) && /Escape/.test(V3) && /yv3-suggest-title/.test(V3), 'Suggestions must appear while typing and work from the keyboard.');
 
 // Structural release contract: Search V3 may be injected by the workflow

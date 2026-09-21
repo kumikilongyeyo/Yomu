@@ -219,6 +219,17 @@
   transition: background 160ms ease;
 }
 
+/* A rail's control navigates, so it is an anchor. It looks identical and it
+   is deliberately named differently ("See all"), because a control that takes
+   you somewhere and a control that adds to what you are looking at must not
+   wear the same word. */
+a.yt-more--link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  line-height: 34px;
+}
+
 .yt-more:hover { background: color-mix(in srgb, var(--accentSoft, #ffc45f1f) 72%, var(--accent, #ffc45f) 28%); }
 .yt-more:disabled { opacity: .55; cursor: wait; }
 .yt-more:focus-visible { outline: 2px solid var(--accent, #ffc45f); outline-offset: 3px; }

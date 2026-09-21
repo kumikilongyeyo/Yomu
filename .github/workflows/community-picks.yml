@@ -1,0 +1,80 @@
+name: Community picks
+
+# What the reading communities recommend, collected once a day instead of once
+# per reader. scripts/community-picks.mjs asks AniList, MangaUpdates,
+# MyAnimeList (via Jikan) and -- when credentials exist -- Reddit, and commits
+# one small JSON file the app serves as a static asset.
+#
+# Reddit needs a free "script" app from reddit.com/prefs/apps and two repository
+# secrets, REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET. Without them that one
+# collector reports itself unavailable, in the file, and the other three run.
+#
+# A run that collects nothing changes nothing: the script exits non-zero and the
+# previous file stays exactly as it was, so a bad day upstream cannot empty
+# Mori's community shelf.
+
+on:
+  schedule:
+    # 04:10 UTC, which is the quiet end of every timezone this app is read in.
+    - cron: '10 4 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/community-picks.mjs'
+      - '.github/workflows/community-picks.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yomu-community-picks
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect community picks
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        run: node scripts/community-picks.mjs
+
+      - name: Sanity-check the file before committing it
+        run: |
+          node -e "
+            const picks = require('./dist-app/community-picks.json');
+            if (picks.schema !== 'yomu.community-picks/1') throw new Error('unexpected schema');
+            if (!Array.isArray(picks.picks) || picks.picks.length < 20) throw new Error('too few picks: ' + picks.picks.length);
+            const answered = Object.values(picks.sources).filter((s) => s.ok).length;
+            if (!answered) throw new Error('no community answered');
+            for (const pick of picks.picks) {
+              if (!pick.title || !Object.keys(pick.signals || {}).length) throw new Error('a pick with no evidence: ' + pick.title);
+            }
+            console.log(picks.picks.length + ' picks, ' + answered + ' communities answered');
+          "
+
+      - name: Commit when it changed
+        run: |
+          if git diff --quiet -- dist-app/community-picks.json; then
+            echo 'No change in the community picks.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dist-app/community-picks.json
+          answered=$(node -e "const p=require('./dist-app/community-picks.json');process.stdout.write(Object.entries(p.sources).filter(([,s])=>s.ok).map(([k])=>k).join(', '))")
+          git commit -m "Refresh the community picks
+
+          Collected from: $answered.
+
+          Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+          git push

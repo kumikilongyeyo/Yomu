@@ -20,7 +20,11 @@ function anilistBody(query, { page = 1 } = {}) {
   }
   const pageMatch = String(query).match(/Page\(\s*page\s*:\s*(\d+)/);
   const wanted = pageMatch ? Number(pageMatch[1]) : page;
-  return { data: { Page: { media: anilistMedia('page', wanted, 14) } } };
+  /* Honour perPage: the see-all screen asks for 30 where a rail asks for 14,
+     and a fixture that ignores it makes the bigger screen look like the rail. */
+  const sizeMatch = String(query).match(/perPage\s*:\s*(\d+)/);
+  const size = sizeMatch ? Math.min(Number(sizeMatch[1]), 50) : 14;
+  return { data: { Page: { media: anilistMedia('page', wanted, size) } } };
 }
 
 /**

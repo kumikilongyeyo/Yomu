@@ -1,0 +1,2431 @@
+{
+ "schema": "yomu.community-picks/1",
+ "generatedAt": "2026-09-20T23:49:20.198Z",
+ "sources": {
+  "anilist": {
+   "ok": true,
+   "rows": 300,
+   "label": "AniList",
+   "about": "Community score and readership"
+  },
+  "mangaupdates": {
+   "ok": true,
+   "rows": 162,
+   "label": "MangaUpdates",
+   "about": "Reader ratings, weighted by vote count"
+  },
+  "myanimelist": {
+   "ok": false,
+   "rows": 0,
+   "label": "MyAnimeList",
+   "about": "MAL rankings and favourites, via Jikan",
+   "error": "HTTP 504"
+  },
+  "reddit": {
+   "ok": false,
+   "rows": 0,
+   "label": "Reddit",
+   "about": "Mentions counted across recommendation threads",
+   "error": "no REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set"
+  }
+ },
+ "counts": {
+  "works": 367,
+  "picks": 120
+ },
+ "picks": [
+  {
+   "title": "On the Way to Meet Mom",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 1,
+     "rank": 0,
+     "note": "9.05/10 from 322 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187189-B5zA4zPh3UJA.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 187189,
+   "malId": 178182,
+   "score": 88,
+   "agree": 2,
+   "total": 3.176
+  },
+  {
+   "title": "Here U Are",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.65/10 from 461 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 100805,
+   "malId": 119072,
+   "score": 85,
+   "agree": 2,
+   "total": 3.152
+  },
+  {
+   "title": "Vagabond",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9925,
+     "rank": 1,
+     "note": "8.96/10 from 1,939 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30656-9mW113O7rDnA.png",
+   "category": "manga",
+   "year": 1998,
+   "anilistId": 30656,
+   "malId": 656,
+   "score": 91,
+   "agree": 2,
+   "total": 3.14
+  },
+  {
+   "title": "Omniscient Reader",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.9775,
+     "rank": 3,
+     "note": "8.82/10 from 939 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119257-Pi21aq3ey9GG.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 119257,
+   "malId": 132214,
+   "score": 86,
+   "agree": 2,
+   "total": 3.14
+  },
+  {
+   "title": "Slam Dunk",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 1,
+     "rank": 0,
+     "note": "8.96/10 from 1,895 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/pklldyu/slam-dunk"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30051-5KJyPlO7z5F4.png",
+   "category": "manga",
+   "year": 1990,
+   "anilistId": 30051,
+   "malId": 51,
+   "score": 90,
+   "agree": 2,
+   "total": 3.032
+  },
+  {
+   "title": "Solo Leveling",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.8575,
+     "rank": 19,
+     "note": "8.47/10 from 2,295 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx105398-b673Vt5ZSuz3.jpg",
+   "category": "manhwa",
+   "year": 2018,
+   "anilistId": 105398,
+   "malId": 121496,
+   "score": 84,
+   "agree": 2,
+   "total": 2.972
+  },
+  {
+   "title": "Tales of Demons and Gods",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.865,
+     "rank": 18,
+     "note": "7.93/10 from 658 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/kfqq1qc/tales-of-demons-and-gods"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86707-QD3UyAOHUEaT.jpg",
+   "category": "manhua",
+   "year": 2015,
+   "anilistId": 86707,
+   "malId": null,
+   "score": 77,
+   "agree": 2,
+   "total": 2.96
+  },
+  {
+   "title": "The Knight Only Lives Today",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9325,
+     "rank": 9,
+     "note": "8.63/10 from 412 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx177706-3r8dnAr8Prjq.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 177706,
+   "malId": 170427,
+   "score": 85,
+   "agree": 2,
+   "total": 2.948
+  },
+  {
+   "title": "Chang Ge Xing",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9925,
+     "rank": 1,
+     "note": "8.7/10 from 736 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/tkrf8sc/chang-ge-xing"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx72001-ovt706Sru0FP.jpg",
+   "category": "manhua",
+   "year": 2011,
+   "anilistId": 72001,
+   "malId": 42001,
+   "score": 81,
+   "agree": 2,
+   "total": 2.876
+  },
+  {
+   "title": "The Devil Butler",
+   "signals": {
+    "anilist": {
+     "strength": 0.955,
+     "rank": 3,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.8275,
+     "rank": 23,
+     "note": "7.85/10 from 311 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx116353-DYuIigXuPwpZ.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 116353,
+   "malId": null,
+   "score": 82,
+   "agree": 2,
+   "total": 2.852
+  },
+  {
+   "title": "Villains Are Destined to Die",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9625,
+     "rank": 5,
+     "note": "8.71/10 from 784 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118408-zZuOINqjBZYn.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 118408,
+   "malId": 133641,
+   "score": 84,
+   "agree": 2,
+   "total": 2.828
+  },
+  {
+   "title": "I Am The Fated Villain",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "7.84/10 from 292 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142287-nlT7oSUzHnNv.jpg",
+   "category": "manhua",
+   "year": 2021,
+   "anilistId": 142287,
+   "malId": null,
+   "score": 76,
+   "agree": 2,
+   "total": 2.684
+  },
+  {
+   "title": "Haikyu!!",
+   "signals": {
+    "anilist": {
+     "strength": 0.715,
+     "rank": 19,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.895,
+     "rank": 14,
+     "note": "8.72/10 from 875 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ul2du3n/haikyu"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx65243-mR4MnJFmfaOF.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 65243,
+   "malId": 35243,
+   "score": 88,
+   "agree": 2,
+   "total": 2.576
+  },
+  {
+   "title": "The Horizon",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.6625,
+     "rank": 45,
+     "note": "8.29/10 from 283 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100568-4BC0PsdwU4bL.png",
+   "category": "manhwa",
+   "year": 2016,
+   "anilistId": 100568,
+   "malId": 125036,
+   "score": 85,
+   "agree": 2,
+   "total": 2.516
+  },
+  {
+   "title": "Who Made Me a Princess",
+   "signals": {
+    "anilist": {
+     "strength": 0.715,
+     "rank": 19,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.82,
+     "rank": 24,
+     "note": "8.43/10 from 843 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107521-M4x3AUb7UGIM.png",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 107521,
+   "malId": 121269,
+   "score": 83,
+   "agree": 2,
+   "total": 2.456
+  },
+  {
+   "title": "Feng Shen Ji",
+   "signals": {
+    "anilist": {
+     "strength": 0.475,
+     "rank": 35,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.9775,
+     "rank": 3,
+     "note": "8.4/10 from 601 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ygzojjg/feng-shen-ji"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx73913-PG7AL3qV591d.png",
+   "category": "manhua",
+   "year": 2010,
+   "anilistId": 73913,
+   "malId": 43913,
+   "score": 76,
+   "agree": 2,
+   "total": 2.324
+  },
+  {
+   "title": "Martial Peak",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4975,
+     "rank": 67,
+     "note": "7.38/10 from 278 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8xr9kqx/martial-peak"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104494-xmWuGEwxzbfB.jpg",
+   "category": "manhua",
+   "year": 2018,
+   "anilistId": 104494,
+   "malId": null,
+   "score": 73,
+   "agree": 2,
+   "total": 2.276
+  },
+  {
+   "title": "I Shall Master this Family!",
+   "signals": {
+    "anilist": {
+     "strength": 0.625,
+     "rank": 25,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.775,
+     "rank": 30,
+     "note": "8.37/10 from 475 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 130429,
+   "malId": 147692,
+   "score": 82,
+   "agree": 2,
+   "total": 2.24
+  },
+  {
+   "title": "Myst, Might, Mayhem",
+   "signals": {
+    "anilist": {
+     "strength": 0.685,
+     "rank": 21,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6775,
+     "rank": 43,
+     "note": "8.3/10 from 301 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 175946,
+   "malId": 168980,
+   "score": 83,
+   "agree": 2,
+   "total": 2.18
+  },
+  {
+   "title": "Noblesse",
+   "signals": {
+    "anilist": {
+     "strength": 0.445,
+     "rank": 37,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.9025,
+     "rank": 13,
+     "note": "8.57/10 from 2,373 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/snvji36/noblesse"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx59983-cfSjrRxuAlAD.png",
+   "category": "manhwa",
+   "year": 2007,
+   "anilistId": 59983,
+   "malId": 29983,
+   "score": 76,
+   "agree": 2,
+   "total": 2.156
+  },
+  {
+   "title": "Horimiya",
+   "signals": {
+    "anilist": {
+     "strength": 0.775,
+     "rank": 15,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.55,
+     "rank": 60,
+     "note": "8.57/10 from 2,063 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx72451-vVXtRwyttjGG.png",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": 72451,
+   "malId": 42451,
+   "score": 82,
+   "agree": 2,
+   "total": 2.12
+  },
+  {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4225,
+     "rank": 77,
+     "note": "8.18/10 from 468 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
+   "agree": 2,
+   "total": 2.108
+  },
+  {
+   "title": "SPY x FAMILY",
+   "signals": {
+    "anilist": {
+     "strength": 0.835,
+     "rank": 11,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4375,
+     "rank": 75,
+     "note": "8.53/10 from 961 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx108556-NHjkz0BNJhLx.jpg",
+   "category": "manga",
+   "year": 2019,
+   "anilistId": 108556,
+   "malId": 119161,
+   "score": 83,
+   "agree": 2,
+   "total": 2.036
+  },
+  {
+   "title": "See You in My 19th Life",
+   "signals": {
+    "anilist": {
+     "strength": 0.325,
+     "rank": 45,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9175,
+     "rank": 11,
+     "note": "8.61/10 from 362 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx122060-ZDEmnfRw0YCb.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 122060,
+   "malId": 147062,
+   "score": 81,
+   "agree": 2,
+   "total": 1.988
+  },
+  {
+   "title": "Absolute Regression",
+   "signals": {
+    "anilist": {
+     "strength": 0.43,
+     "rank": 38,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.76,
+     "rank": 32,
+     "note": "8.37/10 from 262 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 180891,
+   "malId": 172750,
+   "score": 81,
+   "agree": 2,
+   "total": 1.904
+  },
+  {
+   "title": "Kono Oto Tomare!",
+   "signals": {
+    "anilist": {
+     "strength": 0.535,
+     "rank": 31,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6175,
+     "rank": 51,
+     "note": "8.59/10 from 330 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 75143,
+   "malId": 45143,
+   "score": 88,
+   "agree": 2,
+   "total": 1.844
+  },
+  {
+   "title": "Dorohedoro",
+   "signals": {
+    "anilist": {
+     "strength": 0.43,
+     "rank": 38,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.7075,
+     "rank": 39,
+     "note": "8.64/10 from 1,091 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31133-Jx6map3Oidz1.png",
+   "category": "manga",
+   "year": 2000,
+   "anilistId": 31133,
+   "malId": 1133,
+   "score": 86,
+   "agree": 2,
+   "total": 1.82
+  },
+  {
+   "title": "Death Note",
+   "signals": {
+    "anilist": {
+     "strength": 0.52,
+     "rank": 32,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.595,
+     "rank": 54,
+     "note": "8.58/10 from 3,693 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/1ljv3bs/death-note"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30021-FE6kmrfpuKyb.jpg",
+   "category": "manga",
+   "year": 2003,
+   "anilistId": 30021,
+   "malId": 21,
+   "score": 84,
+   "agree": 2,
+   "total": 1.784
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.595,
+     "rank": 27,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.49,
+     "rank": 68,
+     "note": "8.21/10 from 302 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 82,
+   "agree": 2,
+   "total": 1.736
+  },
+  {
+   "title": "Positively Yours",
+   "signals": {
+    "anilist": {
+     "strength": 0.28,
+     "rank": 48,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.79,
+     "rank": 28,
+     "note": "8.38/10 from 521 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 120440,
+   "malId": 140921,
+   "score": 81,
+   "agree": 2,
+   "total": 1.712
+  },
+  {
+   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
+   "signals": {
+    "anilist": {
+     "strength": 0.34,
+     "rank": 44,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7075,
+     "rank": 39,
+     "note": "8.33/10 from 835 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 104973,
+   "malId": 118646,
+   "score": 81,
+   "agree": 2,
+   "total": 1.676
+  },
+  {
+   "title": "How to Win My Husband Over",
+   "signals": {
+    "anilist": {
+     "strength": 0.31,
+     "rank": 46,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.5575,
+     "rank": 59,
+     "note": "8.23/10 from 339 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx141013-YZhKrs2IqxWY.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 141013,
+   "malId": 148234,
+   "score": 81,
+   "agree": 2,
+   "total": 1.388
+  },
+  {
+   "title": "The Extra’s Academy Survival Guide",
+   "signals": {
+    "anilist": {
+     "strength": 0.475,
+     "rank": 35,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.385,
+     "rank": 82,
+     "note": "8.16/10 from 384 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 172619,
+   "malId": 166865,
+   "score": 82,
+   "agree": 2,
+   "total": 1.376
+  },
+  {
+   "title": "Berserk",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30002-Cul4OeN7bYtn.jpg",
+   "category": "manga",
+   "year": 1989,
+   "anilistId": 30002,
+   "malId": 2,
+   "score": 92,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "Chainsaw Man",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx105778-euxXZEIfDY2u.png",
+   "category": "manga",
+   "year": 2018,
+   "anilistId": 105778,
+   "malId": 116778,
+   "score": 84,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "The Greatest Estate Developer",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx140407-fJQr0fmqq1IO.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 140407,
+   "malId": 147272,
+   "score": 90,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "Heaven Official's Blessing",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx112275-fh0u5cH2qB5b.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 112275,
+   "malId": 140765,
+   "score": 87,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "Tamen De Gushi",
+   "signals": {
+    "anilist": {
+     "strength": 1,
+     "rank": 0,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85734-yllpIVoPjADr.jpg",
+   "category": "manhua",
+   "year": 2014,
+   "anilistId": 85734,
+   "malId": 93516,
+   "score": 82,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "19 Days",
+   "signals": {
+    "mangaupdates": {
+     "strength": 1,
+     "rank": 0,
+     "note": "8.7/10 from 701 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/n21qm5h/19-days"
+    }
+   },
+   "cover": "",
+   "category": "manhua",
+   "year": 2014,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 1
+  },
+  {
+   "title": "Reunion (2coin)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9925,
+     "rank": 1,
+     "note": "9.01/10 from 274 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2022,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9925
+  },
+  {
+   "title": "JoJo's Bizarre Adventure: Part 7–Steel Ball Run",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31706-lRncu9VbcBB7.png",
+   "category": "manga",
+   "year": 2004,
+   "anilistId": 31706,
+   "malId": 1706,
+   "score": 92,
+   "agree": 1,
+   "total": 0.985
+  },
+  {
+   "title": "Jujutsu Kaisen",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx101517-H3TdM3g5ZUe9.jpg",
+   "category": "manga",
+   "year": 2018,
+   "anilistId": 101517,
+   "malId": 113138,
+   "score": 80,
+   "agree": 1,
+   "total": 0.985
+  },
+  {
+   "title": "JoJo no Kimyou na Bouken Part 7: Steel Ball Run",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.9/10 from 743 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/22jigcm/jojo-no-kimyou-na-bouken-part-7-steel-ball-run"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2004,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.985
+  },
+  {
+   "title": "Hagane no Renkinjutsushi",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9775,
+     "rank": 3,
+     "note": "8.78/10 from 4,352 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8q91xb4/hagane-no-renkinjutsushi"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2001,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9775
+  },
+  {
+   "title": "Jibi Eopseo",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126986-hIK16AdoJhNo.jpg",
+   "category": "manhwa",
+   "year": 2018,
+   "anilistId": 126986,
+   "malId": 147769,
+   "score": 87,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Tower of God",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85143-23oup3ETbFJk.jpg",
+   "category": "manhwa",
+   "year": 2010,
+   "anilistId": 85143,
+   "malId": 122663,
+   "score": 81,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Little Mushroom",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
+   "category": "manhua",
+   "year": 2023,
+   "anilistId": 168843,
+   "malId": 167788,
+   "score": 85,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Yotsuba to!",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.97,
+     "rank": 4,
+     "note": "8.77/10 from 2,165 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/auem2hr/yotsuba-to"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2003,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Taming the Tiger",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.97,
+     "rank": 4,
+     "note": "8.74/10 from 280 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Watashitachi no Shiawase na Jikan",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9625,
+     "rank": 5,
+     "note": "8.77/10 from 2,428 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/q97i9pa/watashitachi-no-shiawase-na-jikan"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2008,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9625
+  },
+  {
+   "title": "One Piece",
+   "signals": {
+    "anilist": {
+     "strength": 0.955,
+     "rank": 3,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30013-BeslEMqiPhlk.jpg",
+   "category": "manga",
+   "year": 1997,
+   "anilistId": 30013,
+   "malId": 13,
+   "score": 91,
+   "agree": 1,
+   "total": 0.955
+  },
+  {
+   "title": "Bastard",
+   "signals": {
+    "anilist": {
+     "strength": 0.955,
+     "rank": 3,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b86964-vTdn1Esqw3va.jpg",
+   "category": "manhwa",
+   "year": 2014,
+   "anilistId": 86964,
+   "malId": 111213,
+   "score": 83,
+   "agree": 1,
+   "total": 0.955
+  },
+  {
+   "title": "Grandmaster of Demonic Cultivation: Mo Dao Zu Shi",
+   "signals": {
+    "anilist": {
+     "strength": 0.955,
+     "rank": 3,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx101563-nTBq5IEYYWbX.png",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 101563,
+   "malId": 137200,
+   "score": 84,
+   "agree": 1,
+   "total": 0.955
+  },
+  {
+   "title": "Angel Densetsu",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.955,
+     "rank": 6,
+     "note": "8.77/10 from 2,563 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/spwkkqi/angel-densetsu"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 1992,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.955
+  },
+  {
+   "title": "Smyrna & Capri",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.955,
+     "rank": 6,
+     "note": "8.71/10 from 370 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2022,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.955
+  },
+  {
+   "title": "Otoyomegatari",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9475,
+     "rank": 7,
+     "note": "8.76/10 from 1,748 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/9knig0a/otoyomegatari"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2008,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9475
+  },
+  {
+   "title": "Bring the Love",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9475,
+     "rank": 7,
+     "note": "8.67/10 from 308 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2019,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9475
+  },
+  {
+   "title": "Umineko When They Cry Episode 8: Twilight of the Golden Witch",
+   "signals": {
+    "anilist": {
+     "strength": 0.94,
+     "rank": 4,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx64053-tHJHWLRrWbeA.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 64053,
+   "malId": 34053,
+   "score": 90,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "Attack on Titan",
+   "signals": {
+    "anilist": {
+     "strength": 0.94,
+     "rank": 4,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx53390-1RsuABC34P9D.jpg",
+   "category": "manga",
+   "year": 2009,
+   "anilistId": 53390,
+   "malId": 23390,
+   "score": 84,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "My Bias Gets on the Last Train",
+   "signals": {
+    "anilist": {
+     "strength": 0.94,
+     "rank": 4,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 187944,
+   "malId": 178671,
+   "score": 86,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "19 Tian",
+   "signals": {
+    "anilist": {
+     "strength": 0.94,
+     "rank": 4,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b85850-C9jxTZSRutBw.png",
+   "category": "manhua",
+   "year": 2014,
+   "anilistId": 85850,
+   "malId": 116312,
+   "score": 84,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "20 Seiki Shounen",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.94,
+     "rank": 8,
+     "note": "8.76/10 from 1,853 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ktr1ti2/20-seiki-shounen"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 1999,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "Annarasumanara",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.94,
+     "rank": 8,
+     "note": "8.66/10 from 1,687 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/7so3t9i/annarasumanara"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2010,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.94
+  },
+  {
+   "title": "Akatsuki no Yona",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9325,
+     "rank": 9,
+     "note": "8.74/10 from 1,264 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2009,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9325
+  },
+  {
+   "title": "Monster",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30001-Knby7l1jevE7.jpg",
+   "category": "manga",
+   "year": 1994,
+   "anilistId": 30001,
+   "malId": 1,
+   "score": 90,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "Demon Slayer: Kimetsu no Yaiba",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx87216-c9bSNVD10UuD.png",
+   "category": "manga",
+   "year": 2016,
+   "anilistId": 87216,
+   "malId": 96792,
+   "score": 79,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "The Legend of the Northern Blade",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
+   "category": "manhwa",
+   "year": 2019,
+   "anilistId": 119521,
+   "malId": 134744,
+   "score": 85,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "SSS-Class Revival Hunter",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx128067-wnLBg6Cy1ncs.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 128067,
+   "malId": 146909,
+   "score": 83,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "Nan Hao Shang Feng",
+   "signals": {
+    "anilist": {
+     "strength": 0.925,
+     "rank": 5,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx117324-97mHyfJGwpBq.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 117324,
+   "malId": 138533,
+   "score": 84,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "Saezuru Tori wa Habatakanai",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.925,
+     "rank": 10,
+     "note": "8.74/10 from 1,150 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/tkck7k7/saezuru-tori-wa-habatakanai"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
+   "title": "Koimonogatari (TAGURA Tohru)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9175,
+     "rank": 11,
+     "note": "8.72/10 from 254 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/do1ph4j/koimonogatari-tagura-tohru"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2013,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9175
+  },
+  {
+   "title": "Vinland Saga",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30642-0mjRDkf4THpo.jpg",
+   "category": "manga",
+   "year": 2005,
+   "anilistId": 30642,
+   "malId": 642,
+   "score": 90,
+   "agree": 1,
+   "total": 0.91
+  },
+  {
+   "title": "Tokyo Ghoul",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx63327-glC9cDxYBja9.png",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": 63327,
+   "malId": 33327,
+   "score": 84,
+   "agree": 1,
+   "total": 0.91
+  },
+  {
+   "title": "Lord of Mysteries",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx188249-Z9pRMdXVc4dh.png",
+   "category": "manhua",
+   "year": 2025,
+   "anilistId": 188249,
+   "malId": null,
+   "score": 82,
+   "agree": 1,
+   "total": 0.91
+  },
+  {
+   "title": "Doraemon",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.91,
+     "rank": 12,
+     "note": "8.72/10 from 405 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/gzp5lsi/doraemon"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 1969,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.91
+  },
+  {
+   "title": "Ballroom e Youkoso",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9025,
+     "rank": 13,
+     "note": "8.72/10 from 407 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/r5llz8p/ballroom-e-youkoso"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9025
+  },
+  {
+   "title": "Goodnight Punpun",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx34632-5xMDkx3pXsEh.png",
+   "category": "manga",
+   "year": 2007,
+   "anilistId": 34632,
+   "malId": 4632,
+   "score": 88,
+   "agree": 1,
+   "total": 0.895
+  },
+  {
+   "title": "Legroom",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.895,
+     "rank": 14,
+     "note": "8.55/10 from 268 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.895
+  },
+  {
+   "title": "Gekkan Shoujo Nozaki-kun",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8875,
+     "rank": 15,
+     "note": "8.71/10 from 813 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/biidya3/gekkan-shoujo-nozaki-kun"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8875
+  },
+  {
+   "title": "Land of the Lustrous",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx74489-5HtDCFfut8Be.jpg",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 74489,
+   "malId": 44489,
+   "score": 89,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "My Hero Academia",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85486-INqnYx8gL3eX.jpg",
+   "category": "manga",
+   "year": 2014,
+   "anilistId": 85486,
+   "malId": 75989,
+   "score": 78,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "Seasons of Blossom",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx121565-JaDVhpjegXvw.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 121565,
+   "malId": 145539,
+   "score": 85,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "Sweet Home",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100954-xY0Vw2sRRo8t.png",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 100954,
+   "malId": 124845,
+   "score": 81,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "My Wife is the Demon Queen",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107966-Onmu3ihQNKbO.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 107966,
+   "malId": null,
+   "score": 71,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "Sakamichi no Apollon",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.88,
+     "rank": 16,
+     "note": "8.7/10 from 728 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/80p3b9d/sakamichi-no-apollon"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2007,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.88
+  },
+  {
+   "title": "Komatta Toki ni wa Hoshi ni Kike!",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8725,
+     "rank": 17,
+     "note": "8.7/10 from 692 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/dy4zbga/komatta-toki-ni-wa-hoshi-ni-kike"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 1997,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8725
+  },
+  {
+   "title": "Real",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30657-AzyyUOWMJ6fd.png",
+   "category": "manga",
+   "year": 1999,
+   "anilistId": 30657,
+   "malId": 657,
+   "score": 89,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "One-Punch Man",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx74347-sZpmNJ5xLwRK.jpg",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 74347,
+   "malId": 44347,
+   "score": 85,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "Eleceed",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx106929-flAUvHZDUz5v.jpg",
+   "category": "manhwa",
+   "year": 2018,
+   "anilistId": 106929,
+   "malId": 147171,
+   "score": 85,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "The God of High School",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx85141-qHR957V3FVco.png",
+   "category": "manhwa",
+   "year": 2011,
+   "anilistId": 85141,
+   "malId": 111996,
+   "score": 76,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "10 Years That I Loved You the Most",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx111593-5w8OXLib51hs.png",
+   "category": "manhua",
+   "year": 2018,
+   "anilistId": 111593,
+   "malId": null,
+   "score": 81,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "Kakukaku Shikajika",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.865,
+     "rank": 18,
+     "note": "8.7/10 from 359 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/r86dsnk/kakukaku-shikajika"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "You Get Me Going",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.865,
+     "rank": 18,
+     "note": "8.48/10 from 297 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "Fata Morgana no Yakata: Anata no Genten ni Itaru Monogatari",
+   "signals": {
+    "anilist": {
+     "strength": 0.85,
+     "rank": 10,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx110992-ROmqSnw0QDTK.jpg",
+   "category": "manga",
+   "year": 2014,
+   "anilistId": 110992,
+   "malId": 102875,
+   "score": 89,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "Wind Breaker",
+   "signals": {
+    "anilist": {
+     "strength": 0.85,
+     "rank": 10,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "category": "manhwa",
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
+   "score": 84,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "I’m the Max-Level Newbie",
+   "signals": {
+    "anilist": {
+     "strength": 0.85,
+     "rank": 10,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx137280-juUL79K7f9s7.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 137280,
+   "malId": 147392,
+   "score": 77,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "Pirouette into My Heart",
+   "signals": {
+    "anilist": {
+     "strength": 0.85,
+     "rank": 10,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 113350,
+   "malId": 150293,
+   "score": 81,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "Log Into The Future",
+   "signals": {
+    "anilist": {
+     "strength": 0.85,
+     "rank": 10,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx160980-KAM0gr3dSMvB.jpg",
+   "category": "manhua",
+   "year": 2023,
+   "anilistId": 160980,
+   "malId": null,
+   "score": 71,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "Uchuu Kyoudai",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.85,
+     "rank": 20,
+     "note": "8.7/10 from 358 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xp95hcy/uchuu-kyoudai"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2007,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "A Night of a Thousand Dreams",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.85,
+     "rank": 20,
+     "note": "8.47/10 from 490 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/zyp4ssq/a-night-of-a-thousand-dreams"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2004,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.85
+  },
+  {
+   "title": "Kusuriya no Hitorigoto",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8425,
+     "rank": 21,
+     "note": "8.69/10 from 629 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/6y4x7mq/kusuriya-no-hitorigoto"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2017,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8425
+  },
+  {
+   "title": "Can't See Can't Hear But Love",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8425,
+     "rank": 21,
+     "note": "8.46/10 from 449 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/9lmn52r/can-t-see-can-t-hear-but-love"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2010,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8425
+  },
+  {
+   "title": "Fullmetal Alchemist",
+   "signals": {
+    "anilist": {
+     "strength": 0.835,
+     "rank": 11,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
+   "category": "manga",
+   "year": 2001,
+   "anilistId": 30025,
+   "malId": 25,
+   "score": 89,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "Return of the Blossoming Blade",
+   "signals": {
+    "anilist": {
+     "strength": 0.835,
+     "rank": 11,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
+   "score": 84,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "A Returner's Magic Should Be Special",
+   "signals": {
+    "anilist": {
+     "strength": 0.835,
+     "rank": 11,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx105393-oiHumQoBGKG5.jpg",
+   "category": "manhwa",
+   "year": 2018,
+   "anilistId": 105393,
+   "malId": 132247,
+   "score": 76,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "The Ravages of Time",
+   "signals": {
+    "anilist": {
+     "strength": 0.835,
+     "rank": 11,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
+   "category": "manhua",
+   "year": 2001,
+   "anilistId": 31320,
+   "malId": 1320,
+   "score": 81,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "Ghost Hunt",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.835,
+     "rank": 22,
+     "note": "8.68/10 from 600 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/hkn94rd/ghost-hunt"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 1998,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "The Fantasie of a Stepmother",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.835,
+     "rank": 22,
+     "note": "8.45/10 from 423 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2019,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.835
+  },
+  {
+   "title": "Kimi no Yoru ni Fureru",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8275,
+     "rank": 23,
+     "note": "8.68/10 from 327 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2021,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8275
+  },
+  {
+   "title": "Roxana",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8275,
+     "rank": 23,
+     "note": "8.45/10 from 419 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/utubdan/roxana"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8275
+  },
+  {
+   "title": "Ashita no Joe: Fighting for Tomorrow",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
+   "category": "manga",
+   "year": 1968,
+   "anilistId": 31303,
+   "malId": 1303,
+   "score": 89,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Nano Machine",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120980-RZ9WLd0o9hyo.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 120980,
+   "malId": 147863,
+   "score": 81,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Your Talent Is Mine",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx138366-DC3t5MSv6v05.jpg",
+   "category": "manhua",
+   "year": 2021,
+   "anilistId": 138366,
+   "malId": null,
+   "score": 71,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Yagate Kimi ni Naru",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.82,
+     "rank": 24,
+     "note": "8.68/10 from 588 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/wmjgub7/yagate-kimi-ni-naru"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2015,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Aria",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "8.68/10 from 596 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/yobj9va/aria"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2002,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8125
+  },
+  {
+   "title": "Kingdom",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
+   "category": "manga",
+   "year": 2006,
+   "anilistId": 46765,
+   "malId": 16765,
+   "score": 89,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "The Promised Neverland",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx87423-gPNtu8QbGped.jpg",
+   "category": "manga",
+   "year": 2016,
+   "anilistId": 87423,
+   "malId": 100128,
+   "score": 79,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Release that Witch",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b108152-QG8LtVNX5ox2.png",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 108152,
+   "malId": 136488,
+   "score": 72,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Koe no Katachi",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.805,
+     "rank": 26,
+     "note": "8.67/10 from 2,248 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2013,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.805
+  }
+ ]
+}

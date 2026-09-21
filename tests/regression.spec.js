@@ -13,6 +13,8 @@
 import { expect, test } from '@playwright/test';
 import { gotoHome, resetSources, seed, waitForRails, watchConsole } from './support/app.mjs';
 
+const LIVE_CARD = '.yt-card:not(.yt-card--skeleton)';
+
 test.beforeEach(async ({ request, baseURL }) => {
   await resetSources(request, baseURL);
 });
@@ -31,7 +33,9 @@ test.describe('Regression A — one pagination owner per rail', () => {
       const rail = rails.nth(i);
       const label = (await rail.locator('.yr-rail__title').innerText()).trim();
       await expect(rail.locator('[data-yomu-pager]'), `${label}: one pager`).toHaveCount(1);
-      await expect(rail.locator('.yr-rail__head button'), `${label}: one head button`).toHaveCount(1);
+      /* Of any kind: the rail's is an anchor because it navigates, and the
+         point is that there is one of them, not what tag it wears. */
+      await expect(rail.locator('.yr-rail__head > a, .yr-rail__head > button'), `${label}: one head control`).toHaveCount(1);
     }
 
     // Nothing anywhere on the page may still be building the legacy second
@@ -62,114 +66,131 @@ test.describe('Regression A — one pagination owner per rail', () => {
     await expect(pager).toHaveCount(1);
     await page.setViewportSize(size);
 
-    await pager.click();
-    await expect(pager).toHaveText(/More|End/, { timeout: 20_000 });
-    await expect(rail.locator('[data-yomu-pager]')).toHaveCount(1);
+    /* And it still points at this shelf rather than at a stale one. */
+    await expect(pager).toHaveAttribute('href', /\/more\?kind=rail&id=\w+/);
+    await expect(rail.locator('.yr-rail__head > a, .yr-rail__head > button')).toHaveCount(1);
   });
 
-  test('More appends in place and never routes to Discover or Search', async ({ page, baseURL }) => {
+  test('See all opens the whole shelf on its own screen, with a way back', async ({ page, baseURL }) => {
     await seed(page, { baseURL });
     await gotoHome(page);
     await waitForRails(page, 4);
 
     const rail = page.locator('.yr-rail').first();
-    const strip = rail.locator('.yr-strip');
-    const before = await strip.locator('.yt-card:not(.yt-card--skeleton)').count();
-    const url = page.url();
+    const control = rail.locator('[data-yomu-pager]');
+    /* A control that navigates is a link, and is named for navigating. The
+       recovery spec asks for exactly that distinction: "a separately named
+       action such as View all". */
+    await expect(control).toHaveJSProperty('tagName', 'A');
+    await expect(control).toHaveText('See all');
+    await expect(control).toHaveAttribute('href', /\/more\?kind=rail&id=\w+/);
 
-    const pager = rail.locator('[data-yomu-pager]');
-    await expect(pager).toHaveJSProperty('tagName', 'BUTTON');
-    await pager.click();
+    const railCards = await rail.locator(LIVE_CARD).count();
+    await control.click();
 
-    await expect.poll(async () => strip.locator('.yt-card:not(.yt-card--skeleton)').count(), { timeout: 25_000 })
-      .toBeGreaterThan(before);
-    expect(page.url(), 'More must not navigate').toBe(url);
-    await expect(page.locator('#yomu-library-explorer')).toHaveCount(1);
+    await page.waitForURL(/\/more\?kind=rail/, { timeout: 30_000 });
+    await page.locator('#results ' + LIVE_CARD).first().waitFor({ timeout: 45_000 });
+    const onScreen = await page.locator('#results ' + LIVE_CARD).count();
+    expect(onScreen, 'the shelf screen shows more than the rail did').toBeGreaterThan(railCards);
+
+    // It is a grid that grows downwards, which is the whole point.
+    const layout = await page.evaluate(() => {
+      const grid = document.querySelector('#results');
+      const cards = [...grid.querySelectorAll('.yt-card:not(.yt-card--skeleton)')];
+      const rows = new Set(cards.map((c) => Math.round(c.getBoundingClientRect().top / 20)));
+      return { columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length, rows: rows.size };
+    });
+    expect(layout.columns, 'a grid, not a strip').toBeGreaterThan(1);
+    expect(layout.rows, 'more than one row of it').toBeGreaterThan(1);
+
+    // And a back button that goes back.
+    const back = page.locator('#back');
+    await expect(back).toBeVisible();
+    await back.click();
+    await page.waitForURL((url) => !/\/more/.test(url.pathname + url.search), { timeout: 30_000 });
+    await waitForRails(page, 4);
+    await expect(page.locator('.yr-rail').first().locator('[data-yomu-pager]')).toHaveCount(1);
   });
 
-  test('rapid clicking requests one page and appends no duplicates', async ({ page, baseURL }) => {
+  test('the shelf screen appends in place, once per burst, without duplicates', async ({ page, baseURL }) => {
     await seed(page, { baseURL });
-    await gotoHome(page);
-    await waitForRails(page, 4);
+    await page.goto('/more?kind=rail&id=trending&type=all', { waitUntil: 'domcontentloaded' });
+    await page.locator('#results ' + LIVE_CARD).first().waitFor({ timeout: 45_000 });
 
-    /* Only the rail's own page request counts. The ratings engine also talks
-       to AniList on a timer for covers that arrived without a score, and
-       counting those would measure the wrong thing. */
     const requests = [];
     page.on('request', (request) => {
       if (!/graphql\.anilist\.co/.test(request.url())) return;
-      if (/Page\(page:/.test(String(request.postData() || ''))) requests.push(request.url());
+      if (/Page\(page: \d/.test(String(request.postData() || ''))) requests.push(request.url());
     });
 
-    const rail = page.locator('.yr-rail').first();
-    const pager = rail.locator('[data-yomu-pager]');
-    const before = await rail.locator('.yt-card:not(.yt-card--skeleton)').count();
+    const pager = page.locator('[data-yomu-pager]');
+    await expect(pager, 'one control on the shelf screen').toHaveCount(1);
+    await expect(pager).toHaveJSProperty('tagName', 'BUTTON');
+    const before = await page.locator('#results ' + LIVE_CARD).count();
+    const url = page.url();
 
-    const start = requests.length;
-    /* A real triple click: three events in one task, without Playwright's
-       actionability wait turning them into three sequential presses. The
-       second and third land while the first is in flight, which is exactly
-       the case the in-flight guard exists for. Both paths are covered --
-       .click() (suppressed on a disabled control) and a dispatched event
-       (delivered to the listener anyway). */
+    /* Three events in one task: the second and third land while the first is
+       in flight, which is the case the in-flight guard exists for. */
     await page.evaluate(() => {
-      const button = document.querySelector('.yr-rail [data-yomu-pager]');
+      const button = document.querySelector('[data-yomu-pager]');
       button.click();
       button.click();
       button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
-    await expect(pager).toHaveText(/More|End/, { timeout: 25_000 });
-    await page.waitForTimeout(800);
+    await expect(pager).toHaveText(/Load more|End/, { timeout: 30_000 });
+    await page.waitForTimeout(600);
 
-    expect(requests.length - start, 'one in-flight page per click burst').toBeLessThanOrEqual(1);
+    expect(requests.length, 'one in-flight page per burst').toBeLessThanOrEqual(1);
+    expect(page.url(), 'appended in place').toBe(url);
+    await expect(page.locator('[data-yomu-pager]')).toHaveCount(1);
 
-    const titles = await rail.locator('.yt-card__title').allInnerTexts();
-    const unique = new Set(titles.map((t) => t.trim().toLowerCase()));
-    expect(unique.size, 'no duplicate titles appended').toBe(titles.length);
+    const titles = await page.locator('#results .yt-card__title').allInnerTexts();
     expect(titles.length).toBeGreaterThan(before);
+    expect(new Set(titles.map((t) => t.trim().toLowerCase())).size, 'no duplicates').toBe(titles.length);
   });
 });
 
 test.describe('Regression B — no leaked Retry, no second action', () => {
   test('a failed page keeps the cards, shows Retry on the same control, and recovers', async ({ page, baseURL }) => {
     await seed(page, { baseURL, anilistFailPages: [2] });
-    await gotoHome(page);
-    await waitForRails(page, 4);
+    await page.goto('/more?kind=rail&id=trending&type=all', { waitUntil: 'domcontentloaded' });
+    await page.locator('#results ' + LIVE_CARD).first().waitFor({ timeout: 45_000 });
 
-    const rail = page.locator('.yr-rail').first();
-    const pager = rail.locator('[data-yomu-pager]');
-    const before = await rail.locator('.yt-card:not(.yt-card--skeleton)').count();
+    const pager = page.locator('[data-yomu-pager]');
+    const before = await page.locator('#results ' + LIVE_CARD).count();
 
     await pager.click();
-    await expect(pager).toHaveText('Retry', { timeout: 25_000 });
-    await expect(rail.locator('[data-yomu-pager]'), 'still exactly one control').toHaveCount(1);
-    await expect(rail.locator('.yt-card:not(.yt-card--skeleton)')).toHaveCount(before);
+    await expect(pager).toHaveText('Retry', { timeout: 30_000 });
+    await expect(page.locator('[data-yomu-pager]'), 'still exactly one control').toHaveCount(1);
+    await expect(page.locator('#results ' + LIVE_CARD), 'nothing was taken off the screen').toHaveCount(before);
 
-    // Page 2 is allowed through on the retry: the control must return to More.
+    // Page 2 is allowed through on the retry: the control returns to Load more.
     await page.unrouteAll({ behavior: 'ignoreErrors' });
     await seed(page, { baseURL });
     await pager.click();
-    await expect(pager).toHaveText(/More|End/, { timeout: 25_000 });
-    await expect(rail.locator('[data-yomu-pager]')).toHaveCount(1);
+    await expect(pager).toHaveText(/Load more|End/, { timeout: 30_000 });
+    await expect(page.locator('[data-yomu-pager]')).toHaveCount(1);
+    expect(await page.locator('#results ' + LIVE_CARD).count()).toBeGreaterThan(before);
   });
 
   test('the control label is deterministic', async ({ page, baseURL }) => {
     await seed(page, { baseURL });
-    await gotoHome(page);
-    await waitForRails(page, 4);
+    await page.goto('/more?kind=rail&id=trending&type=all', { waitUntil: 'domcontentloaded' });
+    await page.locator('#results ' + LIVE_CARD).first().waitFor({ timeout: 45_000 });
 
-    const pager = page.locator('.yr-rail').first().locator('[data-yomu-pager]');
-    await expect(pager).toHaveText('More');
+    const pager = page.locator('[data-yomu-pager]');
+    await expect(pager).toHaveText('Load more');
     const seen = new Set();
     const stop = Date.now() + 12_000;
     await pager.click();
     while (Date.now() < stop) {
-      seen.add((await pager.innerText()).trim());
-      if (/^(More|End)$/.test((await pager.innerText()).trim()) && seen.has('Loading…')) break;
+      const label = (await pager.innerText()).trim();
+      seen.add(label);
+      if (/^(Load more|End)$/.test(label) && seen.has('Loading…')) break;
       await page.waitForTimeout(60);
     }
     for (const label of seen) {
-      expect(['More', 'Loading…', 'End', 'Retry'], `unexpected label ${label}`).toContain(label);
+      expect(['Load more', 'Loading…', 'End', 'Retry'], `unexpected label ${label}`).toContain(label);
     }
   });
 });

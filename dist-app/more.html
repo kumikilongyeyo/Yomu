@@ -103,7 +103,7 @@
 
   const $ = (id) => document.getElementById(id);
   const params = new URLSearchParams(location.search);
-  const kind = params.get('kind') === 'alike' ? 'alike' : 'author';
+  const kind = ['alike', 'rail'].includes(params.get('kind')) ? params.get('kind') : 'author';
   const id = (params.get('id') || '').trim();
   const name = (params.get('name') || params.get('title') || '').trim();
   let adult = false;
@@ -129,6 +129,123 @@
     $('empty').textContent = message;
     $('empty').hidden = false;
   }
+
+  /* --- a whole rail, on its own screen ------------------------------------ *
+   *
+   * A rail is a horizontal strip, and appending fourteen more cards to the
+   * right-hand end of one puts them outside the viewport: the reader presses
+   * the control, nothing they can see changes, and the honest conclusion is
+   * that the button is broken. So a rail sends them here instead -- the same
+   * titles as a grid that grows downwards, where more *looks* like more, with
+   * the back button this page already has.
+   *
+   * Append still belongs on the full library and on search results, because
+   * those are vertical grids and the growth is visible in place.
+   *
+   * AniList is asked from the browser here for the same reason the rails do
+   * it: it answers a Cloudflare Worker with 403.
+   */
+  const RAILS = {
+    trending: { label: 'Trending now', why: 'Moving fastest this week', sort: 'TRENDING_DESC', badge: 'Trending' },
+    popular: { label: 'Popular right now', why: 'What the most people are reading', sort: 'POPULARITY_DESC', badge: null },
+    top: { label: 'Highest rated', why: 'Rated highest by readers', sort: 'SCORE_DESC', badge: null },
+    gems: { label: 'Hidden gems', why: 'Loved, and not yet everywhere', sort: 'SCORE_DESC', badge: 'Gem', extra: 'averageScore_greater: 75, popularity_lesser: 20000' },
+    fresh: { label: 'New series', why: 'Started recently', sort: 'START_DATE_DESC', badge: 'New', extra: 'status: RELEASING' },
+  };
+  const COUNTRY = { manga: 'JP', manhwa: 'KR', manhua: 'CN' };
+  const PER_PAGE = 30;
+
+  async function railScreen() {
+    const rail = RAILS[id];
+    const type = (params.get('type') || 'all').toLowerCase();
+    if (!rail) {
+      heading('More', 'Unknown shelf', '');
+      fail('That shelf does not exist. Go back and pick one from Home or Discover.');
+      return;
+    }
+    const typeName = type !== 'all' && COUNTRY[type] ? ' · ' + type[0].toUpperCase() + type.slice(1) : '';
+    heading('Every title in', rail.label, rail.why + typeName);
+
+    const seen = new Set();
+    const key = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+    async function page(n) {
+      const args = [
+        'type: MANGA',
+        `sort: ${rail.sort}`,
+        'isAdult: false',
+        COUNTRY[type] ? `countryOfOrigin: ${COUNTRY[type]}` : '',
+        rail.extra || '',
+      ].filter(Boolean).join(', ');
+      const query = `query { Page(page: ${n}, perPage: ${PER_PAGE}) { media(${args}) {
+        id title { english romaji native } coverImage { large medium }
+        averageScore status countryOfOrigin startDate { year } } } }`;
+      const response = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = await response.json();
+      if (body?.errors?.length) throw new Error(body.errors[0]?.message || 'graphql');
+      return body?.data?.Page?.media || [];
+    }
+
+    function draw(rows) {
+      let added = 0;
+      for (const media of rows) {
+        const t = media?.title?.english || media?.title?.romaji || media?.title?.native;
+        if (!t || seen.has(key(t))) continue;
+        seen.add(key(t));
+        $('results').append(window.YomuTitleCard.create({
+          id: media.id,
+          anilistId: media.id,
+          title: t,
+          cover: media.coverImage?.large || media.coverImage?.medium || '',
+          score: media.averageScore ?? null,
+          status: media.status || '',
+          country: media.countryOfOrigin || '',
+          year: media.startDate?.year ?? null,
+        }, { badge: rail.badge, source: false }));
+        added += 1;
+      }
+      return added;
+    }
+
+    $('meta').textContent = 'Asking AniList…';
+    try {
+      const drawn = draw(await page(1));
+      if (!drawn) {
+        $('meta').textContent = '';
+        fail('AniList returned nothing for this shelf right now. Try again in a moment.');
+        return;
+      }
+      $('meta').textContent = `${seen.size} titles`;
+    } catch (error) {
+      $('meta').textContent = '';
+      fail('Could not reach AniList: ' + (error && error.message ? error.message : error));
+      return;
+    }
+
+    /* The same single-owner pager the rest of the app uses, on a grid where
+       the growth is visible. */
+    const foot = document.createElement('div');
+    foot.className = 'yl-foot';
+    document.querySelector('main').append(foot);
+    window.YomuPager?.claim(foot, {
+      key: 'rail:' + id,
+      scope: 'library',
+      label: 'Load more',
+      aria: 'Load more titles in ' + rail.label,
+      onMore: async ({ page: n }) => {
+        const added = draw(await page(n));
+        $('meta').textContent = `${seen.size} titles`;
+        return added > 0;
+      },
+    });
+  }
+
+  if (kind === 'rail') { await railScreen(); return; }
 
   if (kind === 'author') heading('More from', name || 'this author', '');
   else heading('You might like', name ? 'Like ' + name : 'Similar titles', '');

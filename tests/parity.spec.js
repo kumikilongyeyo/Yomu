@@ -183,6 +183,39 @@ test('a skeleton is the same box as a finished card', async ({ page, baseURL }) 
   expect(boxes.ghost.radius).toBe(boxes.real.radius);
 });
 
+test('a title with no artwork gets a compact fallback, never a full-bleed graphic', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+  await waitForRails(page, 4);
+
+  const probe = await page.evaluate(() => {
+    const host = document.querySelector('#yomu-library-explorer .yt-grid');
+    const card = window.YomuTitleCard.create({ title: 'Nano Machine', providers: [{ name: 'Asura', id: 'yomuext-asura' }] });
+    host.append(card);
+    const art = card.querySelector('.yt-card__art').getBoundingClientRect();
+    const fallback = card.querySelector('.yt-card__fallback');
+    const box = fallback.getBoundingClientRect();
+    const style = getComputedStyle(fallback);
+    const out = {
+      text: fallback.textContent,
+      images: card.querySelectorAll('img').length,
+      fontSize: Number.parseFloat(style.fontSize),
+      coverage: (box.width * box.height) / (art.width * art.height),
+    };
+    card.remove();
+    return out;
+  });
+
+  expect(probe.text, 'the title initials, not a logo').toBe('NM');
+  expect(probe.images, 'no image request for a missing cover').toBe(0);
+  expect(probe.fontSize, 'text-sized, not poster-sized').toBeLessThanOrEqual(28);
+  expect(probe.coverage, 'the mark does not fill the cover').toBeLessThan(0.2);
+
+  // And nothing anywhere may hand the brand loader to a card as artwork.
+  const brandCovers = await page.evaluate(() => document.querySelectorAll('.yt-card__img[src*="yomu-loader-ink"]').length);
+  expect(brandCovers).toBe(0);
+});
+
 test('cards are keyboard reachable with a visible focus ring and real targets', async ({ page, baseURL }, testInfo) => {
   await seed(page, { baseURL });
   await gotoHome(page);
@@ -194,15 +227,24 @@ test('cards are keyboard reachable with a visible focus ring and real targets', 
     const art = card.querySelector('.yt-card__art');
     const focused = document.activeElement === card;
     const outline = getComputedStyle(art, null).outlineStyle;
-    const pager = document.querySelector('[data-yomu-pager]');
+    /* Two controls, two jobs. The rail's takes you to the shelf's own screen,
+       so it is a link; the library's adds to what you are already looking at,
+       so it is a button. The test asserts each is the right one, because the
+       wrong one is a real accessibility defect: a link that does not navigate
+       and a button that does are both lies to a screen reader. */
+    const railControl = document.querySelector('.yr-rail [data-yomu-pager]');
+    const appendControl = document.querySelector('#yomu-library-explorer [data-yomu-pager]');
     return {
       focused,
       outline,
       cardTag: card.tagName,
-      pagerTag: pager.tagName,
-      pagerType: pager.getAttribute('type'),
-      pagerLabel: pager.getAttribute('aria-label'),
-      pagerHeight: Math.round(pager.getBoundingClientRect().height),
+      railTag: railControl.tagName,
+      railHref: railControl.getAttribute('href'),
+      pagerTag: appendControl.tagName,
+      pagerType: appendControl.getAttribute('type'),
+      pagerLabel: appendControl.getAttribute('aria-label'),
+      railLabel: railControl.getAttribute('aria-label'),
+      pagerHeight: Math.round(appendControl.getBoundingClientRect().height),
       cardLabel: card.getAttribute('aria-label'),
     };
   });
@@ -210,6 +252,9 @@ test('cards are keyboard reachable with a visible focus ring and real targets', 
   expect(audit.focused).toBe(true);
   expect(audit.outline, 'focus-visible ring on the cover').not.toBe('none');
   expect(audit.cardTag, 'a card that navigates is a link').toBe('A');
+  expect(audit.railTag, 'a control that navigates is a link').toBe('A');
+  expect(audit.railHref, 'and it has somewhere to go').toMatch(/\/more\?kind=rail/);
+  expect(audit.railLabel).toBeTruthy();
   expect(audit.pagerTag, 'a control that appends is a button').toBe('BUTTON');
   expect(audit.pagerType).toBe('button');
   expect(audit.pagerLabel).toBeTruthy();

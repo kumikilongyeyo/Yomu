@@ -108,9 +108,55 @@
     const below = box.top < 260;
     panel.style.top = below ? (box.bottom + 10) + 'px' : 'auto';
     panel.style.bottom = below ? 'auto' : (innerHeight - box.top + 10) + 'px';
-    const wide = Math.min(260, innerWidth - 24);
+    /* The dock is a row of four icons and is as wide as they are; the old
+       text menu had a fixed column width. Measuring beats guessing, and it is
+       what keeps the row centred on the pet rather than on a number. */
+    const wide = Math.min(
+      panel.classList.contains('ym-dock') ? Math.ceil(panel.getBoundingClientRect().width) || 232 : 260,
+      innerWidth - 24,
+    );
     panel.style.width = wide + 'px';
     panel.style.left = Math.max(12, Math.min(box.left + box.width / 2 - wide / 2, innerWidth - wide - 12)) + 'px';
+  }
+
+  /* --- the dock ------------------------------------------------------------ *
+   *
+   * A tap on Mori opens four icons, not a chat.
+   *
+   * It used to open the chat panel outright, which is a whole dialog and a
+   * keyboard for what is often "make it dark" or "go away". The tap is a
+   * choice between the four things Mori is actually for now -- talk to it,
+   * change the look, flip the mode, put it away -- and the chat is one of the
+   * four rather than the only one.
+   *
+   * The icons are inline SVG: no request, no sprite to keep in sync, and they
+   * inherit currentColor, so the skins and the customizer reach them for free.
+   * Every one is a real <button> with a label, and the row is a menubar the
+   * arrow keys walk.
+   */
+
+  const GLYPH = {
+    /* a speech bubble */
+    message: 'M4 4.8h16a1.6 1.6 0 0 1 1.6 1.6v9.2a1.6 1.6 0 0 1-1.6 1.6H9.4L4.6 21v-3.8H4a1.6 1.6 0 0 1-1.6-1.6V6.4A1.6 1.6 0 0 1 4 4.8Z',
+    /* sliders */
+    customize: 'M4 7h9.1a3.2 3.2 0 0 0 6.2 0H21a1 1 0 0 0 0-2h-1.7a3.2 3.2 0 0 0-6.2 0H4a1 1 0 0 0 0 2Zm17 10h-9.1a3.2 3.2 0 0 0-6.2 0H4a1 1 0 0 0 0 2h1.7a3.2 3.2 0 0 0 6.2 0H21a1 1 0 0 0 0-2Z',
+    /* a lamp: the light switch */
+    mode: 'M12 2.6a6.6 6.6 0 0 0-3.9 11.9c.5.4.8 1 .8 1.6v.4h6.2v-.4c0-.6.3-1.2.8-1.6A6.6 6.6 0 0 0 12 2.6ZM9 18.2h6v1.1a1.4 1.4 0 0 1-1.4 1.4h-.2a1.5 1.5 0 0 1-2.8 0h-.2A1.4 1.4 0 0 1 9 19.3v-1.1Z',
+    /* an eye, struck through */
+    hide: 'M2.4 4.1 4 2.5l17.5 17.5-1.6 1.6-3.1-3.1a10.8 10.8 0 0 1-4.8 1.1c-4.6 0-8.6-2.9-10.3-7a12.3 12.3 0 0 1 3.9-5L2.4 4.1Zm9.6 3.3a4.6 4.6 0 0 1 4.6 4.6c0 .6-.1 1.1-.3 1.6l-5.9-5.9c.5-.2 1-.3 1.6-.3Zm0-3.9c4.6 0 8.6 2.9 10.3 7a12.4 12.4 0 0 1-2.6 4l-2.9-2.9a4.6 4.6 0 0 0-5.9-5.9L8.4 3.9c1.1-.3 2.3-.4 3.6-.4Z',
+  };
+
+  function icon(name) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('class', 'ym-dock__glyph');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', GLYPH[name] || GLYPH.message);
+    path.setAttribute('fill', 'currentColor');
+    svg.append(path);
+    return svg;
   }
 
   function openMenu() {
@@ -120,48 +166,60 @@
     open = true;
     window.YomuPet.hush?.();
 
-    const menu = el('div', 'ym-menu');
+    const menu = el('div', 'ym-dock');
     menu.id = MENU_ID;
-    menu.setAttribute('role', 'menu');
+    menu.setAttribute('role', 'menubar');
     menu.setAttribute('aria-label', 'Mori');
 
-    const add = (label, hint, run) => {
-      const item = el('button', 'ym-item');
+    /* Two names per icon: a short one under the glyph, because 58px of 9px
+       text is four characters and a word cut in half reads as a bug, and the
+       whole phrase on `aria-label` and `title`, because a screen reader and a
+       hover both want the sentence. */
+    const add = (name, label, short, run, missing) => {
+      const item = el('button', 'ym-item ym-dock__button');
       item.type = 'button';
       item.setAttribute('role', 'menuitem');
-      item.append(el('span', 'ym-item__label', label));
-      if (hint) item.append(el('span', 'ym-item__hint', hint));
+      item.setAttribute('aria-label', label);
+      item.title = label;
+      item.dataset.ymAction = name;
+      item.append(icon(name), el('span', 'ym-dock__label', short));
+      /* A door that leads nowhere on this page is not offered at all rather
+         than offered and dead. */
+      if (missing) return null;
       item.addEventListener('click', run);
       menu.append(item);
       return item;
     };
 
-    const resume = mostRead();
-    if (resume?.title) {
-      add('Keep reading', resume.title, () => {
-        close();
-        location.href = '/library';
-      });
-    }
-
-    add('What should I read?', 'From your shelf', () => suggest());
-
-    /* Two doors into the look, because the pet is the one thing on every
-       screen: the mode flip, and the whole sheet behind it (yomu-look.js).
-       Neither is offered when that file is absent; the menu still works. */
     const look = window.YomuLook;
-    if (look && look.toggleMode) {
-      const paper = look.mode() === 'light';
-      add(paper ? 'Aurora mode' : 'Paper mode', paper ? 'Dark' : 'Light', () => { close(); look.toggleMode(); });
-    }
-    if (look && look.open) {
-      add('Customize look', 'Colours, tags', () => { close(); look.open(); });
-    }
 
-    add('Hide Mori', null, () => {
+    add('message', 'Message Mori', 'Chat', () => {
+      close();
+      /* The chat is a door off this row now, not the room the tap lands in. */
+      if (window.YomuMoriChat?.open) window.YomuMoriChat.open();
+      else suggest();
+    });
+
+    add('customize', 'Customize look', 'Look', () => { close(); look.open(); }, !look?.open);
+
+    const paper = look?.mode?.() === 'light';
+    add('mode', paper ? 'Aurora mode' : 'Paper mode', paper ? 'Dark' : 'Light', () => { close(); look.toggleMode(); }, !look?.toggleMode);
+
+    add('hide', 'Hide Mori', 'Hide', () => {
       close();
       window.YomuPet.set({ minimized: true });
       window.YomuPet.refresh();
+    });
+
+    /* A menubar walks with the arrow keys, wrapping at both ends. */
+    menu.addEventListener('keydown', (event) => {
+      if (!/^Arrow(Left|Right)$/.test(event.key)) return;
+      const items = [...menu.querySelectorAll('.ym-item')];
+      const here = items.indexOf(document.activeElement);
+      if (here < 0) return;
+      event.preventDefault();
+      const step = event.key === 'ArrowRight' ? 1 : -1;
+      items[(here + step + items.length) % items.length].focus();
     });
 
     document.body.append(menu);

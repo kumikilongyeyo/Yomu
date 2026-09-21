@@ -1,9 +1,12 @@
 /**
  * Yomu progressive exploration controls.
  *
- * Every ranked rail gets one More button. Search gets one More results button
- * that walks page 2+ of the reader's enabled sources instead of pretending
- * page 1 is the whole catalog. Work stays segmented and concurrency-bounded.
+ * Every ranked rail gets one control, and search gets one. They do different
+ * things on purpose: a rail's opens the whole shelf on its own screen, search's
+ * appends the next page of the reader's enabled sources in place. The
+ * difference is whether the reader can see the result -- a rail grows sideways,
+ * off the edge of the viewport; a result grid grows downwards, in front of
+ * them. Work stays segmented and concurrency-bounded either way.
  *
  * ## What changed, and why it had to
  *
@@ -36,7 +39,6 @@
   const NAMI = /(?:^|[^a-z])nami[\s._-]*comi(?:[^a-z]|$)|namicomi/i;
   const SEARCH_CONCURRENCY = 8;
   const SEARCH_SEGMENT = 16;
-  const RAIL_SEGMENT = 14;
   const searchPages = new Map();
 
   const RAILS = {
@@ -48,7 +50,23 @@
     'new series': { id: 'fresh', sort: 'START_DATE_DESC', badge: 'New', extra: 'status:RELEASING' },
   };
 
+  /**
+   * Two normalizers, because they answer two different questions.
+   *
+   * `norm` is the engine's title key: it merges "9.3 Nano Machine" with "Nano
+   * Machine (END)", which means it deliberately throws away the words `manga`,
+   * `manhwa` and `manhua` as noise.
+   *
+   * `labelKey` is for matching a control's own text, where those words are the
+   * entire meaning -- a tab labelled "Manhwa" must not normalize to nothing.
+   * Using the title key here made the type tabs unmatchable, which is a bug
+   * worth naming rather than a style note.
+   */
   function norm(v) {
+    if (window.YomuLibraryEngine?.normalize) return window.YomuLibraryEngine.normalize(v);
+    return labelKey(v);
+  }
+  function labelKey(v) {
     return String(v || '').toLowerCase().normalize('NFKD')
       .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   }
@@ -61,7 +79,7 @@
 
   function currentCountry() {
     const selected = document.querySelector('[role="tab"][aria-selected="true"]');
-    const label = norm(selected?.textContent);
+    const label = labelKey(selected?.textContent);
     if (label === 'manga') return 'JP';
     if (label === 'manhwa') return 'KR';
     if (label === 'manhua') return 'CN';
@@ -70,92 +88,42 @@
 
   function railConfig(section) {
     const title = section.querySelector('.yr-rail__title,h2')?.textContent || '';
-    return RAILS[norm(title)] || null;
+    return RAILS[labelKey(title)] || null;
   }
 
-  function railQuery(config, page, country) {
-    const args = [
-      'type:MANGA',
-      `sort:${config.sort}`,
-      'isAdult:false',
-      country ? `countryOfOrigin:${country}` : '',
-      config.extra || '',
-    ].filter(Boolean).join(',');
-    return `query{Page(page:${page},perPage:${RAIL_SEGMENT}){media(${args}){id title{english romaji native} coverImage{large medium} genres averageScore popularity trending status countryOfOrigin startDate{year}}}}`;
-  }
-
-  function shape(media) {
-    if (!media) return null;
-    const title = media.title?.english || media.title?.romaji || media.title?.native;
-    if (!title) return null;
-    return {
-      id: media.id,
-      title,
-      cover: media.coverImage?.large || media.coverImage?.medium || '',
-      genres: media.genres || [],
-      score: media.averageScore ?? null,
-      popularity: media.popularity ?? 0,
-      trending: media.trending ?? 0,
-      status: media.status || '',
-      country: media.countryOfOrigin || '',
-      year: media.startDate?.year ?? null,
-    };
-  }
-
-  /**
-   * One more page for one rail.
-   *
-   * Returns false when the source is exhausted (the pager settles on End) and
-   * throws when the page failed (the pager offers Retry and the cards already
-   * on screen are untouched). It never removes a card and never navigates.
-   */
-  async function moreRail(section, config, page) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    try {
-      const response = await fetch('https://graphql.anilist.co', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ query: railQuery(config, page, currentCountry()) }),
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const body = await response.json();
-      if (body?.errors?.length) throw new Error(body.errors[0]?.message || 'graphql');
-      const rows = (body?.data?.Page?.media || []).map(shape).filter(Boolean);
-      const strip = section.querySelector('.yr-strip');
-      if (!strip || !rows.length) return false;
-
-      const existing = new Set([...strip.querySelectorAll('.yt-card')]
-        .map((node) => norm(node.getAttribute('aria-label') || node.querySelector('.yt-card__title')?.textContent)));
-      let added = 0;
-      for (const row of rows) {
-        if (existing.has(norm(row.title))) continue;
-        existing.add(norm(row.title));
-        const card = window.YomuRails?.card?.(row, config.badge);
-        if (card) { strip.append(card); added += 1; }
-      }
-      /* A page of nothing but titles already on the rail is not the end of the
-         catalog -- the next press asks for the page after it. */
-      return added > 0 || rows.length > 0;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
+  /* The rail-append path -- railQuery(), shape() and moreRail() -- is gone.
+     It fetched AniList page 2 and pushed cards onto the right-hand end of a
+     horizontal strip, where nobody could see them. more.html?kind=rail draws
+     the whole shelf as a grid instead, and asks AniList itself. */
   function bindRails() {
-    if (!window.YomuPager) return;
     for (const section of document.querySelectorAll('.yr-rail')) {
       const config = railConfig(section);
       const head = section.querySelector('.yr-rail__head');
       if (!config || !head) continue;
-      window.YomuPager.claim(head, {
-        key: `rail:${config.id}`,
-        scope: 'rail',
-        aria: `Load more ${section.querySelector('.yr-rail__title')?.textContent || 'titles'}`,
-        onMore: ({ page }) => moreRail(section, config, page),
-      });
+
+      const href = `/more?kind=rail&id=${encodeURIComponent(config.id)}&type=${encodeURIComponent(currentType())}`;
+      const existing = head.querySelector('.yt-more');
+      if (existing) {
+        /* Re-assert rather than rebuild: the type tabs on Discover change what
+           "all of this shelf" means, and a stale href is a wrong screen. */
+        if (existing.getAttribute('href') !== href) existing.setAttribute('href', href);
+        continue;
+      }
+      /* Anything else that thinks it owns this head goes first. */
+      for (const node of head.querySelectorAll('[data-yomu-pager], .yomu-generic-more, .yomu-rail-more')) node.remove();
+
+      const link = el('a', 'yt-more yt-more--link', 'See all');
+      link.href = href;
+      link.dataset.yomuPager = 'rail';
+      link.setAttribute('aria-label', `See all ${section.querySelector('.yr-rail__title')?.textContent || 'titles'}`);
+      head.append(link);
     }
+  }
+
+  /** Which of Manga / Manhwa / Manhua the reader is looking at, if any. */
+  function currentType() {
+    const country = currentCountry();
+    return country === 'JP' ? 'manga' : country === 'KR' ? 'manhwa' : country === 'CN' ? 'manhua' : 'all';
   }
 
   function collectionSources() {

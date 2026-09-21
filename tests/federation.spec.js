@@ -61,6 +61,50 @@ test('five segments walk deeper pages across providers without one monopolising'
   expect(biggest / report.cards, 'no provider owns the library').toBeLessThan(0.6);
 });
 
+test('one work from many sources is one card wearing +N, however they spell it', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+
+  // Three segments, so the shared work has been offered by several sources.
+  const pager = page.locator('#yomu-library-explorer [data-yomu-pager]');
+  for (let i = 0; i < 3; i += 1) {
+    const before = await page.locator('#yomu-library-explorer .yt-card:not(.yt-card--skeleton)').count();
+    await pager.click();
+    await expect.poll(async () => page.locator('#yomu-library-explorer .yt-card:not(.yt-card--skeleton)').count(), { timeout: 40_000 })
+      .toBeGreaterThan(before);
+  }
+
+  const shelf = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('#yomu-library-explorer .yt-card:not(.yt-card--skeleton)')];
+    return cards.map((card) => ({
+      title: card.querySelector('.yt-card__title')?.textContent?.trim() || '',
+      source: card.querySelector('.yt-card__source')?.textContent?.trim() || '',
+      plus: card.querySelector('.yt-card__source span')?.textContent?.trim() || '',
+      all: card.querySelector('.yt-card__source')?.getAttribute('title') || '',
+    }));
+  });
+
+  /* The fixture gives each source its own mangling of the shared titles: a
+     rating on the front, "(END)" on the end, a whole metadata line. All of
+     them are the same book. */
+  const shared = shelf.filter((row) => /shared saga/i.test(row.title));
+  expect(shared.length, 'the shared work is on the shelf').toBeGreaterThan(0);
+
+  const byWork = new Map();
+  for (const row of shared) {
+    const work = row.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').match(/shared saga \d+/)?.[0];
+    byWork.set(work, (byWork.get(work) || 0) + 1);
+  }
+  for (const [work, count] of byWork) {
+    expect(count, `${work} is one card, not ${count}`).toBe(1);
+  }
+
+  // And that one card says how many sources carry it.
+  const merged = shared.find((row) => /\+\d/.test(row.plus));
+  expect(merged, `no merged card carried a +N tag: ${JSON.stringify(shared.slice(0, 4))}`).toBeTruthy();
+  expect(merged.all.split('·').length, 'the tag lists the sources behind it').toBeGreaterThan(1);
+});
+
 test('NamiComi never appears in browse, search or the engine, even when enabled', async ({ page, baseURL }) => {
   await seed(page, { baseURL, nami: true });
   await gotoHome(page);

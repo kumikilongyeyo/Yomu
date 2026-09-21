@@ -31,6 +31,20 @@ const label = (id) => id === 'namicomi'
   ? 'NamiComi'
   : id.charAt(0).toUpperCase() + id.slice(1) + ' Comics';
 
+/**
+ * How each source mangles a shared title.
+ *
+ * Real sources do not agree on a name. Asura prefixes a rating, Webnovel
+ * suffixes the status, Mgeko prints its whole metadata line. A fixture where
+ * every source spells a title identically cannot tell whether merging works;
+ * this one can.
+ */
+const TITLE_STYLE = {
+  bravo: (t) => `9.3 ${t}`,
+  charlie: (t) => `${t} (END)`,
+  delta: (t) => `${t} Author(S): Updating Chapters 330-eng-li 1 day, 15 hours`,
+};
+
 /** Stable per (source, page, index) so a rerun compares like with like. */
 function seriesFor(sourceId, page, index) {
   const ordinal = (page - 1) * PER_PAGE + index;
@@ -38,7 +52,7 @@ function seriesFor(sourceId, page, index) {
   const key = shared ? `Shared Saga ${ordinal}` : `${label(sourceId)} Tale ${ordinal}`;
   return {
     id: `${sourceId}-${ordinal}`,
-    title: key,
+    title: shared && TITLE_STYLE[sourceId] ? TITLE_STYLE[sourceId](key) : key,
     cover: `/fixtures/cover.svg?t=${encodeURIComponent(key)}`,
     category: CATEGORIES[ordinal % CATEGORIES.length],
     status: STATUSES[ordinal % STATUSES.length],

@@ -202,6 +202,42 @@ is reported because the numbers are the point.
 
 ---
 
+### Second pass, from live use
+
+Four things the fixture could not have told me, reported from the deployed app:
+
+**"Nothing happens when I click More."** It was appending, correctly, to the
+right-hand end of a **horizontally scrolling strip** — so the fourteen new
+cards landed outside the viewport and from the reader's chair the button did
+nothing. A rail's control is now a link named `See all`, to
+`more.html?kind=rail`, which draws the whole shelf as a grid with the back
+button that page already has and its own append pager. Append stays where
+growth is visible: the full library, search results, and the shelf screen.
+
+This contradicts §3's "More means append in place", and deliberately: that rule
+assumed a surface where appending shows. §3 also provides for it — "if
+navigation is ever desired, it must be a separately named action such as View
+all" — which is why the control is named `See all` and is an `<a>`.
+
+**One work, three cards.** A search for *nano machine* came back as
+`9.3 Nano Machine` (asurascans), `Nano Machine (END)` (webnovel) and
+`Nano Machine Author(S): Updating Chapters 330-eng-li 1 day, 15 hours` (Mgeko).
+The merge key now strips a leading rating, a bracketed status and everything
+from the point a source starts printing its own metadata; and `mergeKey()`
+joins a title to a known work when the only difference is noise. `Solo Leveling
+Ragnarok` is not noise, so a sequel keeps its own card. Search and the More
+path use the engine's key too, so all three surfaces merge the same way and the
+one card wears `+2`.
+
+**A result with no artwork came back as a large logo.** `findCover()` answered
+`/brand/yomu-loader-ink.webp` when no source had art, and the card drew that
+brand graphic full-bleed across a 2:3 cover. It returns nothing now, and the
+canonical card draws its own compact fallback — the title's initials, at text
+size, with no request.
+
+**A tap on Mori opened a whole chat.** It opens four icons: Chat, Look, Dark
+(or Light), Hide. The chat is one of the four, not the room the tap lands in.
+
 ### Deliberately not converted
 
 `adult.html` still draws its own tile. It is an 18+-gated page whose covers are
@@ -303,6 +339,44 @@ with the evidence named:
   labelled as an estimate and not as a publisher date.
 
 `Customize Yomu` in the quick row opens the look sheet.
+
+### What the communities recommend
+
+Mori's four signals were all about *this* reader: their history, AniList's
+charts, their sources. None of them answers "what do people who read a lot of
+this say is good".
+
+`scripts/community-picks.mjs` collects that daily in CI — **no model call, no
+paid key, nothing that costs anything**. It asks AniList (community score and
+readership), MangaUpdates (Bayesian rating over reader votes), MyAnimeList
+through Jikan (open source, no key), and — when credentials exist — counts how
+often a known title is named across Reddit's recommendation threads. The result
+is one 56 KB static file the app serves like any other asset, so every reader
+gets the same warm answer for one cached GET.
+
+It runs in CI rather than in the browser or the Worker because a browser is not
+allowed to read those origins (no CORS header) and the Worker should not: AniList
+already returns 403 to Cloudflare egress, and doing it per request would mean
+every reader paying for the same answer.
+
+**Reddit needs two free repository secrets.** Its anonymous JSON endpoints
+answer 403 now, and scraping around that would be unreliable and rude, so the
+collector uses Reddit's documented OAuth application flow. Create a free
+"script" app at `reddit.com/prefs/apps` and set `REDDIT_CLIENT_ID` and
+`REDDIT_CLIENT_SECRET`. Until then that one collector reports itself
+unavailable *in the file*, the reader sees exactly that in the chooser, and the
+other three still run.
+
+**The reader chooses.** `Communities` in Mori's quick row lists each one with
+its evidence — what it is, whether it answered, how many works it ranked — and
+a switch. Everything that answered is on by default, the choice lives on the
+device, and a community switched off does not vote. Agreement between
+communities is weighted above agreement between two of Yomu's own lists,
+because those two are AniList underneath and would otherwise be one opinion
+counted twice.
+
+Nothing is copied from anyone: what is stored is a count of how often a title
+was named and a link back to the thread that named it.
 
 **The tap no longer zooms.** `.mc-input` was 12 px, and mobile Safari zooms the
 whole page when a field under 16 px takes focus — and Mori focused that field

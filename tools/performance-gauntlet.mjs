@@ -110,14 +110,24 @@ const liveMore = await live('/yomu-explore-more.js');
 const liveFind = await live('/find?q=nano%20machine');
 gate('P10 segmented More controls and live production wiring',
   /More results/.test(more)
-  // Rail page state belongs to the one pager that owns the rail now, not to a
-  // WeakMap this file keeps beside a second control.
-  && /YomuPager\.claim\(head/.test(more)
+  /* A rail's control opens the shelf's own screen. It used to append AniList
+     page 2 to the right-hand end of a horizontal strip, where the new cards
+     landed outside the viewport and the reader saw nothing happen. Append is
+     still the rule for grids -- the full library, search, and the shelf screen
+     itself -- because there the growth is in front of them. */
+  && /kind=rail&id=/.test(more)
+  && /yt-more--link/.test(more)
+  && /kind === 'rail'/.test(read('dist-app/more.html'))
+  && /YomuPager\?\.claim\(foot/.test(read('dist-app/more.html'))
   && /searchPages/.test(more)
   && /\|\| 2/.test(more)
   && /SEARCH_CONCURRENCY\s*=\s*8/.test(more)
   && /namicomi/i.test(more)
-  && !/yomu-generic-more/.test(more)
+  /* The duplicate control may still be *named* -- the rail head sweeps it away
+     before placing its own, so a stale one from a cached bundle cannot
+     survive. What must not exist is anywhere that builds one. */
+  && !/el\(\s*'button'\s*,\s*'yomu-generic-more'/.test(more)
+  && /querySelectorAll\('\[data-yomu-pager\], \.yomu-generic-more, \.yomu-rail-more'\)/.test(more)
   && /yomu-explore-more\.js/.test(optimizer)
   && /yomu-pager\.js/.test(optimizer)
   && /yomu-titlecard\.js/.test(optimizer)

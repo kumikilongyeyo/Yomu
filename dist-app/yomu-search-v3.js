@@ -14,7 +14,6 @@
   const SUGGEST_TIMEOUT = 750;
   const CONCURRENCY = 8;
   const CACHE_MS = 10 * 60 * 1000;
-  const FALLBACK_COVER = '/brand/yomu-loader-ink.webp';
   const MARK = '/brand/yomu-icon.svg';
   const isSearchRoute = () => /^(?:\/find(?:\.html)?|\/search)\/?$/.test(location.pathname);
   let searchRun = 0;
@@ -23,11 +22,16 @@
   let activeSuggestAbort = null;
   let quickRows = [];
 
-  const norm = (v) => String(v || '').toLowerCase().normalize('NFKD')
+  /* One title key for the whole app. yomu-library-engine.js owns it, because
+     it is the file that had to learn what sources actually answer with: a
+     rating on the front, "(END)" on the end, or a whole metadata line. The
+     local copy stays as the floor for a page that loads without the engine. */
+  const localNorm = (v) => String(v || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[’'`]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\b(the|a|an|of|and|manga|manhwa|manhua|webtoon|comic|official|colou?red?|color|season|part|vol(?:ume)?|novel|remake|fan\s?colou?red)\b/g, ' ')
     .replace(/\s+/g, ' ').trim();
+  const norm = (v) => (window.YomuLibraryEngine?.normalize || localNorm)(v);
 
   function dice(a, b) {
     a = norm(a); b = norm(b);
@@ -156,7 +160,7 @@ body.yomu-search-v3 #results .shelf-line,body.yomu-search-v3 #results .tile[disa
     const raw = file ? `https://uploads.mangadex.org/covers/${item.id}/${file}.256.jpg` : '';
     return {
       id: String(item.id), title: mdTitle(a), altTitles: mdAlt(a),
-      cover: raw ? `/api/img?u=${encodeURIComponent(raw)}` : FALLBACK_COVER,
+      cover: raw ? `/api/img?u=${encodeURIComponent(raw)}` : '',
       synopsis: String(a.description?.en || Object.values(a.description || {})[0] || ''),
       year: Number(a.year) || undefined, status: a.status || undefined,
       nsfw: /erotica|pornographic/i.test(String(a.contentRating || '')),
@@ -185,14 +189,24 @@ body.yomu-search-v3 #results .shelf-line,body.yomu-search-v3 #results .tile[disa
     }
   }
 
+  /**
+   * A real cover, or nothing.
+   *
+   * This used to answer `/brand/yomu-loader-ink.webp` when no source had art,
+   * and the card drew that brand graphic full-bleed across a 2:3 cover -- a
+   * result with no artwork came back as a large logo, three of them in a row.
+   * Returning an empty string hands the decision to the canonical card, which
+   * draws its own compact fallback: the title's initials, centred, at text
+   * size. Small, and it costs no request.
+   */
   function findCover(item) {
     if (item?.cover) return String(item.cover);
     const names = [item?.title, ...(item?.altTitles || [])].map(norm).filter(Boolean);
     for (const row of quickRows) {
       const theirs = [row.title, ...(row.altTitles || [])].map(norm).filter(Boolean);
-      if (names.some((n) => theirs.includes(n))) return row.cover || FALLBACK_COVER;
+      if (names.some((n) => theirs.includes(n))) return row.cover || '';
     }
-    return FALLBACK_COVER;
+    return '';
   }
 
   /* Search results are the canonical card (yomu-titlecard.js), the same one
@@ -249,7 +263,20 @@ body.yomu-search-v3 #results .shelf-line,body.yomu-search-v3 #results .tile[disa
     document.querySelectorAll('#results .shelf-line,#results .tile[disabled],#results .yt-card--disabled').forEach((n) => n.remove());
     document.querySelectorAll('#results .yt-card__img,#results .tile-art img').forEach((img) => {
       if (img.dataset.yv3Repair) return; img.dataset.yv3Repair = '1';
-      img.addEventListener('error', () => { if (!img.src.endsWith('yomu-loader-ink.webp')) img.src = FALLBACK_COVER; });
+      /* A broken cover becomes the card's own compact fallback rather than a
+         full-bleed brand graphic. yomu-titlecard.js already owns that path, so
+         this only has to cover images the card did not build. */
+      img.addEventListener('error', () => {
+        const art = img.closest('.yt-card__art, .tile-art');
+        img.remove();
+        if (art && !art.querySelector('.yt-card__fallback')) {
+          const mark = document.createElement('span');
+          mark.className = 'yt-card__fallback';
+          const name = art.closest('.yt-card')?.querySelector('.yt-card__title')?.textContent || '';
+          mark.textContent = String(name).split(/s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
+          art.prepend(mark);
+        }
+      });
     });
   }
   function resultsGrid() { return document.getElementById('results') || document.querySelector('.grid'); }

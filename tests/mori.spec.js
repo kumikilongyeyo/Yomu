@@ -48,10 +48,18 @@ async function routeAnilistMedia(page) {
   });
 }
 
-async function openMori(page) {
-  // The pet itself is the tap seam (yomu-pet.js -> onTap); .yp-puck is the
-  // minimized control and is not on screen in a fresh profile.
+/** The pet is the tap seam (yomu-pet.js -> onTap). A tap opens the dock. */
+async function openDock(page) {
   await page.locator('#yomu-pet .yp-pet').first().click();
+  const dock = page.locator('#yomu-mori-menu.ym-dock');
+  await dock.waitFor({ timeout: 20_000 });
+  return dock;
+}
+
+/** The chat is one of the dock's four doors, not what the tap lands on. */
+async function openMori(page) {
+  const dock = await openDock(page);
+  await dock.locator('[data-ym-action="message"]').click();
   const panel = page.locator('#yomu-mori-chat');
   await panel.waitFor({ timeout: 20_000 });
   return panel;
@@ -70,6 +78,76 @@ async function ask(page, text) {
 
 test.beforeEach(async ({ request, baseURL }) => {
   await resetSources(request, baseURL);
+});
+
+test('a tap opens four icons, not a chat', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+
+  const dock = await openDock(page);
+  await expect(page.locator('#yomu-mori-chat'), 'the tap does not open the panel').toHaveCount(0);
+
+  const buttons = dock.locator('.ym-dock__button');
+  await expect(buttons).toHaveCount(4);
+  expect(await buttons.evaluateAll((nodes) => nodes.map((n) => n.dataset.ymAction)))
+    .toEqual(['message', 'customize', 'mode', 'hide']);
+
+  const audit = await dock.evaluate((node) => {
+    const items = [...node.querySelectorAll('.ym-dock__button')];
+    return {
+      role: node.getAttribute('role'),
+      tags: items.map((b) => b.tagName),
+      types: items.map((b) => b.getAttribute('type')),
+      labels: items.map((b) => b.getAttribute('aria-label')),
+      glyphs: items.map((b) => b.querySelectorAll('svg.ym-dock__glyph').length),
+      requests: node.querySelectorAll('img').length,
+      width: Math.round(node.getBoundingClientRect().width),
+    };
+  });
+  expect(audit.role).toBe('menubar');
+  expect(new Set(audit.tags)).toEqual(new Set(['BUTTON']));
+  expect(new Set(audit.types)).toEqual(new Set(['button']));
+  expect(audit.labels).toEqual(['Message Mori', 'Customize look', expect.stringMatching(/Aurora mode|Paper mode/), 'Hide Mori']);
+  expect(audit.glyphs, 'every icon is inline SVG').toEqual([1, 1, 1, 1]);
+  expect(audit.requests, 'no image request for the icons').toBe(0);
+  expect(audit.width, 'a small row, not a panel').toBeLessThan(320);
+
+  // Arrow keys walk the row, Escape closes it.
+  await buttons.first().focus();
+  await page.keyboard.press('ArrowRight');
+  expect(await page.evaluate(() => document.activeElement?.dataset?.ymAction)).toBe('customize');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowLeft');
+  expect(await page.evaluate(() => document.activeElement?.dataset?.ymAction), 'and wraps').toBe('hide');
+  await page.keyboard.press('Escape');
+  await expect(dock).toHaveCount(0);
+});
+
+test('the dock icons do what they say', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+
+  // Customize opens the look sheet.
+  let dock = await openDock(page);
+  await dock.locator('[data-ym-action="customize"]').click();
+  await expect.poll(async () => page.evaluate(() => !!document.getElementById('yomu-look-sheet')?.classList.contains('is-on')), { timeout: 20_000 }).toBe(true);
+  await page.keyboard.press('Escape');
+
+  // The light switch flips the mode, and the icon's label follows it.
+  const modeBefore = await page.evaluate(() => window.YomuLook.mode());
+  dock = await openDock(page);
+  const labelBefore = await dock.locator('[data-ym-action="mode"]').getAttribute('aria-label');
+  await dock.locator('[data-ym-action="mode"]').click();
+  await expect.poll(async () => page.evaluate(() => window.YomuLook.mode()), { timeout: 10_000 }).not.toBe(modeBefore);
+  dock = await openDock(page);
+  expect(await dock.locator('[data-ym-action="mode"]').getAttribute('aria-label')).not.toBe(labelBefore);
+
+  // Hide puts Mori away.
+  await dock.locator('[data-ym-action="hide"]').click();
+  await expect.poll(async () => page.evaluate(() => {
+    const root = document.getElementById('yomu-pet');
+    return !!root?.classList.contains('is-min') || !document.querySelector('#yomu-pet .yp-pet');
+  }), { timeout: 10_000 }).toBe(true);
 });
 
 test('opening Mori does not zoom the page and keeps a 16px field', async ({ page, baseURL }, testInfo) => {
@@ -157,6 +235,59 @@ test('Mori refuses to invent an answer it cannot verify', async ({ page, baseURL
   const answer = await ask(page, 'who wrote A Title That Does Not Exist');
   expect(answer).toMatch(/could not verify|does not list a credited author/i);
   expect(answer, 'no invented name').not.toMatch(/written and drawn by \w/);
+});
+
+test('the community chooser shows the evidence and the reader decides', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+  await openMori(page);
+
+  await page.locator('#yomu-mori-chat .mc-chip', { hasText: 'Communities' }).click();
+  const rows = page.locator('#yomu-mori-chat .mc-source');
+  await expect(rows).toHaveCount(4, { timeout: 20_000 });
+
+  const listed = await rows.evaluateAll((nodes) => nodes.map((row) => ({
+    id: row.querySelector('input').dataset.moriSource,
+    checked: row.querySelector('input').checked,
+    disabled: row.querySelector('input').disabled,
+    text: row.querySelector('.mc-source__text').innerText.replace(/\s+/g, ' ').trim(),
+  })));
+
+  expect(listed.map((r) => r.id)).toEqual(['anilist', 'mangaupdates', 'myanimelist', 'reddit']);
+  // Everything that answered is on by default; a reader who never opened this
+  // gets the widest answer, not the narrowest.
+  expect(listed.slice(0, 3).every((r) => r.checked && !r.disabled)).toBe(true);
+  expect(listed[0].text, 'each one carries its own evidence').toMatch(/120 ranked/);
+  // A community that did not answer says why, instead of quietly not being there.
+  expect(listed[3].disabled).toBe(true);
+  expect(listed[3].checked).toBe(false);
+  expect(listed[3].text).toMatch(/Unavailable · no REDDIT_CLIENT_ID/);
+
+  // Turning one off is remembered, per device.
+  await rows.nth(1).locator('input').uncheck();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('yomu.v1.moriSources')))).toMatchObject({ mangaupdates: false });
+});
+
+test('community picks reach the recommendations, and only the chosen ones', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+  await openMori(page);
+
+  await page.locator('#yomu-mori-chat .mc-chip', { hasText: 'Recommend' }).click();
+  await expect(page.locator('#yomu-mori-chat .mc-picks .mc-pick').first()).toBeVisible({ timeout: 45_000 });
+  const withAll = await page.locator('#yomu-mori-chat .mc-pick strong').allInnerTexts();
+  expect(withAll, 'the work three communities agree on leads').toContain('Community Consensus Saga');
+
+  // Switch every community off; the community signal must leave with them.
+  await page.evaluate(() => localStorage.setItem('yomu.v1.moriSources', JSON.stringify({
+    anilist: false, mangaupdates: false, myanimelist: false, reddit: false,
+  })));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await openMori(page);
+  await page.locator('#yomu-mori-chat .mc-chip', { hasText: 'Recommend' }).click();
+  await expect(page.locator('#yomu-mori-chat .mc-picks .mc-pick').first()).toBeVisible({ timeout: 45_000 });
+  const withNone = await page.locator('#yomu-mori-chat .mc-pick strong').allInnerTexts();
+  expect(withNone, 'a community the reader switched off does not vote').not.toContain('Only MangaUpdates Likes This');
 });
 
 test('recommendations fuse several signals rather than falling through them', async ({ page, baseURL }) => {

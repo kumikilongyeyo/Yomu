@@ -192,7 +192,76 @@
    * enabled sources can actually open beats one the reader would have to go
    * and find, so titles the library engine knows are lifted.
    */
-  const SIGNAL_WEIGHT = { similar: 3.2, taste: 2.4, chart: 1.4, sources: 1.1 };
+  const SIGNAL_WEIGHT = { similar: 3.2, community: 2.8, taste: 2.4, chart: 1.4, sources: 1.1 };
+
+  /* --- what the communities recommend --------------------------------------- *
+   *
+   * `/community-picks.json` is collected daily in CI by
+   * scripts/community-picks.mjs -- AniList, MangaUpdates, MyAnimeList and, when
+   * credentials are set, mentions counted across Reddit's recommendation
+   * threads. It is a static asset, so asking for it costs one cached GET and
+   * every reader gets the same answer.
+   *
+   * The reader chooses which of those communities count. Some people trust
+   * MangaUpdates and not Reddit; some want only what their own reading says.
+   * The choice is stored per device and nothing is uploaded either way.
+   */
+  const PICKS_URL = '/community-picks.json';
+  const SOURCES_KEY = 'yomu.v1.moriSources';
+  let picksPromise = null;
+
+  function communityChoice() {
+    const stored = readJSON(SOURCES_KEY, null);
+    /* Absent means "all of them": a reader who has never opened the chooser
+       gets the widest answer, not the narrowest. */
+    return stored && typeof stored === 'object' ? stored : {};
+  }
+
+  const communityAllows = (id) => communityChoice()[id] !== false;
+
+  async function communityPicks() {
+    picksPromise ||= (async () => {
+      try {
+        const response = await fetch(PICKS_URL, { cache: 'default' });
+        if (!response.ok) return null;
+        const body = await response.json();
+        return body?.schema === 'yomu.community-picks/1' ? body : null;
+      } catch { return null; }
+    })();
+    return picksPromise;
+  }
+
+  /** The picks the reader's chosen communities actually voted for. */
+  async function communityRows(type) {
+    const data = await communityPicks();
+    if (!data) return { rows: [], why: '' };
+    const allowed = Object.keys(data.sources || {}).filter((id) => data.sources[id]?.ok && communityAllows(id));
+    if (!allowed.length) return { rows: [], why: '' };
+
+    const rows = [];
+    for (const pick of data.picks || []) {
+      const voted = allowed.filter((id) => pick.signals?.[id]);
+      if (!voted.length) continue;
+      const note = voted.map((id) => pick.signals[id]?.note).filter(Boolean)[0] || '';
+      rows.push({
+        title: pick.title,
+        cover: pick.cover || '',
+        anilistId: pick.anilistId ?? null,
+        score: pick.score ?? null,
+        category: pick.category || '',
+        year: pick.year ?? null,
+        __agreeing: voted.length,
+        __note: note,
+        __communities: voted.map((id) => data.sources[id]?.label || id),
+      });
+    }
+    rows.sort((a, b) => b.__agreeing - a.__agreeing);
+    const names = allowed.map((id) => data.sources[id]?.label || id);
+    return {
+      rows: rows.filter((row) => typeMatches(row, type)),
+      why: names.length > 1 ? `Recommended across ${names.join(', ')}` : `Recommended on ${names[0]}`,
+    };
+  }
 
   function fuse(signals) {
     const byTitle = new Map();
@@ -205,7 +274,13 @@
         seenHere.add(key);
         /* Position matters inside a signal but must not swamp agreement
            between signals: the tenth pick of two lists beats the first of one. */
-        const weight = SIGNAL_WEIGHT[kind] * (1 - Math.min(index, 20) / 28);
+        let weight = SIGNAL_WEIGHT[kind] * (1 - Math.min(index, 20) / 28);
+        /* Agreement *between reading communities* counts for more than
+           agreement between two of Yomu's own lists, because the two lists are
+           AniList underneath and are therefore one opinion counted twice.
+           Three communities converging on a work is the strongest free signal
+           available, and it is allowed to outrank a chart. */
+        if (row.__agreeing > 1) weight *= 1 + (row.__agreeing - 1) * 0.5;
         const hit = byTitle.get(key);
         if (hit) {
           hit.score += weight;
@@ -235,12 +310,15 @@
         catch { return { kind, why, rows: [] }; }
       };
 
+      const community = await communityRows(type);
       const signals = await Promise.all([
         // Reader-voted "if you liked X". The strongest free signal there is.
         ask('similar', seed ? `Because you read ${seed}` : '', async () => {
           if (!seed || !window.YomuAniList?.similar) return [];
           return (await window.YomuAniList.similar(seed))?.picks || [];
         }),
+        // What the reading communities the reader chose actually recommend.
+        ask('community', community.why, async () => community.rows),
         // This device's own taste profile: saved titles, finished chapters,
         // recent interactions. Never uploaded.
         ask('taste', 'Matches what you have been reading', async () => {
@@ -564,6 +642,53 @@ query ($search: String) {
     }
   }
 
+  /**
+   * Which communities Mori is allowed to listen to.
+   *
+   * Shown as a row of switches with the evidence next to each one: what it is,
+   * whether it answered on the last collection, and how many works it ranked.
+   * A community that did not answer says why rather than being quietly absent,
+   * because "Reddit is off" and "Reddit has no credentials" are different
+   * facts and a reader deserves to know which one they are looking at.
+   */
+  async function chooseSources() {
+    lastIntent = { kind: 'sources', type: 'all' };
+    const data = await communityPicks();
+    if (!data) {
+      bubble('mori', 'I could not load the community list. It is a static file, so this usually means the page is offline — your own reading and your enabled sources still work.');
+      return;
+    }
+
+    const when = new Date(data.generatedAt);
+    const age = Number.isFinite(when.getTime())
+      ? `Collected ${when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+      : 'Collected recently';
+    bubble('mori', 'Pick the communities I listen to. Everything stays on this device.', `${age} · ${data.counts?.picks || 0} works ranked`);
+
+    const wrap = el('div', 'mc-sources');
+    for (const [id, source] of Object.entries(data.sources || {})) {
+      const row = el('label', 'mc-source');
+      const box = el('input');
+      box.type = 'checkbox';
+      box.checked = source.ok && communityAllows(id);
+      box.disabled = !source.ok;
+      box.dataset.moriSource = id;
+      box.addEventListener('change', () => {
+        const choice = { ...communityChoice(), [id]: box.checked };
+        try { localStorage.setItem(SOURCES_KEY, JSON.stringify(choice)); } catch {}
+      });
+      const copy = el('span', 'mc-source__text');
+      copy.append(el('strong', null, source.label || id));
+      copy.append(el('span', null, source.ok
+        ? `${source.about} · ${source.rows} ranked${source.threads ? ` from ${source.threads} threads` : ''}`
+        : `Unavailable · ${source.error || 'did not answer'}`));
+      row.append(box, copy);
+      wrap.append(row);
+    }
+    log.append(wrap);
+    log.scrollTop = log.scrollHeight;
+  }
+
   function customize() {
     const look = window.YomuLook;
     if (!look?.open) {
@@ -580,7 +705,7 @@ query ($search: String) {
       'Library: “show my library”, “continue reading”.',
       'Picks: “recommend manhwa”, “popular manga”, “trending”, “hidden gems”, “surprise me”.',
       'Titles: “find <title>”, “who wrote <title>”, “how many chapters in <title>”, “when is the next chapter of <title>”, “tell me about <title>”.',
-      'Yomu: “customize” opens the look sheet.',
+      'Yomu: “customize” opens the look sheet, “communities” picks who I listen to.',
     ].join('\n'), 'Everything is answered from your reading, your enabled sources, or public community data — no paid model');
   }
 
@@ -599,6 +724,7 @@ query ($search: String) {
     }
     if (/\b(help|what can you do|commands?)\b/.test(lower)) return help();
     if (/\b(customi[sz]e|look sheet|change the (?:colours?|colors?|theme|look)|appearance settings)\b/.test(lower)) return customize();
+    if (/\b(communit(?:y|ies)|choose sources|which sources|my sources|reddit)\b/.test(lower)) return chooseSources();
     if (/\b(my library|show.*library|my shelf|saved titles?)\b/.test(lower)) return showLibrary();
     if (/\b(continue|resume|keep reading|where was i)\b/.test(lower)) return continueReading();
 
@@ -702,6 +828,7 @@ query ($search: String) {
       ['Continue', 'continue reading'],
       ['Popular', 'popular'],
       ['Surprise', 'surprise me'],
+      ['Communities', 'choose sources'],
     ]) {
       const button = el('button', 'mc-chip', label);
       button.type = 'button';
@@ -771,10 +898,22 @@ query ($search: String) {
   addEventListener('yomu:pet-surface', close);
   for (const type of ['popstate', 'hashchange']) addEventListener(type, close);
 
+  /**
+   * The tap belongs to the dock, not to the chat.
+   *
+   * This file used to claim `YomuPet.onTap` and open the panel outright, which
+   * meant one tap on a pixel-art otter produced a dialog and a keyboard. The
+   * dock in yomu-mori.js owns the tap now and offers four doors -- message,
+   * customize, mode, hide -- and this is what the message one opens.
+   *
+   * The claim is kept for the case where the dock is not on the page: a tap
+   * that does nothing is worse than a tap that opens the chat.
+   */
   const claim = () => openChat();
   const attach = () => {
-    if (window.YomuPet?.onTap) window.YomuPet.onTap(claim);
-    else setTimeout(attach, 120);
+    if (!window.YomuPet?.onTap) { setTimeout(attach, 120); return; }
+    if (window.YomuMori?.openMenu) return;
+    window.YomuPet.onTap(claim);
   };
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', attach, { once: true });
   else attach();
