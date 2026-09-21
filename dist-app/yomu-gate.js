@@ -44,6 +44,29 @@
 
   const baseFetch = window.fetch.bind(window);
 
+  /* NamiComi is excluded product-wide; yomu-library-engine.js owns the pattern
+     and every helper honours it in its own source list. The Expo bundle does
+     not: it fans out from the stored collection and cannot be taught the rule,
+     so it asked NamiComi for /series and /latest itself. This wrapper holds
+     baseFetch, which makes it the one chokepoint every caller passes through.
+     Only the path is tested -- searching for the word must still work. An
+     empty payload rather than a rejection keeps the console-clean gates about
+     the product. */
+  const BLOCKED_SOURCE = /(?:^|[^a-z])nami[\s._-]*comi(?:[^a-z]|$)|namicomi/i;
+  function blockedSourcePath(url) {
+    if (url.origin !== location.origin) return false;
+    if (!/^\/api\/(?:ext|suwayomi)\/source\//.test(url.pathname)) return false;
+    let path = url.pathname;
+    try { path = decodeURIComponent(path); } catch {}
+    return (window.YomuLibraryEngine?.BLOCKED_SOURCE || BLOCKED_SOURCE).test(path);
+  }
+  function blockedSourceResponse() {
+    return new Response(JSON.stringify({ series: [], chapters: [], pages: [], page: 1, hasMore: false }), {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store, max-age=0' },
+    });
+  }
+
   function collectionSources() {
     try {
       const collection = JSON.parse(localStorage.getItem(COLLECTION_KEY) || 'null');
@@ -200,6 +223,8 @@
     }
 
     const method = String(init?.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+    if (blockedSourcePath(target)) return blockedSourceResponse();
+
     const isCatalogSearch = method === 'GET'
       && target.origin === location.origin
       && target.pathname === '/api/catalog/search';
