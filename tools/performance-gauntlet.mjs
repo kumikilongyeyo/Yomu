@@ -104,6 +104,9 @@ gate('P9 global loader is blank-page-only and background-silent',
 
 // P10 — exploration itself must stay progressive: rails and search both expose
 // More, search walks page 2+, source fan-out is bounded, and NamiComi is blocked.
+// There is exactly one rail-control ownership path. The retired generic control
+// marker is forbidden outright so the offline gate and the production verifier
+// enforce the same invariant instead of disagreeing over dead cleanup code.
 const livePerf = await live('/yomu-performance.js');
 const liveLoading = await live('/yomu-loading-policy.js');
 const liveMore = await live('/yomu-explore-more.js');
@@ -123,11 +126,11 @@ gate('P10 segmented More controls and live production wiring',
   && /\|\| 2/.test(more)
   && /SEARCH_CONCURRENCY\s*=\s*8/.test(more)
   && /namicomi/i.test(more)
-  /* The duplicate control may still be *named* -- the rail head sweeps it away
-     before placing its own, so a stale one from a cached bundle cannot
-     survive. What must not exist is anywhere that builds one. */
-  && !/el\(\s*'button'\s*,\s*'yomu-generic-more'/.test(more)
-  && /querySelectorAll\('\[data-yomu-pager\], \.yomu-generic-more, \.yomu-rail-more'\)/.test(more)
+  && !/yomu-generic-more/.test(more)
+  && /const existing = head\.querySelector\('\.yt-more'\)/.test(more)
+  && /querySelectorAll\('\[data-yomu-pager\], \.yomu-rail-more'\)/.test(more)
+  && /link\.dataset\.yomuPager = 'rail'/.test(more)
+  && /window\.YomuPager\.claim\(wrap/.test(more)
   && /yomu-explore-more\.js/.test(optimizer)
   && /yomu-pager\.js/.test(optimizer)
   && /yomu-titlecard\.js/.test(optimizer)
@@ -136,6 +139,7 @@ gate('P10 segmented More controls and live production wiring',
     && /SOURCE_BUDGET_MS/.test(livePerf.text)
     && /data-yomu-blank-loading/.test(liveLoading.text)
     && /More results/.test(liveMore.text)
+    && !/yomu-generic-more/.test(liveMore.text)
     && /yomu-explore-more\.js/.test(liveFind.text)
   )),
   BASE ? `perf=${livePerf?.status}; loading=${liveLoading?.status}; more=${liveMore?.status}; find=${liveFind?.status}` : 'offline');
