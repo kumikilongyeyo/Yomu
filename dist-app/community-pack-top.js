@@ -129,8 +129,8 @@
 
     // Rename the existing field instead of creating another one.
     const label = form.querySelector('label[for="yomu-universal-source"]');
-    if (label) label.textContent = 'Website, GitHub repository, or source pack';
-    input.placeholder = 'Paste a website or GitHub link';
+    if (label && label.textContent !== 'Website, GitHub repository, or source pack') label.textContent = 'Website, GitHub repository, or source pack';
+    if (input.placeholder !== 'Paste a website or GitHub link') input.placeholder = 'Paste a website or GitHub link';
 
     let kind = form.querySelector('.sf-kind');
     if (!kind) {
@@ -161,26 +161,30 @@
       if (!submit.disabled && submit.textContent !== text) submit.textContent = text;
     };
 
+    const setKind = (value, text) => {
+      if (kind.dataset.kind !== value) kind.dataset.kind = value;
+      if (kind.textContent !== text) kind.textContent = text;
+    };
+
     const paint = () => {
       const target = classify(input.value);
-      kind.dataset.kind = target.kind;
       if (target.kind === 'repository') {
-        kind.textContent = 'GitHub repository';
+        setKind('repository', 'GitHub repository');
         setSubmitLabel('Add repository');
         showSingle(root);
       } else if (target.kind === 'pack') {
-        kind.textContent = 'Source pack';
+        setKind('pack', 'Source pack');
         setSubmitLabel('Load pack');
       } else if (target.kind === 'website') {
-        kind.textContent = 'Website source';
+        setKind('website', 'Website source');
         setSubmitLabel('Add source');
         showSingle(root);
       } else if (target.kind === 'invalid') {
-        kind.textContent = 'Check link';
+        setKind('invalid', 'Check link');
         setSubmitLabel('Add');
         showSingle(root);
       } else {
-        kind.textContent = 'Auto detect';
+        setKind('empty', 'Auto detect');
         setSubmitLabel('Add');
         showSingle(root);
       }
