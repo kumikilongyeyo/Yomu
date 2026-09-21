@@ -110,7 +110,7 @@
         continue;
       }
       /* Anything else that thinks it owns this head goes first. */
-      for (const node of head.querySelectorAll('[data-yomu-pager], .yomu-generic-more, .yomu-rail-more')) node.remove();
+      for (const node of head.querySelectorAll('[data-yomu-pager], .yomu-rail-more')) node.remove();
 
       const link = el('a', 'yt-more yt-more--link', 'See all');
       link.href = href;
