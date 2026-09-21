@@ -9,7 +9,7 @@
 
 export const SOURCE_IDS = [
   'alpha', 'bravo', 'charlie', 'delta', 'echo',
-  'foxtrot', 'golf', 'hotel', 'india', 'juliet',
+  'foxtrot', 'golf', 'hotel', 'india', 'juliet', 'kilo',
   'namicomi',
 ];
 
@@ -78,12 +78,20 @@ export function searchPage(sourceId, query, page) {
   });
 }
 
+/* Comick in production declares chapters:false / pages:false -- it finds
+   titles, it cannot serve them. `kilo` is the fixture's copy of that shape, so
+   the rule that a readable provider is named first has something to be tested
+   against. */
+export const DISCOVERY_ONLY = new Set(['kilo']);
+
 export function extensions(origin) {
   return SOURCE_IDS.map((id) => ({
     id,
     name: label(id),
     api: `${origin}/api/ext/source/${id}/`,
-    capabilities: { popular: true, latest: true, search: true, chapters: true, pages: true, details: true },
+    capabilities: DISCOVERY_ONLY.has(id)
+      ? { popular: true, latest: true, search: true, details: false, chapters: false, pages: false }
+      : { popular: true, latest: true, search: true, chapters: true, pages: true, details: true },
     nsfw: false,
     status: 'ok',
     language: 'en',

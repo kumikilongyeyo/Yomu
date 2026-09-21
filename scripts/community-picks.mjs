@@ -30,21 +30,16 @@
  *   mangaupdates  Bayesian rating and vote count. The long-running scanlation
  *                 reader community; strongest on manhwa/manhua.
  *   myanimelist   MAL's own rankings, read through Jikan (open source, no key).
- *   reddit        Mentions counted across recommendation threads and their
- *                 comments in the manga/manhwa/manhua subreddits.
+ *
+ * Reddit is deliberately not here. Its anonymous JSON endpoints answer 403
+ * since 2023 and its RSS feeds rate-limit to roughly nothing, so the only
+ * reliable route is an OAuth application -- credentials this repository does
+ * not have and should not require to build. Three communities that work beat
+ * a fourth that reports itself broken every day.
  *
  * Every source may fail independently. A source that does not answer is
  * recorded as unavailable with the reason, and the file still ships: a missing
  * community is a smaller answer, never a broken one, and never a silent one.
- *
- * ## Reddit needs credentials, by design
- *
- * Anonymous JSON endpoints answer 403 now, and scraping around that would be
- * both unreliable and rude. The collector uses Reddit's documented OAuth
- * application flow instead, which is rate-limit friendly and identifies
- * itself. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET (a free "script" app
- * at reddit.com/prefs/apps) and it turns on; without them it reports itself
- * unavailable and the other three still run.
  *
  * Nothing here copies anyone's writing. What is stored is a count of how often
  * a title was named, and a link back to the thread that named it.
@@ -60,9 +55,7 @@ const OUT = path.join(ROOT, 'dist-app', 'community-picks.json');
 const UA = 'yomu-community-picks/1.0 (+https://github.com/kumikilongyeyo/Yomu)';
 const MAX_PICKS = 120;
 
-/* Subreddits whose whole subject is recommending these books to each other. */
-const SUBS = ['manga', 'manhwa', 'manhua', 'MangaCollectors', 'OtomeIsekai', 'Isekai', 'Webtoons', 'noveltranslations'];
-const REDDIT_QUERIES = ['recommendation', 'recommend me', 'what should i read', 'best manhwa', 'best manga', 'hidden gem'];
+
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -244,7 +237,17 @@ async function collectMyAnimeList(report) {
     const url = new URL('https://api.jikan.moe/v4/top/manga');
     url.searchParams.set('limit', '25');
     if (filter) url.searchParams.set('filter', filter);
-    const body = await json(url.toString(), {}, 25000);
+    /* Jikan proxies MyAnimeList, so a 504 here is usually MAL having a moment
+       rather than Jikan being down. One patient retry is the difference between
+       a community that answers most days and one that answers some days. */
+    let body = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try { body = await json(url.toString(), {}, 25000); break; }
+      catch (error) {
+        if (attempt === 2) throw error;
+        await sleep(4000 * (attempt + 1));
+      }
+    }
     const rows = body?.data || [];
     rows.forEach((row, index) => {
       if (!row?.title) return;
@@ -265,122 +268,6 @@ async function collectMyAnimeList(report) {
   report('myanimelist', { ok: true, rows: added, label: 'MyAnimeList', about: 'MAL rankings and favourites, via Jikan' });
 }
 
-/* --- Reddit -------------------------------------------------------------- */
-
-async function redditToken() {
-  const id = process.env.REDDIT_CLIENT_ID;
-  const secret = process.env.REDDIT_CLIENT_SECRET;
-  if (!id || !secret) throw new Error('no REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set');
-  const body = await json('https://www.reddit.com/api/v1/access_token', {
-    method: 'POST',
-    headers: {
-      authorization: 'Basic ' + Buffer.from(`${id}:${secret}`).toString('base64'),
-      'content-type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
-  if (!body?.access_token) throw new Error('no access_token in the OAuth answer');
-  return body.access_token;
-}
-
-/**
- * Count how often a known title is named in recommendation threads.
- *
- * Only titles the other collectors already found are counted. That is what
- * keeps this honest: no free-text guessing at what is or is not a title, no
- * inventing a work that does not exist, and a mention only counts when a
- * ranked catalogue agrees the name is real.
- */
-async function collectReddit(report) {
-  const token = await redditToken();
-  const api = async (pathname, params) => {
-    const url = new URL('https://oauth.reddit.com' + pathname);
-    for (const [k, v] of Object.entries(params || {})) url.searchParams.set(k, String(v));
-    return json(url.toString(), { headers: { authorization: `Bearer ${token}` } });
-  };
-
-  /* The haystack: every title any other community already named, longest
-     first, so "Solo Leveling: Ragnarok" is counted before "Solo Leveling". */
-  const known = [...works.values()]
-    .map((row) => ({ key: row.key, title: row.title, needle: normalize(row.title) }))
-    .filter((row) => row.needle.length >= 5)
-    .sort((a, b) => b.needle.length - a.needle.length);
-  if (!known.length) throw new Error('nothing to count mentions against');
-
-  const mentions = new Map();
-  const threads = [];
-  let scanned = 0;
-
-  for (const sub of SUBS) {
-    for (const query of REDDIT_QUERIES) {
-      let listing;
-      try {
-        listing = await api(`/r/${sub}/search`, { q: query, restrict_sr: 1, sort: 'top', t: 'year', limit: 12, raw_json: 1 });
-      } catch { continue; }
-      for (const child of listing?.data?.children || []) {
-        const post = child?.data;
-        if (!post?.id || post.over_18) continue;
-        threads.push({ sub, id: post.id, title: post.title, permalink: post.permalink, comments: post.num_comments || 0 });
-      }
-      await sleep(1100);
-    }
-  }
-
-  /* The busiest threads only: a recommendation thread with four replies is
-     one person's opinion, and the point of this is the aggregate. */
-  threads.sort((a, b) => b.comments - a.comments);
-  for (const thread of threads.slice(0, 40)) {
-    let body;
-    try { body = await api(`/comments/${thread.id}`, { limit: 200, depth: 2, sort: 'top', raw_json: 1 }); }
-    catch { continue; }
-    scanned += 1;
-
-    const texts = [thread.title];
-    const walk = (node) => {
-      if (!node) return;
-      if (Array.isArray(node)) { node.forEach(walk); return; }
-      if (node.kind === 'Listing') { walk(node.data?.children); return; }
-      if (node.data?.body) texts.push(node.data.body);
-      if (node.data?.replies) walk(node.data.replies);
-    };
-    walk(body);
-
-    const haystack = normalize(texts.join(' \n '));
-    const counted = new Set();
-    for (const row of known) {
-      if (counted.has(row.key) || !haystack.includes(row.needle)) continue;
-      counted.add(row.key);
-      const hit = mentions.get(row.key) || { title: row.title, count: 0, links: [] };
-      hit.count += 1;
-      if (hit.links.length < 3 && thread.permalink) hit.links.push('https://www.reddit.com' + thread.permalink);
-      mentions.set(row.key, hit);
-    }
-    await sleep(1100);
-  }
-
-  const ranked = [...mentions.values()].sort((a, b) => b.count - a.count);
-  ranked.forEach((hit, index) => {
-    if (hit.count < 2) return;
-    record(hit.title, {
-      source: 'reddit',
-      rank: index,
-      of: Math.max(ranked.length, 1),
-      mentions: hit.count,
-      link: hit.links[0] || '',
-      note: `Named in ${hit.count} recommendation thread${hit.count === 1 ? '' : 's'}`,
-    });
-  });
-
-  report('reddit', {
-    ok: true,
-    rows: ranked.filter((h) => h.count >= 2).length,
-    threads: scanned,
-    subs: SUBS,
-    label: 'Reddit',
-    about: 'Mentions counted across recommendation threads',
-  });
-}
-
 /* --- run ----------------------------------------------------------------- */
 
 const sources = {};
@@ -390,8 +277,6 @@ const COLLECTORS = [
   ['anilist', collectAniList, 'AniList', 'Community score and readership'],
   ['mangaupdates', collectMangaUpdates, 'MangaUpdates', 'Reader ratings, weighted by vote count'],
   ['myanimelist', collectMyAnimeList, 'MyAnimeList', 'MAL rankings and favourites, via Jikan'],
-  /* Last, because it counts mentions of what the others found. */
-  ['reddit', collectReddit, 'Reddit', 'Mentions counted across recommendation threads'],
 ];
 
 for (const [id, run, label, about] of COLLECTORS) {

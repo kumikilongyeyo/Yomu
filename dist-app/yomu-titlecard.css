@@ -261,3 +261,10 @@ a.yt-more--link {
 /* A 44px target on a phone, per the input review. */
 @media (max-width: 620px) { .yt-more { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .yt-more { transition: none; } }
+
+/* A title every one of whose sources is discovery-only: findable, not yet
+   readable. Dimmed rather than hidden -- knowing a work exists somewhere Yomu
+   cannot open yet is worth something; it is the reason to add a source. */
+.yt-card--unread .yt-card__art { opacity: .78; }
+.yt-card--unread .yt-card__badge { top: auto; bottom: 6px; left: 6px; }
+.yt-card--unread .yt-card__source { display: none; }

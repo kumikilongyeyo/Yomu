@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-21T09:51:33.269Z",
+ "generatedAt": "2026-09-21T14:24:57.748Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -20,13 +20,6 @@
    "label": "MyAnimeList",
    "about": "MAL rankings and favourites, via Jikan",
    "error": "HTTP 504"
-  },
-  "reddit": {
-   "ok": false,
-   "rows": 0,
-   "label": "Reddit",
-   "about": "Mentions counted across recommendation threads",
-   "error": "no REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set"
   }
  },
  "counts": {
@@ -230,8 +223,8 @@
    "title": "Chang Ge Xing",
    "signals": {
     "anilist": {
-     "strength": 0.805,
-     "rank": 13,
+     "strength": 0.82,
+     "rank": 12,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -248,7 +241,7 @@
    "malId": 42001,
    "score": 81,
    "agree": 2,
-   "total": 2.876
+   "total": 2.9
   },
   {
    "title": "The Devil Butler",
@@ -302,8 +295,8 @@
    "title": "I Am The Fated Villain",
    "signals": {
     "anilist": {
-     "strength": 0.865,
-     "rank": 9,
+     "strength": 0.88,
+     "rank": 8,
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
@@ -320,7 +313,7 @@
    "malId": null,
    "score": 76,
    "agree": 2,
-   "total": 2.684
+   "total": 2.708
   },
   {
    "title": "Haikyu!!",
@@ -779,6 +772,30 @@
    "total": 1.676
   },
   {
+   "title": "The Extra’s Academy Survival Guide",
+   "signals": {
+    "anilist": {
+     "strength": 0.505,
+     "rank": 33,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.385,
+     "rank": 82,
+     "note": "8.16/10 from 384 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 172619,
+   "malId": 166865,
+   "score": 82,
+   "agree": 2,
+   "total": 1.424
+  },
+  {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
@@ -801,30 +818,6 @@
    "score": 81,
    "agree": 2,
    "total": 1.388
-  },
-  {
-   "title": "The Extra’s Academy Survival Guide",
-   "signals": {
-    "anilist": {
-     "strength": 0.475,
-     "rank": 35,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.385,
-     "rank": 82,
-     "note": "8.16/10 from 384 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 172619,
-   "malId": 166865,
-   "score": 82,
-   "agree": 2,
-   "total": 1.376
   },
   {
    "title": "Berserk",
@@ -1747,24 +1740,6 @@
    "total": 0.88
   },
   {
-   "title": "My Wife is the Demon Queen",
-   "signals": {
-    "anilist": {
-     "strength": 0.88,
-     "rank": 8,
-     "note": "Widely read on AniList"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107966-Onmu3ihQNKbO.jpg",
-   "category": "manhua",
-   "year": 2019,
-   "anilistId": 107966,
-   "malId": null,
-   "score": 71,
-   "agree": 1,
-   "total": 0.88
-  },
-  {
    "title": "Sakamichi no Apollon",
    "signals": {
     "mangaupdates": {
@@ -1889,6 +1864,24 @@
    "anilistId": 111593,
    "malId": null,
    "score": 81,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "My Wife is the Demon Queen",
+   "signals": {
+    "anilist": {
+     "strength": 0.865,
+     "rank": 9,
+     "note": "Widely read on AniList"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx107966-Onmu3ihQNKbO.jpg",
+   "category": "manhua",
+   "year": 2019,
+   "anilistId": 107966,
+   "malId": null,
+   "score": 71,
    "agree": 1,
    "total": 0.865
   },
@@ -2281,24 +2274,6 @@
    "total": 0.82
   },
   {
-   "title": "Soulmate",
-   "signals": {
-    "anilist": {
-     "strength": 0.82,
-     "rank": 12,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
-   "category": "manhua",
-   "year": 2020,
-   "anilistId": 118269,
-   "malId": null,
-   "score": 81,
-   "agree": 1,
-   "total": 0.82
-  },
-  {
    "title": "Your Talent Is Mine",
    "signals": {
     "anilist": {
@@ -2387,6 +2362,24 @@
    "anilistId": 87423,
    "malId": 100128,
    "score": 79,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
    "agree": 1,
    "total": 0.805
   },

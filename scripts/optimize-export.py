@@ -15,6 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist-app"
 
 COMMON = [
+    # The rails, the ratings and Mori all read graphql.anilist.co straight from
+    # the browser -- it answers a Cloudflare Worker with 403, so the page is the
+    # only thing that can ask. Opening the connection while the rest of the head
+    # parses saves the DNS + TLS handshake from the critical path of the first
+    # rail. Costs one socket; saves a round trip on every cold load.
+    '<link rel="preconnect" href="https://graphql.anilist.co" crossorigin>',
+    '<link rel="dns-prefetch" href="https://graphql.anilist.co">',
     # The canonical TitleCard and the single pagination owner, wired on every
     # page rather than per route.
     #

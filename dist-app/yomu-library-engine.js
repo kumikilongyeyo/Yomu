@@ -143,6 +143,18 @@
     ].filter(Boolean).join(' '));
   }
 
+  /**
+   * A source you can read, not merely one that can find a name.
+   *
+   * A descriptor that declares nothing is treated as readable: most sources
+   * predate the capability list and work fine. Only an explicit `false` counts
+   * against it, so this can never quietly hide a working provider.
+   */
+  function canRead(capabilities) {
+    const caps = capabilities || {};
+    return caps.chapters !== false && caps.pages !== false;
+  }
+
   function providerId(source) {
     const id = String(source.id || '');
     if (id.startsWith('yomuext-')) return `ext:${id.slice(8)}`;
@@ -181,10 +193,41 @@
    * Every enabled source the reader chose. There is intentionally no .slice()
    * or fixed source-count cap here; request pressure is controlled by the pool.
    */
+  /**
+   * The registry is useful, not load-bearing.
+   *
+   * `/api/ext/sources` supplies API urls for sources whose stored row has none,
+   * plus capabilities and the nsfw flag. Awaiting it outright put one full
+   * round trip in front of the first source request on every cold load, and
+   * most readers do not need it at all: the row in `yomu.v1.collection` already
+   * carries the url, because that is where it came from.
+   *
+   * So it is raced against a short deadline. If it answers in time the run uses
+   * it; if it does not, browsing starts anyway and the answer enriches the next
+   * call through the memo. It is only genuinely awaited when a source would
+   * otherwise have no url to call -- there the registry is the only way to
+   * reach it, and waiting beats dropping it.
+   */
+  const REGISTRY_DEADLINE_MS = 250;
+  let registryMemo = null;
+
+  function registryPromise() {
+    registryMemo ||= registryApis().then((map) => { registryMemo = Promise.resolve(map); return map; });
+    return registryMemo;
+  }
+
+  async function registryFor(rows) {
+    const pending = registryPromise();
+    const needed = rows.some((raw) => raw && raw.enabled !== false && raw.kind === 'api' && !canonicalApi(raw.url));
+    if (needed) return pending;
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), REGISTRY_DEADLINE_MS));
+    return (await Promise.race([pending, timeout])) || new Map();
+  }
+
   async function sources(force = false) {
     const now = Date.now();
     if (!force && sourceMemo && now - sourceMemoAt < 30_000) return sourceMemo;
-    const registry = await registryApis();
+    const registry = await registryFor(collectionSources());
     const seen = new Set();
     const out = [];
 
@@ -202,6 +245,12 @@
         label: String(raw.label || raw.name || reg?.name || id),
         api,
         capabilities: reg?.capabilities || raw.capabilities || {},
+        /* Can this source actually serve a chapter, or only find one?
+           Comick declares chapters:false and pages:false -- it is a discovery
+           source. Until now the capability list was stored and never read, so
+           the library listed its titles, the card named it as the provider,
+           and tapping one went nowhere. */
+        readable: canRead(reg?.capabilities || raw.capabilities),
         official: OFFICIAL_SOURCE.test(`${raw.label || ''} ${raw.name || ''} ${raw.url || ''}`),
       });
     }
@@ -213,7 +262,8 @@
         id: 'mangadex',
         label: 'MangaDex',
         api: null,
-        capabilities: { popular: true, latest: true, search: true },
+        capabilities: { popular: true, latest: true, search: true, details: true, chapters: true, pages: true },
+        readable: true,
         official: false,
         catalogFallback: true,
       });
@@ -289,9 +339,22 @@
       id: providerId(source),
       name: source.label,
       kind: source.id === 'mangadex' ? 'native' : 'extension',
+      /* Travels with the provider so every surface downstream -- the card's
+         provenance chip, the open action, the chapter list -- can prefer one
+         that can actually serve a chapter. */
+      readable: source.readable !== false,
       seriesId: String(item.id || ''),
     };
   }
+
+  /**
+   * Readable providers first.
+   *
+   * A work carried by a discovery-only source and by a real one must open on
+   * the real one. Sorting here rather than at each call site means the card,
+   * the opener and the chapter ledger all inherit the same first choice.
+   */
+  const byReadable = (a, b) => Number(b?.readable !== false) - Number(a?.readable !== false);
 
   function mergeItem(source, item) {
     if (!item?.id || !item?.title || blocked(source)) return null;
@@ -318,7 +381,7 @@
 
     const providers = Array.isArray(row.providers) ? row.providers : [];
     if (!providers.some((p) => p.id === provider.id && String(p.seriesId) === provider.seriesId)) {
-      row.providers = [...providers, provider];
+      row.providers = [...providers, provider].sort(byReadable);
     }
     if (!row.__sourceIds.includes(source.id)) row.__sourceIds.push(source.id);
     row.cover ||= item.cover;

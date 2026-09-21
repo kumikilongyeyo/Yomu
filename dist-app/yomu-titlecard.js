@@ -73,10 +73,21 @@
     return node;
   }
 
-  /** The providers a row can be read from, first one first. */
+  /**
+   * The providers a row can be read from, one that can actually serve a
+   * chapter first.
+   *
+   * Some sources are discovery-only and say so: Comick declares
+   * `chapters: false, pages: false`. A work it shares with a real source must
+   * name the real one on the card and open there, or the reader taps a title
+   * and arrives nowhere. `readable !== false` rather than `=== true`, so a
+   * source that never declared anything keeps its place.
+   */
   function providersOf(item) {
     const rows = Array.isArray(item?.providers) ? item.providers.filter(Boolean) : [];
-    if (rows.length) return rows;
+    if (rows.length) {
+      return [...rows].sort((a, b) => Number(b?.readable !== false) - Number(a?.readable !== false));
+    }
     if (item?.__firstSource) return [{ name: item.__firstSource, id: item.__sourceIds?.[0] }];
     if (item?.sourceLabel) return [{ name: item.sourceLabel, id: item.sourceId }];
     return [];
@@ -167,12 +178,23 @@
     }
 
     const showSource = opts.source ?? providers.length > 0;
+    const readable = providers.filter((p) => p?.readable !== false);
     if (showSource && providers[0]?.name) {
       const source = el('span', 'yt-card__source');
       source.append(el('b', null, String(providers[0].name)));
       if (providers.length > 1) source.append(el('span', null, `+${providers.length - 1}`));
       source.title = providers.map((p) => p?.name).filter(Boolean).join(' · ');
       art.append(source);
+    }
+    /* Every provider is discovery-only: this title can be found but not read.
+       Saying so on the card beats letting the reader find out by tapping it. */
+    if (providers.length && !readable.length) {
+      node.dataset.ytUnreadable = '1';
+      node.classList.add('yt-card--unread');
+      const flag = chip('updated', 'Not readable yet', ['yt-card__badge']);
+      flag.setAttribute('aria-hidden', 'true');
+      flag.title = `Found on ${providers.map((p) => p?.name).filter(Boolean).join(' · ')}, which can list it but not serve its chapters`;
+      art.append(flag);
     }
 
     /* The chip carries `yomu-tile__rating` as well, so yomu-ratings.js sees a

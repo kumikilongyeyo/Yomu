@@ -5,10 +5,6 @@ name: Community picks
 # MyAnimeList (via Jikan) and -- when credentials exist -- Reddit, and commits
 # one small JSON file the app serves as a static asset.
 #
-# Reddit needs a free "script" app from reddit.com/prefs/apps and two repository
-# secrets, REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET. Without them that one
-# collector reports itself unavailable, in the file, and the other three run.
-#
 # A run that collects nothing changes nothing: the script exits non-zero and the
 # previous file stays exactly as it was, so a bad day upstream cannot empty
 # Mori's community shelf.
@@ -43,9 +39,6 @@ jobs:
           node-version: 22
 
       - name: Collect community picks
-        env:
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         run: node scripts/community-picks.mjs
 
       - name: Sanity-check the file before committing it

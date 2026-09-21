@@ -24,6 +24,7 @@ on:
       - 'tools/library-gauntlet.mjs'
       - 'tools/uiux-gauntlet.mjs'
       - 'tools/performance-gauntlet.mjs'
+      - 'tools/source-audit.mjs'
       - 'tools/progression/**'
       - 'tools/bench-library.mjs'
       - 'tests/**'
@@ -227,6 +228,13 @@ jobs:
 
       - name: Performance and loading gauntlet against production (10/10 only)
         run: node tools/performance-gauntlet.mjs https://yomu.yomuread.workers.dev
+
+      # Every enabled source, all the way down: browse, search, details,
+      # chapters, and a page manifest the reader would actually accept. A
+      # source that browses but cannot serve a chapter looks perfect on Home
+      # and is useless the moment anybody taps it.
+      - name: Source audit against production
+        run: node tools/source-audit.mjs https://yomu.yomuread.workers.dev
 
       - name: Roll back failed production release
         if: ${{ failure() && steps.deploy.outcome == 'success' }}

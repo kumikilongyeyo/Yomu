@@ -105,6 +105,56 @@ test('one work from many sources is one card wearing +N, however they spell it',
   expect(merged.all.split('·').length, 'the tag lists the sources behind it').toBeGreaterThan(1);
 });
 
+test('a source that only finds titles never gets named as the one to read them on', async ({ page, baseURL }) => {
+  await seed(page, { baseURL });
+  await gotoHome(page);
+
+  /* The engine reads the declared capabilities -- before this they were stored
+     and never looked at, which is why the library listed titles from a source
+     that cannot serve a chapter and the card named it as the place to read. */
+  const providers = await page.evaluate(async () => {
+    const list = await window.YomuLibraryEngine.sources(true);
+    return list.map((s) => ({ id: s.id, readable: s.readable }));
+  });
+  expect(providers.find((s) => s.id === 'yomuext-kilo')?.readable, 'kilo declares it cannot serve chapters').toBe(false);
+  expect(providers.find((s) => s.id === 'yomuext-alpha')?.readable, 'alpha can').toBe(true);
+
+  /* And the card acts on it. Asserted directly rather than by hunting the
+     shelf for a work that happens to be shared, so the rule is what is tested
+     and not the fixture's luck. */
+  const card = await page.evaluate(() => {
+    const host = document.querySelector('#yomu-library-explorer .yt-grid');
+    const shared = window.YomuTitleCard.create({
+      title: 'Carried By Both',
+      providers: [
+        { id: 'ext:kilo', name: 'Kilo Comics', readable: false, seriesId: 'k-1' },
+        { id: 'ext:alpha', name: 'Alpha Comics', readable: true, seriesId: 'a-1' },
+      ],
+    }, { source: true });
+    const only = window.YomuTitleCard.create({
+      title: 'Findable Not Readable',
+      providers: [{ id: 'ext:kilo', name: 'Kilo Comics', readable: false, seriesId: 'k-2' }],
+    }, { source: true });
+    host.append(shared, only);
+    const read = (node) => ({
+      named: node.querySelector('.yt-card__source b')?.textContent?.trim() || '',
+      plus: node.querySelector('.yt-card__source span')?.textContent?.trim() || '',
+      unreadable: node.dataset.ytUnreadable === '1',
+      flag: node.querySelector('.yt-card__badge')?.textContent?.replace(/\s+/g, '') || '',
+    });
+    const out = { shared: read(shared), only: read(only) };
+    shared.remove();
+    only.remove();
+    return out;
+  });
+
+  expect(card.shared.named, 'a work on both is named on the one that can serve it').toBe('Alpha Comics');
+  expect(card.shared.plus, 'and still says the other carries it').toBe('+1');
+  expect(card.shared.unreadable).toBe(false);
+  expect(card.only.unreadable, 'a work no source can serve says so').toBe(true);
+  expect(card.only.flag).toContain('Notreadableyet');
+});
+
 test('NamiComi never appears in browse, search or the engine, even when enabled', async ({ page, baseURL }) => {
   await seed(page, { baseURL, nami: true });
   await gotoHome(page);
