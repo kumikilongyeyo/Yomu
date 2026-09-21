@@ -24,10 +24,10 @@ COMMON = [
     # microtask -- before a deferred script would have run. A renderer that
     # arrives after its caller is a card that silently does not draw.
     #
-    # The pager is deferred, because every module that claims a control is
-    # itself deferred and defer preserves document order, so it cannot arrive
-    # late. Blocking only what must block: the pair used to cost the first
-    # search result about 110ms on the benchmark's serialized fixture server.
+    # The pager is normally deferred because the app modules that claim it are
+    # deferred too. more.html is the deliberate exception: its inline async
+    # rail script can finish a fast fixture/API request before deferred scripts
+    # execute, so helpers_for() makes the pager synchronous on that route.
     '<link rel="stylesheet" href="/yomu-titlecard.css">',
     '<script src="/yomu-titlecard.js"></script>',
     '<script src="/yomu-pager.js" defer></script>',
@@ -104,6 +104,13 @@ RESOURCE_TAG = re.compile(r'<(?:script\b[^>]*\bsrc="[^"]+"[^>]*></script>|link\b
 
 def helpers_for(relative: str) -> list[str]:
     tags = list(COMMON)
+    if relative == "more.html":
+        # more.html owns a non-deferred inline async script. The first AniList
+        # page can resolve before defer runs (especially in Playwright fixtures),
+        # and optional-chaining the missing pager silently loses the control.
+        # Load this tiny owner synchronously so the claim is deterministic.
+        deferred = '<script src="/yomu-pager.js" defer></script>'
+        tags[tags.index(deferred)] = '<script src="/yomu-pager.js"></script>'
     if relative in CATALOG_PAGES:
         tags += CATALOG
     elif relative in SEARCH_PAGES:
@@ -184,6 +191,10 @@ def assert_release_contract() -> None:
     ):
         if needle not in home:
             raise SystemExit(f"optimizer contract failed: index.html missing {needle}")
+
+    more = (DIST / "more.html").read_text(encoding="utf-8")
+    if '<script src="/yomu-pager.js"></script>' not in more:
+        raise SystemExit("optimizer contract failed: more.html pager must load before its inline rail script")
 
     reader = DIST / "read" / "[chapterId].html"
     if reader.exists():
