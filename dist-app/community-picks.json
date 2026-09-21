@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-21T00:27:22.587Z",
+ "generatedAt": "2026-09-21T09:51:33.269Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -374,8 +374,8 @@
    "title": "Who Made Me a Princess",
    "signals": {
     "anilist": {
-     "strength": 0.715,
-     "rank": 19,
+     "strength": 0.7,
+     "rank": 20,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -392,7 +392,7 @@
    "malId": 121269,
    "score": 83,
    "agree": 2,
-   "total": 2.456
+   "total": 2.432
   },
   {
    "title": "Feng Shen Ji",
@@ -470,8 +470,8 @@
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
-     "strength": 0.685,
-     "rank": 21,
+     "strength": 0.67,
+     "rank": 22,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -488,7 +488,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.18
+   "total": 2.156
   },
   {
    "title": "Noblesse",
