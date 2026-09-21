@@ -157,27 +157,31 @@
       submit.insertAdjacentElement('afterend', communityButton);
     }
 
+    const setSubmitLabel = (text) => {
+      if (!submit.disabled && submit.textContent !== text) submit.textContent = text;
+    };
+
     const paint = () => {
       const target = classify(input.value);
       kind.dataset.kind = target.kind;
       if (target.kind === 'repository') {
         kind.textContent = 'GitHub repository';
-        submit.textContent = 'Add repository';
+        setSubmitLabel('Add repository');
         showSingle(root);
       } else if (target.kind === 'pack') {
         kind.textContent = 'Source pack';
-        submit.textContent = 'Load pack';
+        setSubmitLabel('Load pack');
       } else if (target.kind === 'website') {
         kind.textContent = 'Website source';
-        submit.textContent = 'Add source';
+        setSubmitLabel('Add source');
         showSingle(root);
       } else if (target.kind === 'invalid') {
         kind.textContent = 'Check link';
-        submit.textContent = 'Add';
+        setSubmitLabel('Add');
         showSingle(root);
       } else {
         kind.textContent = 'Auto detect';
-        submit.textContent = 'Add';
+        setSubmitLabel('Add');
         showSingle(root);
       }
     };
@@ -186,6 +190,8 @@
       form.dataset.unifiedSourceBound = '1';
       input.addEventListener('input', paint);
       input.addEventListener('paste', () => setTimeout(paint, 0));
+      new MutationObserver(() => { if (!submit.disabled) paint(); })
+        .observe(submit, { attributes:true, attributeFilter:['disabled'] });
 
       // Intercept only source-pack URLs. Normal websites and GitHub repositories
       // continue through Source Fabric's existing tested code path unchanged.
