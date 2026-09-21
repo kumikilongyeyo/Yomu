@@ -49,6 +49,35 @@ function check(gate, what, ok, detail) {
   results.push(`${ok ? 'PASS' : 'FAIL'}  ${gate}  ${what}${ok || !detail ? '' : `\n        ${detail}`}`);
 }
 
+let warned = 0;
+
+/* An upstream that did not answer is not a release defect.
+ *
+ * This runs against production *after* deploying, and a failure here rolls
+ * the release back. Some of G2 depends on third-party providers answering a
+ * search, so a provider outage could roll back a perfectly good release for
+ * something no commit caused. A warning says so without pulling the release,
+ * and still shows up in the log for a person to read. Only use it where the
+ * evidence distinguishes "nobody answered" from "we misbehaved" -- a warning
+ * that cannot tell those apart is just a disabled check. */
+function warn(gate, what, detail) {
+  warned++;
+  results.push(`WARN  ${gate}  ${what}${detail ? `\n        ${detail}` : ''}`);
+}
+
+/* How many results the catalog itself returned, or -1 when that is unknown.
+   -1 is deliberately not 0: "we could not tell" must not excuse a failure. */
+async function catalogAnswers(query) {
+  try {
+    const r = await get(`${BASE}/api/catalog/search?q=${encodeURIComponent(query)}`, { redirect: 'follow' });
+    if (r.status !== 200) return -1;
+    const body = JSON.parse(r.body);
+    return Array.isArray(body?.series) ? body.series.length : -1;
+  } catch {
+    return -1;
+  }
+}
+
 /* Manual by default, because a gate that checks *where* a redirect goes must
    see the redirect. `{ redirect: 'follow' }` opts back in for the gates that
    care about the page at the end of it. */
@@ -87,8 +116,21 @@ async function g2() {
   const known = await get(`${BASE}/title/solo-leveling?q=Solo%20Leveling&al=105398`);
   check('G2', 'a canonical title URL redirects', known.status === 302, `got ${known.status}`);
   const to = known.headers.get('location') || '';
-  check('G2', 'and it redirects to a series page, not to search',
-    /\/series\/[^?]+\?source=/.test(to), `went to ${to || '(nowhere)'}`);
+  if (/\/series\/[^?]+\?source=/.test(to)) {
+    check('G2', 'and it redirects to a series page, not to search', true);
+  } else {
+    /* Falling through to search is what this route is *supposed* to do when
+       nothing carries the title, so before calling it a defect, ask whether
+       anything answered at all. */
+    const answers = await catalogAnswers('Solo Leveling');
+    if (answers === 0) {
+      warn('G2', 'no provider answered, so a known title fell through to search',
+        `went to ${to || '(nowhere)'} -- the route behaved correctly; the sources are down`);
+    } else {
+      check('G2', 'and it redirects to a series page, not to search', false,
+        `went to ${to || '(nowhere)'}${answers > 0 ? ` while the catalog returned ${answers} result(s)` : ''}`);
+    }
+  }
 
   const unknown = await get(`${BASE}/title/zzz-not-a-real-title?q=zzz%20not%20a%20real%20title`);
   check('G2', 'an unknown title falls through to search deliberately',
@@ -354,5 +396,5 @@ for (const [name, fn] of Object.entries(gates)) {
   }
 }
 console.log(results.join('\n'));
-console.log(`\n${passed} passed, ${failed} failed\n`);
+console.log(`\n${passed} passed, ${failed} failed${warned ? `, ${warned} warned` : ''}\n`);
 process.exit(failed ? 1 : 0);
