@@ -323,6 +323,13 @@
     }
   }
 
+  /* Is the node inside the visual viewport right now? */
+  function onScreen(node) {
+    if (!node?.getBoundingClientRect) return false;
+    const rect = node.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight || 0);
+  }
+
   function anchor(kind) {
     if (kind === 'home') return document.querySelector('.home-grid');
     if (kind === 'discover') {
@@ -354,6 +361,15 @@
 
       observer = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting) || !hasMore || loading) return;
+        /* Prefetching ahead of the reader is the point of the sentinel, and
+           rootMargin fires it a screen or so early -- while the button is
+           still well off-screen. Once the button is actually in view it is
+           the reader's to press, and auto-loading under it appends ten cards
+           above it, which moves it out from under the tap. Press, chase,
+           repeat: at CI's speed the click never lands and the 90s timeout
+           wins. Two pagination owners, one surface -- so the sentinel yields
+           to the visible control. */
+        if (more?.button && onScreen(more.button)) return;
         /* Press the one control rather than starting a parallel load: the
            label, the in-flight guard and the retry state stay in one place. */
         if (more?.button && !more.busy()) more.button.click();
