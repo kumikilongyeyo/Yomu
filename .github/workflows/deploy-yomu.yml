@@ -2,6 +2,14 @@ name: Deploy Yomu to Cloudflare
 
 on:
   workflow_dispatch:
+  # The daily community refresh commits dist-app/community-picks.json with the
+  # Actions token, and a push made with that token deliberately does not start
+  # another workflow -- so without this the collected file would sit on main and
+  # never reach the Worker's static assets. `workflow_run` is the one trigger
+  # that does fire for it.
+  workflow_run:
+    workflows: ['Community picks']
+    types: [completed]
   push:
     branches:
       - main
@@ -36,6 +44,8 @@ concurrency:
 
 jobs:
   deploy:
+    # A community collection that changed nothing, or failed, is not a release.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     # The runtime gauntlet and the loading benchmark run before the upload, so
     # the job is a browser run now rather than a grep over files.
