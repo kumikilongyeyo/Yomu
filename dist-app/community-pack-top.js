@@ -19,8 +19,7 @@
       const path = url.pathname.toLowerCase();
       const parts = url.pathname.split('/').filter(Boolean);
       const jsonLike = /\.json(?:$|[?#])/i.test(url.toString())
-        || /\/source-packs\//i.test(path)
-        || host === 'raw.githubusercontent.com';
+        || /\/source-packs\//i.test(path);
       if (jsonLike) return { kind: 'pack', value: url.toString() };
       if (host === 'github.com' && parts.length >= 2) return { kind: 'repository', value: url.toString() };
       return { kind: 'website', value: url.toString() };
@@ -51,18 +50,16 @@
     document.head.append(style);
   }
 
-  function setInternalMode(root, mode) {
-    const button = root?.querySelector(`.sf-mode-switch button[data-mode="${mode}"]`);
-    if (button && !button.classList.contains('is-active')) button.click();
-  }
-
   function showPack(root) {
-    setInternalMode(root, 'pack');
+    // Do not trigger the old Single source / Source pack switcher. Its legacy
+    // handler hides the main form. The unified design keeps the one textbox
+    // visible while revealing only the pack-specific result/actions below it.
+    root?.querySelector('.sf-form')?.style.removeProperty('display');
     document.getElementById(PACK_ID)?.classList.add('is-active');
   }
 
   function showSingle(root) {
-    setInternalMode(root, 'single');
+    root?.querySelector('.sf-form')?.style.removeProperty('display');
     document.getElementById(PACK_ID)?.classList.remove('is-active');
   }
 
