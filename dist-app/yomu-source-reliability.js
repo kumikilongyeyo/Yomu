@@ -563,13 +563,57 @@
       node.id = 'yomu-source-recovery';
       Object.assign(node.style, {
         position: 'fixed', inset: '0', zIndex: '2147483646', display: 'grid', placeItems: 'center',
-        padding: '24px', background: '#070b10', color: '#f4f6f8',
+        padding: '24px', background: 'var(--bg, #070b10)', color: 'var(--text, #f4f6f8)',
         font: '700 15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', textAlign: 'center',
       });
       document.body.append(node);
     }
     node.innerHTML = `<div style="max-width:420px"><div style="font-size:24px;margin-bottom:10px">↻</div><div>${String(text || 'Finding another source…').replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div></div>`;
     return node;
+  }
+
+  /* Both no-result paths used to remove the overlay after a couple of seconds,
+     which dropped the reader back onto the error page that started all this --
+     a near-blank screen with nothing on it to press, and a 20s guard that made
+     an immediate reload do nothing either. A dead end gets controls and stays
+     put until the reader picks one. */
+  function recoveryDeadEnd(overlay, message) {
+    const wrap = overlay.querySelector('div');
+    if (!wrap) return;
+    wrap.querySelector('div:last-child').textContent = message;
+
+    const row = document.createElement('div');
+    Object.assign(row.style, {
+      display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px',
+    });
+
+    const button = (label, onClick, primary) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.textContent = label;
+      Object.assign(el.style, {
+        font: 'inherit', padding: '10px 14px', borderRadius: '10px', cursor: 'pointer',
+        border: primary ? '0' : '1px solid var(--line, rgba(255,255,255,.22))',
+        background: primary ? 'var(--accent, #4c8dff)' : 'transparent',
+        color: primary ? '#fff' : 'inherit',
+      });
+      el.addEventListener('click', onClick);
+      return el;
+    };
+
+    row.append(
+      button('Try again', () => {
+        try { sessionStorage.removeItem(RECOVERY_GUARD_KEY); } catch {}
+        overlay.remove();
+        queueRecovery('reader asked again');
+      }, true),
+      button('Go back', () => {
+        overlay.remove();
+        if (history.length > 1) history.back(); else location.href = '/';
+      }),
+      button('Dismiss', () => overlay.remove()),
+    );
+    wrap.append(row);
   }
 
   async function fetchLedgerForRecovery(title, ctx) {
@@ -632,8 +676,7 @@
       const title = pageTitle() || storedSeriesTitle(ctx);
       const ledger = await fetchLedgerForRecovery(title, ctx);
       if (!ledger) {
-        overlay.querySelector('div > div:last-child').textContent = 'That source is down and no alternate title match answered yet.';
-        setTimeout(() => overlay.remove(), 2600);
+        recoveryDeadEnd(overlay, 'That source is down, and no other source matched this title yet.');
         return;
       }
 
@@ -667,8 +710,7 @@
         }
       }
 
-      overlay.querySelector('div > div:last-child').textContent = 'No other enabled source returned a readable copy right now.';
-      setTimeout(() => overlay.remove(), 3000);
+      recoveryDeadEnd(overlay, 'No other enabled source returned a readable copy right now.');
     } finally {
       recoveryRunning = false;
       recoveryReason = '';
