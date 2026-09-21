@@ -205,7 +205,15 @@ async function handleSuwayomi(request: Request, env: Env, url: URL): Promise<Res
         sources: 0,
         servers: bases.map((b) => new URL(b).host),
         error: error?.message ?? 'Could not reach Suwayomi.',
-      }, 502);
+        /* 200, not 502. The Worker did its job: it asked the bridge and is
+           reporting the answer, and `reachable: false` with the upstream's own
+           message is that answer. A 5xx here says *this Worker* failed, which
+           is untrue, and Cloudflare counts it -- a configured-but-offline
+           bridge (an expired trycloudflare tunnel, say) then reports as a
+           wall of Workers errors on the dashboard and buries real ones. The
+           only reader, loadBridge() in yomu-shell.js, parses the body and
+           never looked at the status. */
+      }, 200, 'no-store');
     }
   }
 
