@@ -31,7 +31,11 @@
  */
 import type { Env } from './index';
 import { buildProviders } from './routes-extensions';
-import { dedupe, rankByRelevance, type CatalogEntry } from './catalog';
+import { dedupe, rankByRelevance, relevance, type CatalogEntry } from './catalog';
+
+/* How much like the requested name the best answer has to be before this
+   route sends a reader to it rather than to search. */
+const MIN_RELEVANCE = 0.5;
 
 /** Providers that answer metadata but cannot serve pages. Mirrors BAKED_BLIND. */
 const BLIND = new Set(['comick']);
@@ -79,7 +83,24 @@ export function matchEntry(entries: CatalogEntry[], name: string, anilistId: num
     if (exact) return exact;
   }
   const wanted = name.trim().toLowerCase();
-  return entries.find((e) => String(e.title || '').trim().toLowerCase() === wanted) ?? entries[0];
+  const exact = entries.find((e) => String(e.title || '').trim().toLowerCase() === wanted);
+  if (exact) return exact;
+
+  /* Rank order is trusted; that the top entry is the thing asked for is not.
+     Taking entries[0] on faith assumed every provider answers nothing when it
+     has nothing -- and some answer *something* for any query. A title no one
+     carries then redirected to whichever unrelated series a chatty provider
+     volunteered, instead of falling through to search. Observed in production
+     on 2026-09-21: /title/zzz-not-a-real-title resolved to a webtoons series,
+     which is what G2 is for.
+
+     relevance() is the same scorer that produced the ranking: exact is 1,
+     prefix 0.9+, substring 0.8+, and everything else fuzzy -- so the floor
+     keeps real variants ("Nano Machine" under "9.3 Nano Machine") and drops
+     coincidences. Below it, null, and the caller redirects to search, which
+     is the honest answer to "nobody carries this". */
+  const top = entries[0];
+  return top && relevance(top, name) >= MIN_RELEVANCE ? top : null;
 }
 
 /** The provider to open, or null when nothing readable carries it. */
