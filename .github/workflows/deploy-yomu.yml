@@ -250,6 +250,11 @@ jobs:
           fetch_until service-worker 'https://yomu.yomuread.workers.dev/sw.js' "SHELL_VERSION = 'v3'" /tmp/yomu-sw.js
           grep -q 'navigationPreload' /tmp/yomu-sw.js
           grep -q 'staleWhileRevalidate' /tmp/yomu-sw.js
+          # sw.js being served proves nothing on its own: it shipped for months
+          # while only chapter downloads ever registered it.
+          fetch_until sw-registrar 'https://yomu.yomuread.workers.dev/yomu-sw.js' 'Yomu service worker registration' /tmp/yomu-sw-registrar.js
+          grep -q "register('/sw.js')" /tmp/yomu-sw-registrar.js
+          grep -q 'yomu-sw.js' /tmp/yomu-home.html
 
       - name: Full engineering gauntlet against production
         run: node tools/gauntlet.mjs https://yomu.yomuread.workers.dev

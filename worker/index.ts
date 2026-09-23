@@ -45,6 +45,24 @@ const UPSTREAMS: Record<string, string> = {
   ia: 'https://archive.org',
 };
 
+/* The MangaDex relay answers no-store for everything, which means Home's
+ * twenty-odd catalog reads -- a detail and a chapter feed per title on screen
+ * -- go all the way to MangaDex again for every visitor, every load, for data
+ * that is identical for all of them.
+ *
+ * An allow-list rather than a deny-list, because the dangerous one is easy to
+ * miss: /at-home/server/<id> hands back a signed, short-lived image host, and
+ * a cached copy of that is a reader that stops loading pages a quarter of an
+ * hour later. Anything not named here keeps no-store, so a MangaDex endpoint
+ * nobody has thought about yet is uncached by default rather than by luck.
+ *
+ * Ten minutes at the edge is a deliberate ceiling on how late a new chapter
+ * can appear. Browsers hold it for five.
+ */
+const CACHEABLE_MD_READS = new Set(['manga', 'chapter', 'cover', 'author', 'statistics', 'group']);
+const MD_BROWSER_TTL = 300;
+const MD_EDGE_TTL = 600;
+
 const ALLOWED_IMAGE_HOSTS = new Set(['uploads.mangadex.org', 'iiif.archive.org', 'archive.org']);
 const ALLOWED_IMAGE_SUFFIXES = ['.mangadex.network', '.mangadex.org'];
 
@@ -356,15 +374,21 @@ async function handleLegacyProxy(request: Request, url: URL): Promise<Response> 
   if (!base) return json({ error: `Unknown source "${name}".` }, 404);
 
   const target = `${base}/${rest.join('/')}${url.search}`;
+  const holdable = name === 'md' && CACHEABLE_MD_READS.has(rest[0] ?? '');
   const upstream = await fetch(target, {
     headers: { 'User-Agent': userAgent(url), Accept: 'application/json' },
-  });
+    ...(holdable ? { cf: { cacheEverything: true, cacheTtl: MD_EDGE_TTL } } : {}),
+  } as RequestInit & { cf?: { cacheEverything?: boolean; cacheTtl?: number } });
 
   return new Response(upstream.body, {
     status: upstream.status,
     headers: {
       'content-type': upstream.headers.get('content-type') ?? 'application/json',
-      'cache-control': 'no-store',
+      /* Only a successful read is worth holding: caching an upstream error
+         would keep a bad minute for ten of them. */
+      'cache-control': holdable && upstream.ok
+        ? `public, max-age=${MD_BROWSER_TTL}, s-maxage=${MD_EDGE_TTL}`
+        : 'no-store',
     },
   });
 }

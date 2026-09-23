@@ -42,6 +42,10 @@ COMMON = [
     '<link rel="stylesheet" href="/yomu-controls-components.css">',
     '<script src="/yomu-controls.js" defer></script>',
     '<script src="/yomu-loading-policy.js" defer></script>',
+    # sw.js shipped for a long time while only chapter downloads registered it,
+    # so the shell cache existed for almost nobody. This registers it after
+    # load, on every page, with a kill switch.
+    '<script src="/yomu-sw.js" defer></script>',
     '<link rel="stylesheet" href="/yomu-mori-chat.css">',
     '<script src="/yomu-mori-drag.js" defer></script>',
     '<script src="/yomu-mori-chat.js" defer></script>',
@@ -217,6 +221,7 @@ def assert_release_contract() -> None:
         if "</head>" in text:
             for needle in (
                 "/yomu-loading-policy.js", "/yomu-mori-chat.css", "/yomu-mori-drag.js", "/yomu-mori-chat.js",
+                "/yomu-sw.js",
                 # A page that draws a title without the canonical card, or pages
                 # one without the single pagination owner, is the regression
                 # this release exists to remove. It is a failed build, not a
