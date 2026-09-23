@@ -65,7 +65,19 @@ jobs:
       # export itself wrote, and the optimizer then adds its route-aware ones
       # as ordinary links, so the release contracts below still find them.
       - name: Bundle exported stylesheets
-        run: node scripts/bundle-css.mjs
+        run: |
+          node scripts/bundle-css.mjs
+          # The filename carries a hash of the stylesheets, so it is the one
+          # marker that proves the live origin is serving THIS release rather
+          # than a cached copy of the last one. Resolved rather than globbed:
+          # an unmatched glob would travel on as a literal and the live check
+          # would wait for a file that can never appear.
+          bundle=$(ls -1 dist-app/yomu-app-*.css 2>/dev/null | head -1)
+          if [ -z "$bundle" ]; then
+            echo '::error::bundle-css.mjs produced no stylesheet bundle.'
+            exit 1
+          fi
+          echo "YOMU_CSS_BUNDLE=$(basename "$bundle")" >> "$GITHUB_ENV"
 
       - name: Optimize exported HTML
         run: python3 scripts/optimize-export.py
@@ -152,6 +164,12 @@ jobs:
       - name: Verify live Yomu
         run: |
           set -e
+          # An empty marker would make the release wait on grep -q "", which
+          # matches every page including the one this deploy replaced.
+          if [ -z "$YOMU_CSS_BUNDLE" ]; then
+            echo '::error::The stylesheet bundle name was never captured, so the live check cannot tell this release from the last one.'
+            exit 1
+          fi
           fetch_until() {
             name="$1"; url="$2"; pattern="$3"; file="$4"
             echo "Checking $name"
@@ -190,7 +208,12 @@ jobs:
           grep -q 'yomu-source-ux-v2.js' /tmp/yomu-find.html
           grep -q 'yomu-library-explorer.js' /tmp/yomu-find.html
 
-          fetch_until home-page 'https://yomu.yomuread.workers.dev/' 'yomu-library-engine.js' /tmp/yomu-home.html
+          # Anchored on this release's stylesheet bundle. The previous marker was
+          # yomu-library-engine.js, which every release since the federated library
+          # has carried -- so a stale edge copy satisfied it and the one-shot greps
+          # below then ran against the previous page and failed the release.
+          fetch_until home-page 'https://yomu.yomuread.workers.dev/' "$YOMU_CSS_BUNDLE" /tmp/yomu-home.html
+          grep -q 'yomu-library-engine.js' /tmp/yomu-home.html
           grep -q 'yomu-performance.js' /tmp/yomu-home.html
           grep -q 'yomu-loading-policy.js' /tmp/yomu-home.html
           grep -q 'yomu-explore-more.js' /tmp/yomu-home.html
@@ -198,9 +221,9 @@ jobs:
           grep -q 'yomu-mori-drag.js' /tmp/yomu-home.html
           grep -q 'yomu-titlecard.js' /tmp/yomu-home.html
           grep -q 'yomu-titlecard.css' /tmp/yomu-home.html
-          # One bundle, and none of the files it replaced left behind as a
-          # second copy of the same bytes.
-          grep -qE 'yomu-app-[0-9a-f]{12}\.css' /tmp/yomu-home.html
+          # The bundle is proven live by the fetch_until above; what is left to
+          # check is that none of the files it replaced came back alongside it as
+          # a second copy of the same bytes.
           if grep -qE 'href="/yomu-(overrides|skin|tags|look)\.css"' /tmp/yomu-home.html; then
             echo '::error::Home serves the bundle and the individual stylesheets it replaced.'
             exit 1
