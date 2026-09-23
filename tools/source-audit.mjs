@@ -49,7 +49,15 @@ async function json(url) {
       signal: AbortSignal.timeout(TIMEOUT),
     });
     const ms = Date.now() - started;
-    if (!response.ok) return { ok: false, ms, error: `HTTP ${response.status}` };
+    if (!response.ok) {
+      /* The Worker says who refused it. `upstreamStatus` means the provider
+         answered and turned us away, which is a different fact from Yomu
+         being unable to ask -- and the two do not deserve the same verdict. */
+      const body = await response.json().catch(() => null);
+      const upstream = Number(body?.upstreamStatus) || null;
+      const detail = String(body?.error || '').slice(0, 120);
+      return { ok: false, ms, upstream, detail, error: `HTTP ${response.status}` };
+    }
     const type = response.headers.get('content-type') || '';
     if (!/json/i.test(type)) return { ok: false, ms, error: `answered ${type || 'no content-type'}` };
     return { ok: true, ms, body: await response.json() };
@@ -84,6 +92,8 @@ async function audit(source) {
     count: listed.length,
     withCover: listed.filter((r) => r?.cover).length,
     error: browse.error,
+    upstream: browse.upstream,
+    detail: browse.detail,
   };
 
   // 2. search -- for a title this source itself just listed, so a miss is the
@@ -97,6 +107,8 @@ async function audit(source) {
     count: found.length,
     probe: String(probe).slice(0, 48),
     error: search.error,
+    upstream: search.upstream,
+    detail: search.detail,
   };
 
   // 3. details + 4. chapters, for the first title it listed
@@ -206,10 +218,32 @@ if (AS_JSON) {
 
 /* A source that cannot browse AND cannot search is not a source. Anything
    deeper failing is reported but does not block: providers have bad days, and
-   a release gate that goes red for someone else's outage stops being read. */
-const dead = report.filter((row) => !row.steps.browse.ok && !row.steps.search.ok);
-if (dead.length) {
-  console.error(`\n${dead.length} source(s) are wholly unreachable: ${dead.map((r) => r.id).join(', ')}`);
+   a release gate that goes red for someone else's outage stops being read.
+
+   The same reasoning decides what to do about a source that is unreachable at
+   both ends. If the provider answered and refused us -- a 403 bot challenge, a
+   geoblock, a rate limit -- then nothing in the release under test caused it,
+   and failing here reverts good work for a change on somebody else's server.
+   That happened: Kagane put its API behind an interstitial, and the next two
+   releases were rolled back for it, one of which was only a catalog refresh.
+   So a refusal is reported loudly and does not block. A source that is dark
+   for any other reason still does, because that is the shape a routing bug,
+   a broken adapter or a bad deploy takes, and this gate exists to catch those. */
+const dark = report.filter((row) => !row.steps.browse.ok && !row.steps.search.ok);
+const refused = dark.filter((row) => row.steps.browse.upstream || row.steps.search.upstream);
+const broken = dark.filter((row) => !refused.includes(row));
+
+for (const row of refused) {
+  const step = row.steps.browse.upstream ? row.steps.browse : row.steps.search;
+  console.error(
+    `\n! ${row.id} is unreachable because its provider refused us (upstream HTTP ${step.upstream})` +
+      `${step.detail ? `: ${step.detail}` : ''}` +
+      '\n  Reported, not blocking: no change in this release can cause or fix it.',
+  );
+}
+
+if (broken.length) {
+  console.error(`\n${broken.length} source(s) are wholly unreachable: ${broken.map((r) => r.id).join(', ')}`);
   process.exit(1);
 }
 say(`\n${report.length} sources audited, ${report.filter((r) => STEPS.every((s) => r.steps[s]?.ok)).length} flawless end to end.`);
