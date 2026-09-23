@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-22T09:15:23.921Z",
+ "generatedAt": "2026-09-23T09:15:28.960Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -367,8 +367,8 @@
    "title": "Who Made Me a Princess",
    "signals": {
     "anilist": {
-     "strength": 0.7,
-     "rank": 20,
+     "strength": 0.715,
+     "rank": 19,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -385,7 +385,7 @@
    "malId": 121269,
    "score": 83,
    "agree": 2,
-   "total": 2.432
+   "total": 2.456
   },
   {
    "title": "Feng Shen Ji",
@@ -463,8 +463,8 @@
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
-     "strength": 0.67,
-     "rank": 22,
+     "strength": 0.685,
+     "rank": 21,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -481,7 +481,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.156
+   "total": 2.18
   },
   {
    "title": "Noblesse",
@@ -772,30 +772,6 @@
    "total": 1.676
   },
   {
-   "title": "The Extra’s Academy Survival Guide",
-   "signals": {
-    "anilist": {
-     "strength": 0.505,
-     "rank": 33,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.385,
-     "rank": 82,
-     "note": "8.16/10 from 384 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 172619,
-   "malId": 166865,
-   "score": 82,
-   "agree": 2,
-   "total": 1.424
-  },
-  {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
@@ -818,6 +794,30 @@
    "score": 81,
    "agree": 2,
    "total": 1.388
+  },
+  {
+   "title": "The Extra’s Academy Survival Guide",
+   "signals": {
+    "anilist": {
+     "strength": 0.475,
+     "rank": 35,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.385,
+     "rank": 82,
+     "note": "8.16/10 from 384 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 172619,
+   "malId": 166865,
+   "score": 82,
+   "agree": 2,
+   "total": 1.376
   },
   {
    "title": "Berserk",
