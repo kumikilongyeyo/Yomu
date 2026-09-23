@@ -1,0 +1,37 @@
+# Cache policy for Yomu's static assets.
+#
+# Cloudflare Static Assets defaults every file to `max-age=0, must-revalidate`.
+# Yomu ships ~76 first-party helper files, so that default cost a conditional
+# request per file on every full page load -- measured at ~0.8s of pure
+# round-trip latency on a warm browser cache, for 22KB of 304s.
+#
+# HTML is deliberately absent from this file: it keeps the revalidating default
+# so a release is never held back by a cached shell pointing at files a deploy
+# has already replaced.
+
+# Content-hashed by the Expo export. The name changes when the bytes do.
+/_expo/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Brand art, pet sprites, vendored libraries and icons change with a release,
+# never within one.
+/brand/*
+  Cache-Control: public, max-age=604800
+/pets/*
+  Cache-Control: public, max-age=604800
+/vendor/*
+  Cache-Control: public, max-age=604800
+/icons/*
+  Cache-Control: public, max-age=604800
+
+# The hand-written helpers are unversioned, so they revalidate after ten
+# minutes and serve instantly from cache for a week while that happens. A fix
+# still reaches everyone on their next load; nobody pays a round trip for it.
+# community-picks.json is deliberately not listed: the daily refresh workflow
+# rewrites it, and it keeps the revalidating default so the new picks land at once.
+/yomu-*
+  Cache-Control: public, max-age=600, stale-while-revalidate=604800
+/source-*
+  Cache-Control: public, max-age=600, stale-while-revalidate=604800
+/community-pack-*
+  Cache-Control: public, max-age=600, stale-while-revalidate=604800

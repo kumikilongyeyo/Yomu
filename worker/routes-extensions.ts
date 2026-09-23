@@ -512,7 +512,12 @@ export async function handleCatalog(request: Request, env: Env, url: URL): Promi
         ...(alsoSearched ? { alsoSearched } : {}),
       },
       200,
-      kind === 'search' ? 'private, max-age=120' : 'private, max-age=300',
+      // A browse grid is the same answer for everybody, so it is public and
+      // Cloudflare is allowed to hold it: index-v9 stores popular/latest in the
+      // edge cache, which is what turns a 2s provider fan-out into one visitor's
+      // wait instead of every visitor's. A search is keyed on what one person
+      // typed and stays private.
+      kind === 'search' ? 'private, max-age=120' : 'public, max-age=60, s-maxage=300',
     );
   }
 

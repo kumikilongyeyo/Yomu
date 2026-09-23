@@ -124,6 +124,20 @@
     return '/search?q=' + encodeURIComponent(item?.title || '');
   }
 
+  /* MangaDex publishes every cover at several widths and the catalog always asks
+     for the 512px one: 124KB where the 256px file is 40KB. Which is right depends
+     on the screen -- a 190px card on a plain display wants 256, the same card on a
+     phone at 3x genuinely needs 512 -- so both are offered and the browser picks
+     against the `sizes` below. A blanket downgrade would be soft covers on exactly
+     the devices that care most. The width lives in the filename, which survives
+     percent-encoding inside the /api/img relay, so one substitution covers the
+     direct and the proxied URL alike. */
+  const coverSet = (url) => {
+    const wide = String(url || '');
+    if (!wide.includes('uploads.mangadex.org') || !wide.includes('.512.jpg')) return '';
+    return wide.replace('.512.jpg', '.256.jpg') + ' 256w, ' + wide + ' 512w';
+  };
+
   /**
    * @param {object} item                 title row (any surface's shape)
    * @param {object} [opts]
@@ -150,13 +164,17 @@
     const art = el('span', 'yt-card__art yr-card__art');
     if (row.cover) {
       const img = el('img', 'yt-card__img');
-      img.src = row.cover;
       img.alt = '';
       img.loading = 'lazy';
       img.decoding = 'async';
       /* Small cards never need a full-size cover. Providers ignore an unknown
-         attribute, so this costs nothing where it is not honoured. */
+         attribute, so this costs nothing where it is not honoured.
+         sizes and srcset are set before src: assigning src is what starts the
+         download, and a candidate list that arrives afterwards is a second one. */
       img.setAttribute('sizes', '(max-width: 620px) 45vw, 190px');
+      const candidates = coverSet(row.cover);
+      if (candidates) img.srcset = candidates;
+      img.src = row.cover;
       img.addEventListener('error', () => {
         img.remove();
         if (!art.querySelector('.yt-card__fallback')) {

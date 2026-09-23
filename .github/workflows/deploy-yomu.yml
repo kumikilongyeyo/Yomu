@@ -17,6 +17,7 @@ on:
       - 'dist-app/**'
       - 'worker/**'
       - 'extensions/**'
+      - 'scripts/bundle-css.mjs'
       - 'scripts/optimize-export.py'
       - 'scripts/source-forge-gauntlet.mjs'
       - 'tools/gauntlet.mjs'
@@ -59,6 +60,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+
+      # Before the optimizer on purpose: this collapses the stylesheets the
+      # export itself wrote, and the optimizer then adds its route-aware ones
+      # as ordinary links, so the release contracts below still find them.
+      - name: Bundle exported stylesheets
+        run: node scripts/bundle-css.mjs
 
       - name: Optimize exported HTML
         run: python3 scripts/optimize-export.py
@@ -191,6 +198,13 @@ jobs:
           grep -q 'yomu-mori-drag.js' /tmp/yomu-home.html
           grep -q 'yomu-titlecard.js' /tmp/yomu-home.html
           grep -q 'yomu-titlecard.css' /tmp/yomu-home.html
+          # One bundle, and none of the files it replaced left behind as a
+          # second copy of the same bytes.
+          grep -qE 'yomu-app-[0-9a-f]{12}\.css' /tmp/yomu-home.html
+          if grep -qE 'href="/yomu-(overrides|skin|tags|look)\.css"' /tmp/yomu-home.html; then
+            echo '::error::Home serves the bundle and the individual stylesheets it replaced.'
+            exit 1
+          fi
           grep -q 'yomu-pager.js' /tmp/yomu-home.html
           grep -q 'yomu-titlecard.js' /tmp/yomu-find.html
           grep -q 'yomu-pager.js' /tmp/yomu-find.html

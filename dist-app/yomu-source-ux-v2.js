@@ -131,7 +131,7 @@
   function style() {
     if (document.getElementById('yomu-load-css')) return;
     const s = document.createElement('style'); s.id = 'yomu-load-css'; s.textContent = `
-#yomu-load{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;background:color-mix(in srgb,var(--bg,#070b10) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .15s;color:var(--text,#f5f7fa)}#yomu-load.on{opacity:1;pointer-events:auto}.yl-card{width:min(84vw,360px);display:grid;justify-items:center;gap:10px;text-align:center}.yl-book{position:relative;width:70px;height:52px;perspective:300px}.yl-book i,.yl-book b,.yl-book em{position:absolute;top:7px;width:30px;height:39px;background:var(--accent,#ffc45f);border-radius:5px 5px 9px 9px}.yl-book i{left:3px;transform:skewY(7deg)}.yl-book b{right:3px;transform:skewY(-7deg)}.yl-book em{right:4px;transform-origin:left center;animation:yf 1.05s cubic-bezier(.55,.08,.25,.95) infinite;backface-visibility:hidden}@keyframes yf{0%,16%{transform:rotateY(0) skewY(-7deg)}70%,100%{transform:rotateY(-180deg) skewY(-7deg)}}.yl-brand{font:900 25px/1 Archivo,-apple-system,sans-serif}.yl-title{font:800 14px/1.25 Archivo,-apple-system,sans-serif}.yl-detail{min-height:17px;color:var(--muted,#91a8bb);font:650 11px/1.35 Archivo,-apple-system,sans-serif}.yl-track{width:min(72vw,290px);height:5px;border-radius:9px;overflow:hidden;background:var(--line,#263747)}.yl-bar{height:100%;width:5%;border-radius:inherit;background:var(--accent,#ffc45f);transition:width .2s}.yl-count{font:800 10px/1 Archivo,-apple-system,sans-serif;color:var(--dim,#7890a4)}#yomu-source-status{margin:9px 0 2px;padding:8px 10px;border:1px solid var(--line,#263747);border-radius:11px;background:color-mix(in srgb,var(--surface,#111b25) 72%,transparent);color:var(--muted,#91a8bb);font:700 10.5px/1.3 Archivo,-apple-system,sans-serif}#yomu-source-status b{color:var(--text,#f5f7fa)}#yomu-source-status .good{color:#91e4ad}#yomu-reader-progress{position:fixed;left:50%;bottom:calc(102px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483500;padding:8px 11px;border-radius:999px;border:1px solid var(--line,#263747);background:color-mix(in srgb,var(--bg,#070b10) 92%,transparent);color:var(--text,#f5f7fa);font:750 10.5px/1 Archivo,-apple-system,sans-serif;white-space:nowrap;pointer-events:none}@media(prefers-reduced-motion:reduce){.yl-book em{animation:none}}`;
+#yomu-load{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;background:color-mix(in srgb,var(--bg,#070b10) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .15s;color:var(--text,#f5f7fa)}#yomu-load.on{opacity:1;pointer-events:auto}.yl-card{width:min(84vw,360px);display:grid;justify-items:center;gap:10px;text-align:center}.yl-book{position:relative;width:70px;height:52px;perspective:300px}.yl-book i,.yl-book b,.yl-book em{position:absolute;top:7px;width:30px;height:39px;background:var(--accent,#ffc45f);border-radius:5px 5px 9px 9px}.yl-book i{left:3px;transform:skewY(7deg)}.yl-book b{right:3px;transform:skewY(-7deg)}.yl-book em{right:4px;transform-origin:left center;animation:yf 1.05s cubic-bezier(.55,.08,.25,.95) infinite;backface-visibility:hidden}@keyframes yf{0%,16%{transform:rotateY(0) skewY(-7deg)}70%,100%{transform:rotateY(-180deg) skewY(-7deg)}}.yl-brand{font:900 25px/1 Archivo,-apple-system,sans-serif}.yl-title{font:800 14px/1.25 Archivo,-apple-system,sans-serif}.yl-detail{min-height:17px;color:var(--muted,#91a8bb);font:650 11px/1.35 Archivo,-apple-system,sans-serif}.yl-track{width:min(72vw,290px);height:5px;border-radius:9px;overflow:hidden;background:var(--line,#263747)}.yl-bar{height:100%;width:5%;border-radius:inherit;background:var(--accent,#ffc45f);transition:width .2s}.yl-count{font:800 10px/1 Archivo,-apple-system,sans-serif;color:var(--dim,#7890a4)}#yomu-source-status{margin:9px 0 2px;padding:8px 10px;border:1px solid var(--line,#263747);border-radius:11px;background:color-mix(in srgb,var(--surface,#111b25) 72%,transparent);color:var(--muted,#91a8bb);font:700 10.5px/1.3 Archivo,-apple-system,sans-serif}#yomu-source-status b{color:var(--text,#f5f7fa)}#yomu-source-status .good{color:#91e4ad}#yomu-reader-progress{position:fixed;left:50%;bottom:calc(102px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2147483500;padding:8px 11px;border-radius:999px;border:1px solid var(--line,#263747);background:color-mix(in srgb,var(--bg,#070b10) 92%,transparent);color:var(--text,#f5f7fa);font:750 10.5px/1 Archivo,-apple-system,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .16s ease}#yomu-reader-progress.on{opacity:1}@media(prefers-reduced-motion:reduce){.yl-book em{animation:none}}`;
     document.head.append(s);
   }
 
@@ -169,28 +169,63 @@
     }; if (!mount()) setTimeout(mount, 250);
   }
 
-  let expected = 0, loaded = 0, failed = 0;
+  let expected = 0, loaded = 0, failed = 0, tracked = [], reveal, watchdog;
+  const inReader = () => location.pathname.startsWith('/read/');
+
+  function hidePill() {
+    clearTimeout(reveal); clearTimeout(watchdog); reveal = watchdog = 0;
+    document.getElementById('yomu-reader-progress')?.remove();
+  }
+  function showPill(text) {
+    let n = document.getElementById('yomu-reader-progress');
+    if (!n) { n = document.createElement('div'); n.id = 'yomu-reader-progress'; document.body.append(n); }
+    n.textContent = text;
+    clearTimeout(watchdog); watchdog = setTimeout(hidePill, 12000);
+    if (n.classList.contains('on') || reveal) return;
+    reveal = setTimeout(() => { reveal = 0; document.getElementById('yomu-reader-progress')?.classList.add('on'); }, 140);
+  }
+  /** The page actually on screen, ignoring the zero-height screens the app keeps mounted. */
+  function pageInView() {
+    const h = innerHeight || 0; let best = null, gap = Infinity;
+    for (const e of tracked) {
+      if (!e.img.isConnected) continue;
+      const r = e.img.getBoundingClientRect();
+      if (!r.height || !r.width || r.bottom <= 0 || r.top >= h) continue;
+      const d = Math.abs((r.top + r.bottom) / 2 - h / 2);
+      if (d < gap) { gap = d; best = e; }
+    }
+    return best;
+  }
   function readerPaint() {
-    if (!expected || !location.pathname.startsWith('/read/')) return;
-    let n = document.getElementById('yomu-reader-progress'); if (!n) { n = document.createElement('div'); n.id = 'yomu-reader-progress'; document.body.append(n); }
+    if (!expected || !inReader()) return hidePill();
+    const cur = pageInView();
+    // Nothing on screen yet means the first page has not arrived; once pages
+    // have rendered, an empty viewport is chrome and needs no pill.
+    if (cur ? cur.st.loaded && !cur.st.failed : loaded > 0) return hidePill();
     const x = Math.min(expected, loaded + failed), p = Math.round(x / expected * 100);
-    n.textContent = failed ? `Pages ${loaded}/${expected} · ${failed} retrying · ${p}%` : `Loading pages ${loaded}/${expected} · ${p}%`;
-    if (x >= expected && !failed) setTimeout(() => n.remove(), 450);
+    showPill(failed ? `Pages ${loaded}/${expected} · ${failed} retrying · ${p}%` : `Loading pages ${loaded}/${expected} · ${p}%`);
   }
   function observeImages() {
     const states = new WeakMap();
     const scan = () => {
-      if (!location.pathname.startsWith('/read/')) return;
+      if (!inReader()) { if (expected) { expected = loaded = failed = 0; tracked = []; } return hidePill(); }
       for (const img of document.querySelectorAll('img')) {
         const src = String(img.getAttribute('src') || img.currentSrc || '');
         if (!src || !/\/api\/|chapter|reader|page/i.test(src) || /brand|avatar|icon|badge|pet|logo/i.test(src) || states.has(img)) continue;
-        const st = { loaded: false, failed: false }; states.set(img, st);
+        const st = { loaded: false, failed: false }; states.set(img, st); tracked.push({ img, st });
         const ok = () => { if (st.loaded) return; st.loaded = true; if (st.failed) { failed = Math.max(0, failed - 1); st.failed = false; } loaded++; readerPaint(); };
         const bad = () => { if (st.loaded || st.failed) return; st.failed = true; failed++; readerPaint(); };
         if (img.complete && img.naturalWidth > 0) ok(); else { img.addEventListener('load', ok, { once: true }); img.addEventListener('error', bad, { once: true }); }
       }
+      if (tracked.length > 240) tracked = tracked.filter((e) => e.img.isConnected);
     };
     new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] }); scan();
+    // A timer, not requestAnimationFrame: rAF never fires while the tab is hidden,
+    // which would latch the coalescer and freeze the pill on whatever it last showed.
+    let queued = 0;
+    const recheck = () => { if (queued) return; queued = setTimeout(() => { queued = 0; readerPaint(); }, 90); };
+    addEventListener('scroll', recheck, { passive: true, capture: true });
+    addEventListener('resize', recheck, { passive: true });
   }
 
   const targetOf = (i) => { try { return new URL(typeof i === 'string' || i instanceof URL ? i : i?.url || '', location.href); } catch { return null; } };
@@ -241,7 +276,7 @@
     }
 
     if (/\/chapters\/[^/]+\/manifest$/.test(u.pathname) && location.pathname.startsWith('/read/')) {
-      expected = loaded = failed = 0; const t = start('Opening chapter…', 'Getting the page manifest from this source', 'Reader check', 70, 210);
+      expected = loaded = failed = 0; tracked = []; hidePill(); const t = start('Opening chapter…', 'Getting the page manifest from this source', 'Reader check', 70, 210);
       const r = await prev(input, init); if (!r.ok) { trouble(t, 'This source did not answer', `HTTP ${r.status} · Yomu is checking alternatives`); return r; }
       const b = await r.clone().json().catch(() => null), pages = Array.isArray(b?.pages) ? b.pages.length : 0;
       if (!pages) { trouble(t, 'No reader pages returned', 'Yomu is checking another source'); return r; }

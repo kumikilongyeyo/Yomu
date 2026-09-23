@@ -21,3 +21,8 @@ tools/source-forge/.cache/
 # lives in docs/recovery/.
 playwright-report/
 test-results/
+
+# Built by scripts/bundle-css.mjs during the release, from the stylesheets that
+# are committed beside it. Generated at deploy time so the committed pages keep
+# linking each file by name, which is what makes them readable and greppable.
+dist-app/yomu-app-*.css

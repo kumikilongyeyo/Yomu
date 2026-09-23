@@ -115,6 +115,7 @@
     track.addEventListener('pointerup', settle); track.addEventListener('pointercancel', settle); track.addEventListener('touchstart', user, { passive: true }); track.addEventListener('touchend', user, { passive: true }); track.addEventListener('wheel', user, { passive: true });
     track.addEventListener('click', (e) => { if (Date.now() - Number(track.dataset.yomuDragged || 0) < 400) { e.preventDefault(); e.stopPropagation(); } }, true);
     track.addEventListener('scroll', () => {
+      holdArt(track);
       if (!frame) frame = requestAnimationFrame(() => { frame = 0; dots(track); });
       clearTimeout(settleTimer); settleTimer = setTimeout(() => {
         const now = Date.now(), wired = Number(track.dataset.yomuHeroWiredAt || now), userAgo = now - Number(track.dataset.yomuUserScroll || 0), programAgo = now - Number(track.dataset.yomuProgramScroll || 0), remapAgo = now - Number(track.dataset.yomuAutoRemap || 0);
@@ -124,14 +125,71 @@
     }, { passive: true });
   }
 
+  /* The hero shows one slide at a time, but every slide paints its cover the
+   * moment it is built -- six full-size covers competing with the first paint
+   * for bandwidth, five of which nobody has asked to see. Hold back everything
+   * but the slide on screen and its neighbour, and let the rest in as they are
+   * scrolled to, or after three seconds. The timer matters: a browser that
+   * never fires a scroll still ends up exactly where it does today, only later.
+   */
+  const ART_HOLD_MS = 3000;
+  let released = false, releaseTimer = 0;
+
+  function artUrl(node) {
+    const inline = node.style.backgroundImage || '';
+    const open = inline.indexOf('url('), close = inline.lastIndexOf(')');
+    if (open < 0 || close <= open) return '';
+    let raw = inline.slice(open + 4, close).trim();
+    const quote = raw.charAt(0);
+    if ((quote === '"' || quote === "'") && raw.charAt(raw.length - 1) === quote) raw = raw.slice(1, -1);
+    return raw;
+  }
+  function showArt(node) {
+    const held = node.dataset.yomuArt; if (!held) return;
+    delete node.dataset.yomuArt;
+    node.style.backgroundImage = 'url("' + held.split('"').join('%22') + '")';
+  }
+  function releaseArt() {
+    released = true;
+    for (const art of document.querySelectorAll('.hero__art[data-yomu-art]')) showArt(art);
+  }
+  /* Runs straight from the MutationObserver, not from a frame callback: the
+     browser starts the download at the next style recalculation, so a coalesced
+     pass would arrive after the request it is trying to avoid. The observer
+     watches childList only, and this writes attributes, so it cannot re-enter. */
+  function holdArt(track) {
+    if (released || !track?.children.length) return;
+    const here = index(track);
+    [...track.children].forEach((slide, i) => {
+      const art = slide.querySelector && slide.querySelector('.hero__art'); if (!art) return;
+      if (Math.abs(i - here) <= 1) { showArt(art); return; }
+      if (art.dataset.yomuArt) return;
+      const url = artUrl(art); if (!url) return;
+      art.dataset.yomuArt = url;
+      art.style.backgroundImage = '';
+      if (!releaseTimer) releaseTimer = setTimeout(releaseArt, ART_HOLD_MS);
+    });
+  }
+
   function pass() {
     if (!isHome()) { document.getElementById(DOTS)?.remove(); return; }
     const track = document.querySelector('.hero-track'); if (!track) return;
-    wire(track); placeTop(track); paintRatings(); dots(track);
+    wire(track); placeTop(track); paintRatings(); dots(track); holdArt(track);
   }
   window.YomuHeroPlus = { pickSlides: pick, repaint: pass };
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', pass); else pass();
   let frame = 0;
-  new MutationObserver(() => { if (frame) return; frame = requestAnimationFrame(() => { frame = 0; pass(); }); }).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver((records) => {
+    /* Only while something is still being held, and only for batches that
+       actually inserted nodes: index() reads layout, and paying for that on
+       every mutation of a busy page would cost more than the covers it saves. */
+    if (!released) {
+      let inserted = false;
+      for (const record of records) if (record.addedNodes.length) { inserted = true; break; }
+      const track = inserted && isHome() ? document.querySelector('.hero-track') : null;
+      if (track) holdArt(track);
+    }
+    if (frame) return; frame = requestAnimationFrame(() => { frame = 0; pass(); });
+  }).observe(document.documentElement, { childList: true, subtree: true });
   for (const type of ['popstate','hashchange','resize','visibilitychange']) addEventListener(type, () => { if (!document.hidden) pass(); });
 })();

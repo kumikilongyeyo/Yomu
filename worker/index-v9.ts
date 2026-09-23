@@ -94,11 +94,53 @@ async function repairManifest(url: URL, response: Response): Promise<Response> {
   });
 }
 
+/* The browse grids fan out to every provider, so the first visitor to ask waits
+ * seconds for an answer that is identical for everyone else. A Workers response
+ * is never edge-cached on its own -- Cloudflare only stores what the Cache API is
+ * explicitly told to store -- so popular and latest go through caches.default,
+ * keyed on the full URL (page and adult already live in the query string).
+ *
+ * Search is excluded on purpose: it is keyed on what one person typed.
+ */
+const EDGE_CACHED = /^\/api\/catalog\/(popular|latest)$/;
+
+async function catalogFromEdge(
+  request: Request,
+  ctx: ExecutionContext | undefined,
+  serve: () => Promise<Response>,
+): Promise<Response> {
+  const cache = (caches as unknown as { default: Cache }).default;
+  const hit = await cache.match(request).catch(() => undefined);
+  if (hit) {
+    const headers = new Headers(hit.headers);
+    headers.set('x-yomu-edge-cache', 'hit');
+    return new Response(hit.body, { status: hit.status, statusText: hit.statusText, headers });
+  }
+
+  const response = await serve();
+  if (!response.ok) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set('x-yomu-edge-cache', 'miss');
+  const body = await response.arrayBuffer();
+  const stored = new Response(body, { status: response.status, statusText: response.statusText, headers });
+
+  /* Storing must never delay the answer, and a cache that refuses the write is
+     a slow page, not a broken one. */
+  const write = cache.put(request, stored.clone()).catch(() => {});
+  if (ctx?.waitUntil) ctx.waitUntil(write);
+  return stored;
+}
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === 'GET' && url.pathname === '/api/source-beast/capacity') {
       return browserCapacity(env as BrowserEnv);
+    }
+
+    if (request.method === 'GET' && EDGE_CACHED.test(url.pathname)) {
+      return catalogFromEdge(request, ctx, () => v8.fetch(request, env));
     }
 
     let response = await v8.fetch(request, env);

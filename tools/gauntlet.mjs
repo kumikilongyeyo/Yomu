@@ -297,10 +297,16 @@ async function u14() {
 
 const PALETTE_FILES = new Set(['yomu-skin.css', 'yomu-skins.css']);
 
+/* The release bundle is a concatenation of the stylesheets this loop already
+   reads one by one, so scanning it can only re-report the palette files' own
+   definitions as if a component had reached for them. The rule is enforced on
+   the inputs, which is where a developer can act on it. */
+const GENERATED_CSS = /^yomu-app-[0-9a-f]{12}\.css$/;
+
 async function u7() {
   const dir = path.join(ROOT, 'dist-app');
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.css'))) {
-    if (PALETTE_FILES.has(file)) continue;
+    if (PALETTE_FILES.has(file) || GENERATED_CSS.test(file)) continue;
     const css = fs.readFileSync(path.join(dir, file), 'utf8');
     const reaches = [...css.matchAll(/var\(\s*--(pa|au)-[a-z0-9-]+/gi)].map((m) => m[0].replace(/var\(\s*/, ''));
     check('U7', `${file} reads the resolved tokens, not one mode's`, reaches.length === 0,

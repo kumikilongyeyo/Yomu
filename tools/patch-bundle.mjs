@@ -737,6 +737,22 @@ const HEAD_FIRST = {
 const SCRIPT_FREE_PAGES = new Set(['start.html', 'shelf.html']);
 const isScript = (a) => a.tag.includes('<script');
 
+/* A released page may carry scripts/bundle-css.mjs's single stylesheet instead
+   of the individual links this tool inserts. That is not a page missing its
+   CSS -- it is the same CSS, concatenated. The bundler writes a
+   `==== /yomu-x.css ====` banner per input, so which files a given bundle
+   actually contains is something this can read rather than assume: a stale or
+   partial bundle still reports its inputs as missing, which is the point. */
+const BUNDLE_LINK = /\/(yomu-app-[0-9a-f]{12}\.css)/;
+function stylesheetsInBundle(html) {
+  const link = html.match(BUNDLE_LINK);
+  if (!link) return new Set();
+  const bundle = path.join(PAGES_DIR, link[1]);
+  if (!fs.existsSync(bundle)) return new Set();
+  const css = fs.readFileSync(bundle, 'utf8');
+  return new Set([...css.matchAll(/==== \/(yomu-[A-Za-z0-9._-]+\.css) ====/g)].map((m) => m[1]));
+}
+
 for (const { file: assetFile } of ASSETS) {
   if (!assetFile) continue;
   if (fs.existsSync(path.join(PAGES_DIR, assetFile))) continue;
@@ -889,7 +905,8 @@ if (!failed) {
     const wanted = SCRIPT_FREE_PAGES.has(page) ? ASSETS.filter((a) => !isScript(a)) : ASSETS;
     const probeOf = (a) => a.probe ?? ('"/' + a.file + '"');
     const nameOf = (a) => a.file ?? a.label;
-    const missing = wanted.filter((a) => !html.includes(probeOf(a)));
+    const bundled = stylesheetsInBundle(html);
+    const missing = wanted.filter((a) => !html.includes(probeOf(a)) && !bundled.has(a.file));
     if (!missing.length) { console.log(`already      assets: ${page}`); continue; }
     if (!html.includes('</head>')) { console.log(`skipped      assets: ${page} (no <head>)`); continue; }
     if (check) { console.log(`NOT APPLIED  assets: ${page} (${missing.map(nameOf).join(', ')})`); failed++; continue; }
