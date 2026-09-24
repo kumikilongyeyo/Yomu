@@ -168,8 +168,13 @@ export function createMangadexProvider(adult = false): YomuExtension {
     const MAX_CHAPTERS = 5000;
     const rows: any[] = [];
     for (let offset = 0; offset < MAX_CHAPTERS; offset += PAGE) {
+      // External chapters are links to the publisher (Solo Leveling's 24 all
+      // point at WebNovel) with `pages: 0` -- nothing Yomu can open. Listing
+      // them put 24 rows in the ledger that each failed on tap, and hid the
+      // "turn on a source that has it" offer an honest empty list shows.
       const qs =
         `translatedLanguage[]=en&order[chapter]=asc&limit=${PAGE}&offset=${offset}` +
+        `&includeExternalUrl=0&includeEmptyPages=0` +
         (adult ? RATINGS_ADULT : RATINGS_SAFE);
       const page = await md(`/manga/${encodeURIComponent(id)}/feed?${qs}`);
       const batch = page.data ?? [];
@@ -180,7 +185,7 @@ export function createMangadexProvider(adult = false): YomuExtension {
       if (Number.isFinite(page.total) && rows.length >= page.total) break;
     }
 
-    const data = { data: rows };
+    const data = { data: rows.filter((c: any) => !c?.attributes?.externalUrl && Number(c?.attributes?.pages ?? 1) !== 0) };
     return (data.data ?? [])
       .map((c: any, index: number) => {
         const attr = c.attributes ?? {};
