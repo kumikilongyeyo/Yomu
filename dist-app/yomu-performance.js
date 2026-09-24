@@ -21,6 +21,14 @@
   const FRESH_MS = 10 * 60 * 1000;
   const STALE_MS = 60 * 60 * 1000;
   const SOURCE_BUDGET_MS = 4200; // < 1/3 of the old 14s source wait.
+  // The chapter ledger (/api/catalog/chapters) asks every provider at once, so
+  // a cold answer is 1.5-4.5s -- right on the budget above, and cut off at
+  // 4.2s it came back empty: no chips, no gaps, no "these sources have it".
+  // It never blocks a screen (the source's own list renders first), so it
+  // gets the time it needs.
+  const LEDGER_BUDGET_MS = 12_000;
+  const budgetFor = (url) => (url.origin === location.origin && url.pathname === '/api/catalog/chapters'
+    ? LEDGER_BUDGET_MS : SOURCE_BUDGET_MS);
   const MAX_ROWS = 80;
   const MAX_BODY = 280_000;
   const WARM_CONCURRENCY = 6;
@@ -111,7 +119,7 @@
   function network(key, input, init = {}, background = false) {
     if (inflight.has(key)) return inflight.get(key).then((r) => r.clone());
     const task = (async () => {
-      const merged = combinedSignal(init.signal || (input instanceof Request ? input.signal : null), SOURCE_BUDGET_MS);
+      const merged = combinedSignal(init.signal || (input instanceof Request ? input.signal : null), budgetFor(targetOf(input)));
       try {
         const response = await rawFetch(input, { ...init, cache: 'no-store', signal: merged.signal });
         if (response.ok) remember(key, response);
