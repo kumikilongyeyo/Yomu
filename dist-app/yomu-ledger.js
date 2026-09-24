@@ -149,6 +149,16 @@
       // everything it can reach, which is right for a merge and wrong for a
       // chip: a chip for a source you cannot open is a dead end.
       const usable = new Set(mine);
+      // Everyone the Worker found, before the filter: that is what identity
+      // is, and it is what the link store must remember (below).
+      const carriers = data.sources.filter((s) => s && s.ok !== false && s.seriesId);
+      // Carriers this device could turn on in one tap: an extension or the
+      // built-in MangaDex with chapters, and not already on. Kept so an empty
+      // list can say where the chapters are instead of saying nothing.
+      data.offDevice = carriers.filter((s) => s.chapterCount > 0
+        && !usable.has(toAppSource(s.providerId))
+        && (s.providerId.startsWith('ext:') || s.providerId === 'mangadex'))
+        .sort((a, b) => b.chapterCount - a.chapterCount);
       data.sources = data.sources.filter((s) => usable.has(toAppSource(s.providerId)));
       const keep = new Set(data.sources.map((s) => s.providerId));
       for (const row of data.rows) row.releases = row.releases.filter((r) => keep.has(r.providerId));
@@ -165,9 +175,12 @@
       labels = labelsFor(data.sources);
 
       // Remember who carries this title, so the next open skips matching.
+      // All of them, not just the ones enabled today: the fast path asks only
+      // the providers named here, so storing the filtered set meant a source
+      // turned on later was never asked about this title again.
       if (!known || !known.length) {
         const store = linkStore();
-        store[context.key] = data.sources.map((s) => `${s.providerId}:${s.seriesId}`);
+        store[context.key] = carriers.map((s) => `${s.providerId}:${s.seriesId}`);
         writeJSON(LINKS_KEY, store);
       }
     } catch {
@@ -469,7 +482,12 @@
     const existing = document.getElementById(ELSEWHERE_ID);
     const native = list.querySelectorAll('.chapter-line[data-chn]').length;
 
-    if (native || !ledger.rows.length) { existing?.remove(); return; }
+    if (native) { existing?.remove(); return; }
+    if (!ledger.rows.length) {
+      if (ledger.offDevice?.length) paintOffer(context, list, existing);
+      else existing?.remove();
+      return;
+    }
 
     const signature = 'e' + ledger.rows.length + ':' + ledger.rows[0]?.label;
     if (existing && existing.getAttribute('data-sig') === signature) return;
@@ -498,6 +516,94 @@
     }
 
     if (existing) existing.replaceWith(box); else list.append(box);
+  }
+
+  /**
+   * Nothing on the sources this device has on, and the chapters are elsewhere.
+   *
+   * The state a new visitor is in after "look around without setting anything
+   * up" (MangaDex only), and an iOS Home Screen app is in on first launch (its
+   * storage is not Safari's). Solo Leveling then read "0 chapters" while three
+   * sources carried two hundred. One tap turns the fullest one on and opens
+   * the title there; a full navigation, because the app's collection store
+   * reads localStorage once and never hears a later write.
+   */
+  function paintOffer(context, list, existing) {
+    const ELSEWHERE_ID = 'yomu-ledger-elsewhere';
+    const offer = ledger.offDevice.slice(0, 4);
+    const signature = 'o' + offer.map((s) => s.providerId + s.chapterCount).join(',');
+    if (existing && existing.getAttribute('data-sig') === signature) return;
+
+    const box = document.createElement('div');
+    box.id = ELSEWHERE_ID;
+    box.className = 'yomu-elsewhere yomu-elsewhere--offer';
+    box.setAttribute('data-sig', signature);
+
+    const head = document.createElement('p');
+    head.className = 'yomu-elsewhere__head';
+    head.textContent = `None of your sources have chapters for this title. `
+      + `${offer.length === 1 ? 'One source you have not turned on has them' : `${offer.length} sources you have not turned on have them`}:`;
+    box.append(head);
+
+    for (const source of offer) {
+      const line = document.createElement('div');
+      line.className = 'yomu-elsewhere__row';
+      const name = document.createElement('b');
+      name.textContent = source.providerName || source.providerId;
+      const count = document.createElement('span');
+      count.textContent = `${source.chapterCount} chapter${source.chapterCount === 1 ? '' : 's'}`;
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'yomu-elsewhere__go';
+      go.textContent = 'Turn on & open';
+      go.setAttribute('aria-label', `Turn on ${source.providerName} and open this title there`);
+      go.addEventListener('click', () => {
+        if (!enableSource(source)) { go.textContent = 'Could not turn on'; return; }
+        location.assign('/series/' + encodeURIComponent(source.seriesId)
+          + '?source=' + encodeURIComponent(toAppSource(source.providerId)));
+      });
+      line.append(name, count, go);
+      box.append(line);
+    }
+
+    if (existing) existing.replaceWith(box); else list.append(box);
+  }
+
+  /**
+   * The same row the Add Source screen writes (source-import.js), so the app
+   * cannot tell the difference. `kind: 'api'` for an extension -- a wrong kind
+   * makes the app say "This source was removed."
+   */
+  function enableSource(source) {
+    try {
+      const raw = localStorage.getItem(COLLECTION_KEY);
+      const col = raw === null ? { revision: 0, sources: [], library: [], progress: {} } : JSON.parse(raw);
+      if (!col || typeof col !== 'object' || !Array.isArray(col.sources)) return false;
+      const id = toAppSource(source.providerId);
+      const existing = col.sources.find((s) => s && s.id === id);
+      let row;
+      if (source.providerId === 'mangadex') {
+        if (!existing) return false;
+        row = { ...existing, enabled: true };
+      } else {
+        const ext = source.providerId.slice(4);
+        row = {
+          ...existing,
+          id,
+          label: source.providerName || ext,
+          category: 'Yomu Extensions',
+          kind: 'api',
+          url: location.origin + '/api/ext/source/' + encodeURIComponent(ext) + '/',
+          enabled: true,
+        };
+      }
+      localStorage.setItem(COLLECTION_KEY, JSON.stringify({
+        ...col,
+        revision: (Number.isInteger(col.revision) ? col.revision : 0) + 1,
+        sources: [...col.sources.filter((s) => s && s.id !== id), row],
+      }));
+      return true;
+    } catch { return false; }
   }
 
   /**

@@ -8,6 +8,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const SOURCE = fs.readFileSync(new URL('../../dist-app/sw.js', import.meta.url), 'utf8');
+// The current shell cache, read from the worker: patch-bundle.mjs stamps the
+// bundle's hash into SHELL_VERSION, so the name changes with every bundle edit.
+const CURRENT = `yomu-shell-${SOURCE.match(/const SHELL_VERSION = '([^']+)'/)[1]}`;
 
 class FakeCache {
   constructor() { this.map = new Map(); }
@@ -79,11 +82,11 @@ async function runFetch(listener, request) {
 
 test('activating removes only older shell caches and enables navigation preload', async () => {
   const { listeners, caches, state } = bootWorker();
-  for (const name of ['yomu-shell-v1', 'yomu-shell-v2', 'yomu-shell-v3']) await caches.open(name);
+  for (const name of ['yomu-shell-v1', 'yomu-shell-v2', 'yomu-shell-v3', CURRENT]) await caches.open(name);
 
   await runLifecycle(listeners.activate);
 
-  assert.deepEqual((await caches.keys()).sort(), ['yomu-shell-v3']);
+  assert.deepEqual((await caches.keys()).sort(), [CURRENT]);
   assert.equal(state.preloadEnabled, true, 'navigation preload should remove worker startup latency');
 });
 
@@ -143,7 +146,7 @@ test('a warm hashed Expo asset is cache-first', async () => {
     mode: 'no-cors',
     destination: 'script',
   };
-  const cache = await caches.open('yomu-shell-v3');
+  const cache = await caches.open(CURRENT);
   await cache.put(request, 'cached-entry');
 
   const response = await runFetch(listeners.fetch, request);

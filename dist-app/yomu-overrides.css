@@ -2158,6 +2158,24 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.yomu-elsewhere--offer .yomu-elsewhere__row b { min-width: 0; flex: 0 1 auto; }
+.yomu-elsewhere__go {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 12px/1 var(--uiFont);
+  cursor: pointer;
+}
+.yomu-elsewhere__row:first-of-type .yomu-elsewhere__go {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accentText, #18212a);
+}
+.yomu-elsewhere__go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* The circle's rows now sit on Your Yomu rather than in Settings, so they
    need the same shapes there. */

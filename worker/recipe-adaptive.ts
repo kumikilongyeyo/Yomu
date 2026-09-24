@@ -1,4 +1,5 @@
 import type { Env } from './index';
+import { chaptersFromHtml, type HygieneChapter } from './chapter-hygiene';
 
 type RecipeFamily = 'http-source' | 'mmrcms' | 'wpcomics' | 'custom' | 'browser-required';
 type Link = { url: string; text: string };
@@ -438,13 +439,10 @@ function chapterScore(link: Link, seriesUrl: string, plan: RecipePlan): number {
   return score;
 }
 
-function chapterLinks(html: string, base: string, seriesUrl: string, plan: RecipePlan): Link[] {
-  const scored = linksFromHtml(html, base)
-    .map((link) => ({ link, score: chapterScore(link, seriesUrl, plan) }))
-    .filter((row) => row.score >= 5)
-    .sort((a, b) => b.score - a.score);
-  const seen = new Set<string>();
-  return scored.map((row) => row.link).filter((row) => !seen.has(row.url) && seen.add(row.url)).slice(0, 500);
+function chapterLinks(html: string, base: string, seriesUrl: string, plan: RecipePlan): HygieneChapter[] {
+  // Scoping, naming, numbering and the list's size live in chapter-hygiene.ts;
+  // what counts as a chapter link is still decided here, by chapterScore.
+  return chaptersFromHtml(html, base, seriesUrl, (link) => chapterScore(link, seriesUrl, plan) >= 5);
 }
 
 function readerSlice(html: string, selector?: string): string {
@@ -680,7 +678,7 @@ export async function handleRecipeRuntime(request: Request, _env: Env, url: URL)
         synopsis: '',
         ...(coverFromHtml(detail.html, detail.finalUrl) ? { cover: coverFromHtml(detail.html, detail.finalUrl) } : {}),
         category: 'comic',
-        chapters: detail.chapters.map((chapter, i) => ({ id: encodeToken(chapter.url), number: chapterNumber(chapter, Math.max(1, detail.chapters.length - i)), name: chapter.text || `Issue ${Math.max(1, detail.chapters.length - i)}` })),
+        chapters: detail.chapters.map((chapter, i) => ({ id: encodeToken(chapter.url), number: chapter.number ?? chapterNumber(chapter, Math.max(1, detail.chapters.length - i)), name: chapter.text || `Issue ${chapter.number ?? Math.max(1, detail.chapters.length - i)}` })),
         recipeFamily: plan.family,
       }, 200, 'private, max-age=120');
     }

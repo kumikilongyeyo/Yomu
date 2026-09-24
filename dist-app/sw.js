@@ -4,7 +4,7 @@
  * yomu-shell-<version> is disposable and belongs to this worker.
  * yomu-downloads-v1 belongs to the reader and is never deleted here.
  */
-const SHELL_VERSION = 'v3';
+const SHELL_VERSION = 'v3-b92924236e';
 const SHELL = `yomu-shell-${SHELL_VERSION}`;
 const OURS = /^yomu-shell-/;
 const SHELL_MAX_ENTRIES = 160;
