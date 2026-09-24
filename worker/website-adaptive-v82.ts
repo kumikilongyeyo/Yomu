@@ -1,4 +1,5 @@
 import type { Env } from './index';
+import { chaptersFromHtml, madaraListIsDeferred, type HygieneChapter } from './chapter-hygiene';
 
 type Framework = 'madara' | 'mangathemesia' | 'wordpress' | 'generic-html';
 type Link = { url: string; text: string };
@@ -392,13 +393,10 @@ function chapterScore(link: Link, seriesUrl: string, plan: SitePlan): number {
   return score;
 }
 
-function chapterLinks(html: string, base: string, seriesUrl: string, plan: SitePlan): Link[] {
-  const rows = linksFromHtml(html, base)
-    .map((link) => ({ link, score: chapterScore(link, seriesUrl, plan) }))
-    .filter((row) => row.score >= 7)
-    .sort((a, b) => b.score - a.score);
-  const seen = new Set<string>();
-  return rows.map((row) => row.link).filter((row) => !seen.has(row.url) && seen.add(row.url)).slice(0, 650);
+function chapterLinks(html: string, base: string, seriesUrl: string, plan: SitePlan): HygieneChapter[] {
+  // Scoping, naming, numbering and the list's size live in chapter-hygiene.ts;
+  // what counts as a chapter link is still decided here, by chapterScore.
+  return chaptersFromHtml(html, base, seriesUrl, (link) => chapterScore(link, seriesUrl, plan) >= 7);
 }
 
 function readerSlice(html: string): string {
@@ -451,7 +449,7 @@ async function discoverCatalog(plan: SitePlan, deadline: number, attempts: Attem
   return best;
 }
 
-async function madaraAjaxChapters(plan: SitePlan, seriesUrl: string, deadline: number, attempts: Attempt[]): Promise<Link[]> {
+async function madaraAjaxChapters(plan: SitePlan, seriesUrl: string, deadline: number, attempts: Attempt[]): Promise<HygieneChapter[]> {
   const endpoint = `${seriesUrl.replace(/\/+$/, '')}/ajax/chapters/`;
   for (const method of ['POST', 'GET'] as const) {
     if (Date.now() >= deadline - 600) break;
@@ -475,8 +473,9 @@ async function discoverDetail(plan: SitePlan, seriesUrl: string, deadline: numbe
   const page = await fetchHtml(seriesUrl, plan.baseUrl, deadline);
   let chapters = chapterLinks(page.html, page.finalUrl, seriesUrl, plan);
   attempts.push({ stage: 'chapters', input: seriesUrl, ok: chapters.length > 0, count: chapters.length });
-  if (!chapters.length && plan.framework === 'madara') {
-    chapters = await madaraAjaxChapters(plan, page.finalUrl, deadline, attempts);
+  if (plan.framework === 'madara' && madaraListIsDeferred(page.html, chapters.length)) {
+    const deferred = await madaraAjaxChapters(plan, page.finalUrl, deadline, attempts);
+    if (deferred.length > chapters.length) chapters = deferred;
   }
   if (!chapters.length) throw new Error('Adaptive detail discovery found the title but no chapter links.');
   return { html: page.html, finalUrl: page.finalUrl, chapters };
@@ -691,8 +690,8 @@ export async function handleWebsiteAdaptiveRuntime(request: Request, _env: Env, 
         nsfw: plan.nsfw,
         chapters: detail.chapters.map((chapter, i) => ({
           id: encodeToken(chapter.url),
-          number: chapterNumber(chapter, Math.max(1, detail.chapters.length - i)),
-          name: chapter.text || `Chapter ${Math.max(1, detail.chapters.length - i)}`,
+          number: chapter.number ?? chapterNumber(chapter, Math.max(1, detail.chapters.length - i)),
+          name: chapter.text || `Chapter ${chapter.number ?? Math.max(1, detail.chapters.length - i)}`,
         })),
         adaptiveFramework: plan.framework,
       }, 200, 'private, max-age=120');
