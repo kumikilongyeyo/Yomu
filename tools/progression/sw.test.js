@@ -9,8 +9,8 @@ import fs from 'node:fs';
 
 const SOURCE = fs.readFileSync(new URL('../../dist-app/sw.js', import.meta.url), 'utf8');
 // The current shell cache, read from the worker: patch-bundle.mjs stamps the
-// bundle's hash into SHELL_VERSION, so the name changes with every bundle edit.
-const CURRENT = `yomu-shell-${SOURCE.match(/const SHELL_VERSION = '([^']+)'/)[1]}`;
+// bundle's hash into BUNDLE_STAMP, so the name changes with every bundle edit.
+const CURRENT = `yomu-shell-${SOURCE.match(/const SHELL_VERSION = '([^']+)'/)[1]}-${SOURCE.match(/const BUNDLE_STAMP = '([^']+)'/)[1]}`;
 
 class FakeCache {
   constructor() { this.map = new Map(); }
@@ -170,4 +170,11 @@ test('successful network responses are cached outside the response critical path
   assert.match(SOURCE, /storeInBackground\(event, request, response\)/);
   assert.match(SOURCE, /event\.waitUntil\(task\)/);
   assert.doesNotMatch(SOURCE, /await cache\.put\(request, response\.clone\(\)\);[\s\S]{0,160}return response;/);
+});
+
+test("the live release check still finds SHELL_VERSION = 'v3'", () => {
+  // deploy-yomu.yml's "Verify live Yomu" greps the served sw.js for this exact
+  // text and rolls the release back without it. Changing it here means
+  // changing the workflow in the same release.
+  assert.ok(SOURCE.includes("SHELL_VERSION = 'v3'"));
 });

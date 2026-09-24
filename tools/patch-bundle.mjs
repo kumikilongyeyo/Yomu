@@ -981,18 +981,21 @@ if (bundleChanged) fs.writeFileSync(file, source);
  * cached the bundle before an edit keeps the old one for good -- an iOS Home
  * Screen install has no reload that would clear it.
  *
- * The shell cache is therefore named after the bundle's contents. Any edit
+ * The shell cache is therefore named after the bundle's contents (BUNDLE_STAMP). Any edit
  * changes sw.js by a byte, the browser installs the new worker, and its
  * activate step deletes every yomu-shell-* cache but its own.
  */
 {
   const SW = 'dist-app/sw.js';
   const digest = crypto.createHash('sha256').update(source).digest('hex').slice(0, 10);
-  const stamp = `const SHELL_VERSION = 'v3-${digest}';`;
+  // A separate constant, not SHELL_VERSION: deploy-yomu.yml's "Verify live
+  // Yomu" step greps the live sw.js for the literal SHELL_VERSION = 'v3' and
+  // rolls the release back without it (it did, once, on 2026-09-24).
+  const stamp = `const BUNDLE_STAMP = '${digest}';`;
   const sw = fs.readFileSync(SW, 'utf8');
-  const current = sw.match(/const SHELL_VERSION = '[^']*';/)?.[0];
-  if (!current) {
-    console.log(`ANCHOR LOST  service worker: no SHELL_VERSION in ${SW}`);
+  const current = sw.match(/const BUNDLE_STAMP = '[^']*';/)?.[0];
+  if (!current || !sw.includes("SHELL_VERSION = 'v3'")) {
+    console.log(`ANCHOR LOST  service worker: BUNDLE_STAMP or SHELL_VERSION = 'v3' missing in ${SW}`);
     failed++;
   } else if (current === stamp) {
     console.log('already      service worker: shell cache follows the bundle');

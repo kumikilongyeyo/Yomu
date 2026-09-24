@@ -4,8 +4,12 @@
  * yomu-shell-<version> is disposable and belongs to this worker.
  * yomu-downloads-v1 belongs to the reader and is never deleted here.
  */
-const SHELL_VERSION = 'v3-b92924236e';
-const SHELL = `yomu-shell-${SHELL_VERSION}`;
+const SHELL_VERSION = 'v3';
+/* The bundle's hash, written by tools/patch-bundle.mjs -- never by hand. It is
+   separate from SHELL_VERSION because the deploy's live check greps for the
+   literal SHELL_VERSION = 'v3', and a release that fails it is rolled back. */
+const BUNDLE_STAMP = 'b92924236e';
+const SHELL = `yomu-shell-${SHELL_VERSION}-${BUNDLE_STAMP}`;
 const OURS = /^yomu-shell-/;
 const SHELL_MAX_ENTRIES = 160;
 
