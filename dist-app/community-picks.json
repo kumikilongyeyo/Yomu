@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-23T09:15:28.960Z",
+ "generatedAt": "2026-09-24T09:14:30.580Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.05/10 from 322 MangaUpdates readers",
+     "note": "9.05/10 from 323 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -62,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.65/10 from 461 MangaUpdates readers",
+     "note": "8.65/10 from 462 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
     }
    },
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 939 MangaUpdates readers",
+     "note": "8.82/10 from 940 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,295 MangaUpdates readers",
+     "note": "8.47/10 from 2,296 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 784 MangaUpdates readers",
+     "note": "8.71/10 from 786 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -367,8 +367,8 @@
    "title": "Who Made Me a Princess",
    "signals": {
     "anilist": {
-     "strength": 0.715,
-     "rank": 19,
+     "strength": 0.7,
+     "rank": 20,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -385,7 +385,7 @@
    "malId": 121269,
    "score": 83,
    "agree": 2,
-   "total": 2.456
+   "total": 2.432
   },
   {
    "title": "Feng Shen Ji",
@@ -446,7 +446,7 @@
     "mangaupdates": {
      "strength": 0.775,
      "rank": 30,
-     "note": "8.37/10 from 475 MangaUpdates readers",
+     "note": "8.37/10 from 476 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -463,14 +463,14 @@
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
-     "strength": 0.685,
-     "rank": 21,
+     "strength": 0.67,
+     "rank": 22,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
      "strength": 0.6775,
      "rank": 43,
-     "note": "8.3/10 from 301 MangaUpdates readers",
+     "note": "8.3/10 from 302 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
    },
@@ -481,7 +481,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.18
+   "total": 2.156
   },
   {
    "title": "Noblesse",
@@ -540,8 +540,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.4225,
-     "rank": 77,
+     "strength": 0.43,
+     "rank": 76,
      "note": "8.18/10 from 468 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
     }
@@ -553,7 +553,7 @@
    "malId": 146966,
    "score": 79,
    "agree": 2,
-   "total": 2.108
+   "total": 2.12
   },
   {
    "title": "SPY x FAMILY",
@@ -583,8 +583,8 @@
    "title": "See You in My 19th Life",
    "signals": {
     "anilist": {
-     "strength": 0.325,
-     "rank": 45,
+     "strength": 0.34,
+     "rank": 44,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -601,7 +601,7 @@
    "malId": 147062,
    "score": 81,
    "agree": 2,
-   "total": 1.988
+   "total": 2.012
   },
   {
    "title": "Absolute Regression",
@@ -612,9 +612,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.76,
-     "rank": 32,
-     "note": "8.37/10 from 262 MangaUpdates readers",
+     "strength": 0.7525,
+     "rank": 33,
+     "note": "8.37/10 from 264 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -625,7 +625,7 @@
    "malId": 172750,
    "score": 81,
    "agree": 2,
-   "total": 1.904
+   "total": 1.892
   },
   {
    "title": "Kono Oto Tomare!",
@@ -660,8 +660,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.7075,
-     "rank": 39,
+     "strength": 0.7,
+     "rank": 40,
      "note": "8.64/10 from 1,091 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
@@ -673,7 +673,7 @@
    "malId": 1133,
    "score": 86,
    "agree": 2,
-   "total": 1.82
+   "total": 1.808
   },
   {
    "title": "Death Note",
@@ -708,9 +708,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.49,
-     "rank": 68,
-     "note": "8.21/10 from 302 MangaUpdates readers",
+     "strength": 0.4975,
+     "rank": 67,
+     "note": "8.21/10 from 303 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
    },
@@ -721,14 +721,38 @@
    "malId": 163116,
    "score": 82,
    "agree": 2,
-   "total": 1.736
+   "total": 1.748
+  },
+  {
+   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
+   "signals": {
+    "anilist": {
+     "strength": 0.355,
+     "rank": 43,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7075,
+     "rank": 39,
+     "note": "8.33/10 from 836 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 104973,
+   "malId": 118646,
+   "score": 81,
+   "agree": 2,
+   "total": 1.7
   },
   {
    "title": "Positively Yours",
    "signals": {
     "anilist": {
-     "strength": 0.28,
-     "rank": 48,
+     "strength": 0.265,
+     "rank": 49,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -745,43 +769,43 @@
    "malId": 140921,
    "score": 81,
    "agree": 2,
-   "total": 1.712
+   "total": 1.688
   },
   {
-   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
+   "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.34,
-     "rank": 44,
+     "strength": 0.49,
+     "rank": 34,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7075,
-     "rank": 39,
-     "note": "8.33/10 from 835 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
+     "strength": 0.3925,
+     "rank": 81,
+     "note": "8.16/10 from 385 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
    "category": "manhwa",
-   "year": 2017,
-   "anilistId": 104973,
-   "malId": 118646,
-   "score": 81,
+   "year": 2023,
+   "anilistId": 172619,
+   "malId": 166865,
+   "score": 82,
    "agree": 2,
-   "total": 1.676
+   "total": 1.412
   },
   {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
-     "strength": 0.31,
-     "rank": 46,
+     "strength": 0.325,
+     "rank": 45,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5575,
-     "rank": 59,
+     "strength": 0.55,
+     "rank": 60,
      "note": "8.23/10 from 339 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -793,31 +817,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.388
-  },
-  {
-   "title": "The Extra’s Academy Survival Guide",
-   "signals": {
-    "anilist": {
-     "strength": 0.475,
-     "rank": 35,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.385,
-     "rank": 82,
-     "note": "8.16/10 from 384 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 172619,
-   "malId": 166865,
-   "score": 82,
-   "agree": 2,
-   "total": 1.376
+   "total": 1.4
   },
   {
    "title": "Berserk",
@@ -915,7 +915,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "8.7/10 from 701 MangaUpdates readers",
+     "note": "8.7/10 from 702 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n21qm5h/19-days"
     }
    },
@@ -1100,7 +1100,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.74/10 from 280 MangaUpdates readers",
+     "note": "8.74/10 from 281 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
     }
    },
@@ -1378,7 +1378,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.74/10 from 1,264 MangaUpdates readers",
+     "note": "8.74/10 from 1,265 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
     }
    },
