@@ -19,6 +19,7 @@
  * When the Expo source turns up, every edit here should move into it and this
  * script should be deleted. Each one records where it belongs.
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -120,6 +121,22 @@ const EDITS = [
       'names a chapter something else.',
     from: 'return(0,x.jsxs)("div",{className:"chapter-line"+(t?\' is-read\':\'\'),children:[',
     to:   'return(0,x.jsxs)("div",{className:"chapter-line"+(t?\' is-read\':\'\'),"data-chn":e.number,children:[',
+  },
+
+  {
+    name: 'series: a chapter row says each thing once',
+    why:
+      'Every row read "Chapter 200 / Chapter 200 / 0 pages" on most sources. ' +
+      'The name is printed under the number even when it is only the number ' +
+      'again, and "0 pages" is what an unknown count looks like -- six of the ' +
+      "seven extensions never report one, so it said nothing true. The name " +
+      'now shows only when it adds something ("Romance Dawn"), the count only ' +
+      'when it is known, and "Read" stays either way.',
+    from:
+      '(0,x.jsx)("span",{children:e.name}),(0,x.jsxs)("small",{children:[e.pageCount," pages",t?\' \\xb7 Read\':\'\']})',
+    to:
+      '(0,x.jsx)("span",{children:String(e.name||\'\').replace(/\\s+/g,\' \').trim().toLowerCase()===(\'chapter \'+e.number).toLowerCase()?\'\':e.name}),' +
+      '(0,x.jsxs)("small",{children:[e.pageCount>0?e.pageCount+" pages":\'\',e.pageCount>0&&t?\' \\xb7 \':\'\',t?\'Read\':\'\']})',
   },
 
   {
@@ -956,5 +973,38 @@ if (!failed) {
 // The bundle is written only if a bundle edit changed it; the HTML pass
 // writes its own files as it goes.
 if (bundleChanged) fs.writeFileSync(file, source);
+
+/*
+ * The service worker serves /_expo/static/ cache-first, because Expo's hashed
+ * filenames promise the bytes never change. This script breaks that promise:
+ * it edits the bundle in place under the same name. So a reader whose worker
+ * cached the bundle before an edit keeps the old one for good -- an iOS Home
+ * Screen install has no reload that would clear it.
+ *
+ * The shell cache is therefore named after the bundle's contents. Any edit
+ * changes sw.js by a byte, the browser installs the new worker, and its
+ * activate step deletes every yomu-shell-* cache but its own.
+ */
+{
+  const SW = 'dist-app/sw.js';
+  const digest = crypto.createHash('sha256').update(source).digest('hex').slice(0, 10);
+  const stamp = `const SHELL_VERSION = 'v3-${digest}';`;
+  const sw = fs.readFileSync(SW, 'utf8');
+  const current = sw.match(/const SHELL_VERSION = '[^']*';/)?.[0];
+  if (!current) {
+    console.log(`ANCHOR LOST  service worker: no SHELL_VERSION in ${SW}`);
+    failed++;
+  } else if (current === stamp) {
+    console.log('already      service worker: shell cache follows the bundle');
+  } else if (check) {
+    console.log(`NOT APPLIED  service worker: ${current} does not name this bundle (${digest})`);
+    failed++;
+  } else {
+    fs.writeFileSync(SW, sw.replace(current, stamp));
+    console.log(`applied      service worker: shell cache ${digest}`);
+    changed++;
+  }
+}
+
 if (failed) process.exit(1);
 console.log(changed ? `\n${changed} edit(s) applied` : '\nnothing to do');
