@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-25T09:33:34.030Z",
+ "generatedAt": "2026-09-26T09:18:15.390Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -439,8 +439,8 @@
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
-     "strength": 0.625,
-     "rank": 25,
+     "strength": 0.61,
+     "rank": 26,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -457,7 +457,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.228
+   "total": 2.204
   },
   {
    "title": "Noblesse",
@@ -614,7 +614,7 @@
     "mangaupdates": {
      "strength": 0.745,
      "rank": 34,
-     "note": "8.37/10 from 264 MangaUpdates readers",
+     "note": "8.37/10 from 265 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -662,7 +662,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,091 MangaUpdates readers",
+     "note": "8.64/10 from 1,092 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -674,6 +674,30 @@
    "score": 86,
    "agree": 2,
    "total": 1.808
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.625,
+     "rank": 25,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.4975,
+     "rank": 67,
+     "note": "8.21/10 from 303 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 82,
+   "agree": 2,
+   "total": 1.796
   },
   {
    "title": "Death Note",
@@ -698,30 +722,6 @@
    "score": 84,
    "agree": 2,
    "total": 1.784
-  },
-  {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.595,
-     "rank": 27,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.4975,
-     "rank": 67,
-     "note": "8.21/10 from 303 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 82,
-   "agree": 2,
-   "total": 1.748
   },
   {
    "title": "Positively Yours",
