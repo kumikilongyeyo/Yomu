@@ -60,7 +60,14 @@
   const READING = /^\/(?:read|series)\//;
   /* The chapter ledger (series page) and page rescue (reader) moved here too:
      44KB between them, parsed on Home for nothing. */
-  const READING_SCRIPTS = ['/yomu-integrity.js', '/yomu-reader-plus.js', '/yomu-page-rescue.js', '/yomu-ledger.js'];
+  const READING_SCRIPTS = [
+    '/yomu-integrity.js', '/yomu-reader-plus.js', '/yomu-page-rescue.js', '/yomu-ledger.js',
+    /* Reader- and series-only features that used to ride on every page. Each
+       guards its own route and boots on readyState, so a late load is fine.
+       yomu-pet.js asks YomuChapterEnd.owns() only at a chapter-complete,
+       which fires in the reader, after this has loaded it. */
+    '/yomu-chapter-end.js', '/yomu-cast.js', '/yomu-capsule.js', '/yomu-heat.js', '/yomu-race.js',
+  ];
   let readingLoaded = false;
 
   function ensureReading() {

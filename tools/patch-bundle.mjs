@@ -686,18 +686,11 @@ const ASSETS = [
      these at paint time, after every deferred script has run. */
   { file: 'yomu-stickers.js', tag: '<script src="/yomu-stickers.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shelf.js', tag: '<script src="/yomu-shelf.js" defer></scr' + 'ipt>' },
-  /* yomu-integrity.js, yomu-reader-plus.js, yomu-page-rescue.js and
-     yomu-ledger.js are deliberately NOT here:
+  /* yomu-integrity.js, yomu-reader-plus.js, yomu-page-rescue.js,
+     yomu-ledger.js, yomu-chapter-end.js, yomu-cast.js, yomu-capsule.js,
+     yomu-heat.js and yomu-race.js are deliberately NOT here:
      yomu-fabric-route.js loads them on entering /read/ or /series/. On every
      page they cost the release gate's warm-revisit budget (see that file). */
-  /* Reads nothing at load time and depends on nothing loading first.
-     It coordinates with yomu-pet.js over the reader's chapter-end moment, and
-     that handshake is deliberately a question about the *event* rather than
-     about either file's state -- because the order below is not the order the
-     pages are actually in (see the insertion note further down), and a
-     handshake that needed it would be broken on exactly the pages that
-     matter. */
-  { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },
   /* After the pet (it borrows the sprite), the shelf (the badge drop) and
@@ -710,16 +703,12 @@ const ASSETS = [
   { file: 'yomu-streak-ui.js', tag: '<script src="/yomu-streak-ui.js" defer></scr' + 'ipt>' },
   { file: 'yomu-roam.js', tag: '<script src="/yomu-roam.js" defer></scr' + 'ipt>' },
   { file: 'yomu-binge.js', tag: '<script src="/yomu-binge.js" defer></scr' + 'ipt>' },
-  { file: 'yomu-cast.js', tag: '<script src="/yomu-cast.js" defer></scr' + 'ipt>' },
   /* The discovery update. Skins first: it sets data-yomu-skin on <html>
      as it loads and the earlier that lands the less of a flash. */
   { file: 'yomu-skins.js', tag: '<script src="/yomu-skins.js" defer></scr' + 'ipt>' },
   { file: 'yomu-roulette.js', tag: '<script src="/yomu-roulette.js" defer></scr' + 'ipt>' },
   { file: 'yomu-bingo.js', tag: '<script src="/yomu-bingo.js" defer></scr' + 'ipt>' },
-  { file: 'yomu-capsule.js', tag: '<script src="/yomu-capsule.js" defer></scr' + 'ipt>' },
   /* The social update. All three read what yomu-circle.js already fetched. */
-  { file: 'yomu-race.js', tag: '<script src="/yomu-race.js" defer></scr' + 'ipt>' },
-  { file: 'yomu-heat.js', tag: '<script src="/yomu-heat.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shelfshare.js', tag: '<script src="/yomu-shelfshare.js" defer></scr' + 'ipt>' },
   /* Year in Yomu. Reads the store and the AniList cache; draws on a canvas. */
   { file: 'yomu-wrap.js', tag: '<script src="/yomu-wrap.js" defer></scr' + 'ipt>' },
