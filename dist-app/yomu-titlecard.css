@@ -268,3 +268,24 @@ a.yt-more--link {
 .yt-card--unread .yt-card__art { opacity: .78; }
 .yt-card--unread .yt-card__badge { top: auto; bottom: 6px; left: 6px; }
 .yt-card--unread .yt-card__source { display: none; }
+
+/* How far you are, along the foot of the cover (yomu-titlecard.js
+   progressFor). Over artwork, so fixed colours rather than theme ink, and
+   absolutely positioned so no card changes size. Sits under the source pill
+   (bottom: 6px), never across it. */
+.yt-card__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: 3px;
+  background: rgba(0, 0, 0, .45);
+  pointer-events: none;
+}
+.yt-card__progress i {
+  display: block;
+  height: 100%;
+  background: #ffb347;
+  box-shadow: 0 0 6px rgba(255, 179, 71, .6);
+}

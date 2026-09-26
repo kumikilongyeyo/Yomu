@@ -670,7 +670,6 @@ const ASSETS = [
   { file: 'yomu-shell.js', tag: '<script src="/yomu-shell.js" defer></scr' + 'ipt>' },
   { file: 'yomu-sync.js', tag: '<script src="/yomu-sync.js" defer></scr' + 'ipt>' },
   { file: 'yomu-circle.js', tag: '<script src="/yomu-circle.js" defer></scr' + 'ipt>' },
-  { file: 'yomu-ledger.js', tag: '<script src="/yomu-ledger.js" defer></scr' + 'ipt>' },
   /* Order here is a dependency chain, and deferred scripts run in document
      order, so it is the only thing holding it together:
        progress  owns the counters and the affinity gates
@@ -687,6 +686,10 @@ const ASSETS = [
      these at paint time, after every deferred script has run. */
   { file: 'yomu-stickers.js', tag: '<script src="/yomu-stickers.js" defer></scr' + 'ipt>' },
   { file: 'yomu-shelf.js', tag: '<script src="/yomu-shelf.js" defer></scr' + 'ipt>' },
+  /* yomu-integrity.js, yomu-reader-plus.js, yomu-page-rescue.js and
+     yomu-ledger.js are deliberately NOT here:
+     yomu-fabric-route.js loads them on entering /read/ or /series/. On every
+     page they cost the release gate's warm-revisit budget (see that file). */
   /* Reads nothing at load time and depends on nothing loading first.
      It coordinates with yomu-pet.js over the reader's chapter-end moment, and
      that handshake is deliberately a question about the *event* rather than
@@ -694,13 +697,6 @@ const ASSETS = [
      pages are actually in (see the insertion note further down), and a
      handshake that needed it would be broken on exactly the pages that
      matter. */
-  /* Rescues a chapter page the reader could not load, through a second
-     proxy, silently. Depends on nothing and is depended on by nothing:
-     it listens for image errors in the capture phase and rewrites a src. */
-  { file: 'yomu-page-rescue.js', tag: '<script src="/yomu-page-rescue.js" defer></scr' + 'ipt>' },
-  /* yomu-integrity.js and yomu-reader-plus.js are deliberately NOT here:
-     yomu-fabric-route.js loads them on entering /read/ or /series/. On every
-     page they cost the release gate's warm-revisit budget (see that file). */
   { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },

@@ -117,6 +117,68 @@
     return parts.join(' · ');
   }
 
+  /* --- where you are in it -------------------------------------------- *
+   *
+   * A card for a series you are halfway through looked exactly like one you
+   * had never opened. The reading index the shell keeps (yomu.v1.reading,
+   * "<sourceId>:<seriesId>" -> { title, chapterLabel, ... }) knows better.
+   * Matched on source + series id first, then on the exact normalised title,
+   * because discovery rows and reading rows often come from different
+   * sources. The chapter goes in front of the note; a thin bar along the
+   * foot of the cover shows how far, only when the series' total is known
+   * (a library row with `total`). Absolutely positioned, so no card changes
+   * size -- the parity gates measure that.
+   */
+  const fold = (value) => String(value || '').toLowerCase().normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  let progressMemo = { at: 0, byKey: new Map(), byTitle: new Map(), totals: new Map() };
+
+  function progressIndex() {
+    if (Date.now() - progressMemo.at < 4000) return progressMemo;
+    const byKey = new Map();
+    const byTitle = new Map();
+    const totals = new Map();
+    try {
+      const reading = JSON.parse(localStorage.getItem('yomu.v1.reading') || '{}') || {};
+      for (const [key, entry] of Object.entries(reading)) {
+        if (!entry) continue;
+        byKey.set(key, entry);
+        const t = fold(entry.title);
+        if (t && (!byTitle.has(t) || (entry.at || 0) > (byTitle.get(t).at || 0))) byTitle.set(t, entry);
+      }
+      const library = JSON.parse(localStorage.getItem('yomu.v1.collection') || '{}')?.library;
+      for (const row of Array.isArray(library) ? library : []) {
+        const total = Number(row?.total || row?.chapterCount || 0);
+        if (total > 0 && row?.title) totals.set(fold(row.title), total);
+      }
+    } catch {}
+    progressMemo = { at: Date.now(), byKey, byTitle, totals };
+    return progressMemo;
+  }
+
+  const toAppSource = (id) => (id.startsWith('ext:') ? 'yomuext-' + id.slice(4) : id.startsWith('suwayomi:') ? 'mihon-' + id.slice(9) : id);
+
+  function progressFor(row, providers) {
+    const index = progressIndex();
+    if (!index.byKey.size) return null;
+    let entry = null;
+    for (const p of providers) {
+      const id = String(p?.id || '');
+      const series = String(p?.seriesId || '');
+      if (!id || !series) continue;
+      entry = index.byKey.get(`${id}:${series}`) || index.byKey.get(`${toAppSource(id)}:${series}`);
+      if (entry) break;
+    }
+    const title = fold(row.title);
+    if (!entry && title) entry = index.byTitle.get(title) || null;
+    if (!entry) return null;
+    const match = String(entry.chapterLabel || '').match(/([0-9]+(?:\.[0-9]+)?)/);
+    const chapter = match ? Number(match[1]) : null;
+    if (chapter == null) return null;
+    const total = index.totals.get(title) || Number(row.chapterCount || row.total || 0) || null;
+    return { chapter, total: total && total >= chapter ? total : null };
+  }
+
   function canonicalHref(item) {
     if (window.YomuOpenTitle?.canonicalHref) {
       try { return window.YomuOpenTitle.canonicalHref(item); } catch {}
@@ -229,6 +291,19 @@
       art.append(rating);
     }
 
+    const progress = progressFor(row, providers);
+    if (progress) {
+      node.dataset.ytReading = String(progress.chapter);
+      if (progress.total) {
+        const bar = el('span', 'yt-card__progress');
+        bar.setAttribute('aria-hidden', 'true');
+        const fill = el('i');
+        fill.style.width = `${Math.max(3, Math.min(100, Math.round((progress.chapter / progress.total) * 100)))}%`;
+        bar.append(fill);
+        art.append(bar);
+      }
+    }
+
     node.append(art);
 
     const body = el('span', 'yt-card__body');
@@ -236,7 +311,8 @@
     /* An explicit note wins, including an explicit empty one -- a rail that
        has nothing to say under a title says nothing rather than falling
        through to a status word. */
-    const note = opts.note !== undefined ? opts.note : derivedNote(row);
+    const reading = progress ? `Ch. ${progress.chapter}${progress.total ? ` / ${progress.total}` : ''}` : '';
+    const note = opts.note !== undefined ? opts.note : [reading, derivedNote(row)].filter(Boolean).join(' \u00b7 ');
     if (note) body.append(el('span', 'yt-card__note yr-card__note', note));
     node.append(body);
 

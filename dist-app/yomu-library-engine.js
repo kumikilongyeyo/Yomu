@@ -470,8 +470,15 @@
 
   function matches(row, type, genre) {
     if (!row) return false;
-    if (type === 'completed' && !/completed|finished|complete/i.test(String(row.status || ''))) return false;
-    if (type && !['all', 'completed'].includes(type) && String(row.category || '').toLowerCase() !== type) return false;
+    /* type is "category" or "category:status" ("manhwa:completed"); the bare
+       "completed" that predates the status axis still means all:completed. */
+    const [head = 'all', tail = ''] = String(type || 'all').split(':');
+    const category = head === 'completed' ? 'all' : head;
+    const state = head === 'completed' ? 'completed' : tail;
+    const status = String(row.status || '');
+    if (state === 'completed' && !/completed|finished|complete/i.test(status)) return false;
+    if (state === 'ongoing' && !/ongoing|releasing|publishing|serializ/i.test(status)) return false;
+    if (category && category !== 'all' && String(row.category || '').toLowerCase() !== category) return false;
     if (genre) {
       const wanted = normalize(genre);
       const hay = [row.title, ...(row.genres || [])].map(normalize);

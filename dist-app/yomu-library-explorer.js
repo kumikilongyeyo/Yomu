@@ -16,6 +16,13 @@
     ['manga', 'Manga'],
     ['manhwa', 'Manhwa'],
     ['manhua', 'Manhua'],
+  ];
+  /* Status is its own axis, not a fifth type: "completed manhwa" is the
+     question a binge reader asks, and as a type Completed could not be
+     combined with Manhwa at all. A toggle -- pressing the active one clears
+     it. The engine receives the pair as one type, "manhwa:completed". */
+  const STATUSES = [
+    ['ongoing', 'Ongoing'],
     ['completed', 'Completed'],
   ];
   /* The chip row is intentionally short: eight genres is a row a reader can
@@ -49,7 +56,13 @@
   let loading = false;
   let hasMore = true;
   let mountedFor = '';
-  let current = { mode: 'popular', type: 'all', genre: '' };
+  let current = { mode: 'popular', type: 'all', status: '', genre: '' };
+
+  /** What the engine is asked for: the status rides on the type. */
+  function engineView() {
+    const { status, ...view } = current;
+    return status ? { ...view, type: `${view.type}:${status}` } : view;
+  }
   const responding = new Set();
   /* Titles already on screen for this view, so a prefetched segment and a
      progressive row can never draw the same card twice. */
@@ -103,7 +116,7 @@
   }
 
   function params(extra) {
-    return { ...current, count: SEGMENT, ...extra };
+    return { ...engineView(), count: SEGMENT, ...extra };
   }
 
   /**
@@ -131,7 +144,7 @@
     if (!engine || loading || (!hasMore && !reset)) return;
     loading = true;
     if (reset) {
-      engine.resetView(current);
+      engine.resetView(engineView());
       grid.textContent = '';
       painted.clear();
       hasMore = true;
@@ -185,6 +198,16 @@
     loadMore({ reset: true });
   }
 
+  function setStatus(status) {
+    const next = current.status === status ? '' : status;
+    if (next === current.status) return;
+    current.status = next;
+    for (const button of section.querySelectorAll('[data-yl-status]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.ylStatus === next));
+    }
+    loadMore({ reset: true });
+  }
+
   function setGenre(genre) {
     const next = current.genre === genre ? '' : genre;
     if (next === current.genre) return;
@@ -205,6 +228,14 @@
       button.dataset.ylType = id;
       button.setAttribute('aria-pressed', String(id === current.type));
       button.addEventListener('click', () => setType(id));
+      row.append(button);
+    }
+    for (const [id, label] of STATUSES) {
+      const button = el('button', 'yl-filter yl-filter--status', label);
+      button.type = 'button';
+      button.dataset.ylStatus = id;
+      button.setAttribute('aria-pressed', String(id === current.status));
+      button.addEventListener('click', () => setStatus(id));
       row.append(button);
     }
     const genreChip = (genre) => {
@@ -302,10 +333,16 @@
         const button = event.target.closest?.('button');
         if (!button) return;
         const label = String(button.textContent || '').trim().toLowerCase();
+        /* Home's tabs are exclusive, so Completed there means "all types,
+           completed", and any other tab clears the status. */
         const type = label === 'manga' ? 'manga'
           : label === 'manhwa' ? 'manhwa'
-            : label === 'manhua' ? 'manhua'
-              : label === 'completed' ? 'completed' : 'all';
+            : label === 'manhua' ? 'manhua' : 'all';
+        const status = label === 'completed' ? 'completed' : '';
+        if (current.status !== status) {
+          current.status = status;
+          if (current.type === type) { loadMore({ reset: true }); return; }
+        }
         setType(type);
       });
     }
@@ -322,6 +359,87 @@
       });
     }
   }
+
+  /* --- coming back to where you were ---------------------------------- *
+   *
+   * Opening a card is a full navigation (cards are real links, so cmd-click
+   * and copy-link work), and coming back rebuilt the explorer from its first
+   * segment: forty covers deep on Home, Back landed at the top with ten.
+   * Measured 2026-09-26: Home 7274px -> 0, Discover 7698 -> 5016 (the browser
+   * restores what it can into a page that is now shorter).
+   *
+   * So the view is remembered per URL -- scroll offset, how many cards were
+   * loaded, the filters -- when you leave, and on a back navigation the
+   * filters are re-applied, segments are loaded until the count matches, and
+   * the scroll is put back. Session storage, 30 minutes: a Back tomorrow is a
+   * new visit. Any scroll of your own during the restore wins.
+   */
+  const MEMORY_KEY = 'yomu.v1.browseMemory';
+  const MEMORY_MS = 30 * 60 * 1000;
+  const MAX_RESTORE_SEGMENTS = 10;
+  let restoring = null;
+
+  const scroller = () => (routeName() === 'home' ? document.querySelector('.g-app') : document.scrollingElement);
+  const memoryKey = () => location.pathname + location.search;
+  const readMemory = () => { try { return JSON.parse(sessionStorage.getItem(MEMORY_KEY) || '{}') || {}; } catch { return {}; } };
+
+  function remember() {
+    if (!section?.isConnected || !routeName() || restoring) return;
+    const el = scroller();
+    if (!el) return;
+    const all = readMemory();
+    all[memoryKey()] = { y: Math.round(el.scrollTop), count: painted.size, view: { ...current }, at: Date.now() };
+    const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at);
+    for (const key of keys.slice(12)) delete all[key];
+    try { sessionStorage.setItem(MEMORY_KEY, JSON.stringify(all)); } catch {}
+  }
+
+  /** A memory worth restoring: only on a way *back*, and only a fresh one. */
+  function memoryToRestore() {
+    const nav = performance.getEntriesByType?.('navigation')?.[0];
+    if (nav?.type !== 'back_forward' && !popped) return null;
+    const entry = readMemory()[memoryKey()];
+    if (!entry || Date.now() - Number(entry.at || 0) > MEMORY_MS || !(entry.y > 0)) return null;
+    return entry;
+  }
+
+  let popped = false;
+  addEventListener('popstate', () => { popped = true; });
+
+  async function restore(entry) {
+    restoring = entry;
+    let cancelled = false;
+    const cancel = () => { cancelled = true; };
+    for (const type of ['wheel', 'touchstart', 'keydown']) addEventListener(type, cancel, { once: true, passive: true, capture: true });
+    try {
+      for (let i = 0; i < MAX_RESTORE_SEGMENTS && !cancelled && hasMore && painted.size < entry.count; i++) {
+        if (loading) { await new Promise((r) => setTimeout(r, 120)); i--; continue; }
+        await loadMore();
+      }
+      /* Content above the explorer (rails, the hero) can still be growing, so
+         the offset is re-applied until it holds or three seconds pass. */
+      const until = Date.now() + 3000;
+      while (!cancelled && Date.now() < until) {
+        const el = scroller();
+        if (el) {
+          if (Math.abs(el.scrollTop - entry.y) < 24 && el.scrollHeight >= entry.y + el.clientHeight * 0.5) break;
+          el.scrollTop = entry.y;
+        }
+        await new Promise((r) => setTimeout(r, 150));
+      }
+    } finally {
+      restoring = null;
+      popped = false;
+      for (const type of ['wheel', 'touchstart', 'keydown']) removeEventListener(type, cancel, { capture: true });
+    }
+  }
+
+  /* Leaving: a card or any link, the tab going away, the page unloading. */
+  document.addEventListener('click', (event) => {
+    if (event.target?.closest?.('a[href]') && routeName()) remember();
+  }, true);
+  addEventListener('pagehide', remember);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') remember(); });
 
   /* Is the node inside the visual viewport right now? */
   function onScreen(node) {
@@ -348,7 +466,9 @@
       observer?.disconnect();
       section?.remove();
       mountedFor = kind;
-      current = { mode: 'popular', type: 'all', genre: '' };
+      current = { mode: 'popular', type: 'all', status: '', genre: '' };
+      const memory = memoryToRestore();
+      if (memory?.view) current = { ...current, ...memory.view };
       responding.clear();
       painted.clear();
       hasMore = true;
@@ -376,11 +496,21 @@
         else loadMore();
       }, { rootMargin: '700px 0px 700px 0px', threshold: 0.01 });
       observer.observe(sentinel);
-      loadMore({ reset: true });
+      const first = loadMore({ reset: true });
+      if (memory) {
+        try { history.scrollRestoration = 'manual'; } catch {}
+        Promise.resolve(first).then(() => restore(memory));
+      }
       return;
     }
 
-    if (!section.isConnected) at.parentNode.insertBefore(section, at);
+    if (!section.isConnected) {
+      at.parentNode.insertBefore(section, at);
+      /* Back inside the app: the section kept its cards, but the page's
+         scroller is new. */
+      const memory = memoryToRestore();
+      if (memory) restore(memory);
+    }
     if (kind === 'home') attachHomeControls();
   }
 

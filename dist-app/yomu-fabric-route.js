@@ -58,7 +58,9 @@
   const onRoute = () => ROUTE.test(location.pathname);
 
   const READING = /^\/(?:read|series)\//;
-  const READING_SCRIPTS = ['/yomu-integrity.js', '/yomu-reader-plus.js'];
+  /* The chapter ledger (series page) and page rescue (reader) moved here too:
+     44KB between them, parsed on Home for nothing. */
+  const READING_SCRIPTS = ['/yomu-integrity.js', '/yomu-reader-plus.js', '/yomu-page-rescue.js', '/yomu-ledger.js'];
   let readingLoaded = false;
 
   function ensureReading() {
