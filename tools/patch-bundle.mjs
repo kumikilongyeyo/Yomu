@@ -630,6 +630,11 @@ const ASSETS = [
      proxy, silently. Depends on nothing and is depended on by nothing:
      it listens for image errors in the capture phase and rewrites a src. */
   { file: 'yomu-page-rescue.js', tag: '<script src="/yomu-page-rescue.js" defer></scr' + 'ipt>' },
+  /* Scores each copy of a chapter for completeness and keeps a per-device
+     source health record. The two recovery helpers ask for it at call time
+     (window.YomuIntegrity) and fall back without it, so its position here
+     does not matter. */
+  { file: 'yomu-integrity.js', tag: '<script src="/yomu-integrity.js" defer></scr' + 'ipt>' },
   { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },

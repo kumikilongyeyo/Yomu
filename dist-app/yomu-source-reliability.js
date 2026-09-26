@@ -656,7 +656,7 @@
     try {
       const response = await window.fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(14000) });
       const body = response.ok ? await response.json().catch(() => null) : null;
-      return { release, ready: !!(response.ok && Array.isArray(body?.pages) && body.pages.length), pageCount: body?.pages?.length || 0 };
+      return { release, ready: !!(response.ok && Array.isArray(body?.pages) && body.pages.length), pageCount: body?.pages?.length || 0, pages: Array.isArray(body?.pages) ? body.pages : undefined };
     } catch {
       return { release, ready: false };
     }
@@ -684,9 +684,10 @@
         const candidates = ledger.sources
           .filter((source) => source && source.ok !== false)
           .filter((source) => String(source.providerId || '') !== ctx.providerId)
-          .filter((source) => String(source.seriesId || '') && Number(source.chapterCount || 0) > 0)
-          .sort((a, b) => Number(b.chapterCount || 0) - Number(a.chapterCount || 0));
-        const best = candidates[0];
+          .filter((source) => String(source.seriesId || '') && Number(source.chapterCount || 0) > 0);
+        const best = (window.YomuIntegrity
+          ? window.YomuIntegrity.rankSources(candidates)
+          : candidates.sort((a, b) => Number(b.chapterCount || 0) - Number(a.chapterCount || 0)))[0];
         if (best) {
           overlay.querySelector('div > div:last-child').textContent = `Switching to ${best.providerName || 'a working source'}…`;
           const target = new URL(`/series/${encodeURIComponent(best.seriesId)}`, location.origin);
@@ -699,7 +700,11 @@
         let row = Number.isFinite(number) ? ledger.rows.find((item) => Number(item.number) === Number(number)) : null;
         if (!row) row = ledger.rows.find((item) => (item.releases || []).some((release) => String(release.chapterId) === ctx.chapterId));
         const candidates = (row?.releases || []).filter((release) => String(release.providerId || '') !== ctx.providerId);
-        const checked = await pool(candidates.slice(0, 12), VERIFY_CONCURRENCY, verifyRelease);
+        // With yomu-integrity.js loaded, the list comes back best first: a
+        // complete copy beats one that is merely non-empty.
+        const checked = window.YomuIntegrity
+          ? await window.YomuIntegrity.verifyAll(candidates.slice(0, 12), verifyRelease, { concurrency: VERIFY_CONCURRENCY })
+          : await pool(candidates.slice(0, 12), VERIFY_CONCURRENCY, verifyRelease);
         const best = checked.find((item) => item?.ready)?.release;
         if (best) {
           overlay.querySelector('div > div:last-child').textContent = `Opening this chapter from ${best.providerName || 'another source'}…`;

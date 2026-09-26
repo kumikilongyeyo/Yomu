@@ -210,9 +210,11 @@
         .filter((source) => source && source.ok !== false)
         .filter((source) => source.providerId !== activeProvider)
         .filter((source) => enabled.has(toAppSource(String(source.providerId || ''))))
-        .filter((source) => String(source.seriesId || '') && Number(source.chapterCount || 0) > 0)
-        .sort((a, b) => Number(b.chapterCount || 0) - Number(a.chapterCount || 0) || kindRank(a.kind) - kindRank(b.kind) || String(a.providerName || '').localeCompare(String(b.providerName || '')));
-      const best = candidates[0];
+        .filter((source) => String(source.seriesId || '') && Number(source.chapterCount || 0) > 0);
+      const ranked = window.YomuIntegrity
+        ? window.YomuIntegrity.rankSources(candidates)
+        : candidates.sort((a, b) => Number(b.chapterCount || 0) - Number(a.chapterCount || 0) || kindRank(a.kind) - kindRank(b.kind) || String(a.providerName || '').localeCompare(String(b.providerName || '')));
+      const best = ranked[0];
       if (!best) return;
       const sourceId = toAppSource(String(best.providerId)), seriesId = String(best.seriesId), signature = sourceId + ':' + seriesId;
       if (signature === ctx.key) return;
@@ -290,7 +292,7 @@
       const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(12_000) });
       const body = await response.json().catch(() => null);
       const pages = Array.isArray(body?.pages) ? body.pages : [];
-      return { release, ready: response.ok && pages.length > 0, pageCount: pages.length, status: response.status };
+      return { release, ready: response.ok && pages.length > 0, pageCount: pages.length, pages, status: response.status };
     } catch (error) {
       return { release, ready: false, error: String(error?.message || error || 'reader check failed') };
     }
@@ -298,6 +300,9 @@
 
   async function verifyReleases(releases) {
     const queue = releases.slice(0, VERIFY_LIMIT);
+    // yomu-integrity.js scores completeness (declared page count, first/last
+    // page decode, learned slicing per source pair) and returns best first.
+    if (window.YomuIntegrity) return window.YomuIntegrity.verifyAll(queue, verifyRelease, { concurrency: VERIFY_CONCURRENCY });
     const out = new Array(queue.length);
     let cursor = 0;
     async function worker() {
@@ -352,7 +357,7 @@
     button.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:11px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(145,168,187,.18);background:rgba(7,17,26,.72);color:#f7f8fa;cursor:pointer';
 
     const left = document.createElement('span');
-    const meta = release.scanlator
+    const meta = [release.scanlator, verified?.summary].filter(Boolean).join(' · ')
       || (verified?.pageCount ? verified.pageCount + ' pages' : release.pageCount ? release.pageCount + ' pages' : release.kind || 'source');
     left.innerHTML = `<b style="display:block">${escapeHtml(release.providerName || sourceLabel(appSourceId) || release.providerId)}</b><small style="color:#91a8bb">${escapeHtml(meta)}</small>`;
 
