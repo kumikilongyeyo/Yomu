@@ -67,6 +67,8 @@
        yomu-pet.js asks YomuChapterEnd.owns() only at a chapter-complete,
        which fires in the reader, after this has loaded it. */
     '/yomu-chapter-end.js', '/yomu-cast.js', '/yomu-capsule.js', '/yomu-heat.js', '/yomu-race.js',
+    /* Swaps a chapter that will not open for a working copy. */
+    '/yomu-chapter-switch.js',
   ];
   let readingLoaded = false;
 

@@ -666,6 +666,9 @@
     if (recoveryRunning) return;
     const ctx = currentRoute();
     if (!ctx) return;
+    // yomu-chapter-switch.js owns reader failures when it is loaded (it
+    // detects them by state, not wording); one owner, so no race.
+    if (ctx.kind === 'reader' && window.YomuChapterSwitch?.owns?.()) return;
     if (!pageLooksBroken() && !recoveryReason) return;
     const signature = guardSignature(ctx);
     if (recentlyTried(signature)) return;
