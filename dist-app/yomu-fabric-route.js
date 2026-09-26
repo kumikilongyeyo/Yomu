@@ -26,6 +26,14 @@
  * Loading is deliberately on demand rather than on every page. These scripts
  * run observers that scan `#root` on each mutation; carrying that everywhere
  * to save one fetch is the trade that made /sources unresponsive before.
+ *
+ * The same bridge carries the reading helpers (2026-09-26): chapter integrity
+ * and the reader's look-ahead only matter on /read/ and /series/, and on
+ * every other page they were pure cost. The release gate's warm revisit of
+ * Home was already at 224-246ms of a 250ms budget; one more script tag on
+ * every page took it to 260 and blocked the deploy. Those two load here, in
+ * parallel (neither depends on the other), the first time either route is
+ * entered, and stay loaded.
  */
 (() => {
   'use strict';
@@ -48,6 +56,16 @@
   ];
 
   const onRoute = () => ROUTE.test(location.pathname);
+
+  const READING = /^\/(?:read|series)\//;
+  const READING_SCRIPTS = ['/yomu-integrity.js', '/yomu-reader-plus.js'];
+  let readingLoaded = false;
+
+  function ensureReading() {
+    if (readingLoaded) return;
+    readingLoaded = true;
+    for (const src of READING_SCRIPTS) if (!alreadyLoaded(src)) load(src);
+  }
 
   /** Already in the page, whether from /sources.html or from a previous visit. */
   const alreadyLoaded = (src) =>
@@ -90,6 +108,7 @@
     const changed = now !== last;
     last = now;
     if (onRoute()) ensureLoaded();
+    if (READING.test(now)) ensureReading();
     if (changed) {
       window.dispatchEvent(new CustomEvent('yomu:route', {
         detail: { pathname: now, sources: onRoute() },

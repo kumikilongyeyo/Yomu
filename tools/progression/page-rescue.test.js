@@ -85,3 +85,27 @@ test('garbage in is null out, not a throw', () => {
   }
   assert.equal(upstreamOf(''), null);
 });
+
+/* --- the third door: the same page from another source ---------------------- */
+
+const { pickAlternate } = await import('../../dist-app/yomu-page-rescue.js');
+
+const alt = (providerId, n) => ({ providerId, providerName: providerId, pages: Array.from({ length: n }, (_, i) => ({ index: i, url: `https://yomu.test/api/img?u=${providerId}-${i}` })) });
+
+test('the third door takes the same page index from the first matching copy', () => {
+  const pick = pickAlternate([alt('ext:flame', 20), alt('ext:weeb', 20)], 17, 0);
+  assert.equal(pick.providerId, 'ext:flame');
+  assert.match(pick.url, /ext:flame-17$/);
+});
+
+test('a second failure on the third door moves to the next copy, then stops', () => {
+  const copies = [alt('ext:flame', 20), alt('ext:weeb', 20)];
+  assert.equal(pickAlternate(copies, 3, 1).providerId, 'ext:weeb');
+  assert.equal(pickAlternate(copies, 3, 2), null);
+});
+
+test('no copies, or a copy without that page, is no answer rather than a wrong page', () => {
+  assert.equal(pickAlternate([], 0, 0), null);
+  assert.equal(pickAlternate(undefined, 0, 0), null);
+  assert.equal(pickAlternate([alt('ext:short', 5)], 12, 0), null);
+});

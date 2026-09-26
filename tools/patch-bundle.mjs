@@ -164,6 +164,74 @@ const EDITS = [
       '(0,e.useEffect)(()=>(Y(),',
   },
 
+  {
+    name: 'reader: the reading mode is remembered per title',
+    why:
+      'Scroll, Page and Spread were one global setting, so switching a manga to ' +
+      'Page switched every manhwa with it. The mode is now kept per series in ' +
+      'yomu.v1.reader-mode.byTitle; the global key is still written and is the ' +
+      'fallback for a title never opened, so the last choice carries to a new one.',
+    from: "[_,P]=(0,e.useState)(()=>N(m,'scroll'))",
+    to:
+      "[_,P]=(0,e.useState)(()=>{try{const t=JSON.parse(localStorage.getItem('yomu.v1.reader-mode.byTitle')||'{}')[k];" +
+      "if(t==='scroll'||t==='page'||t==='spread')return t}catch{}return N(m,'scroll')})",
+  },
+  {
+    name: 'reader: the per-title mode is saved with the global one',
+    why: 'The other half of the edit above.',
+    from:
+      '(0,e.useEffect)(()=>{try{localStorage.setItem(m,_),localStorage.setItem(p,String(E))}catch{}},[_,E]);',
+    to:
+      '(0,e.useEffect)(()=>{try{localStorage.setItem(m,_),localStorage.setItem(p,String(E));' +
+      "if(k){const o=JSON.parse(localStorage.getItem('yomu.v1.reader-mode.byTitle')||'{}');" +
+      "if(o[k]!==_){delete o[k];o[k]=_;const ks=Object.keys(o);ks.length>300&&delete o[ks[0]];" +
+      "localStorage.setItem('yomu.v1.reader-mode.byTitle',JSON.stringify(o))}}}catch{}},[_,E,k]);",
+  },
+  {
+    name: 'reader: a prefetched manifest can be handed to the reader',
+    why:
+      'Manifests are served no-store, so preloading the next chapter from outside ' +
+      'saved nothing: the reader fetched it again on arrival. yomu-reader-plus.js ' +
+      'puts the promise in globalThis.__yomuManifestHandoff (keyed source|chapter, ' +
+      '2 minutes, used once) and this wrapper hands it over instead of refetching. ' +
+      'It is defined here, not by the helper, so the adapter identity is the same ' +
+      'on the first render as on every later one -- a wrapper that appeared after ' +
+      'mount would change useReader\'s input and load the chapter twice. A Proxy ' +
+      'with methods bound to the real adapter, not Object.create, so an adapter ' +
+      'with private fields still works.',
+    from: "b=e=>e.split(':')[0]??'';function N(e,s)",
+    to:
+      "b=e=>e.split(':')[0]??'',__yh=new WeakMap(),__ya=f=>{let w=__yh.get(f);if(w)return w;const bound=new Map();" +
+      "const gm=(i,...a)=>{const c=globalThis.__yomuManifestHandoff,key=f.id+'|'+i,h=c&&c.get(key);" +
+      "if(h&&Date.now()-h.at<12e4){c.delete(key);return h.promise.catch(()=>f.getManifest(i,...a))}return f.getManifest(i,...a)};" +
+      "w=new Proxy(f,{get(t,q){if(q==='getManifest')return gm;const v=t[q];if(typeof v!=='function')return v;" +
+      "let g=bound.get(q);g||(g=v.bind(t),bound.set(q,g));return g}});__yh.set(f,w);return w};function N(e,s)",
+  },
+  {
+    name: 'reader: the adapter goes through the handoff',
+    why: 'Uses the wrapper above. Same adapter otherwise.',
+    from: 'W=(0,n.useReader)({adapter:f,sourceSeriesId:k,chapterId:v})',
+    to: 'W=(0,n.useReader)({adapter:__ya(f),sourceSeriesId:k,chapterId:v})',
+  },
+  {
+    name: 'reader: its state is readable from outside',
+    why:
+      'Preloading, the scroll-direction chrome and cross-source page rescue all ' +
+      'need to know the chapter the reader is on, its neighbours, the page and ' +
+      'the page list -- none of which is in the DOM. Published on ' +
+      'globalThis.__yomuReader after every render, with show/hide for the chrome, ' +
+      'and a yomu:reader event. Deleted on unmount.',
+    from: 'const re=K?(w+1)/K*100:0;return(0,o.jsxs)',
+    to:
+      'const re=K?(w+1)/K*100:0;' +
+      '(0,e.useEffect)(()=>{globalThis.__yomuReader={adapter:f,source:f.id,chapterId:v,seriesId:k,' +
+      'next:G?.nextChapterId??null,previous:G?.previousChapterId??null,page:w,count:K,pages:J,mode:Q,sheet:!!M,' +
+      'show:Y,hide:()=>{X.current&&clearTimeout(X.current),F(!1)}};' +
+      "try{dispatchEvent(new Event('yomu:reader'))}catch{}});" +
+      '(0,e.useEffect)(()=>()=>{delete globalThis.__yomuReader},[]);' +
+      'return(0,o.jsxs)',
+  },
+
   /* --- home — app/index.web.tsx --------------------------------------- */
   {
     name: 'home: the app\'s own Continue card yields to the shell\'s row',
@@ -630,11 +698,9 @@ const ASSETS = [
      proxy, silently. Depends on nothing and is depended on by nothing:
      it listens for image errors in the capture phase and rewrites a src. */
   { file: 'yomu-page-rescue.js', tag: '<script src="/yomu-page-rescue.js" defer></scr' + 'ipt>' },
-  /* Scores each copy of a chapter for completeness and keeps a per-device
-     source health record. The two recovery helpers ask for it at call time
-     (window.YomuIntegrity) and fall back without it, so its position here
-     does not matter. */
-  { file: 'yomu-integrity.js', tag: '<script src="/yomu-integrity.js" defer></scr' + 'ipt>' },
+  /* yomu-integrity.js and yomu-reader-plus.js are deliberately NOT here:
+     yomu-fabric-route.js loads them on entering /read/ or /series/. On every
+     page they cost the release gate's warm-revisit budget (see that file). */
   { file: 'yomu-chapter-end.js', tag: '<script src="/yomu-chapter-end.js" defer></scr' + 'ipt>' },
   { file: 'yomu-pet.js', tag: '<script src="/yomu-pet.js" defer></scr' + 'ipt>' },
   { file: 'yomu-greet.js', tag: '<script src="/yomu-greet.js" defer></scr' + 'ipt>' },

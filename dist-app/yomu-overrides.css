@@ -2109,6 +2109,42 @@
   overflow-wrap: anywhere;
 }
 
+/* Can you finish it? -- yomu-ledger.js completenessNode(). --raised/--line
+   rather than --m-fill: those have a value in both themes and outside the app
+   shell, where a dark literal fallback goes invisible on Paper. */
+.yomu-complete {
+  margin: 0 0 8px;
+  padding: 9px 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--raised);
+  font: 500 12px/1.4 var(--uiFont);
+  color: var(--muted);
+}
+.yomu-complete b { font-weight: 700; color: var(--text); }
+.yomu-complete__meter {
+  display: block;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.yomu-complete__meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #3fae7f;
+}
+.yomu-complete.is-gappy .yomu-complete__meter i { background: var(--warn); }
+.yomu-complete small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 420px) {
   .chapter-releases { max-width: 38%; }
 }

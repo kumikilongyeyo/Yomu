@@ -36,6 +36,7 @@
   const LINKS_KEY = 'yomu.v1.ledgerLinks';
   const COLLECTION_KEY = 'yomu.v1.collection';
   const BAR_ID = 'yomu-ledger-bar';
+  const COMPLETE_ID = 'yomu-complete';
   const HOLD_MS = 550;
 
   const readJSON = (key, fallback) => {
@@ -381,6 +382,77 @@
     return node;
   }
 
+  /* --- can you finish it? ---------------------------------------------- *
+   *
+   * One line above the list: how many of the chapters there are you can
+   * actually open, and which are missing. Across every source the ledger
+   * merged, not just the one you are on -- "can I finish this?" is about
+   * Yomu, not about a site.
+   *
+   * Counted on whole chapters from 1 to the highest whole chapter anyone has.
+   * Decimals (12.5) and a chapter 0 are extras: counted when present, never
+   * reported missing. When the numbering cannot be trusted -- one source
+   * numbered by year, so "2024" is the highest -- it says nothing rather than
+   * "12 / 2024".
+   */
+  function completeness(rows) {
+    const whole = new Set();
+    for (const row of rows || []) {
+      const n = Number(row?.number);
+      if (Number.isInteger(n) && n >= 1) whole.add(n);
+    }
+    if (whole.size < 2) return null;
+    const highest = Math.max(...whole);
+    const missing = [];
+    for (let n = 1; n <= highest; n++) if (!whole.has(n)) missing.push(n);
+    if (missing.length > whole.size) return null;
+    const ranges = [];
+    for (const n of missing) {
+      const last = ranges[ranges.length - 1];
+      if (last && last[1] === n - 1) last[1] = n; else ranges.push([n, n]);
+    }
+    return { available: highest - missing.length, total: highest, missing, ranges };
+  }
+
+  function describeRanges(ranges, limit = 4) {
+    const parts = ranges.slice(0, limit).map(([a, b]) => (a === b ? String(a) : `${a}\u2013${b}`));
+    const more = ranges.length - limit;
+    return parts.join(', ') + (more > 0 ? ` +${more} more` : '');
+  }
+
+  function completenessNode(partial) {
+    const c = completeness(ledger.rows);
+    if (!c) return null;
+    const node = document.createElement('div');
+    node.id = COMPLETE_ID;
+    const whole = c.missing.length === 0;
+    node.className = 'yomu-complete' + (whole ? ' is-whole' : ' is-gappy') + (partial ? ' is-partial' : '');
+    node.setAttribute('role', 'status');
+
+    const line = document.createElement('div');
+    const count = document.createElement('b');
+    count.textContent = whole
+      ? `All ${c.total} chapters available`
+      : `${c.available} / ${c.total} chapters available`;
+    line.append(count);
+    if (partial) line.append(document.createTextNode(' so far'));
+
+    const meter = document.createElement('span');
+    meter.className = 'yomu-complete__meter';
+    meter.setAttribute('aria-hidden', 'true');
+    const fill = document.createElement('i');
+    fill.style.width = `${Math.round((c.available / c.total) * 1000) / 10}%`;
+    meter.append(fill);
+
+    node.append(line, meter);
+    if (!whole) {
+      const gaps = document.createElement('small');
+      gaps.textContent = `Missing ${describeRanges(c.ranges)}`;
+      node.append(gaps);
+    }
+    return node;
+  }
+
   function bar(context) {
     const ok = ledger.sources.filter((s) => s.ok).length;
     const total = ledger.sources.length;
@@ -422,8 +494,17 @@
 
     if (!ledger) {
       document.getElementById(BAR_ID)?.remove();
+      document.getElementById(COMPLETE_ID)?.remove();
       return;
     }
+
+    // Can you finish it, above everything else. Replaced only when its text
+    // changes: this runs from a mutation observer.
+    const whole = completenessNode(ledger.partial);
+    const had = document.getElementById(COMPLETE_ID);
+    if (!whole) had?.remove();
+    else if (!had) list.before(whole);
+    else if (had.textContent !== whole.textContent) had.replaceWith(whole);
 
     // The bar, above the list.
     const built = bar(context);
@@ -662,6 +743,10 @@
     }
     if (ledger) paint();
   }
+
+  /* An object literal: Node's CJS lexer reads named exports statically. */
+  if (typeof module !== 'undefined' && module.exports) module.exports = { completeness, describeRanges };
+  if (typeof document === 'undefined') return;
 
   const pass = () => tick();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pass);
