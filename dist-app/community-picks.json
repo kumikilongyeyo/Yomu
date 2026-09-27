@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-26T09:18:15.390Z",
+ "generatedAt": "2026-09-27T09:57:38.992Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -772,30 +772,6 @@
    "total": 1.664
   },
   {
-   "title": "The Extra’s Academy Survival Guide",
-   "signals": {
-    "anilist": {
-     "strength": 0.475,
-     "rank": 35,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.3925,
-     "rank": 81,
-     "note": "8.16/10 from 385 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 172619,
-   "malId": 166865,
-   "score": 82,
-   "agree": 2,
-   "total": 1.388
-  },
-  {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
@@ -818,6 +794,30 @@
    "score": 81,
    "agree": 2,
    "total": 1.376
+  },
+  {
+   "title": "The Extra’s Academy Survival Guide",
+   "signals": {
+    "anilist": {
+     "strength": 0.46,
+     "rank": 36,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.3925,
+     "rank": 81,
+     "note": "8.16/10 from 385 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx172619-LSoXY45QAas4.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 172619,
+   "malId": 166865,
+   "score": 82,
+   "agree": 2,
+   "total": 1.364
   },
   {
    "title": "Berserk",
@@ -1556,24 +1556,6 @@
    "total": 0.91
   },
   {
-   "title": "Lord of Mysteries",
-   "signals": {
-    "anilist": {
-     "strength": 0.91,
-     "rank": 6,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx188249-Z9pRMdXVc4dh.png",
-   "category": "manhua",
-   "year": 2025,
-   "anilistId": 188249,
-   "malId": null,
-   "score": 82,
-   "agree": 1,
-   "total": 0.91
-  },
-  {
    "title": "Doraemon",
    "signals": {
     "mangaupdates": {
@@ -1626,6 +1608,24 @@
    "anilistId": 34632,
    "malId": 4632,
    "score": 88,
+   "agree": 1,
+   "total": 0.895
+  },
+  {
+   "title": "Lord of Mysteries",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx188249-Z9pRMdXVc4dh.png",
+   "category": "manhua",
+   "year": 2025,
+   "anilistId": 188249,
+   "malId": null,
+   "score": 82,
    "agree": 1,
    "total": 0.895
   },
