@@ -39,6 +39,8 @@
   'use strict';
 
   const ROUTE = /^\/sources(?:\.html)?\/?$/;
+  const LIBRARY_ROUTE = /^\/library(?:\.html)?\/?$/;
+  const DISCOVERY_SCRIPT = '/yomu-reader-discovery.js';
 
   /* Order matters. source-fabric-panel.js creates #yomu-source-fabric-command
      and #yomu-source-pack; everything after it anchors onto one of those. This
@@ -83,6 +85,7 @@
     !!document.querySelector(`script[src="${src}"], script[data-yomu-fabric="${src}"]`);
 
   let loading = null;
+  let discoveryLoading = null;
 
   function load(src) {
     return new Promise((resolve) => {
@@ -112,13 +115,20 @@
     return loading;
   }
 
+  function ensureDiscovery() {
+    if (alreadyLoaded(DISCOVERY_SCRIPT)) return Promise.resolve();
+    if (!discoveryLoading) discoveryLoading = load(DISCOVERY_SCRIPT);
+    return discoveryLoading;
+  }
+
   let last = location.pathname;
 
   function routeChanged() {
     const now = location.pathname;
     const changed = now !== last;
     last = now;
-    if (onRoute()) ensureLoaded();
+    if (onRoute()) ensureLoaded().then(ensureDiscovery);
+    if (LIBRARY_ROUTE.test(now)) ensureDiscovery();
     if (READING.test(now)) ensureReading();
     if (changed) {
       window.dispatchEvent(new CustomEvent('yomu:route', {
