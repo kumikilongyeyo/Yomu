@@ -63,22 +63,22 @@
     const packButton = switcher?.querySelector('button[data-mode="pack"]');
     if (!pack || !packButton) return;
 
-    singleButton?.classList.remove('is-active');
-    singleButton?.setAttribute('aria-selected', 'false');
-    packButton.classList.add('is-active');
-    packButton.setAttribute('aria-selected', 'true');
-    pack.classList.add('is-active');
+    if (singleButton?.classList.contains('is-active')) singleButton.classList.remove('is-active');
+    if (singleButton?.getAttribute('aria-selected') !== 'false') singleButton?.setAttribute('aria-selected', 'false');
+    if (!packButton.classList.contains('is-active')) packButton.classList.add('is-active');
+    if (packButton.getAttribute('aria-selected') !== 'true') packButton.setAttribute('aria-selected', 'true');
+    if (!pack.classList.contains('is-active')) pack.classList.add('is-active');
 
     const singleForm = root.querySelector('.sf-form');
     const pipeline = root.querySelector('.sf-pipe');
     const singleStatus = root.querySelector('.sf-status');
     const singleResult = root.querySelector('.sf-result');
     const details = root.querySelector('details');
-    if (singleForm) singleForm.style.display = 'none';
-    if (pipeline) pipeline.style.display = 'none';
-    if (singleStatus) singleStatus.style.display = 'none';
-    if (singleResult) singleResult.style.display = 'none';
-    if (details) details.style.display = 'none';
+    if (singleForm && singleForm.style.display !== 'none') singleForm.style.display = 'none';
+    if (pipeline && pipeline.style.display !== 'none') pipeline.style.display = 'none';
+    if (singleStatus && singleStatus.style.display !== 'none') singleStatus.style.display = 'none';
+    if (singleResult && singleResult.style.display !== 'none') singleResult.style.display = 'none';
+    if (details && details.style.display !== 'none') details.style.display = 'none';
   }
 
   function bindPackPersistence(root) {
@@ -103,7 +103,7 @@
       if (!packPinned) return;
       requestAnimationFrame(() => forcePackMode(document.getElementById(ROOT_ID)));
     });
-    packObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'aria-selected'] });
+    packObserver.observe(root, { childList: true, subtree: true });
   }
 
   async function openCommunityPack(button, status) {
@@ -135,6 +135,8 @@
 
     community.click();
     forcePackMode(root);
+    setTimeout(() => forcePackMode(document.getElementById(ROOT_ID)), 120);
+    setTimeout(() => forcePackMode(document.getElementById(ROOT_ID)), 360);
     status.textContent = 'Community Pack loaded. Yomu will only queue sources that are new on this device.';
     button.disabled = false;
   }
@@ -184,8 +186,10 @@
   function libraryMountTarget() {
     return document.querySelector('#root main')
       || document.querySelector('#root [role="main"]')
+      || document.querySelector('.g-main')
+      || document.querySelector('.g-app')
       || document.querySelector('main')
-      || document.getElementById('root');
+      || document.querySelector('#root > div');
   }
 
   function mountLibraryHub() {
