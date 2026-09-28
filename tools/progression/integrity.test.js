@@ -292,3 +292,15 @@ test('verifyAll: the only copy left still opens even if it is short', async () =
   assert.equal(out[0].ready, true);
   assert.equal(out[0].grade, 'suspect');
 });
+
+test('extreme short outlier is low confidence when two other copies agree', () => {
+  const result = assess(copy('ext:short', 4), [sib('ext:a', 47), sib('ext:b', 45)]);
+  assert.equal(result.grade, 'suspect');
+  assert.equal(result.ready, true, 'a warning must not block the only readable copy');
+  assert.match(result.summary, /uncertain/);
+});
+
+test('a declared compact layout is not penalized by raw peer counts', () => {
+  const result = assess(copy('ext:compact', 4, { release: { providerId: 'ext:compact', pageCount: 4 } }), [sib('ext:a', 47), sib('ext:b', 45)]);
+  assert.equal(result.grade, 'complete');
+});

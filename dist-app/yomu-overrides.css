@@ -2565,3 +2565,19 @@ html[data-yomu-src="expanded"] .yomu-src-more::after { transform: rotate(90deg);
   padding-bottom: var(--yomu-dock-clearance);
   scroll-padding-bottom: var(--yomu-dock-clearance);
 }
+
+/* Reader Reliability Pass */
+[data-reader-comfort]{display:grid;gap:16px;padding:18px 0}
+[data-reader-comfort] label{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:44px}
+[data-reader-comfort] select{padding:10px;color:inherit;background:var(--surface,#18232c);border:1px solid #65717a;border-radius:8px}
+[data-reader-comfort] small{opacity:.7;line-height:1.5}
+.yomu-paged{position:absolute;inset:0;background:#0b0b0e;display:flex;align-items:center;justify-content:center;touch-action:pan-y pinch-zoom}
+.yomu-paged-pages{display:flex;width:100%;height:100%;margin:auto;gap:2px}
+.yomu-paged-page{flex:1;min-width:0;height:100%;position:relative}
+.yomu-paged-page img{width:100%;height:100%;object-fit:contain;display:block}
+.yomu-page-prev,.yomu-page-next{position:absolute;top:50%;background:#1119;color:white;border:0;border-radius:50%;width:44px;height:44px;font-size:24px;opacity:.3}
+.yomu-page-prev{left:env(safe-area-inset-left,0px)}.yomu-page-next{right:env(safe-area-inset-right,0px)}
+.yomu-page-retry{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);padding:14px}
+.rd-head{padding-top:max(10px,env(safe-area-inset-top))}.rd-foot{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.yomu-reader-progress{position:fixed;bottom:calc(4px + env(safe-area-inset-bottom));right:12px;z-index:45;background:#1119;color:#eee;border-radius:8px;padding:3px 7px;font:11px system-ui;pointer-events:none}
+@media(max-width:600px){.rd-sheet{bottom:0;max-height:80dvh;overflow:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))}.yomu-source-picker{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;width:auto!important;max-height:75dvh;overflow:auto}}

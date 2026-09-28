@@ -27,6 +27,15 @@ const BUNDLE_DIR = 'dist-app/_expo/static/js/web';
 const check = process.argv.includes('--check');
 
 const EDITS = [
+{"name": "reader: keep current page when changing mode", "why": "Switching between scroll and paged views must not reset the reading position.", "from": "H?.pageIndex??0,initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition", "to": "(globalThis.__yomuReader?.chapterId===v&&globalThis.__yomuReader?.count>0&&globalThis.__yomuReader?.mode!==Q?globalThis.__yomuReader.page:H?.pageIndex??0),initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition"},
+{"name": "reader: MangaDex data saver images", "why": "Use the source-provided smaller variant when requested.", "from": "url:`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`})),delivery:", "to": "dataSaverUrl:s.chapter?.dataSaver?.[a]?`/api/img?u=${encodeURIComponent(`${u}/data-saver/${c}/${s.chapter.dataSaver[a]}`)}`:null,url:(`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`)})),delivery:"},
+{"name": "reader: bounded mounted pages", "why": "Reader reliability and comfort controls.", "from": "const H=(0,n.mountedRange)(E,h.length,t.MOUNT_RADIUS);", "to": "const H=globalThis.YomuReaderSettings?.windowRange(E,h.length)??(0,n.mountedRange)(E,h.length,3);"},
+{"name": "reader: adjustable width", "why": "Reader reliability and comfort controls.", "from": "Math.min(e.clientWidth,l);S", "to": "Math.min(e.clientWidth,globalThis.YomuReaderSettings?.prefs.width||l);T(e=>new Map(e));S"},
+{"name": "reader: paged seek", "why": "Reader reliability and comfort controls.", "from": "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);s&&a&&s.scrollTo", "to": "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);globalThis.dispatchEvent(new CustomEvent(\"yomu:seek-page\",{detail:e}));s&&a&&s.scrollTo"},
+{"name": "reader: true paged component", "why": "Reader reliability and comfort controls.", "from": "(0,o.jsx)(a.ChapterReader,{adapter:f,pages:J,chapterId:v,initialIndex:", "to": "(0,o.jsx)(Q===\"page\"&&globalThis.YomuReaderSettings?globalThis.YomuReaderSettings.Paged:a.ChapterReader,{React:e,spread:V,adapter:f,pages:J,chapterId:v,initialIndex:"},
+{"name": "reader: quality-aware page urls", "why": "Reader reliability and comfort controls.", "from": "uri:c.resolveImageUri(n),width:j", "to": "uri:globalThis.YomuReaderSettings?.uri(c,n)??c.resolveImageUri(n),width:j"},
+{"name": "reader: no hidden keyboard navigation", "why": "Reader reliability and comfort controls.", "from": "const e=e=>{if('ArrowRight'===e.key", "to": "const e=e=>{if(e.defaultPrevented||e.target.closest?.(\"input,select,textarea,button,[contenteditable],.rd-sheet\"))return;if('ArrowRight'===e.key"},
+
   /* --- reader chrome — app/read/[chapterId].web.tsx -------------------- */
   {
     name: 'reader: idle timeout 3s -> 2s',
@@ -64,11 +73,7 @@ const EDITS = [
       'onTap:()=>{const t=Date.now();' +
       'if(t-(globalThis.__yomuTap??0)<320){globalThis.__yomuTap=0;Z?F(!1):Y()}' +
       'else globalThis.__yomuTap=t}',
-    to:
-      'onTap:()=>{const t=Date.now();' +
-      'if(t-(globalThis.__yomuTap??0)<320){globalThis.__yomuTap=0;' +
-      'globalThis.__yomuExit?.()?Y():Z?F(!1):Y()}' +
-      'else globalThis.__yomuTap=t}',
+    to: "onTap:()=>{globalThis.__yomuExit?.()?Y():Z?F(!1):Y()}",
   },
 
   {
@@ -80,7 +85,7 @@ const EDITS = [
       'through the art. Page mode keeps the gap, because there the pages really ' +
       'are separate sheets and the seam is what tells them apart.',
     from: '(0,n.buildLayout)(h,j,P,s),[h,j,P])',
-    to:   "(0,n.buildLayout)(h,j,P,'page'===w?s:0),[h,j,P,w])",
+    to:   "(0,n.buildLayout)(h,j,P,globalThis.YomuReaderSettings?.prefs.gap??0),[h,j,P,w,globalThis.YomuReaderSettings?.prefs.gap])",
   },
   {
     name: 'reader: chapter rows carry their chapter id',
@@ -226,7 +231,7 @@ const EDITS = [
       'const re=K?(w+1)/K*100:0;' +
       '(0,e.useEffect)(()=>{globalThis.__yomuReader={adapter:f,source:f.id,chapterId:v,seriesId:k,' +
       'next:G?.nextChapterId??null,previous:G?.previousChapterId??null,page:w,count:K,pages:J,mode:Q,sheet:!!M,' +
-      'show:Y,hide:()=>{X.current&&clearTimeout(X.current),F(!1)}};' +
+      'navigate:se,flush:W.flush,show:Y,hide:()=>{X.current&&clearTimeout(X.current),F(!1)}};' +
       "try{dispatchEvent(new Event('yomu:reader'))}catch{}});" +
       '(0,e.useEffect)(()=>()=>{delete globalThis.__yomuReader},[]);' +
       'return(0,o.jsxs)',
@@ -665,6 +670,7 @@ const PAGES_DIR = 'dist-app';
 // Each is matched by its own filename, so adding one later tops up pages that
 // already carry the other rather than being mistaken for done.
 const ASSETS = [
+  { file: 'yomu-reader-settings.js', tag: '<script src="/yomu-reader-settings.js" defer></scr' + 'ipt>' },
   /* Archivo is one variable family covering both roles -- width 62..125 gives
      the expanded display cut, so display and UI are a single request. No
      `file`, so the local-existence check skips it; `probe` is what marks a

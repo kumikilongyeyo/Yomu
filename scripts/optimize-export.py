@@ -15,6 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist-app"
 
 COMMON = [
+    '<script src="/yomu-reader-settings.js" defer></script>',
+    '<script src="/yomu-integrity.js" defer></script>',
+    '<script src="/yomu-reader-plus.js" defer></script>',
+    '<script src="/yomu-page-rescue.js" defer></script>',
+    '<script src="/yomu-chapter-switch.js" defer></script>',
+
     # The rails, the ratings and Mori all read graphql.anilist.co straight from
     # the browser -- it answers a Cloudflare Worker with 403, so the page is the
     # only thing that can ask. Opening the connection while the rest of the head

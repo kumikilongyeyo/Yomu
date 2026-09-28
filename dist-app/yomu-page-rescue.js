@@ -179,7 +179,7 @@
       try {
         const r = await fetch(manifestUrl(rel), { cache: 'no-store', signal: AbortSignal.timeout(12000) });
         const body = r.ok ? await r.json().catch(() => null) : null;
-        if (Array.isArray(body?.pages) && body.pages.length === state.count) {
+        if (Array.isArray(body?.pages) && body.pages.length === state.count && body.pages.every((p, i) => p.contentHash && p.contentHash === state.pages?.[i]?.contentHash)) {
           out.push({ providerId: rel.providerId, providerName: rel.providerName, pages: body.pages });
         }
       } catch {}

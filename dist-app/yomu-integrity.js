@@ -212,6 +212,13 @@
       reasons.push(`${n} pages; this source usually has ~${Math.round(n / shortfall)} here`);
     }
 
+    // Two independent, similar counts are a warning, never proof that slices align.
+    const peers = siblings.map(s => Number(s.count)).filter(n => n > 0).sort((a, b) => a - b);
+    if (!matchesDeclared && !relative.length && peers.length >= 2 && peers.at(-1) / peers[0] < 1.25 && n > 0 && n < median(peers) * .25) {
+      score -= 30; suspect = true;
+      reasons.push('Unusually short compared with two other copies; completeness uncertain');
+    }
+
     if (measured && n > 1) {
       const indices = item.pages.map((page) => page?.index);
       if (indices.every((index) => Number.isInteger(index))) {

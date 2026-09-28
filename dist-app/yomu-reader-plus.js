@@ -95,6 +95,7 @@
   const queue = [];
   let active = 0;
   const WARM_CONCURRENCY = 2;
+  const inFlight = new Set();
 
   function warm(uri) {
     if (!uri || warmed.has(uri)) return;
@@ -109,7 +110,9 @@
       active++;
       const img = new Image();
       img.decoding = 'async';
-      const done = () => { active--; img.onload = img.onerror = null; pump(); };
+      let finished = false;
+      const done = () => { if (finished) return; finished = true; clearTimeout(timeout); active--; img.onload = img.onerror = null; img.removeAttribute('src'); inFlight.delete(done); pump(); };
+      const timeout = setTimeout(done, 12000); inFlight.add(done);
       img.onload = done;
       img.onerror = done;
       img.src = uri;
@@ -117,7 +120,7 @@
   }
 
   function resolve(r, page) {
-    try { return page ? r.adapter.resolveImageUri(page) : null; } catch { return null; }
+    try { return page ? globalThis.YomuReaderSettings?.uri(r.adapter, page) || r.adapter.resolveImageUri(page) : null; } catch { return null; }
   }
 
   /* The next chapter, fetched once per (source, chapter). */
@@ -129,6 +132,8 @@
 
   function prepareNext(r, stage) {
     if (!r.next || stage === 'none') return;
+    const constrained = navigator.connection?.saveData || /2g/.test(navigator.connection?.effectiveType || '') || globalThis.YomuReaderSettings?.prefs.quality === 'saver';
+    if (constrained && (!globalThis.YomuReaderSettings?.prefs.continuous || stage !== 'images')) return;
     const key = `${r.source}|${r.next}`;
     if (next.key !== key) {
       next.key = key;
@@ -137,14 +142,16 @@
       try { promise = Promise.resolve(r.adapter.getManifest(r.next)); } catch (error) { promise = Promise.reject(error); }
       next.promise = promise;
       handoff().set(key, { at: Date.now(), promise });
+      for (const [id, value] of handoff()) if (Date.now() - value.at > 120000 || (handoff().size > 3 && id !== key)) handoff().delete(id);
+      promise.then(manifest => { if (next.key === key && reader()?.chapterId === r.chapterId) appendNext(r, manifest); }).catch(() => {});
       promise.catch(() => { handoff().delete(key); if (next.key === key) next.key = ''; });
       try { performance.mark(`reader:prefetch:manifest:${r.next}`); } catch {}
     }
-    if (stage === 'images' && !next.warmed) {
+    if (stage === 'images' && !constrained && !next.warmed) {
       next.warmed = true;
       const adapter = r.adapter;
       next.promise.then((manifest) => {
-        for (const page of (manifest?.pages || []).slice(0, 2)) warm(resolve({ adapter }, page));
+        if (next.key === key && reader()?.chapterId === r.chapterId) for (const page of (manifest?.pages || []).slice(0, 2)) warm(resolve({ adapter }, page));
       }).catch(() => {});
     }
   }
@@ -153,11 +160,46 @@
     const r = reader();
     if (!r || !r.chapterId) return;
     const chapterKey = `${r.source}|${r.chapterId}`;
-    if (warmedFor !== chapterKey) { warmedFor = chapterKey; warmed.clear(); queue.length = 0; }
+    if (warmedFor !== chapterKey) { warmedFor = chapterKey; warmed.clear(); queue.length = 0; [...inFlight].forEach(cancel => cancel()); advancing = false; document.querySelector('[data-next-chapter-preview]')?.remove(); }
 
-    const extra = aheadCount(navigator.connection);
+    const extra = 0; // The mounted window itself preloads 1–4 pages. No second decode window.
     for (const index of aheadPages(r.page, r.count, extra)) warm(resolve(r, r.pages?.[index]));
     prepareNext(r, nextChapterStage(r.page, r.count));
+    showProgress(r);
+  }
+
+  let advancing = false;
+  function showProgress(r) {
+    let badge = document.querySelector('.yomu-reader-progress');
+    if (!badge) { badge = document.createElement('span'); badge.className = 'yomu-reader-progress'; document.body.append(badge); }
+    const text = `${r.page + 1} / ${r.count}`;
+    if (badge.textContent !== text) badge.textContent = text;
+  }
+  function appendNext(r, manifest) {
+    const root = document.querySelector('[data-testid="reader-scroll"]');
+    if (!root || r.mode !== 'scroll' || !globalThis.YomuReaderSettings?.prefs.continuous || !manifest?.pages?.length || root.querySelector('[data-next-chapter-preview]')) return;
+    const preview = document.createElement('section'); preview.dataset.nextChapterPreview = r.next;
+    preview.style.cssText = 'position:relative;text-align:center;min-height:160px;background:#0b0b0e;color:#ddd;padding-top:24px';
+    const divider = document.createElement('p'); divider.textContent = 'Next chapter · keep scrolling'; preview.append(divider);
+    const image = document.createElement('img'); image.src = resolve(r, manifest.pages[0]); image.alt = 'Next chapter preview';
+    image.style.cssText = 'display:block;width:100%;max-width:900px;height:auto;margin:auto';
+    if (!navigator.connection?.saveData && globalThis.YomuReaderSettings?.prefs.quality !== 'saver' && !/2g/.test(navigator.connection?.effectiveType || '')) preview.append(image);
+    else image.removeAttribute('src');
+    root.append(preview);
+  }
+  function advance(el, r) {
+    const preview = el.querySelector('[data-next-chapter-preview]');
+    if (!preview || advancing || r.sheet || !globalThis.YomuReaderSettings?.prefs.continuous || el.scrollTop + el.clientHeight < preview.offsetTop + 100) return;
+    advancing = true;
+    Promise.resolve(r.navigate?.(r.next)).catch(() => { advancing = false; });
+  }
+  if (browser) {
+    addEventListener('yomu:reader-settings', () => {
+      document.querySelector('[data-next-chapter-preview]')?.remove();
+      const r = reader();
+      if (r && next.promise) next.promise.then(value => { if (reader()?.chapterId === r.chapterId) appendNext(r, value); }).catch(() => {});
+    });
+    new MutationObserver(() => { if (!reader()) document.querySelector('.yomu-reader-progress')?.remove(); }).observe(document.documentElement, { childList: true, subtree: true });
   }
 
   let chrome = null;
@@ -167,6 +209,7 @@
     if (!el || el.nodeType !== 1 || el.getAttribute('data-testid') !== 'reader-scroll') return;
     const r = reader();
     if (!r) return;
+    advance(el, r);
     const step = chromeStep(chrome, el.scrollTop);
     chrome = step.state;
     if (!step.intent) return;

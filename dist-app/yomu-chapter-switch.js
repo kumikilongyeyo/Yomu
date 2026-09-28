@@ -385,6 +385,7 @@
   function capturePosition() {
     const r = reader();
     const el = scroller();
+    if (r?.mode === 'page' && r.count > 0) return { index: r.page, offset: 0, count: r.count };
     if (!r || !(r.count > 0) || !el) return null;
     const boxes = [...el.querySelectorAll('[data-page-index]')]
       .map((node) => ({ index: Number(node.getAttribute('data-page-index')), top: node.offsetTop, height: node.offsetHeight }))
@@ -623,7 +624,9 @@
     const target = () => {
       const r = reader();
       const el = scroller();
-      if (!r || !(r.count > 0) || !el || !el.clientWidth) return null;
+      if (!r || !(r.count > 0)) return null;
+      if (r.mode === "page") return { paged: carryPosition(position, r.count).index };
+      if (!el || !el.clientWidth) return null;
       const want = carryPosition(position, r.count);
       const box = el.querySelector(`[data-page-index="${want.index}"]`);
       return box ? { el, top: box.offsetTop + want.offset * box.offsetHeight } : null;
@@ -631,6 +634,7 @@
     const apply = (slack) => {
       const t = target();
       if (!t) return false;
+      if (t.paged != null) { dispatchEvent(new CustomEvent("yomu:seek-page", { detail: t.paged })); return true; }
       if (Math.abs(t.el.scrollTop - t.top) > slack(t.el)) t.el.scrollTop = t.top;
       return true;
     };

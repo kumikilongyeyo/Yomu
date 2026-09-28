@@ -368,7 +368,8 @@
     button.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:11px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(145,168,187,.18);background:rgba(7,17,26,.72);color:#f7f8fa;cursor:pointer';
 
     const left = document.createElement('span');
-    const meta = [release.scanlator, verified?.summary].filter(Boolean).join(' · ')
+    const badge = verified?.grade === 'suspect' ? 'Backup · low confidence' : verified?.grade === 'complete' ? (verified.ms < 1200 ? 'Fast' : 'Recommended') : '';
+    const meta = [badge, release.scanlator, verified?.summary].filter(Boolean).join(' · ')
       || (verified?.pageCount ? verified.pageCount + ' pages' : release.pageCount ? release.pageCount + ' pages' : release.kind || 'source');
     left.innerHTML = `<b style="display:block">${escapeHtml(release.providerName || sourceLabel(appSourceId) || release.providerId)}</b><small style="color:#91a8bb">${escapeHtml(meta)}</small>`;
 
