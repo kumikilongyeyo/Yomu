@@ -39,6 +39,7 @@ jobs:
               "$url" -o "$out"
           }
 
+          fetch_json "$YOMU_ORIGIN/api/ext/refresh" refresh.json
           fetch_json "$YOMU_ORIGIN/api/ext/sources" sources.json
           node <<'NODE'
           const fs = require('fs');
