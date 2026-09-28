@@ -7,19 +7,12 @@ type BrowserEnv = Env & { BROWSER: Fetcher };
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
-  headers: {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store, max-age=0',
-    'x-yomu-entrypoint': 'v9',
-  },
+  headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store, max-age=0', 'x-yomu-entrypoint': 'v9' },
 });
 
 async function browserCapacity(env: BrowserEnv): Promise<Response> {
   try {
-    const [limits, sessions] = await Promise.all([
-      puppeteer.limits(env.BROWSER),
-      puppeteer.sessions(env.BROWSER),
-    ]);
+    const [limits, sessions] = await Promise.all([puppeteer.limits(env.BROWSER), puppeteer.sessions(env.BROWSER)]);
     return json({
       ok: true,
       provider: 'cloudflare-browser-run',
@@ -27,11 +20,7 @@ async function browserCapacity(env: BrowserEnv): Promise<Response> {
       maxConcurrentSessions: Number(limits.maxConcurrentSessions ?? 0),
       activeSessionCount: Array.isArray(limits.activeSessions) ? limits.activeSessions.length : 0,
       timeUntilNextAllowedBrowserAcquisition: Number(limits.timeUntilNextAllowedBrowserAcquisition ?? 0),
-      sessions: (sessions ?? []).map((session: any) => ({
-        sessionId: String(session.sessionId || ''),
-        startTime: Number(session.startTime || 0),
-        connected: !!session.connectionId,
-      })),
+      sessions: (sessions ?? []).map((session: any) => ({ sessionId: String(session.sessionId || ''), startTime: Number(session.startTime || 0), connected: !!session.connectionId })),
     });
   } catch (error: any) {
     return json({ ok: false, error: String(error?.message || error || 'Unable to read Browser Run capacity.') }, 502);
@@ -61,9 +50,7 @@ async function repairManifest(url: URL, response: Response): Promise<Response> {
   if (!body || !Array.isArray(body.pages) || String(body.sourceSeriesId ?? '').trim()) return response;
   const match = url.pathname.match(/\/chapters\/([^/]+)\/manifest$/);
   let chapterId = String(body.chapterId ?? '');
-  if (!chapterId && match) {
-    try { chapterId = decodeURIComponent(match[1]); } catch { chapterId = match[1]; }
-  }
+  if (!chapterId && match) { try { chapterId = decodeURIComponent(match[1]); } catch { chapterId = match[1]; } }
   const sourceSeriesId = String(url.searchParams.get('series') || url.searchParams.get('sourceSeriesId') || chapterId || 'unknown-series');
   const headers = new Headers(response.headers);
   headers.delete('content-length');
@@ -97,7 +84,7 @@ async function catalogFromEdge(request: Request, ctx: ExecutionContext | undefin
 }
 
 async function resolveWithMagic(request: Request, env: BrowserEnv, url: URL): Promise<Response> {
-  const core = await v8.fetch(request.clone(), env);
+  const core = await v8.fetch(request.clone() as any, env);
   const type = core.headers.get('content-type') ?? '';
   if (!type.includes('application/json')) return core;
   const payload: any = await core.clone().json().catch(() => null);
@@ -111,30 +98,15 @@ async function resolveWithMagic(request: Request, env: BrowserEnv, url: URL): Pr
   if (!rawInput) return core;
 
   const magic = await tryMagicResolve(rawInput, env, url.origin).catch((error: any) => ({
-    ok: true,
-    ready: false,
-    route: 'browser-render-error',
-    failureKind: 'browser-render-error',
-    message: String(error?.message || error || 'Browser render fallback failed.'),
+    ok: true, ready: false, route: 'browser-render-error', failureKind: 'browser-render-error', message: String(error?.message || error || 'Browser render fallback failed.'),
   }));
-
   if (!magic) return core;
+
   const merged = {
     ...(payload && typeof payload === 'object' ? payload : {}),
     ...(magic.ready ? magic : {}),
-    sourceMagic: {
-      ready: magic.ready === true,
-      route: magic.route ?? null,
-      failureKind: magic.failureKind ?? null,
-      score: Number(magic.score ?? 0),
-      message: magic.message ?? null,
-      probe: magic.probe ?? null,
-    },
-    fabric: {
-      ...(payload?.fabric ?? {}),
-      publicBrowserFallback: true,
-      endToEndGauntlet: ['browse', 'search', 'title', 'chapters', 'reader-pages'],
-    },
+    sourceMagic: { ready: magic.ready === true, route: magic.route ?? null, failureKind: magic.failureKind ?? null, score: Number(magic.score ?? 0), message: magic.message ?? null, probe: magic.probe ?? null },
+    fabric: { ...(payload?.fabric ?? {}), publicBrowserFallback: true, endToEndGauntlet: ['browse', 'search', 'title', 'chapters', 'reader-pages'] },
   };
   const headers = new Headers(core.headers);
   headers.delete('content-length');
@@ -157,13 +129,10 @@ async function augmentFabricStatus(response: Response): Promise<Response> {
   return new Response(JSON.stringify({
     ...payload,
     sourceMagic: {
-      version: '1.0',
-      enabled: true,
+      version: '1.0', enabled: true,
       strategy: 'existing adapters → adaptive HTML → public browser render → end-to-end gauntlet',
       verifies: ['browse', 'search', 'title', 'chapters', 'reader-pages'],
-      lazyImageRecovery: true,
-      jsRenderedSites: true,
-      catalogFallbackSearch: true,
+      lazyImageRecovery: true, jsRenderedSites: true, catalogFallbackSearch: true,
     },
   }), { status: response.status, statusText: response.statusText, headers });
 }
@@ -176,38 +145,20 @@ export default {
     const magicRuntime = await handleMagicRuntime(request, browserEnv, url);
     if (magicRuntime) return magicRuntime;
 
-    if (request.method === 'POST' && url.pathname === '/api/fabric/resolve') {
-      return resolveWithMagic(request, browserEnv, url);
-    }
+    if (request.method === 'POST' && url.pathname === '/api/fabric/resolve') return resolveWithMagic(request, browserEnv, url);
+    if (request.method === 'GET' && url.pathname === '/api/source-beast/capacity') return browserCapacity(browserEnv);
+    if (request.method === 'GET' && EDGE_CACHED.test(url.pathname)) return catalogFromEdge(request, ctx, () => v8.fetch(request as any, env));
 
-    if (request.method === 'GET' && url.pathname === '/api/source-beast/capacity') {
-      return browserCapacity(browserEnv);
-    }
-
-    if (request.method === 'GET' && EDGE_CACHED.test(url.pathname)) {
-      return catalogFromEdge(request, ctx, () => v8.fetch(request, env));
-    }
-
-    let response = await v8.fetch(request, env);
-
-    if (request.method === 'GET' && url.pathname === '/api/fabric/status') {
-      response = await augmentFabricStatus(response);
-    }
-
-    if (request.method === 'GET' && /\/chapters\/[^/]+\/manifest$/.test(url.pathname)) {
-      response = await repairManifest(url, response);
-    }
+    let response = await v8.fetch(request as any, env);
+    if (request.method === 'GET' && url.pathname === '/api/fabric/status') response = await augmentFabricStatus(response);
+    if (request.method === 'GET' && /\/chapters\/[^/]+\/manifest$/.test(url.pathname)) response = await repairManifest(url, response);
 
     if (request.method === 'GET') {
       const type = response.headers.get('content-type') ?? '';
       if (response.ok && type.includes('text/html')) {
         const scripts = ['/yomu-source-reliability.js'];
-        if (url.pathname.startsWith('/read/') || url.pathname.startsWith('/series/')) {
-          scripts.push('/yomu-source-ux-v2.js', '/source-auto-switch.js');
-        }
-        if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') {
-          scripts.push('/source-beast-capacity-guard.js');
-        }
+        if (url.pathname.startsWith('/read/') || url.pathname.startsWith('/series/')) scripts.push('/yomu-source-ux-v2.js', '/source-auto-switch.js');
+        if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') scripts.push('/source-beast-capacity-guard.js');
         return injectScripts(response, scripts);
       }
     }
