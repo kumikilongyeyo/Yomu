@@ -1,0 +1,84 @@
+name: Comix source smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/comix-source-smoke.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe public Comix API bridge end-to-end
+        run: |
+          set -euo pipefail
+          API='https://comix-api.vercel.app'
+
+          curl -LfsS --retry 3 --max-time 30 "$API/api/manga/home?sfw=true" -o home.json
+          ID=$(node <<'NODE'
+          const j=require('./home.json');
+          const rows=[...(j.popular||[]),...(j.latest||[])];
+          if(!rows.length) throw new Error('no home titles');
+          const x=rows.find(v=>v.id&&v.title) || rows[0];
+          console.error(`home: ${rows.length} usable rows; selected=${x.title}`);
+          process.stdout.write(String(x.id));
+          NODE
+          )
+
+          curl -LfsS --retry 3 --max-time 30 "$API/api/manga/$ID?sfw=true" -o detail.json
+          node <<'NODE'
+          const j=require('./detail.json');
+          if(!j.comic?.id || !j.comic?.title) throw new Error('detail unusable');
+          console.log(`detail: ${j.comic.title}`);
+          NODE
+
+          curl -LfsS --retry 3 --max-time 30 "$API/api/manga/$ID/chapters?page=1&limit=30" -o chapters.json
+          CHAPTER=$(node <<'NODE'
+          const j=require('./chapters.json');
+          const rows=j.result?.items||[];
+          if(!rows.length) throw new Error('no chapters');
+          const x=rows.find(v=>v.chapter_id||v.id) || rows[0];
+          const id=x.chapter_id||x.id;
+          if(!id) throw new Error('chapter id missing');
+          console.error(`chapters: ${rows.length}; selected=${id}`);
+          process.stdout.write(String(id));
+          NODE
+          )
+
+          curl -LfsS --retry 3 --max-time 45 "$API/api/manga/read?chapterId=$CHAPTER" -o read.json
+          PAGE=$(node <<'NODE'
+          const j=require('./read.json');
+          const rows=j.images||[];
+          if(rows.length<2) throw new Error(`reader returned ${rows.length} images`);
+          const x=rows.find(v=>v.url) || rows[0];
+          const u=new URL(x.url,'https://comix-api.vercel.app').toString();
+          console.error(`reader: ${rows.length} pages; scramble=${!!x.scramble}`);
+          process.stdout.write(u);
+          NODE
+          )
+
+          curl -LfsS --retry 3 --max-time 45 -D page.headers "$PAGE" -o page.bin
+          node <<'NODE'
+          const fs=require('fs');
+          const h=fs.readFileSync('page.headers','utf8');
+          const n=fs.statSync('page.bin').size;
+          if(!/content-type:\s*image\//i.test(h)) throw new Error('page is not image/*');
+          if(n<5000) throw new Error(`page too small: ${n}`);
+          console.log(`image: PASS ${n} bytes`);
+          NODE
+
+          curl -LfsS --retry 3 --max-time 30 "$API/api/manga/search?q=$(node -e "process.stdout.write(encodeURIComponent(require('./detail.json').comic.title.split(/\s+/).slice(0,2).join(' ')))")&sfw=true" -o search.json
+          node <<'NODE'
+          const j=require('./search.json');
+          const rows=j.results||j.items||j.data||[];
+          if(!Array.isArray(rows)||!rows.length) throw new Error('search returned no results');
+          console.log(`search: PASS ${rows.length} results`);
+          NODE
+
+          echo 'COMIX BRIDGE SMOKE: PASS'
