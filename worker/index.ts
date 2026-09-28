@@ -25,6 +25,7 @@ import { handleShelf } from './routes-shelf';
 import { handleTitle } from './title';
 import { withSeriesMeta } from './series-meta';
 import { handleSeo } from './seo';
+import { fetchAsset } from './asset-path';
 
 export interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -423,10 +424,13 @@ export default {
        and cached at the edge; every failure path returns the shell untouched,
        so the worst case is exactly what was served before. */
     if (url.pathname.startsWith('/series/') && request.method === 'GET') {
-      return withSeriesMeta(await env.ASSETS.fetch(request), request, env, url);
+      return withSeriesMeta(await fetchAsset(env.ASSETS, request), request, env, url);
     }
 
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    /* fetchAsset, not ASSETS.fetch: an id with a slash in it (every Asura and
+       Flame chapter) is otherwise redirected into a route that does not
+       exist. See worker/asset-path.ts. */
+    if (!url.pathname.startsWith('/api/')) return fetchAsset(env.ASSETS, request);
     if (url.pathname.startsWith('/api/ext/')) return handleExtensions(request, env, url);
     if (url.pathname === '/api/catalog/similar') return handleSimilar(request, env, url);
     if (url.pathname.startsWith('/api/catalog/')) return handleCatalog(request, env, url);
