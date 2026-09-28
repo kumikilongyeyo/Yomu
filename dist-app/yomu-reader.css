@@ -1,0 +1,212 @@
+/**
+ * The reader's own presentation: Page mode, what sits below a chapter's last
+ * page, the reading settings in the reader's sheet, the page counter, the
+ * one-line offers, the shortcuts panel.
+ *
+ * Loaded on demand with the reading helpers (yomu-reader-settings.js links
+ * it; optimize-export's READER list does for a reader page served on its own)
+ * rather than from yomu-overrides.css: that file is render-blocking on every
+ * page, and 13KB of rules Home never uses was 4.5% more CSS in front of the
+ * release gate's warm revisit, which has no headroom. Page mode carries its
+ * own inline layout, so it is readable before this arrives.
+ */
+/* =====================================================================
+ * Reader reliability pass -- yomu-reader-settings.js, yomu-reader-plus.js,
+ * yomu-page-rescue.js, yomu-chapter-switch.js.
+ *
+ * The reader's strip is always #0b0b0e whatever the theme, and these sit on
+ * it or over artwork, so their ink is fixed light, not a theme colour (see
+ * yomu-theming-traps: text over a picture is not a theme colour). The
+ * settings rows live in the reader's glass sheet and use its own tokens.
+ * The chrome's safe-area padding is the kit's own (8px + inset top, 12px +
+ * inset bottom); nothing here overrides it.
+ * ===================================================================== */
+
+/* --- Reading settings, in the reader's sheet ------------------------- */
+[data-reader-comfort] { display: block; margin-top: 6px; }
+[data-reader-comfort] .yomu-rs-row { gap: 14px; min-height: 44px; margin-top: 14px; line-height: 1.25; }
+[data-reader-comfort] .yomu-rs-label { display: grid; gap: 3px; min-width: 0; }
+[data-reader-comfort] .yomu-rs-label small { font: 400 12px/1.35 var(--uiFont); color: var(--muted); }
+[data-reader-comfort] output { font: 500 12.5px/1 var(--uiFont); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+[data-reader-comfort] .yomu-rs-range .yomu-rs-row { margin-top: 16px; min-height: 0; }
+[data-reader-comfort] input[type='range'] { display: block; width: 100%; height: 32px; margin: 4px 0 0; accent-color: var(--accent); }
+[data-reader-comfort] .yomu-rs-modes { grid-template-columns: repeat(2, 1fr); }
+[data-reader-comfort] .yomu-rs-modes .rd-mode { min-height: 46px; }
+[data-reader-comfort] .rd-switch { cursor: pointer; }
+[data-reader-comfort] .yomu-rs-keys {
+  display: block; width: 100%; min-height: 44px; margin-top: 16px; border-radius: 13px;
+  border: 1px solid var(--line); background: transparent; color: var(--text);
+  font: 500 13px/1 var(--uiFont); cursor: pointer;
+}
+[data-reader-comfort] .yomu-rs-keys:hover { background: var(--m-fill-hi, rgba(127, 127, 127, .12)); }
+
+/* --- Page mode -------------------------------------------------------- */
+.yomu-paged {
+  position: absolute; inset: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #0b0b0e; color: #e9ebf2;
+  touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.yomu-paged-pages { display: flex; justify-content: center; width: 100%; height: 100%; margin: 0 auto; }
+.yomu-paged-page { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; }
+.yomu-paged.is-single .yomu-paged-page { flex: 1 1 auto; }
+.yomu-paged-page img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  -webkit-user-drag: none; pointer-events: none;
+}
+.yomu-paged-wait {
+  position: absolute; top: 50%; left: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border-radius: 50%; border: 2px solid rgba(233, 235, 242, .18); border-top-color: rgba(233, 235, 242, .7);
+  animation: yomu-paged-spin .8s linear infinite;
+}
+@keyframes yomu-paged-spin { to { transform: rotate(360deg); } }
+.yomu-paged-failed {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 16px; text-align: center; font: 500 13.5px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #f0c4b4;
+}
+.yomu-paged-failed button, .yomu-paged-end button {
+  min-height: 44px; padding: 10px 18px; border-radius: 13px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .08); color: #f4f6fa;
+  font: 600 13.5px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.yomu-page-arrow {
+  position: absolute; top: 50%; z-index: 2; width: 46px; height: 46px; margin-top: -23px;
+  border: 0; border-radius: 50%; background: rgba(12, 14, 18, .55); color: #fff;
+  font: 400 26px/1 system-ui, sans-serif; cursor: pointer; opacity: 0; transition: opacity .18s;
+}
+.yomu-page-arrow--left { left: max(10px, env(safe-area-inset-left)); }
+.yomu-page-arrow--right { right: max(10px, env(safe-area-inset-right)); }
+.yomu-page-arrow:disabled { visibility: hidden; }
+@media (hover: hover) and (pointer: fine) {
+  .yomu-paged:hover .yomu-page-arrow { opacity: .55; }
+  .yomu-paged .yomu-page-arrow:hover, .yomu-paged .yomu-page-arrow:focus-visible { opacity: 1; }
+}
+@media (hover: none) { .yomu-page-arrow { display: none; } }
+.yomu-paged-tip {
+  position: absolute; inset: 0; z-index: 3; display: grid; grid-template-columns: 3fr 4fr 3fr; pointer-events: none;
+  animation: yomu-paged-tip 2.6s ease forwards;
+}
+.yomu-paged-tip span {
+  display: flex; align-items: center; justify-content: center;
+  border-inline: 1px dashed rgba(255, 255, 255, .22); background: rgba(12, 14, 18, .38);
+  font: 700 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #fff; letter-spacing: .02em;
+}
+@keyframes yomu-paged-tip { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+.yomu-paged-end {
+  position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: calc(72px + env(safe-area-inset-top)) 16px calc(140px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 28px; touch-action: pan-y;
+}
+.yomu-paged-end__card { display: grid; justify-items: center; gap: 14px; width: min(100%, 420px); margin-top: auto; text-align: center; }
+/* Centred when it is alone; with the chapter's thread under it, the pair is. */
+.yomu-paged-end__card:last-child { margin-bottom: auto; }
+.yomu-paged-end__card > small { font: 600 12px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(233, 235, 242, .6); }
+.yomu-paged-end__next { display: grid !important; gap: 6px; width: 100%; min-height: 72px !important; padding: 14px 18px !important; border-radius: 18px !important; }
+.yomu-paged-end__next span { font-size: 12px; font-weight: 600; color: rgba(233, 235, 242, .65); }
+.yomu-paged-end__next strong { font-size: 18px; font-weight: 750; }
+.yomu-paged-end__back { background: transparent !important; border-color: transparent !important; color: rgba(233, 235, 242, .72) !important; }
+.yomu-paged-end__done { margin: 0; font: 500 15px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+.yomu-paged-end .yomu-thread { width: min(100%, 560px); margin-bottom: auto; }
+
+/* --- Below the last page: the next chapter ---------------------------- */
+.yomu-next {
+  position: relative; display: block; text-align: center; color: #e9ebf2; background: #0b0b0e;
+  font: 500 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.yomu-next--preview { padding: 34px 0 0; }
+.yomu-next--card { display: grid; justify-items: center; gap: 14px; padding: 40px 16px calc(150px + env(safe-area-inset-bottom)); }
+.yomu-next__divider { display: grid; justify-items: center; gap: 6px; padding: 0 16px 18px; }
+.yomu-next__divider::before {
+  content: ''; display: block; width: min(56%, 260px); height: 1px; margin-bottom: 14px;
+  background: linear-gradient(90deg, transparent, rgba(233, 235, 242, .35), transparent);
+}
+.yomu-next small, .yomu-next__done { font: 600 11.5px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(233, 235, 242, .58); }
+.yomu-next__divider strong { font-size: 19px; font-weight: 750; letter-spacing: -.01em; }
+.yomu-next__divider span { color: rgba(233, 235, 242, .7); font-size: 13px; }
+.yomu-next__page { margin: 0 auto; max-width: 100%; min-height: 40vh; }
+.yomu-next__page img { display: block; width: 100%; height: auto; }
+.yomu-next__go {
+  display: grid; gap: 5px; width: min(100%, 420px); min-height: 76px; padding: 14px 18px; border-radius: 18px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .08); color: #f4f6fa; font: inherit;
+}
+.yomu-next__go span { font-size: 12px; font-weight: 600; color: rgba(233, 235, 242, .65); }
+.yomu-next__go strong { font-size: 18px; font-weight: 750; }
+.yomu-next__go small { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 12.5px; }
+.yomu-next__go:hover { background: rgba(255, 255, 255, .12); }
+.yomu-next__back { min-height: 44px; padding: 10px 16px; border: 0; background: transparent; color: rgba(233, 235, 242, .72); font: inherit; cursor: pointer; }
+.yomu-next__caught { margin: 4px 0; font-size: 15px; }
+
+/* --- The desktop rail is chrome while reading -------------------------- *
+ * Above 1101px the shell's 184px rail is fixed over the left of every page,
+ * the reader included -- over Page mode's back zone and its left arrow. In
+ * the reader it goes with the header and the dock: away while you read, back
+ * with a tap. The attributes are set by yomu-reader-plus.js, which only runs
+ * in the reader: an `html:has(...)` rule here re-checked the whole document on
+ * every card the search page inserted and cost search 11-16% in the bench. */
+@media (min-width: 1101px) {
+  html[data-yomu-reader] #yomu-sidebar { transition: opacity .22s, transform .22s; }
+  html[data-yomu-reader='away'] #yomu-sidebar { opacity: 0; transform: translateX(-10px); pointer-events: none; }
+}
+
+/* --- The counter left while the chrome is away ----------------------- */
+.yomu-reader-progress {
+  position: fixed; z-index: 45; right: max(12px, env(safe-area-inset-right)); bottom: calc(8px + env(safe-area-inset-bottom));
+  padding: 4px 8px; border-radius: 9px; background: rgba(12, 14, 18, .62); color: rgba(244, 246, 250, .9);
+  font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums;
+  pointer-events: none; opacity: 0; transition: opacity .25s;
+}
+.yomu-reader-progress.is-on { opacity: 1; }
+.yomu-reader-progress:empty { display: none; }
+
+/* --- One-line notes and offers over the page -------------------------- */
+.yomu-mode-hint, .yomu-short-offer, .yomu-rescue-note {
+  position: fixed; z-index: 9999; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; width: max-content; max-width: min(92vw, 460px);
+  padding: 8px 8px 8px 14px; border-radius: 16px; background: rgba(12, 14, 18, .92); color: #f4f6fa;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .32);
+  font: 600 12.5px/1.35 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  animation: yomu-note-in .22s ease;
+}
+.yomu-rescue-note { padding: 8px 14px; border-radius: 999px; pointer-events: none; transition: opacity .4s; }
+.yomu-rescue-note.is-leaving { opacity: 0; }
+.yomu-mode-hint button, .yomu-short-offer button {
+  flex: none; min-height: 34px; padding: 6px 12px; border-radius: 11px; border: 0; cursor: pointer;
+  background: #f4f6fa; color: #0c0e12; font: 700 12.5px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.yomu-mode-hint .yomu-mode-hint__x, .yomu-short-offer .yomu-short-offer__x {
+  min-width: 34px; padding: 6px; background: transparent; color: rgba(244, 246, 250, .75); font-size: 18px; font-weight: 500;
+}
+@keyframes yomu-note-in { from { opacity: 0; transform: translate(-50%, 6px); } }
+
+/* --- Keyboard shortcuts ----------------------------------------------- */
+.yomu-keys {
+  position: fixed; z-index: 40; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(92vw, 440px); max-height: 80dvh; overflow: auto; padding: 16px 18px 18px;
+  border-radius: 22px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+}
+.yomu-keys__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.yomu-keys__head h2 { margin: 0; font: 700 16px/1.2 var(--uiFont); }
+.yomu-keys dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; margin: 0; align-items: center; }
+.yomu-keys dt { display: flex; gap: 4px; white-space: nowrap; }
+.yomu-keys dd { margin: 0; font: 400 13px/1.4 var(--uiFont); color: var(--muted); }
+.yomu-keys kbd {
+  min-width: 24px; padding: 3px 7px; border-radius: 7px; border: 1px solid var(--line); border-bottom-width: 2px;
+  font: 600 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; color: var(--text);
+}
+
+/* --- The chapter source picker as a sheet on a phone ------------------ */
+@media (max-width: 600px) {
+  .yomu-source-picker, #yomu-source-picker {
+    left: 8px !important; right: 8px !important; top: auto !important; transform: none !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important; width: auto !important; max-height: 75dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yomu-paged-wait { animation-duration: 2.4s; }
+  .yomu-paged-tip, .yomu-mode-hint, .yomu-short-offer, .yomu-rescue-note { animation: none; }
+  .yomu-reader-progress, .yomu-page-arrow { transition: none; }
+}

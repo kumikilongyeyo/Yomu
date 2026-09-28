@@ -414,6 +414,8 @@
   /* --- the counter left on screen while the chrome is away ----------------- */
 
   function showProgress(r) {
+    /* Unstyled, it would be a line of text in the page. */
+    if (settings() && settings().cssReady && !settings().cssReady()) return;
     let badge = document.querySelector('.yomu-reader-progress');
     if (!badge) {
       badge = document.createElement('span');
@@ -483,6 +485,7 @@
       if (key !== onScroll.key) { onScroll.key = key; chrome = null; }
     });
     addEventListener('yomu:reader-settings', () => { removeTail(); onReader(); });
+    addEventListener('yomu:reader-styles', () => onReader());
     /* Leaving the reader takes the counter and the tail with it. */
     addEventListener('yomu:route', () => {
       if (reader()) return;

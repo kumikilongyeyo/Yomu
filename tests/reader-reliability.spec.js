@@ -355,3 +355,45 @@ test('the keyboard: ] moves on a chapter and M changes the mode', async ({ page,
   await page.keyboard.press(']');
   await expect(page).toHaveURL(/c3/);
 });
+
+/* --- the reader's stylesheet --------------------------------------------- *
+ * Not in the every-page sheet: production serves the app shell for /read/,
+ * which does not link it, and yomu-reader-settings.js does at runtime. The
+ * fixture's bare reader page links it, so the page is served without it here.
+ */
+test('the reader stylesheet loads on demand, and Page mode is readable before it lands', async ({ page, baseURL }) => {
+  /* Serve the reader page the way production does for this sheet: not in the HTML. */
+  await page.route('**/read/**', async (route) => {
+    if (route.request().resourceType() !== 'document') return route.continue();
+    const res = await route.fetch();
+    const html = (await res.text()).replace('<link rel="stylesheet" href="/yomu-reader.css">', '');
+    return route.fulfill({ response: res, body: html, headers: { ...res.headers(), 'content-type': 'text/html; charset=utf-8' } });
+  });
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  await page.route('**/yomu-reader.css', async (route) => { await gate; return route.continue(); });
+  await seed(page, { baseURL });
+  await page.addInitScript(() => { localStorage.setItem('yomu.v2.reader.pagedTip', '1'); });
+  await page.route('**/fixtures/fx-night-archive/c2/manifest.json', (route) => route.fulfill({ json: manifest(`${SERIES}:c2`, 40) }));
+  await page.route('**/fixtures/page.svg?*', (route) => route.fulfill({ contentType: 'image/svg+xml', body: SVG() }));
+  /* The held sheet holds the load event too; the reader does not wait for it. */
+  await page.goto(`/read/${SERIES}%3Ac2?source=local-fixtures`, { waitUntil: 'domcontentloaded' });
+  await expect.poll(() => page.evaluate(() => globalThis.__yomuReader?.count), { timeout: 30000 }).toBe(40);
+  await expect.poll(() => page.evaluate(() => !!globalThis.YomuReaderSettings)).toBe(true);
+  expect(await page.evaluate(() => document.querySelectorAll('link[href="/yomu-reader.css"]').length)).toBe(1);
+  expect(await page.evaluate(() => globalThis.YomuReaderSettings.cssReady())).toBe(false);
+  await page.evaluate(() => globalThis.__yomuReader.setMode('page'));
+  const paged = page.getByTestId('reader-paged');
+  await expect(paged).toBeVisible();
+  /* Readable with no sheet: it fills the stage and the page fits it. */
+  const box = await paged.boundingBox();
+  const vp = page.viewportSize();
+  expect(Math.round(box.width)).toBe(vp.width);
+  const img = await page.locator('.yomu-paged-page img').first().boundingBox();
+  expect(img.height).toBeLessThanOrEqual(vp.height + 1);
+  expect(await page.locator('.yomu-page-arrow').count()).toBe(0);
+  release();
+  await expect.poll(() => page.evaluate(() => globalThis.YomuReaderSettings.cssReady())).toBe(true);
+  await expect(page.locator('.yomu-page-arrow')).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.yomu-page-arrow')).borderRadius)).toBe('50%');
+});

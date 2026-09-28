@@ -13,10 +13,14 @@ broken images or the next chapter. What each part does and where it lives.
 | `dist-app/yomu-page-rescue.js` | The per-image retry ladder and the pending/exhausted signal |
 | `dist-app/yomu-chapter-switch.js` | Whole-chapter recovery: dead pages, stalls, failed manifests, a copy that is short |
 | `dist-app/yomu-integrity.js` | Completeness and reliability scoring, picker labels, same-slicing proof, per-source page-count history |
+| `dist-app/yomu-reader.css` | Everything above that is drawn: Page mode, the tail below the last page, the settings rows, the counter, the one-line offers, the shortcuts panel |
 
 All of them load on demand with the other reading helpers (`yomu-fabric-route.js`,
 `READING_SCRIPTS`), never on every page: Home's warm-revisit budget has no room
-for them. A reader or series page served as its own document gets them from
+for them. The stylesheet is linked at runtime by `yomu-reader-settings.js`, not
+by `yomu-overrides.css`, which is render-blocking on every page; Page mode
+carries its own inline layout so it is readable before the sheet arrives. A
+reader or series page served as its own document gets all of them from
 `scripts/optimize-export.py`'s `READER` list.
 
 ## What the reader gets

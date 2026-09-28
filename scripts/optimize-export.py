@@ -88,6 +88,7 @@ READER = [
     # document. Everywhere else yomu-fabric-route.js loads them on entering
     # /read/ or /series/ (READING_SCRIPTS) -- never on every page: Home's warm
     # revisit budget has no room for five scripts it does not use.
+    '<link rel="stylesheet" href="/yomu-reader.css">',
     '<script src="/yomu-reader-settings.js" defer></script>',
     '<script src="/yomu-integrity.js" defer></script>',
     '<script src="/yomu-reader-plus.js" defer></script>',

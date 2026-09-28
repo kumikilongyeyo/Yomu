@@ -87,6 +87,42 @@
   }
 
   const listeners = new Set();
+
+  /* --- the reader's stylesheet, on demand ---------------------------------- *
+   *
+   * yomu-reader.css is not in the every-page stylesheet (render-blocking on
+   * Home for nothing). It is linked here, the first reading helper to run.
+   * Page mode lays itself out inline, so it is readable before the sheet
+   * arrives; the decoration that needs the sheet (arrows, the tip, the
+   * counter) waits for `cssReady`.
+   */
+  let cssReady = false;
+  function ensureStyles() {
+    if (!browser) return;
+    let link = document.querySelector('link[href="/yomu-reader.css"]');
+    const ready = () => {
+      if (cssReady) return;
+      cssReady = true;
+      listeners.forEach((fn) => { try { fn(); } catch {} });
+      try { dispatchEvent(new Event('yomu:reader-styles')); } catch {}
+    };
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/yomu-reader.css';
+      link.id = 'yomu-reader-css';
+      link.addEventListener('load', ready, { once: true });
+      link.addEventListener('error', ready, { once: true });
+      document.head.append(link);
+      return;
+    }
+    if (link.sheet) ready();
+    else {
+      link.addEventListener('load', ready, { once: true });
+      link.addEventListener('error', ready, { once: true });
+    }
+  }
+
   function save(values) {
     prefs = readPrefs({ ...prefs, ...values });
     api.prefs = prefs;
@@ -534,7 +570,7 @@
     const pageNodes = shownOnScreen.map((i, slot) => {
       const page = pages[i];
       const position = single ? 'center' : slot === 0 ? 'right center' : 'left center';
-      return h('div', { key: page.key, 'data-page-index': i, className: 'yomu-paged-page' },
+      return h('div', { key: page.key, 'data-page-index': i, className: 'yomu-paged-page', style: LAYOUT.slot },
         h(PagedImage, {
           React: R, page, adapter, position,
           onDims: (key, width, height) => setDims((map) => {
@@ -557,6 +593,7 @@
 
     return h('div', {
       ref: rootRef,
+      style: LAYOUT.root,
       className: 'yomu-paged' + (single ? ' is-single' : ' is-spread'),
       'data-testid': 'reader-paged',
       'data-at-end': atEnd || lastGroup ? '1' : '0',
@@ -566,14 +603,24 @@
     },
     atEnd ? end : h('div', {
       className: 'yomu-paged-pages',
-      style: { maxWidth: single ? prefs.width : undefined },
+      style: { ...LAYOUT.pages, maxWidth: single ? prefs.width : undefined },
     }, ...pageNodes),
-    h('button', { type: 'button', className: 'yomu-page-arrow yomu-page-arrow--left', 'aria-label': arrowLabel(visualLeft), disabled: !canLeft || (visualLeft === 'next' && atEnd && !r?.next), onClick: (e) => { e.stopPropagation(); go(visualLeft); } }, '‹'),
-    h('button', { type: 'button', className: 'yomu-page-arrow yomu-page-arrow--right', 'aria-label': arrowLabel(visualRight), disabled: !canRight || (visualRight === 'next' && atEnd && !r?.next), onClick: (e) => { e.stopPropagation(); go(visualRight); } }, '›'),
-    tip ? h('div', { className: 'yomu-paged-tip', 'aria-hidden': true },
+    !cssReady ? null : h('button', { type: 'button', className: 'yomu-page-arrow yomu-page-arrow--left', 'aria-label': arrowLabel(visualLeft), disabled: !canLeft || (visualLeft === 'next' && atEnd && !r?.next), onClick: (e) => { e.stopPropagation(); go(visualLeft); } }, '‹'),
+    !cssReady ? null : h('button', { type: 'button', className: 'yomu-page-arrow yomu-page-arrow--right', 'aria-label': arrowLabel(visualRight), disabled: !canRight || (visualRight === 'next' && atEnd && !r?.next), onClick: (e) => { e.stopPropagation(); go(visualRight); } }, '›'),
+    tip && cssReady ? h('div', { className: 'yomu-paged-tip', 'aria-hidden': true },
       h('span', null, prefs.rtl ? 'Next' : 'Back'), h('span', null, 'Menu'), h('span', null, prefs.rtl ? 'Back' : 'Next')) : null);
   }
   const suppressClick = { armed: false };
+
+  /* What Page mode needs to be readable with no stylesheet at all: it fills
+     the stage, the pages share it, each image fits. yomu-reader.css adds the
+     rest. */
+  const LAYOUT = Object.freeze({
+    root: { position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b0b0e' },
+    pages: { display: 'flex', justifyContent: 'center', width: '100%', height: '100%', margin: '0 auto' },
+    slot: { position: 'relative', flex: '1 1 0', minWidth: 0, height: '100%', display: 'flex' },
+    img: { display: 'block', width: '100%', height: '100%', objectFit: 'contain' },
+  });
 
   function PagedImage({ React: R, page, adapter, position, onDims }) {
     const h = R.createElement;
@@ -591,7 +638,7 @@
         alt: `Page ${page.index + 1}`,
         decoding: 'async',
         draggable: false,
-        style: { objectPosition: position },
+        style: { ...LAYOUT.img, objectPosition: position },
         onLoad: (event) => {
           setLoaded(src);
           setFailed('');
@@ -894,6 +941,8 @@
     prefs, save, uri, windowRange, Paged,
     /** 'fast' | 'normal' | 'slow' | 'unknown': how pages are arriving here. */
     speed: () => environment().speed,
+    /** Whether yomu-reader.css has arrived. */
+    cssReady: () => cssReady,
     constrained: () => environment().constrained,
     /* pure, for the tests */
     readPrefs, pageBytes, spreadGroups, groupOf, tapAction, swipeAction, keyAction,
@@ -901,6 +950,7 @@
   };
 
   if (browser) {
+    ensureStyles();
     window.YomuReaderSettings = api;
     addEventListener('yomu:reader', onReader);
     addEventListener('keydown', onShortcut);
