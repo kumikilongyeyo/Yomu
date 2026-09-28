@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect ToonGod public page structure
+      - name: Inspect current ToonGod selectors
         run: |
           set -euo pipefail
           URL='https://www.toongod.cc/webtoon/tales-of-demons-and-gods/'
@@ -27,32 +27,17 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           const h=fs.readFileSync('page.html','utf8');
-          const checks={
-            bytes:h.length,
-            h1PostTitle:(h.match(/<h1[^>]*class=["'][^"']*post-title/gi)||[]).length,
-            postTitleH1:(h.match(/class=["'][^"']*post-title[^"']*["'][^>]*>[\s\S]{0,300}<h1/gi)||[]).length,
-            ogTitle:(h.match(/property=["']og:title["']/gi)||[]).length,
-            summaryContent:(h.match(/summary__content/gi)||[]).length,
-            descriptionSummary:(h.match(/description-summary/gi)||[]).length,
-            genreContent:(h.match(/genres-content/gi)||[]).length,
-            chapterLinks:(h.match(/wp-manga-chapter/gi)||[]).length,
-            ajaxChapters:(h.match(/ajax\/chapters/gi)||[]).length,
-          };
-          console.log(JSON.stringify(checks,null,2));
-          for(const needle of ['og:title','post-title','summary__content','description-summary','genres-content','wp-manga-chapter','ajax/chapters']){
-            const i=h.toLowerCase().indexOf(needle.toLowerCase());
-            if(i>=0) console.log(`\n--- ${needle} ---\n${h.slice(Math.max(0,i-350),Math.min(h.length,i+900)).replace(/\s+/g,' ')}`);
+          console.log('bytes=',h.length);
+          const needles=['TALES OF DEMONS','chapter-','/chapter/','/chapters/','class="chapter','class="list','class="detail','class="manga','description','genres','status','author','latest-chapter','episode'];
+          for(const needle of needles){
+            let i=0, seen=0;
+            while((i=h.toLowerCase().indexOf(needle.toLowerCase(),i))>=0 && seen<4){
+              console.log(`\n--- ${needle} #${seen+1} ---\n${h.slice(Math.max(0,i-450),Math.min(h.length,i+1300)).replace(/\s+/g,' ')}`);
+              i+=needle.length; seen++;
+            }
           }
-          NODE
-          echo '\nAJAX chapter endpoint:'
-          curl -L --silent --show-error --max-time 30 \
-            -A 'Mozilla/5.0 (compatible; Yomu/0.3; +https://yomu.yomuread.workers.dev)' \
-            -H 'Referer: https://www.toongod.cc/' \
-            -X POST "${URL}ajax/chapters/" \
-            -o ajax.html -w 'HTTP %{http_code} bytes=%{size_download}\n'
-          node <<'NODE'
-          const fs=require('fs');
-          const h=fs.readFileSync('ajax.html','utf8');
-          console.log('ajax wp-manga-chapter=',(h.match(/wp-manga-chapter/gi)||[]).length);
-          console.log(h.slice(0,1200).replace(/\s+/g,' '));
+          const hrefs=[...h.matchAll(/href=["']([^"']+)["']/gi)].map(m=>m[1]);
+          const chap=hrefs.filter(x=>/chapter|chapters|episode|ep-/i.test(x));
+          console.log('\nchapter-like href count=',chap.length);
+          console.log([...new Set(chap)].slice(0,40).join('\n'));
           NODE
