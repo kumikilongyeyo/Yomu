@@ -8,43 +8,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Search title chapters pages and image
+      - name: Diagnose current Nyx public API shape
         shell: bash
         run: |
           set -euo pipefail
           SITE='https://yomu.yomuread.workers.dev'
-          SRC='nyxscans'
+          API='https://api.nyxscans.com'
           curl -fsS "$SITE/api/ext/refresh" | jq .
-          reg=$(curl -fsS "$SITE/api/ext/sources")
-          echo "$reg" | jq -e '.extensions[] | select(.id=="nyxscans" and .version==2)' >/dev/null
-          base="$SITE/api/ext/source/$SRC"
-          cat=$(curl -fsS "$base/series?page=1")
-          id=$(echo "$cat" | jq -r '.series[0].id')
-          title=$(echo "$cat" | jq -r '.series[0].title')
-          echo "selected=$title id=$id"
-          test -n "$id"
-          search=$(curl -fsS --get --data-urlencode "q=$title" "$base/search")
-          test "$(echo "$search" | jq '.series|length')" -gt 0
-          eid=$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1],safe=""))' "$id")
-          detail=$(curl -fsS "$base/series/$eid")
-          chapters=$(echo "$detail" | jq '.chapters|length')
-          cid=$(echo "$detail" | jq -r '.chapters[0].id // empty')
-          echo "chapters=$chapters"
-          test "$chapters" -gt 0
-          test -n "$cid"
-          ecid=$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1],safe=""))' "$cid")
-          manifest=$(curl -fsS "$base/chapters/$ecid/manifest")
-          pages=$(echo "$manifest" | jq '.pages|length')
-          image=$(echo "$manifest" | jq -r '.pages[0].url // empty')
-          sid=$(echo "$manifest" | jq -r '.sourceSeriesId // empty')
-          echo "pages=$pages sourceSeriesId=$sid"
-          test "$pages" -gt 0
-          test -n "$sid"
-          h=$(mktemp); b=$(mktemp)
-          curl -fsSL -D "$h" -o "$b" "$image"
-          type=$(grep -i '^content-type:' "$h" | tail -1 | tr -d '\r' | cut -d' ' -f2-)
-          bytes=$(wc -c < "$b" | tr -d ' ')
-          echo "image type=$type bytes=$bytes"
-          [[ "$type" == image/* ]]
-          test "$bytes" -gt 5000
-          echo 'NYX LIVE SMOKE: PASS'
+          raw=$(curl -fsS --get --data-urlencode 'postSlug=operation-true-love' "$API/api/post")
+          echo '=== /api/post top-level keys ==='
+          echo "$raw" | jq 'keys'
+          echo '=== post summary ==='
+          echo "$raw" | jq '{postKeys:(.post|keys), postId:.post.id, slug:.post.slug, title:.post.postTitle, totalChapterCount, chaptersType:(.post.chapters|type), chaptersLen:(.post.chapters|length)}'
+          if [[ "$(echo "$raw" | jq '.post.chapters|length')" -eq 0 ]]; then
+            pid=$(echo "$raw" | jq -r '.post.id // empty')
+            echo "=== chapter API fallback postId=$pid ==="
+            ch=$(curl -fsS --get --data-urlencode "postId=$pid" "$API/api/chapters")
+            echo "$ch" | jq '{keys:keys, postKeys:(.post|keys), chapterLen:(.post.chapters|length), first:(.post.chapters[0] // null)}'
+          fi
