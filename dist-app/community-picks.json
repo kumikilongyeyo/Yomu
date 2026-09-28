@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-27T09:57:38.992Z",
+ "generatedAt": "2026-09-28T10:48:48.768Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -607,8 +607,8 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.43,
-     "rank": 38,
+     "strength": 0.445,
+     "rank": 37,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -623,16 +623,16 @@
    "year": 2024,
    "anilistId": 180891,
    "malId": 172750,
-   "score": 81,
+   "score": 82,
    "agree": 2,
-   "total": 1.88
+   "total": 1.904
   },
   {
    "title": "Kono Oto Tomare!",
    "signals": {
     "anilist": {
-     "strength": 0.535,
-     "rank": 31,
+     "strength": 0.55,
+     "rank": 30,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -649,7 +649,7 @@
    "malId": 45143,
    "score": 88,
    "agree": 2,
-   "total": 1.844
+   "total": 1.868
   },
   {
    "title": "Dorohedoro",
