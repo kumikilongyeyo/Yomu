@@ -1,0 +1,129 @@
+name: ToonGod live smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/toongod-live-smoke.yml'
+      - 'extensions/sources/toongod.json'
+      - 'extensions/index.json'
+      - 'worker/extensions/**'
+      - 'worker/routes-extensions.ts'
+      - 'dist-app/source-packs/community.json'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify ToonGod through production Yomu
+        env:
+          YOMU_ORIGIN: https://yomu.yomuread.workers.dev
+        run: |
+          set -euo pipefail
+
+          fetch_json() {
+            url="$1"
+            out="$2"
+            echo "GET $url"
+            curl -L --fail --silent --show-error \
+              --retry 3 --retry-delay 2 --max-time 30 \
+              -H 'accept: application/json' \
+              "$url" -o "$out"
+          }
+
+          fetch_json "$YOMU_ORIGIN/api/ext/sources" sources.json
+          node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('sources.json', 'utf8'));
+          const src = (body.extensions || []).find((x) => x.id === 'toongod');
+          if (!src) throw new Error('ToonGod is missing from /api/ext/sources');
+          const required = ['search', 'popular', 'latest', 'details', 'chapters', 'pages'];
+          for (const key of required) {
+            if (src.capabilities?.[key] !== true) throw new Error(`ToonGod capability ${key} is not enabled`);
+          }
+          if (!src.api || !String(src.api).includes('/api/ext/source/toongod/')) throw new Error('ToonGod API route is missing');
+          console.log(`registered: ${src.name} v${src.version} status=${src.status}`);
+          NODE
+
+          fetch_json "$YOMU_ORIGIN/api/ext/source/toongod/series?page=1" popular.json
+          node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('popular.json', 'utf8'));
+          if (!Array.isArray(body.series) || body.series.length < 3) throw new Error(`popular returned ${body.series?.length ?? 0} titles`);
+          if (body.series.some((x) => !x.id || !x.title)) throw new Error('popular contains an unusable title row');
+          console.log(`popular: ${body.series.length} titles; first=${body.series[0].title}`);
+          NODE
+
+          fetch_json "$YOMU_ORIGIN/api/ext/source/toongod/latest?page=1" latest.json
+          node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+          if (!Array.isArray(body.series) || body.series.length < 3) throw new Error(`latest returned ${body.series?.length ?? 0} titles`);
+          if (body.series.some((x) => !x.id || !x.title)) throw new Error('latest contains an unusable title row');
+          console.log(`latest: ${body.series.length} titles; first=${body.series[0].title}`);
+          NODE
+
+          fetch_json "$YOMU_ORIGIN/api/ext/source/toongod/search?q=tales%20of%20demons%20and%20gods" search.json
+          SERIES_ID=$(node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('search.json', 'utf8'));
+          const rows = Array.isArray(body.series) ? body.series : [];
+          if (!rows.length) throw new Error('search returned no titles');
+          const exact = rows.find((x) => /tales of demons and gods/i.test(String(x.title || ''))) || rows[0];
+          if (!exact.id || !exact.title) throw new Error('search row has no id/title');
+          console.error(`search: ${rows.length} titles; selected=${exact.title}`);
+          process.stdout.write(String(exact.id));
+          NODE
+          )
+
+          SERIES_ENCODED=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$SERIES_ID")
+          fetch_json "$YOMU_ORIGIN/api/ext/source/toongod/series/$SERIES_ENCODED" detail.json
+          CHAPTER_ID=$(node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('detail.json', 'utf8'));
+          if (!body.title) throw new Error('series detail has no title');
+          if (!Array.isArray(body.chapters) || body.chapters.length < 2) throw new Error(`series detail returned ${body.chapters?.length ?? 0} chapters`);
+          const chapter = body.chapters.find((x) => x.id) || body.chapters[0];
+          if (!chapter?.id) throw new Error('chapter has no id');
+          console.error(`detail: ${body.title}; chapters=${body.chapters.length}; selected=${chapter.name || chapter.number || chapter.id}`);
+          process.stdout.write(String(chapter.id));
+          NODE
+          )
+
+          CHAPTER_ENCODED=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$CHAPTER_ID")
+          fetch_json "$YOMU_ORIGIN/api/ext/source/toongod/chapters/$CHAPTER_ENCODED/manifest" manifest.json
+          PAGE_URL=$(node <<'NODE'
+          const fs = require('fs');
+          const body = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          if (body.schema !== 'yomu.chapter-manifest/1') throw new Error(`wrong manifest schema: ${body.schema}`);
+          if (!body.sourceSeriesId) throw new Error('manifest is missing sourceSeriesId');
+          if (!Array.isArray(body.pages) || body.pages.length < 2) throw new Error(`manifest returned ${body.pages?.length ?? 0} pages`);
+          const first = body.pages[0];
+          if (!first?.url || !String(first.url).includes('/api/ext/image?ext=toongod')) throw new Error('reader page is not using the ToonGod image relay');
+          console.error(`reader: ${body.pages.length} pages; delivery=${body.delivery}`);
+          process.stdout.write(String(first.url));
+          NODE
+          )
+
+          curl -L --fail --silent --show-error \
+            --retry 3 --retry-delay 2 --max-time 30 \
+            -D page.headers "$PAGE_URL" -o page.bin
+
+          node <<'NODE'
+          const fs = require('fs');
+          const headers = fs.readFileSync('page.headers', 'utf8');
+          const size = fs.statSync('page.bin').size;
+          if (!/content-type:\s*image\//i.test(headers)) throw new Error('proxied reader page did not return an image content-type');
+          if (size < 5000) throw new Error(`proxied reader page is suspiciously small: ${size} bytes`);
+          console.log(`image relay: PASS (${size} bytes)`);
+          NODE
+
+          echo 'TOONGOD LIVE SMOKE: PASS'
