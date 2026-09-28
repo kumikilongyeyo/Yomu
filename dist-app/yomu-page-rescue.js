@@ -365,8 +365,9 @@
       rescue(target);
     }, true);
 
-    /* A rescued page that loads is simply a page again. */
-    addEventListener('load', (event) => {
+    /* A rescued page that loads is simply a page again. On the document: a
+       load event fired at an element never reaches the window. */
+    document.addEventListener('load', (event) => {
       const target = event.target;
       if (target && target.tagName === 'IMG' && target.dataset?.yomuRescue) delete target.dataset.yomuRescue;
     }, true);

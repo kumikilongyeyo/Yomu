@@ -575,7 +575,10 @@
       scheduleSave();
     };
     /* load/error do not bubble; capture sees them on the way down. */
-    addEventListener('load', observe(true), true);
+    /* On the document, not the window: the DOM excludes the window from the
+       path of a load event fired at an element (so window.onload does not
+       fire per image), and a window capture listener never sees one. */
+    document.addEventListener('load', observe(true), true);
     addEventListener('error', observe(false), true);
     /* A batch still waiting when the reader leaves would be lost. */
     addEventListener('pagehide', () => { if (saveTimer) saveNow(); });

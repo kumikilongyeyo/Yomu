@@ -864,7 +864,10 @@
       open: (href, providerName) => go(href, providerName),
     };
     addEventListener('error', onImageError, true);
-    addEventListener('load', onImageLoad, true);
+    /* On the document, not the window: the DOM excludes the window from the
+       path of a load event fired at an element (so window.onload does not
+       fire per image), and a window capture listener never sees one. */
+    document.addEventListener('load', onImageLoad, true);
     document.addEventListener('click', onClick, true);
     document.addEventListener('click', onRetryClick, true);
     addEventListener('yomu:reader', onReader);

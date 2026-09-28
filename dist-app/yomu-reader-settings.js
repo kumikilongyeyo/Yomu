@@ -321,7 +321,9 @@
    */
   function inferMode(ratios, origin) {
     const values = (ratios || []).filter((r) => r > 0).sort((a, b) => a - b);
-    if (values.length < 6) return null;
+    /* Five: the page window mounts five pages at the top of a chapter, and
+       an offer that needs a sixth never comes before the reader scrolls. */
+    if (values.length < 5) return null;
     const median = values[values.length >> 1];
     if (median >= 2.2) return 'scroll';
     const pageShaped = values.filter((r) => r >= 1.2 && r <= 1.8).length / values.length;
@@ -888,12 +890,22 @@
   }
 
   let hintFor = '';
+  /* Every page of this chapter that has loaded, by index -- including pages
+     the window has since unmounted -- so the evidence grows as you read. */
+  const shapes = { key: '', byIndex: new Map() };
+  function noteShape(event) {
+    const img = event.target;
+    if (!img || img.tagName !== 'IMG' || !(img.naturalWidth > 0) || !(img.naturalHeight > 0)) return;
+    const holder = img.closest?.('[data-testid="reader-scroll"] [data-page-index], [data-testid="reader-paged"] [data-page-index]');
+    const r = reader();
+    if (!holder || !r) return;
+    const key = `${r.source}|${r.chapterId}`;
+    if (shapes.key !== key) { shapes.key = key; shapes.byIndex.clear(); }
+    shapes.byIndex.set(holder.getAttribute('data-page-index'), img.naturalHeight / img.naturalWidth);
+  }
   function measuredRatios() {
-    const out = [];
-    for (const img of document.querySelectorAll('[data-testid="reader-scroll"] [data-page-index] img, [data-testid="reader-paged"] [data-page-index] img')) {
-      if (img.naturalWidth > 0 && img.naturalHeight > 0) out.push(img.naturalHeight / img.naturalWidth);
-    }
-    return out;
+    const r = reader();
+    return r && shapes.key === `${r.source}|${r.chapterId}` ? [...shapes.byIndex.values()] : [];
   }
 
   function considerHint(r) {
@@ -954,6 +966,9 @@
     window.YomuReaderSettings = api;
     addEventListener('yomu:reader', onReader);
     addEventListener('keydown', onShortcut);
+    /* load does not bubble, and never reaches the window from an element:
+       capture on the document sees every page image arrive. */
+    document.addEventListener('load', noteShape, true);
     addEventListener('yomu:reader-settings', () => {
       const group = document.querySelector('[data-reader-comfort]');
       if (group) paintGroup(group);
@@ -962,6 +977,7 @@
        relayout for the strip, and one render for the route, which is what
        swaps in the paged view. */
     if (globalThis.__yomuReader) {
+      for (const img of document.querySelectorAll('[data-page-index] img')) if (img.complete) noteShape({ target: img });
       try { dispatchEvent(new Event('resize')); } catch {}
       if (globalThis.__yomuReader.choice && globalThis.__yomuReader.choice !== 'scroll') globalThis.__yomuReader.show?.();
       onReader();

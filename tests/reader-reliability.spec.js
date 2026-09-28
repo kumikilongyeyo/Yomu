@@ -35,8 +35,11 @@ async function open(page, baseURL, { settings = {}, pages = 160, url, before } =
   await seed(page, { baseURL });
   await page.addInitScript((value) => {
     if (!localStorage.getItem('yomu.v2.reader.settings')) localStorage.setItem('yomu.v2.reader.settings', JSON.stringify(value));
-    /* The first-use tip over the paged view is a one-time overlay. */
+    /* The first-use tip over the paged view is a one-time overlay, and the
+       fixture series is page-shaped manga, which draws the one-time offer of
+       Page mode; both have their own tests. */
     localStorage.setItem('yomu.v2.reader.pagedTip', '1');
+    if (!localStorage.getItem('yomu.v2.reader.modeHint') && !window.__keepHint) localStorage.setItem('yomu.v2.reader.modeHint', JSON.stringify({ 'local-fixtures:fx-night-archive': 'dismissed' }));
   }, settings);
   await page.route('**/fixtures/fx-night-archive/c2/manifest.json', (route) => route.fulfill({ json: manifest(`${SERIES}:c2`, pages, url) }));
   await page.route('**/fixtures/page.svg?*', (route) => route.fulfill({ contentType: 'image/svg+xml', body: SVG() }));
@@ -230,6 +233,9 @@ test('a failed page is retried quietly: no dead frame while the rescue works', a
   expect(sawDead, 'the rescue is invisible while it works').toBe(false);
   await expect.poll(() => holder.locator('img').evaluate((img) => img.naturalWidth > 0)).toBe(true);
   expect(asked).toBe(3);
+  /* Rescued is a page again: no mark left for a later error to be read against.
+     (A load event never reaches the window; this listener used to be there.) */
+  await expect.poll(() => holder.locator('img').evaluate((img) => img.dataset.yomuRescue ?? null)).toBe(null);
 });
 
 test('a page nothing can load says so -- after the rescue, not before', async ({ page, baseURL }, testInfo) => {
@@ -282,6 +288,13 @@ test('a dead page switches to another source when you reach it, at the same plac
   });
   await scrollToPage(page, 40, 0.5);
   await expect.poll(() => readerPage(page)).toBe(40);
+  /* Pages that loaded count for their source, not only pages that failed:
+     the success listener sat on the window, which a load event never reaches. */
+  await expect.poll(() => page.evaluate(() => {
+    dispatchEvent(new Event('pagehide')); /* flush the batched write */
+    const store = JSON.parse(localStorage.getItem('yomu.v1.sourceHealth') || '{}');
+    return Number(store['local-fixtures']?.page?.[0] || 0);
+  })).toBeGreaterThan(0);
   await expect(page).toHaveURL(/source=yomuext-alpha/, { timeout: 20000 });
   await expect(page.locator('#yomu-chapter-switch')).toContainText('Switched source');
   await expect(page.locator('#yomu-chapter-switch')).toContainText('Alpha Comics');
@@ -396,4 +409,20 @@ test('the reader stylesheet loads on demand, and Page mode is readable before it
   await expect.poll(() => page.evaluate(() => globalThis.YomuReaderSettings.cssReady())).toBe(true);
   await expect(page.locator('.yomu-page-arrow')).toHaveCount(2);
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.yomu-page-arrow')).borderRadius)).toBe('50%');
+});
+
+test('page-shaped manga opened in Scroll gets one offer of Page mode, and never again', async ({ page, baseURL }) => {
+  await page.addInitScript(() => { window.__keepHint = true; });
+  await open(page, baseURL);
+  const hint = page.locator('#yomu-mode-hint');
+  await expect(hint).toBeVisible({ timeout: 12000 });
+  await expect(hint).toContainText('manga pages');
+  await hint.getByRole('button', { name: 'Page mode' }).click();
+  await expect(page.getByTestId('reader-paged')).toBeVisible();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('yomu.v2.reader.modeHint'))['local-fixtures:fx-night-archive'])).toBe('accepted');
+  await page.evaluate(() => globalThis.__yomuReader.setMode('scroll'));
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => globalThis.__yomuReader?.count)).toBe(160);
+  await page.waitForTimeout(4000);
+  await expect(hint).toHaveCount(0);
 });

@@ -128,6 +128,7 @@ test('page-shaped images are only manga when the title is Japanese', () => {
   assert.equal(inferMode(ratios(1.45), 'strip'), null, 'a webtoon sliced into page-sized pieces stays a strip');
   assert.equal(inferMode(ratios(1.45), null), null, 'unknown origin, no offer');
   assert.equal(inferMode(ratios(1.45, 4), 'manga'), null, 'too few pages seen to say');
+  assert.equal(inferMode(ratios(1.45, 5), 'manga'), 'page', 'the five pages mounted at the top of a chapter are enough');
 });
 
 test('origin comes from the series category first', () => {
