@@ -144,6 +144,29 @@ test('page mode: right to left, keys, swipe, tap zones, spreads, and an end that
   await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), `${RESUME}.read`)).toContain(`${SERIES}:c2`);
   await end.getByRole('button', { name: /Next/ }).click();
   await expect(page).toHaveURL(/c3/);
+  /* A new chapter starts at its own first page, not at the old one's end. */
+  await expect.poll(() => readerPage(page)).toBe(0);
+  await expect(page.locator('.yomu-paged-end')).toHaveCount(0);
+});
+
+test('a seek the moment Page mode appears is kept, not reset to where it opened', async ({ page, baseURL }) => {
+  await open(page, baseURL);
+  await scrollToPage(page, 40);
+  await expect.poll(() => readerPage(page)).toBe(40);
+  /* WebKit runs passive effects late: a mount-time reset used to land after
+     this seek and put the reader back on page 41. */
+  await page.evaluate(() => new Promise((done) => {
+    globalThis.__yomuReader.setMode('page');
+    const poll = setInterval(() => {
+      if (!document.querySelector('[data-testid="reader-paged"]')) return;
+      clearInterval(poll);
+      dispatchEvent(new CustomEvent('yomu:seek-page', { detail: 5 }));
+      done();
+    }, 0);
+  }));
+  await expect.poll(() => readerPage(page)).toBe(5);
+  await page.waitForTimeout(600);
+  expect(await readerPage(page)).toBe(5);
 });
 
 /* --- the end of a chapter ------------------------------------------------- */

@@ -382,8 +382,20 @@
     const group = groups[g] || [index];
     const lastGroup = g >= groups.length - 1;
 
-    /* A new chapter starts where the reader said. */
-    R.useEffect(() => { setIndex(clampIndex(initialIndex)); setAtEnd(false); setDims(new Map()); }, [chapterId]);
+    /* A new chapter starts where the reader said -- on a change of chapter,
+       not on mount, where the state already starts there. As a passive
+       effect on mount it ran after paint, and WebKit runs those late: a seek
+       made just after entering Page mode (a source switch putting the place
+       back, a tap on the slider) landed first and was then reset to the page
+       the view opened on. */
+    const chapterSeen = R.useRef(chapterId);
+    R.useLayoutEffect(() => {
+      if (chapterSeen.current === chapterId) return;
+      chapterSeen.current = chapterId;
+      setIndex(clampIndex(initialIndex));
+      setAtEnd(false);
+      setDims(new Map());
+    }, [chapterId]);
 
     R.useEffect(() => {
       const fn = () => refresh((n) => n + 1);
