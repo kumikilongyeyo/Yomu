@@ -1,0 +1,27 @@
+name: ToonGod detail diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/toongod-detail-diagnostic.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect production ToonGod detail failure
+        run: |
+          set -u
+          ORIGIN='https://yomu.yomuread.workers.dev'
+          curl -L -sS "$ORIGIN/api/ext/refresh" -o /dev/null
+          ID=$(node -e "process.stdout.write(encodeURIComponent('https://www.toongod.cc/webtoon/tales-of-demons-and-gods/'))")
+          STATUS=$(curl -L -sS -w '%{http_code}' -o response.json "$ORIGIN/api/ext/source/toongod/series/$ID")
+          echo "status=$STATUS"
+          cat response.json
+          echo
+          test "$STATUS" = '200'
