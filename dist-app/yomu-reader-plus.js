@@ -269,6 +269,7 @@
     section.className = 'yomu-next yomu-next--card';
     const done = document.createElement('small');
     done.className = 'yomu-next__done';
+    done.dataset.yn = 'here';
     done.textContent = here.number ? `End of ${here.number}` : 'End of chapter';
     section.append(done);
     if (r.next) {
@@ -277,9 +278,13 @@
       const label = document.createElement('span');
       label.textContent = 'Next';
       const title = document.createElement('strong');
+      title.dataset.yn = 'next';
       title.textContent = upcoming.number || 'Next chapter';
-      go.append(label, title);
-      if (upcoming.name) { const name = document.createElement('small'); name.textContent = upcoming.name; go.append(name); }
+      const name = document.createElement('small');
+      name.dataset.yn = 'name';
+      name.textContent = upcoming.name;
+      name.hidden = !upcoming.name;
+      go.append(label, title, name);
       section.append(go);
     } else {
       const caught = document.createElement('p');
@@ -302,11 +307,16 @@
     const divider = document.createElement('div');
     divider.className = 'yomu-next__divider';
     const done = document.createElement('small');
+    done.dataset.yn = 'here';
     done.textContent = here.number ? `End of ${here.number}` : 'End of chapter';
     const title = document.createElement('strong');
+    title.dataset.yn = 'next';
     title.textContent = upcoming.number || 'Next chapter';
-    divider.append(done, title);
-    if (upcoming.name) { const name = document.createElement('span'); name.textContent = upcoming.name; divider.append(name); }
+    const name = document.createElement('span');
+    name.dataset.yn = 'name';
+    name.textContent = upcoming.name;
+    name.hidden = !upcoming.name;
+    divider.append(done, title, name);
     section.append(divider);
 
     const first = manifest.pages[0];
@@ -335,6 +345,32 @@
     return section;
   }
 
+  /**
+   * The chapter list can arrive after the tail is built (a 1,194-chapter
+   * series takes a while), which left "End of chapter / Next chapter" with no
+   * numbers. Filled in place rather than rebuilt: a rebuilt preview reloads
+   * its image and moves the page under the reader. Written only when it
+   * differs, so a document observer elsewhere is not woken for nothing.
+   */
+  function relabel(tail, r) {
+    const here = chapterName(r.series, r.chapterId);
+    const upcoming = r.next ? chapterName(r.series, r.next) : { number: '', name: '' };
+    const want = {
+      here: here.number ? `End of ${here.number}` : 'End of chapter',
+      next: upcoming.number || 'Next chapter',
+      name: upcoming.name,
+    };
+    for (const node of tail.querySelectorAll('[data-yn]')) {
+      const text = want[node.dataset.yn];
+      if (text == null) continue;
+      if (node.textContent !== text) node.textContent = text;
+      if (node.dataset.yn === 'name' && node.hidden !== !text) node.hidden = !text;
+    }
+    const img = tail.querySelector('.yomu-next__page img');
+    const alt = `${upcoming.number || 'Next chapter'}, page 1`;
+    if (img && img.alt !== alt) img.alt = alt;
+  }
+
   /** What belongs below the pages now; built once per chapter and state. */
   function paintTail() {
     const r = reader();
@@ -355,6 +391,7 @@
          stays last. Moved only when out of place, so nothing fights. */
       root.append(tail);
     }
+    relabel(tail, r);
   }
 
   function resumeKey(seriesId) {

@@ -197,6 +197,23 @@ test('continuous chapters: the next chapter starts at exactly the spot on screen
   await expect(page.locator('[data-yomu-next]')).toHaveCount(0);
 });
 
+test('the chapter-end labels fill in when the chapter list arrives late, without rebuilding', async ({ page, baseURL }) => {
+  await open(page, baseURL);
+  await scrollToPage(page, 150);
+  const preview = page.locator('[data-yomu-next="preview"]');
+  await expect(preview).toContainText('Chapter 3');
+  /* As built before a long series answered: no numbers yet. */
+  await preview.evaluate((tail) => {
+    window.__tailNode = tail;
+    tail.querySelector('[data-yn="here"]').textContent = 'End of chapter';
+    tail.querySelector('[data-yn="next"]').textContent = 'Next chapter';
+  });
+  await page.evaluate(() => dispatchEvent(new Event('yomu:reader')));
+  await expect(preview.locator('[data-yn="here"]')).toHaveText('End of Chapter 2');
+  await expect(preview.locator('[data-yn="next"]')).toHaveText('Chapter 3');
+  expect(await preview.evaluate((tail) => tail === window.__tailNode), 'the same node: the image is not reloaded').toBe(true);
+});
+
 test('with continuous chapters off, the end of a chapter is a card with the next one on it', async ({ page, baseURL }) => {
   await open(page, baseURL, { settings: { continuous: false } });
   await scrollToPage(page, 150);
