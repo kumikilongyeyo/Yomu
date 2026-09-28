@@ -23,6 +23,17 @@ const DEFAULT_MAX_ITEMS = 200;
 const HARD_MAX_ITEMS = 3000;
 const SELF = new Set(['', '.', ':scope', 'self']);
 
+const readAttribute = (el: Element, field: FieldSpec): string | null => {
+  const names = [field.attr, ...(field.attrs ?? [])].filter(
+    (name, i, all): name is string => !!name && all.indexOf(name) === i,
+  );
+  for (const name of names) {
+    const value = el.getAttribute(name);
+    if (value?.trim()) return value;
+  }
+  return null;
+};
+
 /**
  * Extract records from an HTML response.
  * With `list`, returns one record per matching element; without it, returns a
@@ -40,7 +51,6 @@ export async function extractHtml(
   let current: Record<string, string | string[]> | null = scoped ? null : {};
   if (!scoped) items.push(current!);
 
-  // Text arrives in chunks; buffer per (record, field) until the node ends.
   const buffers = new Map<string, string>();
   const bufKey = (field: string) => `${items.length}:${field}`;
 
@@ -65,25 +75,26 @@ export async function extractHtml(
         if (items.length >= maxItems) return;
         current = {};
         items.push(current);
-        // Self-referential fields (an attribute on the item element itself).
         for (const [name, f] of Object.entries(spec.fields)) {
-          if (f.selector != null && SELF.has(f.selector) && f.attr) write(name, el.getAttribute(f.attr));
+          if (f.selector != null && SELF.has(f.selector) && (f.attr || f.attrs?.length)) {
+            write(name, readAttribute(el, f));
+          }
         }
       },
     });
   }
 
   for (const [name, f] of Object.entries(spec.fields)) {
-    if (f.template != null) continue; // resolved later, from sibling fields
+    if (f.template != null) continue;
     const sel = f.selector ?? '';
-    if (scoped && SELF.has(sel) && f.attr) continue; // already handled above
+    if (scoped && SELF.has(sel) && (f.attr || f.attrs?.length)) continue;
     const full = scoped ? (SELF.has(sel) ? spec.list! : `${spec.list} ${sel}`) : sel || 'html';
 
     let handler: { element?: (e: Element) => void; text?: (t: Text) => void };
-    if (f.attr) {
+    if (f.attr || f.attrs?.length) {
       handler = {
         element(el) {
-          write(name, el.getAttribute(f.attr!));
+          write(name, readAttribute(el, f));
         },
       };
     } else {
@@ -106,18 +117,13 @@ export async function extractHtml(
     }
     try {
       rewriter = rewriter.on(full, handler as any);
-    } catch {
-      // An unsupported selector disables that one field, never the whole parse.
-    }
+    } catch {}
   }
 
-  // Driving the stream to completion is what actually runs the handlers.
   await rewriter.transform(response).arrayBuffer();
 
   const { fillTemplate, applyTransforms } = await import('./expr');
   for (const item of items) {
-    // Transforms first: a template field reads its siblings' *final* values,
-    // so `{{id}}` means the extracted id, not the raw href it came from.
     for (const [name, f] of Object.entries(spec.fields)) {
       if (f.template != null || item[name] == null) continue;
       if (f.many && Array.isArray(item[name])) {

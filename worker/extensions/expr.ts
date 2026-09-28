@@ -33,6 +33,8 @@ export interface FieldSpec {
   selector?: string;
   /** Attribute to read instead of text content (html parsers only). */
   attr?: string;
+  /** Ordered attribute fallbacks for lazy-loaded images/links; first non-empty wins. */
+  attrs?: string[];
   /** Literal template, e.g. `https://x/{{id}}.jpg`, evaluated against sibling fields. */
   template?: string;
   /** Collect every match rather than the first -- for genres, tags, alt titles. */
@@ -102,7 +104,6 @@ export function applyTransforms(input: unknown, transforms: Transform[] | undefi
   let value: unknown = input;
   for (const step of transforms ?? []) {
     if ('pluck' in step) {
-      // Lift one field out of each object in an array: `genres[].name`.
       value = Array.isArray(value)
         ? value.map((el) => (el && typeof el === 'object' ? (el as any)[step.pluck] : el)).filter((v) => v != null)
         : value;
