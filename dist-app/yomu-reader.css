@@ -33,6 +33,11 @@
 [data-reader-comfort] .yomu-rs-modes { grid-template-columns: repeat(2, 1fr); }
 [data-reader-comfort] .yomu-rs-modes .rd-mode { min-height: 46px; }
 [data-reader-comfort] .rd-switch { cursor: pointer; }
+/* The kit's off-state track is white at 15% (#ffffff26): a dark-mode literal,
+   so on Paper's glass an off switch was a white knob floating on nothing --
+   "Right to left" and the kit's own Auto-scroll alike. Ink-relative, so it
+   reads in both modes (--text has a value in each). */
+.rd-sheet .rd-switch:not(.is-on) { background: color-mix(in srgb, var(--text) 18%, transparent); }
 [data-reader-comfort] .yomu-rs-keys {
   display: block; width: 100%; min-height: 44px; margin-top: 16px; border-radius: 13px;
   border: 1px solid var(--line); background: transparent; color: var(--text);
