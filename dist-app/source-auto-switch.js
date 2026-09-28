@@ -232,13 +232,24 @@
     return release && enabled.has(toAppSource(String(release.providerId || '')));
   }
 
-  function goToRelease(release) {
+  async function goToRelease(release) {
     if (!release?.chapterId || !release?.providerId) return;
     const appSourceId = toAppSource(String(release.providerId));
     ensureSourceEnabled(appSourceId);
-    const target = new URL('/read/' + encodeURIComponent(String(release.chapterId)), location.origin);
-    target.searchParams.set('source', appSourceId);
-    location.assign(target.toString());
+    /* HTTP-adapter sources route on "<seriesId>:<chapterId>"; the ledger that
+       listed this release knows the series. A bare chapter id opens a chapter
+       with no neighbours. */
+    const data = await (discoveryPromise || ledgerPromise || Promise.resolve(null)).catch(() => null);
+    const seriesId = (data?.sources || []).find((s) => String(s.providerId) === String(release.providerId))?.seriesId;
+    const switcher = window.YomuChapterSwitch;
+    const chapter = String(release.chapterId);
+    const id = seriesId && !chapter.includes(':') ? `${seriesId}:${chapter}` : chapter;
+    const href = switcher?.routeFor?.(release, seriesId)
+      || `/read/${encodeURIComponent(id)}?source=${encodeURIComponent(appSourceId)}`;
+    closePicker();
+    /* In the reader: the app's router, and the reading position comes along. */
+    if (isReader() && switcher?.open) { switcher.open(href, release.providerName || sourceLabel(appSourceId)); return; }
+    location.assign(new URL(href, location.origin).toString());
   }
 
   function currentRow(data) {

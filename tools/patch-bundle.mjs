@@ -231,6 +231,45 @@ const EDITS = [
       '(0,e.useEffect)(()=>()=>{delete globalThis.__yomuReader},[]);' +
       'return(0,o.jsxs)',
   },
+  {
+    name: 'reader: a Save button that saves, and the router published',
+    why:
+      'A small component, defined beside the reader, for the header bookmark ' +
+      '(see the next edit). It reads the library through useCollection -- the ' +
+      'store hook the series page reads, from the collection module the reader ' +
+      'already imports as `d` -- and saves with the same saveTitle fields the ' +
+      'series page\'s Save uses; a second tap removes it.\n' +
+      'It also publishes the router on globalThis.__yomuRouter, so a chapter ' +
+      'switch opens another source\'s copy without a page load: the handoff ' +
+      'and the reader\'s state stay in memory. (Hard loads of slash ids -- Asura ' +
+      'and Flame, /read/<series>:<a>%2F<b> -- used to be "Unmatched Route"; that ' +
+      'was the asset server\'s redirect, fixed in worker/asset-path.ts.) ' +
+      'Anchored on the text AFTER the handoff wrapper\'s edit, so that edit ' +
+      'still recognises itself as applied.',
+    from: '{try{return localStorage.getItem(e)||s}catch{return s}}function C(){',
+    to:
+      '{try{return localStorage.getItem(e)||s}catch{return s}}' +
+      'function __YS({series:I,sourceId:F,seriesId:K}){const R=(0,s.useRouter)();' +
+      '(0,e.useEffect)(()=>{globalThis.__yomuRouter=R},[R]);' +
+      'const c2=(0,d.useCollection)(),k=(0,d.titleKey)(F,I?.id??K),' +
+      'n2=!!(c2?.data?.library||[]).find(t2=>(0,d.titleKey)(t2.sourceId,t2.id)===k);' +
+      'return(0,o.jsx)("button",{className:"rd-icon","aria-label":n2?"Saved to your library. Tap to remove":"Save to library",' +
+      '"aria-pressed":n2,disabled:!I,onClick:async()=>{if(!I)return;try{if(n2)await(0,d.removeTitles)([k]);' +
+      'else{const{id:a2,title:b2,author:c3,synopsis:u2,genres:g2,category:h2,cover:m2}=I;' +
+      'await(0,d.saveTitle)({id:a2,title:b2,author:c3,synopsis:u2,...g2?{genres:g2}:{},...h2?{category:h2}:{},...m2?{cover:m2}:{},' +
+      "sourceId:F,folder:'',hidden:!1,total:I.chapters?.length??0})}}catch{}}," +
+      'children:(0,o.jsx)(l.Icon,{name:n2?"bookmarkFill":"bookmark",size:20})})}' +
+      'function C(){',
+  },
+  {
+    name: 'reader: Save saves the title you are reading',
+    why:
+      'The bookmark in the reader header said "Save to library" and opened the ' +
+      'Library screen instead, leaving the chapter. It is now the component ' +
+      'above: the filled bookmark says the title is saved.',
+    from: "(0,o.jsx)(\"button\",{className:\"rd-icon\",\"aria-label\":\"Save to library\",onClick:()=>y.push('/library'),children:(0,o.jsx)(l.Icon,{name:\"bookmark\",size:20})})",
+    to: '(0,o.jsx)(__YS,{series:I,sourceId:f.id,seriesId:k})',
+  },
 
   /* --- home — app/index.web.tsx --------------------------------------- */
   {
@@ -1043,7 +1082,9 @@ if (bundleChanged) fs.writeFileSync(file, source);
  */
 {
   const SW = 'dist-app/sw.js';
-  const digest = crypto.createHash('sha256').update(source).digest('hex').slice(0, 10);
+  /* Over LF text: CI checks out LF, this machine CRLF, and a stamp that
+     depends on the checkout fails the release gate's --check. */
+  const digest = crypto.createHash('sha256').update(source.replace(/\r\n/g, '\n')).digest('hex').slice(0, 10);
   // A separate constant, not SHELL_VERSION: deploy-yomu.yml's "Verify live
   // Yomu" step greps the live sw.js for the literal SHELL_VERSION = 'v3' and
   // rolls the release back without it (it did, once, on 2026-09-24).

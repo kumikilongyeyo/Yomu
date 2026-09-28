@@ -10,6 +10,13 @@
  *   BROKEN    the reader shows its error screen, or chapter images stay dead
  *             after every rescue (the first page, or any two pages).
  *
+ *   STALLED   the manifest opened, page images were asked for, and not one
+ *             has painted after STALL_MS of visible time. No error event ever
+ *             fires for an image that simply hangs, so the two signals above
+ *             never see this chapter; it just sits there looking dead. A page
+ *             that hangs while its neighbours load is handed to page rescue as
+ *             if it had failed, and counts toward BROKEN.
+ *
  *   FIRST     a failed manifest is asked for once more, directly. A source
  *             that answers now was having a moment; its own Try again is
  *             pressed and nothing changes source. (Live, a manifest that the
@@ -17,8 +24,16 @@
  *
  *   THEN      the other sources that carry this chapter are checked -- the
  *             chapter ledger names them, yomu-integrity.js ranks them
- *             complete-first -- and the best working copy opens, with a note
- *             saying which source it came from.
+ *             complete-first -- and the best working copy opens. When images
+ *             are the problem (BROKEN pages, STALLED), a copy only counts if
+ *             one of its page images actually decoded: a manifest listing 42
+ *             pages on a dead CDN is the failure we are running from.
+ *
+ *   KEEP      the place. The page and how far into it, as a fraction of the
+ *             chapter, travel with the switch and are put back once the new
+ *             copy has laid out -- exactly when both copies have the same page
+ *             count, by fraction when they slice the strip differently. A
+ *             small note says which source it is now; nothing else shows.
  *
  *   REMEMBER  the broken chapter maps to its working copy for 12 hours. Opening
  *             it again, reloading it, or pressing Try again on it switches
@@ -43,6 +58,20 @@
       means still blank DEAD_CHECK_MS later, after any rescue in flight. */
   const DEAD_AFTER = 2;
   const DEAD_CHECK_MS = 5000;
+  /** Visible time with page images requested and none painted before the
+      other copies are checked. Checking is silent; a switch also needs a copy
+      whose own image loaded while ours did not, so a slow connection (where
+      that probe is slow too) never trades one slow copy for another. */
+  const STALL_MS = 6000;
+  /** One page still loading this long while another page finished after it
+      started is hung, not slow. Without that evidence, twice as long, and never
+      on a connection that says it is 2G or saving data. */
+  const HANG_MS = 15000;
+  const HANDOFF_KEY = 'yomu.v1.chapterSwitch.handoff';
+  const HANDOFF_MS = 90 * 1000;
+  /** A copy found by a stall check that the reader then outgrew is kept this
+      long for the dead-page path to use without searching again. */
+  const PREFOUND_MS = 2 * 60 * 1000;
 
   /* --- decisions, pure ------------------------------------------------------ */
 
@@ -75,15 +104,17 @@
   }
 
   /**
-   * The reader URL for a release. HTTP-adapter sources route on
-   * "<seriesId>:<chapterId>" -- without the series the reader opens the
-   * chapter but cannot find its neighbours -- and MangaDex on the bare id.
+   * The reader URL for a release. Every adapter routes on
+   * "<seriesId>:<chapterId>": the reader takes its series from the part before
+   * the colon, MangaDex's getManifest rejects a bare id as malformed, and an
+   * HTTP source without its series cannot find the chapter's neighbours. The
+   * ledger lists bare ids, so the series goes on here.
    */
   function routeFor(release, seriesId) {
     const provider = String(release?.providerId || '');
     const chapter = String(release?.chapterId || '');
     if (!provider || !chapter) return null;
-    const id = provider.startsWith('ext:') && seriesId && !chapter.includes(':') ? `${seriesId}:${chapter}` : chapter;
+    const id = seriesId && !chapter.includes(':') ? `${seriesId}:${chapter}` : chapter;
     return `/read/${encodeURIComponent(id)}?source=${encodeURIComponent(toAppSource(provider))}`;
   }
 
@@ -91,6 +122,65 @@
   function ledgerChapterId(routeId) {
     const i = String(routeId).indexOf(':');
     return i > 0 ? String(routeId).slice(i + 1) : String(routeId);
+  }
+
+  const clamp01 = (n) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0);
+
+  /**
+   * Where a scroll offset sits: the page whose box starts at or above it, and
+   * how far into that page, 0-1. `boxes` are { index, top, height }, top-sorted
+   * -- the reader's own layout, read off the page holders.
+   */
+  function positionOf(boxes, top) {
+    if (!boxes?.length) return { index: 0, offset: 0 };
+    let pick = boxes[0];
+    for (const box of boxes) { if (box.top <= top) pick = box; else break; }
+    return { index: pick.index, offset: clamp01(pick.height > 0 ? (top - pick.top) / pick.height : 0) };
+  }
+
+  /**
+   * The same place in a copy with `count` pages. The same count is the same
+   * slicing, so the same page; a different count means the strip was cut
+   * differently (15, 18 and 49 pages for one chapter on three sites), and only
+   * the fraction of the chapter survives.
+   */
+  function carryPosition(from, count) {
+    if (!from || !(from.count > 0) || !(count > 0)) return { index: 0, offset: 0 };
+    const offset = clamp01(from.offset);
+    if (from.count === count) return { index: Math.min(Math.max(0, from.index | 0), count - 1), offset };
+    const at = clamp01((from.index + offset) / from.count) * count;
+    const index = Math.min(count - 1, Math.floor(at));
+    return { index, offset: clamp01(at - index) };
+  }
+
+  /** A chapter whose images were asked for and none has painted. */
+  function stalled({ waited, painted, requested }) {
+    return !painted && !!requested && waited >= STALL_MS;
+  }
+
+  /** One page image that is not coming. See HANG_MS. Restarting a big page
+      that was merely slow throws its progress away, so the bar is high. */
+  function hung({ waited, loadedSince, slow }) {
+    if (waited >= 2 * HANG_MS && loadedSince) return true;
+    return !slow && waited >= 4 * HANG_MS;
+  }
+
+  /**
+   * Which checked copy to open. `checked` is best-first. When the manifest was
+   * the problem, the best ready copy. When images were, only a copy with a
+   * page that decoded (or MangaDex, trusted without a fetch): a probe that
+   * timed out is "unknown", and unknown is how the copy we are leaving looks
+   * too. Without the integrity layer there are no probes to ask, and the old
+   * rule stands.
+   */
+  function pickCopy(checked, { strict = false, probed = true, first = false } = {}) {
+    const ready = (checked || []).filter((item) => item?.ready);
+    if (!strict || !probed) return ready[0] || null;
+    /* Proof is a page that decoded -- the first page, for a stall, since that
+       is the one not painting. MangaDex is trusted without a fetch elsewhere,
+       but trust is not proof, and "unknown" is how the copy we are leaving
+       looks too. */
+    return ready.find((item) => item.probes?.first?.ok === true || (!first && item.probes?.last?.ok === true)) || null;
   }
 
   /* --- the device's memory -------------------------------------------------- */
@@ -172,7 +262,7 @@
     return m ? Number(m[1]) : null;
   }
 
-  async function findWorkingCopy(state) {
+  async function findWorkingCopy(state, kind) {
     const ledger = await ledgerFor(state);
     if (!ledger) return null;
     const provider = toProviderId(state.source);
@@ -184,42 +274,81 @@
     if (!row) return null;
 
     const saved = new Map(collectionSources().filter(Boolean).map((s) => [String(s.id), s]));
+    const seriesFor = (rel) => (ledger.sources || []).find((s) => String(s.providerId) === String(rel.providerId))?.seriesId;
     const candidates = (row.releases || [])
       .filter((rel) => String(rel.providerId) !== provider)
       .filter((rel) => { const s = saved.get(toAppSource(String(rel.providerId))); return s && s.enabled !== false; })
+      /* Not a copy already known to be broken: A -> B -> A is a loop. */
+      .filter((rel) => {
+        const k = hrefKey(routeFor(rel, seriesFor(rel)) || '');
+        const i = k.indexOf('|');
+        return !(i > 0 && remembered(k.slice(0, i), k.slice(i + 1)));
+      })
       .slice(0, 8);
     if (!candidates.length) return null;
 
-    const checked = window.YomuIntegrity
+    const probed = !!window.YomuIntegrity;
+    const checked = probed
       ? await window.YomuIntegrity.verifyAll(candidates, verifyOne, { concurrency: 3 })
       : (await Promise.all(candidates.map(verifyOne))).filter(Boolean);
-    const best = checked.find((item) => item?.ready)?.release;
+    const best = pickCopy(checked, { strict: kind !== 'manifest', probed, first: kind === 'stall' })?.release;
     if (!best) return null;
-    const seriesId = (ledger.sources || []).find((s) => String(s.providerId) === String(best.providerId))?.seriesId;
+    const seriesId = seriesFor(best);
     const href = routeFor(best, seriesId);
     return href ? { href, providerName: best.providerName || toAppSource(String(best.providerId)) } : null;
   }
 
-  /* --- telling the reader --------------------------------------------------- */
+  /* --- telling the reader --------------------------------------------------- *
+   *
+   * As little as possible. A switch that works shows the new copy and one
+   * small line saying where it came from. While the error screen is being
+   * recovered, its message and its Try again are hidden (they would be wrong
+   * in a second) and a quiet line appears only if the search takes a while.
+   * A stall is recovered with nothing on screen at all. The only thing that
+   * interrupts is every source having failed.
+   */
 
-  function note(text, { busy = false } = {}) {
+  function pill(text, ms = 0) {
     let node = document.getElementById('yomu-chapter-switch');
     if (!node) {
       node = document.createElement('div');
       node.id = 'yomu-chapter-switch';
       node.setAttribute('role', 'status');
       Object.assign(node.style, {
-        position: 'fixed', left: '50%', top: '42%', transform: 'translate(-50%, -50%)', zIndex: '2147483645',
-        maxWidth: 'min(86vw, 380px)', padding: '14px 18px', borderRadius: '16px', textAlign: 'center',
-        background: 'rgba(12,14,18,.94)', color: '#f4f6fa', boxShadow: '0 18px 50px rgba(0,0,0,.4)',
-        font: '600 14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+        position: 'fixed', left: '50%', bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))', transform: 'translateX(-50%)',
+        zIndex: '9999', maxWidth: 'min(88vw, 420px)', padding: '8px 14px', borderRadius: '999px', textAlign: 'center',
+        background: 'rgba(12,14,18,.9)', color: '#f4f6fa', boxShadow: '0 8px 28px rgba(0,0,0,.3)', pointerEvents: 'none',
+        font: '600 12.5px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', transition: 'opacity .4s',
       });
       document.body.append(node);
     }
-    node.textContent = (busy ? '↻  ' : '') + text;
+    clearTimeout(pill.timer);
+    node.style.opacity = '1';
+    node.textContent = text;
+    if (ms > 0) pill.timer = setTimeout(clearPill, ms);
     return node;
   }
-  const clearNote = (after = 0) => setTimeout(() => document.getElementById('yomu-chapter-switch')?.remove(), after);
+  function clearPill() {
+    const node = document.getElementById('yomu-chapter-switch');
+    if (!node) return;
+    node.style.opacity = '0';
+    setTimeout(() => { if (node.style.opacity === '0') node.remove(); }, 450);
+  }
+
+  let recoveringTimer = null;
+  function recovering(on) {
+    const root = document.documentElement;
+    clearTimeout(recoveringTimer);
+    if (!on) { root.removeAttribute('data-yomu-recovering'); return; }
+    if (!document.getElementById('yomu-chapter-switch-style')) {
+      const style = document.createElement('style');
+      style.id = 'yomu-chapter-switch-style';
+      style.textContent = 'html[data-yomu-recovering] .rd-stage .rd-state--bad{visibility:hidden}';
+      document.head.append(style);
+    }
+    root.setAttribute('data-yomu-recovering', '');
+    recoveringTimer = setTimeout(() => pill('Finding a working copy…'), 1200);
+  }
 
   /* --- the flow ------------------------------------------------------------- */
 
@@ -235,10 +364,62 @@
     return { source, chapterId, seriesId: i > 0 ? chapterId.slice(0, i) : (reader()?.seriesId || '') };
   }
 
+  /** The chapter key a reader href opens. */
+  function hrefKey(href) {
+    try {
+      const url = new URL(href, location.href);
+      let id = url.pathname.slice('/read/'.length);
+      try { id = decodeURIComponent(id); } catch {}
+      return keyOf(url.searchParams.get('source') || '', id);
+    } catch { return ''; }
+  }
+
+  /* Visited reader screens stay mounted at zero height, so "the" strip is the
+     one with a size. */
+  function scroller() {
+    for (const el of document.querySelectorAll('[data-testid="reader-scroll"]')) if (el.clientHeight > 0) return el;
+    return null;
+  }
+
+  /** Where the reader is now, for the next copy: { index, offset, count }. */
+  function capturePosition() {
+    const r = reader();
+    const el = scroller();
+    if (!r || !(r.count > 0) || !el) return null;
+    const boxes = [...el.querySelectorAll('[data-page-index]')]
+      .map((node) => ({ index: Number(node.getAttribute('data-page-index')), top: node.offsetTop, height: node.offsetHeight }))
+      .filter((box) => Number.isInteger(box.index))
+      .sort((a, b) => a.top - b.top);
+    const at = positionOf(boxes, el.scrollTop);
+    return { ...at, count: r.count };
+  }
+
   let running = false;
 
-  function go(href) {
+  /**
+   * Leave for another copy, taking the place along. A chapter that failed
+   * before it laid out has no place of its own; if it was itself the target
+   * of a switch, the place that switch carried is still the reader's.
+   */
+  function go(href, providerName) {
     try { performance.mark('reader:chapter-switch'); } catch {}
+    const state = currentState();
+    const prior = readJSON(sessionStorage, HANDOFF_KEY, null);
+    const inherited = prior && Date.now() - Number(prior.at || 0) < HANDOFF_MS && state && prior.to === keyOf(state.source, state.chapterId)
+      ? prior.position : null;
+    writeJSON(sessionStorage, HANDOFF_KEY, {
+      to: hrefKey(href), providerName: providerName || '', position: capturePosition() || inherited || null, at: Date.now(),
+    });
+    /* Through the app's router, not a page load: no reload, no new shell, the
+       handoff read back in memory. A page load is the fallback, and it works
+       for slash ids too (worker/asset-path.ts). See patch-bundle.mjs, "a Save
+       button that saves, and the router published". */
+    const router = reader() ? globalThis.__yomuRouter : null;
+    if (router?.replace) {
+      recovering(false);
+      clearPill();
+      try { router.replace(href); return; } catch {}
+    }
     location.replace(href);
   }
 
@@ -249,6 +430,9 @@
     return !!result.ready;
   }
 
+  /* A stall check whose chapter then started painting leaves its answer here. */
+  let prefound = null;
+
   async function handleFailure(kind) {
     const state = currentState();
     if (!state || running) return;
@@ -256,16 +440,16 @@
     const known = remembered(state.source, state.chapterId);
     const history = tried()[key] || {};
     if (!known && history.searched) return; /* already looked this visit; a reload or a press looks again */
+    /* A copy we just switched to that stalls too says the link is slow, not
+       the copy: hopping again would only restart every download. */
+    if (kind === 'stall' && (arrivedKey === key || slowLink())) return;
     running = true;
+    const loud = kind === 'manifest';
     try {
       const answers = kind === 'manifest' && !known && !history.retried ? await sourceAnswers(state) : false;
       const action = decide({ kind, known, retried: !!history.retried, sourceAnswers: answers });
 
-      if (action === 'switch-known') {
-        note(`Opening this chapter from ${known.providerName}…`, { busy: true });
-        go(known.href);
-        return;
-      }
+      if (action === 'switch-known') { go(known.href, known.providerName); return; }
       if (action === 'retry') {
         markTried(key, 'retried');
         const button = document.querySelector('.rd-state--bad .m-btn');
@@ -273,20 +457,30 @@
         return;
       }
 
-      markTried(key, 'searched');
-      note('This chapter isn’t loading here. Finding a working copy…', { busy: true });
-      const found = await findWorkingCopy(state);
-      if (currentState()?.chapterId !== state.chapterId) { clearNote(); return; }
-      if (found) {
-        remember(state.source, state.chapterId, { ...found, kind });
-        note(`Opening this chapter from ${found.providerName}…`, { busy: true });
-        go(found.href);
+      let found = prefound && prefound.key === key && Date.now() - prefound.at < PREFOUND_MS ? prefound.found : null;
+      prefound = null;
+      if (!found) {
+        if (loud) recovering(true);
+        found = await findWorkingCopy(state, kind);
+      }
+      if (currentState()?.chapterId !== state.chapterId) { recovering(false); clearPill(); return; }
+      /* The chapter came alive while we looked: keep the answer for later
+         instead of pulling the reader off a strip that is now working. */
+      if (kind === 'stall' && painting.key === key && painting.painted) {
+        if (found) prefound = { key, found, at: Date.now() };
         return;
       }
-      note('No other source has a working copy of this chapter right now.');
-      clearNote(3200);
+      markTried(key, 'searched');
+      if (found) {
+        remember(state.source, state.chapterId, { ...found, kind });
+        go(found.href, found.providerName);
+        return;
+      }
+      recovering(false);
+      if (loud || kind === 'pages') pill('No other source has a working copy of this chapter right now.', 3200);
     } catch {
-      clearNote();
+      recovering(false);
+      clearPill();
     } finally {
       running = false;
     }
@@ -294,14 +488,11 @@
 
   /* Dead pages: a page index whose image has failed DEAD_AFTER times and is
      still showing nothing a moment later -- by then page rescue has tried both
-     proxies and, where it could, another source's copy of that page. */
+     proxies and, where it could, another source's copy of that page. A hung
+     image counts as a failure here too (see watchdog). */
   const errorsByPage = new Map();
   let pagesFor = '';
-  function onImageError(event) {
-    const img = event.target;
-    if (!img || img.tagName !== 'IMG' || !reader()) return;
-    const holder = img.closest?.('[data-page-index]');
-    if (!holder) return;
+  function countFailure(holder) {
     const state = currentState();
     const chapterKey = state ? keyOf(state.source, state.chapterId) : '';
     if (pagesFor !== chapterKey) { pagesFor = chapterKey; errorsByPage.clear(); }
@@ -310,11 +501,165 @@
     errorsByPage.set(index, count);
     if (count < DEAD_AFTER) return;
     setTimeout(() => {
+      /* The reader may have moved on (or been switched) in the meantime. */
+      const now = currentState();
+      if (!now || keyOf(now.source, now.chapterId) !== chapterKey || !holder.isConnected) return;
       const still = holder.querySelector('img');
       if (still && still.complete && still.naturalWidth > 0) return;
       const dead = [...errorsByPage.entries()].filter(([, n]) => n >= DEAD_AFTER).map(([i]) => i);
       if (dead.includes(0) || dead.length >= 2) handleFailure('pages');
     }, DEAD_CHECK_MS);
+  }
+  function onImageError(event) {
+    const img = event.target;
+    if (!img || img.tagName !== 'IMG' || !reader()) return;
+    const holder = img.closest?.('[data-page-index]');
+    if (holder) countFailure(holder);
+  }
+
+  /* --- the watchdog --------------------------------------------------------- *
+   *
+   * Errors are what a broken image says. A hung one says nothing: the request
+   * never finishes, the reader's page stays "loading", and neither the error
+   * screen nor the dead-page count ever moves. So the watchdog measures the
+   * thing the reader actually wants -- a page that painted -- and counts only
+   * time the tab was visible and online, so a phone in a pocket is not a stall.
+   */
+
+  const painting = { key: '', painted: false, waited: 0, lastLoad: 0 };
+  const hangs = new WeakMap();
+  let lastTick = 0;
+
+  const pageImages = (el) => (el ? el.querySelectorAll('[data-page-index] img') : []);
+  const isPainted = (img) => img.complete && img.naturalWidth > 0;
+  const slowLink = () => {
+    const c = navigator.connection;
+    return !!c && (c.saveData || /(^|-)2g$/.test(String(c.effectiveType || '')));
+  };
+
+  /** A new chapter starts a new clock. Images can load before the first tick sees it. */
+  function track(key) {
+    if (painting.key !== key) Object.assign(painting, { key, painted: false, waited: 0, lastLoad: 0 });
+  }
+
+  function onImageLoad(event) {
+    const img = event.target;
+    if (!img || img.tagName !== 'IMG' || !reader() || !(img.naturalWidth > 0)) return;
+    if (!img.closest?.('[data-page-index]')) return;
+    const state = currentState();
+    if (!state) return;
+    track(keyOf(state.source, state.chapterId));
+    painting.painted = true;
+    painting.lastLoad = performance.now();
+    if (arrival && arrival.key === painting.key) announce();
+  }
+
+  function tick() {
+    const now = performance.now();
+    const dt = lastTick ? Math.min(now - lastTick, 2000) : 0;
+    lastTick = now;
+    const r = reader();
+    const state = r && r.count > 0 ? currentState() : null;
+    if (!state) return;
+    const key = keyOf(state.source, state.chapterId);
+    track(key);
+    if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
+
+    const images = [...pageImages(scroller())];
+    if (!painting.painted && images.some(isPainted)) painting.painted = true;
+    if (painting.painted && arrival?.key === key) announce();
+    const requested = images.some((img) => img.getAttribute('src'));
+    if (!painting.painted && requested) painting.waited += dt;
+    if (stalled({ waited: painting.waited, painted: painting.painted, requested })) {
+      painting.waited = -Infinity; /* once per chapter visit */
+      try { performance.mark('reader:stall'); } catch {}
+      handleFailure('stall');
+    }
+
+    /* Hung pages, each on its own clock. */
+    const slow = slowLink();
+    for (const img of images) {
+      const src = img.getAttribute('src') || '';
+      if (!src || img.complete) { hangs.delete(img); continue; }
+      let t = hangs.get(img);
+      if (!t || t.src !== src) { t = { src, since: now, waited: 0, handled: false }; hangs.set(img, t); }
+      t.waited += dt;
+      if (t.handled || !hung({ waited: t.waited, loadedSince: painting.lastLoad > t.since, slow })) continue;
+      t.handled = true;
+      try { performance.mark('image:hung'); } catch {}
+      const holder = img.closest('[data-page-index]');
+      /* Page rescue's next door for this image (a new src cancels the hung
+         request), and one mark toward dead for the whole-chapter path. */
+      window.YomuPageRescue?.__rescue?.(img);
+      if (holder) countFailure(holder);
+      /* No door left on this source (the src did not move): as good as a second failure. */
+      if (holder && img.getAttribute('src') === src) countFailure(holder);
+    }
+  }
+
+  /* --- arriving on the new copy --------------------------------------------- */
+
+  let arrival = null;
+  /** The chapter the last switch landed on. */
+  let arrivedKey = '';
+
+  function announce() {
+    const a = arrival;
+    arrival = null;
+    if (a?.name) pill(`Switched to ${a.name} to keep reading`, 2200);
+  }
+
+  /**
+   * Put the reader back where it was. Waits for the new strip to lay out, sets
+   * the place, and re-checks twice in case the reader's own restore landed
+   * after us -- but never once the reader has touched anything.
+   */
+  function restore(position) {
+    if (!position || (position.index === 0 && position.offset < 0.02)) return;
+    const started = performance.now();
+    let touched = false;
+    const touch = () => { touched = true; };
+    for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) addEventListener(type, touch, { capture: true, passive: true, once: true });
+    const target = () => {
+      const r = reader();
+      const el = scroller();
+      if (!r || !(r.count > 0) || !el || !el.clientWidth) return null;
+      const want = carryPosition(position, r.count);
+      const box = el.querySelector(`[data-page-index="${want.index}"]`);
+      return box ? { el, top: box.offsetTop + want.offset * box.offsetHeight } : null;
+    };
+    const apply = (slack) => {
+      const t = target();
+      if (!t) return false;
+      if (Math.abs(t.el.scrollTop - t.top) > slack(t.el)) t.el.scrollTop = t.top;
+      return true;
+    };
+    const attempt = () => {
+      if (touched) return;
+      if (apply(() => 2)) {
+        try { performance.mark('reader:chapter-switch:restored'); } catch {}
+        for (const ms of [350, 1200]) setTimeout(() => { if (!touched) apply((el) => el.clientHeight / 2); }, ms);
+        return;
+      }
+      if (performance.now() - started < 8000) requestAnimationFrame(attempt);
+    };
+    requestAnimationFrame(attempt);
+  }
+
+  function onArrival() {
+    const state = currentState();
+    const r = reader();
+    if (!state || !r || !(r.count > 0)) return;
+    const handoff = readJSON(sessionStorage, HANDOFF_KEY, null);
+    if (!handoff) return;
+    const key = keyOf(state.source, state.chapterId);
+    if (Date.now() - Number(handoff.at || 0) > HANDOFF_MS) { try { sessionStorage.removeItem(HANDOFF_KEY); } catch {} return; }
+    if (handoff.to !== key) return;
+    try { sessionStorage.removeItem(HANDOFF_KEY); } catch {}
+    arrival = { key, name: handoff.providerName };
+    arrivedKey = key;
+    restore(handoff.position);
+    if (painting.key === key && painting.painted) announce();
   }
 
   /* The error screen, by state. */
@@ -339,8 +684,7 @@
     if (known) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      note(`Opening this chapter from ${known.providerName}…`, { busy: true });
-      go(known.href);
+      go(known.href, known.providerName);
       return;
     }
     clearTried(keyOf(state.source, state.chapterId));
@@ -355,33 +699,42 @@
     if (nav?.type === 'reload') {
       clearTried(keyOf(state.source, state.chapterId));
       const known = remembered(state.source, state.chapterId);
-      if (known) { note(`Opening this chapter from ${known.providerName}…`, { busy: true }); go(known.href); }
+      if (known) go(known.href, known.providerName);
     }
   }
 
   /* A chapter whose manifest failed and now opens is not broken any more. One
-     whose *pages* died still opens its manifest fine, so that memory is kept
-     until it expires. */
+     whose *pages* died (or stalled) still opens its manifest fine, so that
+     memory is kept until it expires. */
+  let ticking = null;
   function onReader() {
     const r = reader();
     if (!r || !(r.count > 0)) return;
     if (remembered(r.source, r.chapterId)?.kind === 'manifest') forget(r.source, r.chapterId);
+    onArrival();
+    ticking ||= setInterval(tick, 1000);
   }
 
   if (browser) {
     window.YomuChapterSwitch = {
       /** yomu-source-reliability.js asks before running its own reader recovery. */
       owns: () => location.pathname.startsWith('/read/'),
-      prune, decide, routeFor, ledgerChapterId,
+      prune, decide, routeFor, ledgerChapterId, positionOf, carryPosition, stalled, hung, pickCopy,
+      /** For the console: where a switch would carry the reader right now. */
+      position: capturePosition,
+      /** Open another copy of this chapter, keeping the place (source-auto-switch.js's picker). */
+      open: (href, providerName) => go(href, providerName),
     };
     addEventListener('error', onImageError, true);
+    addEventListener('load', onImageLoad, true);
     document.addEventListener('click', onClick, true);
     addEventListener('yomu:reader', onReader);
     new MutationObserver(watch).observe(document.documentElement, { childList: true, subtree: true });
     onArrive();
     watch();
+    onReader(); /* loaded after the reader's last render: do not wait for the next */
   }
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { prune, decide, routeFor, ledgerChapterId, MEMORY_MS };
+    module.exports = { prune, decide, routeFor, ledgerChapterId, positionOf, carryPosition, stalled, hung, pickCopy, MEMORY_MS, STALL_MS, HANG_MS };
   }
 })();

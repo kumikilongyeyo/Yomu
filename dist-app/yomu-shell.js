@@ -1233,7 +1233,7 @@
       art.classList.toggle('is-empty', !record.cover);
 
       const current = chapterId === context.chapterId;
-      const state = current ? (here == null ? 'Reading' : here + '%')
+      const state = current ? (here == null ? 'Reading' : 'Reading · ' + here + '%')
         : done.has(chapterId) ? '✓' : '';
       const kind = current ? 'now' : done.has(chapterId) ? 'read' : '';
 
@@ -2873,6 +2873,79 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Where you are, in the reader's Chapters sheet
+   *
+   * The current chapter's row was tinted, and that was all. The sheet opens
+   * at the top, newest first, so on chapter 57 of 200 the tint is 143 rows
+   * away; and a search filters your own chapter out along with everything
+   * else. So the sheet opens on your chapter, and a "Reading now" line sits
+   * under the search field -- still there while you search -- that brings
+   * you back to it.
+   * ------------------------------------------------------------------ */
+  const RD_HERE_ID = 'yomu-rd-here';
+  /** The sheet we last scrolled to the current row, so it happens once per opening. */
+  let hereSheet = null;
+
+  function currentChapterButton(list) {
+    if (!list) return null;
+    const own = list.querySelector('button[data-ch][aria-current="true"]');
+    if (own) return own;
+    const context = readerContext();
+    if (!context) return null;
+    for (const button of list.querySelectorAll('button[data-ch]')) {
+      if (button.getAttribute('data-ch') === context.chapterId) return button;
+    }
+    return null;
+  }
+
+  function showCurrentChapter(smooth) {
+    const sheet = document.querySelector('.rd-sheet');
+    const button = currentChapterButton(sheet && sheet.querySelector('.rd-chapters'));
+    const row = button && (button.closest('li') || button);
+    if (row && row.style.display !== 'none') row.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  function markReaderHere() {
+    const sheet = document.querySelector('.rd-sheet');
+    const list = sheet && sheet.querySelector('.rd-chapters');
+    const head = sheet && sheet.querySelector('.rd-sheet__head');
+    const existing = document.getElementById(RD_HERE_ID);
+    const button = currentChapterButton(list);
+    if (!sheet || !head || !button) { existing?.remove(); if (!sheet) hereSheet = null; return; }
+
+    if (hereSheet !== sheet) {
+      hereSheet = sheet;
+      requestAnimationFrame(() => showCurrentChapter(false));
+    }
+
+    const name = (button.querySelector('strong')?.textContent || '').trim()
+      || 'Chapter ' + (button.getAttribute('data-n') || '');
+    const percent = /\d+%/.exec(button.querySelector('.yomu-ch__state')?.textContent || '');
+    const text = 'Reading now \u00b7 ' + name + (percent ? ' \u00b7 ' + percent[0] : '');
+
+    let chip = existing;
+    if (!chip) {
+      chip = document.createElement('button');
+      chip.id = RD_HERE_ID;
+      chip.type = 'button';
+      chip.addEventListener('click', () => {
+        const field = document.getElementById(RD_JUMP_ID);
+        if (field && field.value) {
+          field.value = '';
+          field.dispatchEvent(new Event('input'));
+        }
+        showCurrentChapter(true);
+      });
+    }
+    /* Checked before writing: this runs from the shell's MutationObserver,
+       and a write that is always a mutation never lets it settle. */
+    if (chip.parentElement !== head) head.append(chip);
+    if (chip.textContent !== text) chip.textContent = text;
+    const label = 'Go to ' + name + ', the chapter you are reading';
+    if (chip.getAttribute('aria-label') !== label) chip.setAttribute('aria-label', label);
+  }
+
+  /* ------------------------------------------------------------------ *
    * The genre row, as one control
    *
    * Nine chips in a scrolling row is still nine chips: it stopped claiming
@@ -3967,6 +4040,7 @@
     mountSeriesResume();
     mountChapterJump();
     mountReaderJump();
+    markReaderHere();
     foldGenreRow();
     foldTagRow();
     mountSearchGreeting();
