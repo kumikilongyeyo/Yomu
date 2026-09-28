@@ -39,6 +39,17 @@
  *             it again, reloading it, or pressing Try again on it switches
  *             straight away instead of failing first.
  *
+ *   ONE PAGE  a single page that page rescue gave up on (every door refused,
+ *             yomu-page-rescue.js marks it "exhausted") is left alone while it
+ *             is somewhere ahead -- and switched away from the moment the
+ *             reader gets to it, the same way as above, so the hole is never
+ *             what they look at.
+ *
+ *   SHORT     a chapter that opens with far fewer pages than this source's own
+ *             other chapters of the series (4 after 45 and 47) is checked
+ *             against the other sources in the background. If one has the whole
+ *             chapter, a small line offers it; nothing moves on its own.
+ *
  * Only sources the reader has saved and not disabled are candidates: the app
  * says "This source was removed" for one it does not know, and a disabled
  * source was disabled on purpose.
@@ -231,7 +242,7 @@
       return { release, ready: native, pageCount: Number(release?.pageCount || 0), trustedNative: native };
     }
     try {
-      const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(12000) });
+      const response = await fetch(url, { cache: 'no-store', headers: { 'x-yomu-quiet': '1' }, signal: AbortSignal.timeout(12000) });
       const body = response.ok ? await response.json().catch(() => null) : null;
       const pages = Array.isArray(body?.pages) ? body.pages : [];
       return { release, ready: response.ok && pages.length > 0, pageCount: pages.length, pages };
@@ -251,7 +262,7 @@
       params.set('title', title);
     }
     params.set('prefer', toProviderId(state.source));
-    const response = await fetch(`/api/catalog/chapters?${params}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+    const response = await fetch(`/api/catalog/chapters?${params}`, { cache: 'no-store', headers: { 'x-yomu-quiet': '1' }, signal: AbortSignal.timeout(20000) });
     const body = response.ok ? await response.json().catch(() => null) : null;
     return Array.isArray(body?.rows) ? body : null;
   }
@@ -262,7 +273,7 @@
     return m ? Number(m[1]) : null;
   }
 
-  async function findWorkingCopy(state, kind) {
+  async function findWorkingCopy(state, kind, { atLeast = 0 } = {}) {
     const ledger = await ledgerFor(state);
     if (!ledger) return null;
     const provider = toProviderId(state.source);
@@ -291,11 +302,62 @@
     const checked = probed
       ? await window.YomuIntegrity.verifyAll(candidates, verifyOne, { concurrency: 3 })
       : (await Promise.all(candidates.map(verifyOne))).filter(Boolean);
-    const best = pickCopy(checked, { strict: kind !== 'manifest', probed, first: kind === 'stall' })?.release;
+    /* A short copy is only worth leaving for a complete one with more pages. */
+    const pick = kind === 'short'
+      ? checked.find((item) => item?.ready && item.grade === 'complete' && Number(item.pageCount || 0) >= atLeast)
+      : pickCopy(checked, { strict: kind !== 'manifest', probed, first: kind === 'stall' });
+    const best = pick?.release;
     if (!best) return null;
     const seriesId = seriesFor(best);
     const href = routeFor(best, seriesId);
-    return href ? { href, providerName: best.providerName || toAppSource(String(best.providerId)) } : null;
+    return href ? { href, providerName: best.providerName || toAppSource(String(best.providerId)), pageCount: Number(pick.pageCount || 0) } : null;
+  }
+
+  /* --- a copy with most of its pages missing ------------------------------------ */
+
+  let shortChecked = '';
+  function checkShort(r) {
+    const state = currentState();
+    if (!state || !window.YomuIntegrity?.checkCount || !(r.count > 0)) return;
+    const key = keyOf(state.source, state.chapterId);
+    if (shortChecked === key) return;
+    shortChecked = key;
+    const seriesId = state.seriesId || r.seriesId || '';
+    if (!seriesId) return;
+    let short = false;
+    try { short = window.YomuIntegrity.checkCount(state.source, seriesId, state.chapterId, r.count); } catch {}
+    if (!short || tried()[key]?.short) return;
+    markTried(key, 'short');
+    offerComplete(state, r.count);
+  }
+
+  async function offerComplete(state, count) {
+    let found = null;
+    try { found = await findWorkingCopy(state, 'short', { atLeast: Math.max(count * 2, count + 6) }); } catch {}
+    const now = currentState();
+    if (!found || !now || keyOf(now.source, now.chapterId) !== keyOf(state.source, state.chapterId)) return;
+    try { performance.mark('reader:short-copy'); } catch {}
+    document.getElementById('yomu-short-offer')?.remove();
+    const offer = document.createElement('div');
+    offer.id = 'yomu-short-offer';
+    offer.className = 'yomu-short-offer';
+    offer.setAttribute('role', 'status');
+    const text = document.createElement('span');
+    const pages = found.pageCount ? ` (${found.pageCount} pages)` : '';
+    text.textContent = `This copy has only ${count} page${count === 1 ? '' : 's'}. ${found.providerName} has the whole chapter${pages}.`;
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.textContent = 'Open it';
+    open.addEventListener('click', () => { offer.remove(); go(found.href, found.providerName, null); });
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'yomu-short-offer__x';
+    close.setAttribute('aria-label', 'Keep this copy');
+    close.textContent = '×';
+    close.addEventListener('click', () => offer.remove());
+    offer.append(text, open, close);
+    document.body.append(offer);
+    setTimeout(() => offer.remove(), 14000);
   }
 
   /* --- telling the reader --------------------------------------------------- *
@@ -315,8 +377,10 @@
       node.id = 'yomu-chapter-switch';
       node.setAttribute('role', 'status');
       Object.assign(node.style, {
+        /* max-content: fixed at left:50%, shrink-to-fit only has the right
+           half of the screen, and one short line wrapped into two. */
         position: 'fixed', left: '50%', bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))', transform: 'translateX(-50%)',
-        zIndex: '9999', maxWidth: 'min(88vw, 420px)', padding: '8px 14px', borderRadius: '999px', textAlign: 'center',
+        zIndex: '9999', width: 'max-content', maxWidth: 'min(88vw, 420px)', padding: '8px 14px', borderRadius: '999px', textAlign: 'center',
         background: 'rgba(12,14,18,.9)', color: '#f4f6fa', boxShadow: '0 8px 28px rgba(0,0,0,.3)', pointerEvents: 'none',
         font: '600 12.5px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', transition: 'opacity .4s',
       });
@@ -380,6 +444,10 @@
     for (const el of document.querySelectorAll('[data-testid="reader-scroll"]')) if (el.clientHeight > 0) return el;
     return null;
   }
+  /* Where the page images are: the strip, or the paged view. */
+  function stage() {
+    return scroller() || [...document.querySelectorAll('[data-testid="reader-paged"]')].find((el) => el.clientHeight > 0) || null;
+  }
 
   /** Where the reader is now, for the next copy: { index, offset, count }. */
   function capturePosition() {
@@ -402,14 +470,20 @@
    * before it laid out has no place of its own; if it was itself the target
    * of a switch, the place that switch carried is still the reader's.
    */
-  function go(href, providerName) {
+  function sourceName(appSourceId) {
+    const source = collectionSources().find((s) => String(s?.id) === String(appSourceId));
+    return String(source?.name || source?.label || '').trim();
+  }
+
+  function go(href, providerName, position) {
     try { performance.mark('reader:chapter-switch'); } catch {}
     const state = currentState();
     const prior = readJSON(sessionStorage, HANDOFF_KEY, null);
     const inherited = prior && Date.now() - Number(prior.at || 0) < HANDOFF_MS && state && prior.to === keyOf(state.source, state.chapterId)
       ? prior.position : null;
     writeJSON(sessionStorage, HANDOFF_KEY, {
-      to: hrefKey(href), providerName: providerName || '', position: capturePosition() || inherited || null, at: Date.now(),
+      to: hrefKey(href), providerName: providerName || '', fromName: state ? sourceName(state.source) : '',
+      position: position !== undefined ? position : capturePosition() || inherited || null, at: Date.now(),
     });
     /* Through the app's router, not a page load: no reload, no new shell, the
        handoff read back in memory. A page load is the fallback, and it works
@@ -478,7 +552,8 @@
         return;
       }
       recovering(false);
-      if (loud || kind === 'pages') pill('No other source has a working copy of this chapter right now.', 3200);
+      if (loud) pill('No other source has a working copy of this chapter right now.', 3200);
+      else if (kind === 'pages') pill(deadNote(), 3600);
     } catch {
       recovering(false);
       clearPill();
@@ -492,11 +567,47 @@
      proxies and, where it could, another source's copy of that page. A hung
      image counts as a failure here too (see watchdog). */
   const errorsByPage = new Map();
+  /** Pages of this chapter nothing could load: index -> true. */
+  const deadPages = new Set();
   let pagesFor = '';
-  function countFailure(holder) {
+  function chapterPages() {
     const state = currentState();
     const chapterKey = state ? keyOf(state.source, state.chapterId) : '';
-    if (pagesFor !== chapterKey) { pagesFor = chapterKey; errorsByPage.clear(); }
+    if (pagesFor !== chapterKey) { pagesFor = chapterKey; errorsByPage.clear(); deadPages.clear(); }
+    return chapterKey;
+  }
+
+  /**
+   * The chapter as a whole is broken when its first page is dead or two pages
+   * are; a single dead page is only worth leaving for once the reader is at it.
+   */
+  function judgeDead() {
+    const dead = [...deadPages];
+    if (!dead.length) return;
+    if (dead.includes(0) || dead.length >= 2) { handleFailure('pages'); return; }
+    const r = reader();
+    if (r && dead.some((i) => Math.abs(i - (Number(r.page) || 0)) <= 1)) handleFailure('pages');
+  }
+
+  function deadNote() {
+    const dead = [...deadPages].sort((a, b) => a - b);
+    if (dead.length === 1) return `Page ${dead[0] + 1} could not be loaded from any source right now.`;
+    return 'No other source has a working copy of this chapter right now.';
+  }
+
+  function markDead(holder) {
+    const index = Number(holder.getAttribute('data-page-index'));
+    if (!Number.isInteger(index) || deadPages.has(index)) return;
+    deadPages.add(index);
+    try { performance.mark(`reader:dead-page:${index}`); } catch {}
+    judgeDead();
+  }
+
+  /* An image page rescue does not handle (not one of this origin's proxied
+     pages) has no ladder to wait for: two errors and still blank a moment
+     later is dead, the old rule. */
+  function countFailure(holder) {
+    const chapterKey = chapterPages();
     const index = Number(holder.getAttribute('data-page-index'));
     const count = (errorsByPage.get(index) || 0) + 1;
     errorsByPage.set(index, count);
@@ -507,15 +618,31 @@
       if (!now || keyOf(now.source, now.chapterId) !== chapterKey || !holder.isConnected) return;
       const still = holder.querySelector('img');
       if (still && still.complete && still.naturalWidth > 0) return;
-      const dead = [...errorsByPage.entries()].filter(([, n]) => n >= DEAD_AFTER).map(([i]) => i);
-      if (dead.includes(0) || dead.length >= 2) handleFailure('pages');
+      if (still?.dataset?.yomuRescue === 'pending') return; /* rescue will say when it is done */
+      markDead(holder);
     }, DEAD_CHECK_MS);
   }
   function onImageError(event) {
     const img = event.target;
     if (!img || img.tagName !== 'IMG' || !reader()) return;
     const holder = img.closest?.('[data-page-index]');
-    if (holder) countFailure(holder);
+    if (!holder) return;
+    /* After page rescue's own listener, whatever order the two loaded in. */
+    queueMicrotask(() => {
+      chapterPages();
+      const rescue = img.dataset?.yomuRescue;
+      if (rescue === 'pending') return;
+      if (rescue === 'exhausted') { markDead(holder); return; }
+      countFailure(holder);
+    });
+  }
+  /* The reader's own Retry is a new start for that page. */
+  function onRetryClick(event) {
+    const holder = event.target?.closest?.('[data-page-index]');
+    if (!holder || !event.target.closest('button')) return;
+    const index = Number(holder.getAttribute('data-page-index'));
+    deadPages.delete(index);
+    errorsByPage.delete(index);
   }
 
   /* --- the watchdog --------------------------------------------------------- *
@@ -566,7 +693,7 @@
     track(key);
     if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
 
-    const images = [...pageImages(scroller())];
+    const images = [...pageImages(stage())];
     if (!painting.painted && images.some(isPainted)) painting.painted = true;
     if (painting.painted && arrival?.key === key) announce();
     const requested = images.some((img) => img.getAttribute('src'));
@@ -590,11 +717,13 @@
       try { performance.mark('image:hung'); } catch {}
       const holder = img.closest('[data-page-index]');
       /* Page rescue's next door for this image (a new src cancels the hung
-         request), and one mark toward dead for the whole-chapter path. */
+         request). When rescue took it, its ladder decides; otherwise two marks
+         toward dead, the old rule. */
       window.YomuPageRescue?.__rescue?.(img);
-      if (holder) countFailure(holder);
-      /* No door left on this source (the src did not move): as good as a second failure. */
-      if (holder && img.getAttribute('src') === src) countFailure(holder);
+      if (holder && img.dataset?.yomuRescue !== 'pending') {
+        countFailure(holder);
+        if (img.getAttribute('src') === src) countFailure(holder);
+      }
     }
   }
 
@@ -607,7 +736,8 @@
   function announce() {
     const a = arrival;
     arrival = null;
-    if (a?.name) pill(`Switched to ${a.name} to keep reading`, 2200);
+    if (!a?.name) return;
+    pill(a.from && a.from !== a.name ? `Switched source · ${a.from} → ${a.name}` : `Switched source · ${a.name}`, 2600);
   }
 
   /**
@@ -660,7 +790,7 @@
     if (Date.now() - Number(handoff.at || 0) > HANDOFF_MS) { try { sessionStorage.removeItem(HANDOFF_KEY); } catch {} return; }
     if (handoff.to !== key) return;
     try { sessionStorage.removeItem(HANDOFF_KEY); } catch {}
-    arrival = { key, name: handoff.providerName };
+    arrival = { key, name: handoff.providerName, from: handoff.fromName || '' };
     arrivedKey = key;
     restore(handoff.position);
     if (painting.key === key && painting.painted) announce();
@@ -717,6 +847,10 @@
     if (remembered(r.source, r.chapterId)?.kind === 'manifest') forget(r.source, r.chapterId);
     onArrival();
     ticking ||= setInterval(tick, 1000);
+    checkShort(r);
+    /* The reader moved: a lone dead page may be the one it is at now. */
+    if (deadPages.size && pagesFor === keyOf(r.source, r.chapterId)) judgeDead();
+    if (document.getElementById('yomu-short-offer') && shortChecked !== keyOf(r.source, r.chapterId)) document.getElementById('yomu-short-offer')?.remove();
   }
 
   if (browser) {
@@ -732,6 +866,7 @@
     addEventListener('error', onImageError, true);
     addEventListener('load', onImageLoad, true);
     document.addEventListener('click', onClick, true);
+    document.addEventListener('click', onRetryClick, true);
     addEventListener('yomu:reader', onReader);
     new MutationObserver(watch).observe(document.documentElement, { childList: true, subtree: true });
     onArrive();

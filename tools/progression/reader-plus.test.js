@@ -68,3 +68,35 @@ test('reaching the top of the chapter always shows the chrome', () => {
 test('the thresholds are asymmetric: quicker to come back than to leave', () => {
   assert.ok(SHOW_AFTER < HIDE_AFTER);
 });
+
+/* --- the reliability pass ---------------------------------------------------- */
+
+const { handoffOffset, chapterName } = await import('../../dist-app/yomu-reader-plus.js');
+
+test('the next chapter is asked for at 70% and warmed at 85%', () => {
+  assert.equal(nextChapterStage(26, 40), 'none', '67%');
+  assert.equal(nextChapterStage(27, 40), 'manifest', '70%');
+  assert.equal(nextChapterStage(32, 40), 'manifest', 'page 33 of 40 is 82.5%');
+  assert.equal(nextChapterStage(33, 40), 'images', 'page 34 of 40 is exactly 85%');
+  assert.equal(nextChapterStage(34, 40), 'images', '87.5%');
+});
+
+test('warming starts past the real end of the mounted window when there is one', () => {
+  assert.deepEqual(aheadPages(10, 40, 2, 12), [13, 14]);
+  assert.deepEqual(aheadPages(10, 40, 2), [14, 15], 'without one, the bundle\'s own +/-3');
+});
+
+test('moving into the next chapter keeps the spot on screen', () => {
+  assert.equal(handoffOffset(900, 1000, 2000), null, 'still above its first page');
+  assert.equal(handoffOffset(1000, 1000, 2000), 0);
+  assert.equal(handoffOffset(1500, 1000, 2000), 0.25);
+  assert.ok(handoffOffset(9000, 1000, 2000) < 1, 'never past the page it hands over');
+  assert.equal(handoffOffset(1500, 1000, 0), null, 'an image with no height yet is not a place');
+});
+
+test('chapters are named from the series the reader loaded', () => {
+  const series = { chapters: [{ id: 'a:c12', number: 12, name: '12' }, { id: 'a:c13', number: 13, name: 'The Gate' }] };
+  assert.deepEqual(chapterName(series, 'a:c12'), { number: 'Chapter 12', name: '' }, 'a name that is just the number is not repeated');
+  assert.deepEqual(chapterName(series, 'a:c13'), { number: 'Chapter 13', name: 'The Gate' });
+  assert.deepEqual(chapterName(null, 'x'), { number: '', name: '' });
+});

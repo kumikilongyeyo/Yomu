@@ -173,10 +173,19 @@
           }
         : { chapterId: anchor.chapterId };
 
+      /* How far into that page, when the anchor is at the page the index
+         names -- the panel, not just the page, on the other device. Old
+         clients ignore the field; the server keeps what it is sent. */
+      const offset = fromIndex.page && anchor.chapterId === fromIndex.chapterId
+        && Number(anchor.pageIndex) === fromIndex.page - 1 && Number(anchor.offsetInPage) > 0
+        ? Math.round(Math.min(1, Number(anchor.offsetInPage)) * 1000) / 1000
+        : undefined;
+
       out.push({
         seriesId,
         sourceId: record.sourceId,
         ...fromIndex,
+        ...(offset ? { offset } : {}),
         read: Array.isArray(read) ? read : [],
         updatedAt: Number(anchor.updatedAtLocal) || Date.now(),
       });
@@ -472,14 +481,20 @@
         || mine.chapterId !== entry.chapterId
         || (Number(entry.page) || 0) > (Number(mine.pageIndex) || 0) + 1;
       if (ahead) {
+        const pageIndex = Math.max(0, (Number(entry.page) || 1) - 1);
+        /* The reader resolves an anchor by its page key before its index, so
+           keeping this device's key -- for the page it was on, often in
+           another chapter -- reopened the old page and ignored the synced
+           one. The key only survives when it names the same page. */
+        const samePage = !!mine && mine.chapterId === entry.chapterId && Number(mine.pageIndex) === pageIndex;
         writeJSON(key, {
           sourceSeriesId: entry.seriesId,
           anchor: {
             schema: 'yomu.reading-anchor/1',
             chapterId: entry.chapterId,
-            pageKey: mine?.pageKey ?? null,
-            pageIndex: Math.max(0, (Number(entry.page) || 1) - 1),
-            offsetInPage: 0,
+            pageKey: samePage ? (mine.pageKey ?? null) : null,
+            pageIndex,
+            offsetInPage: Math.min(1, Math.max(0, Number(entry.offset) || 0)),
             manifestVersion: mine?.manifestVersion ?? 'synced',
             pageListVersion: Number(entry.pages) || 0,
             updatedAtLocal: Number(entry.updatedAt) || Date.now(),

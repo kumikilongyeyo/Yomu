@@ -286,6 +286,89 @@
       .map(({ item }) => item);
   }
 
+  /* --- labels for the source picker ----------------------------------------- *
+   *
+   * One of each, by rank, not one per row: a picker where every complete copy
+   * says "Recommended" recommends nothing. The best-ranked complete copy is
+   * Recommended; a complete copy that answered clearly faster than it is
+   * Fast; the other complete copies are Complete; anything the checks could
+   * not vouch for is Backup, and says why when it knows.
+   */
+  function pickerLabels(items) {
+    const ready = (items || []).filter((item) => item?.ready);
+    const complete = ready.filter((item) => item.grade === 'complete');
+    const labels = new Map();
+    if (complete.length) {
+      const best = complete[0];
+      labels.set(best, 'Recommended');
+      const rest = complete.slice(1);
+      const quickest = rest.filter((item) => item.ms > 0).sort((a, b) => a.ms - b.ms)[0];
+      const bar = best.ms > 0 ? best.ms * 0.75 : Infinity;
+      if (quickest && quickest.ms < bar) labels.set(quickest, 'Fast');
+      for (const item of rest) if (!labels.has(item)) labels.set(item, 'Complete');
+    }
+    for (const item of ready) {
+      if (labels.has(item)) continue;
+      labels.set(item, item.grade === 'suspect' ? 'Backup · may be incomplete' : 'Backup');
+    }
+    return labels;
+  }
+
+  /* --- two sources that cut a chapter the same way ------------------------- */
+
+  /** A learned ratio within 4% of one: the same page count, chapter after chapter. */
+  function sameSlicing(layout, p, q) {
+    const ratio = learnedRatio(layout, p, q);
+    return ratio != null && Math.abs(ratio) < Math.log(1.04);
+  }
+
+  /* --- a copy shorter than its own source's other chapters ------------------ *
+   *
+   * The one comparison that is fair without any learning: a source against
+   * itself. Its chapters of one series are cut the same way, so 4 pages after
+   * 45 and 47 is a copy with most of its pages missing -- the case that loads
+   * fine, returns 200, and leaves half the chapter out.
+   */
+  const COUNTS_KEY = 'yomu.v1.chapterCounts';
+  const COUNTS_PER_SERIES = 10;
+  const COUNTS_MAX_SERIES = 200;
+
+  function shortAgainstHistory(count, history) {
+    const prior = (history || []).map(Number).filter((n) => n > 0);
+    if (prior.length < 2 || !(count > 0)) return false;
+    const usual = median(prior);
+    return usual >= 8 && count <= Math.max(3, usual * 0.35);
+  }
+
+  /** The counts this source gave for its other chapters of the series (oldest first). */
+  function countsFor(store, key, chapterId) {
+    const entry = store?.[key];
+    if (!entry || typeof entry.c !== 'object') return [];
+    return Object.entries(entry.c).filter(([id]) => id !== chapterId).map(([, n]) => Number(n));
+  }
+
+  function noteCount(store, key, chapterId, count, suspect, now = Date.now()) {
+    if (!key || !chapterId || !(count > 0)) return store;
+    const entry = store[key] && typeof store[key].c === 'object' ? store[key] : { c: {} };
+    /* A short copy is not what this source usually does; remembering it would
+       teach the history to expect the next short one. */
+    if (suspect) delete entry.c[chapterId];
+    else {
+      delete entry.c[chapterId];
+      entry.c[chapterId] = count;
+      const ids = Object.keys(entry.c);
+      for (const old of ids.slice(0, Math.max(0, ids.length - COUNTS_PER_SERIES))) delete entry.c[old];
+    }
+    entry.at = now;
+    store[key] = entry;
+    const keys = Object.keys(store);
+    if (keys.length > COUNTS_MAX_SERIES) {
+      keys.sort((a, b) => Number(store[a]?.at || 0) - Number(store[b]?.at || 0));
+      for (const old of keys.slice(0, keys.length - COUNTS_MAX_SERIES)) delete store[old];
+    }
+    return store;
+  }
+
   const KIND_RANK = { extension: 0, native: 1, suwayomi: 2 };
 
   /**
@@ -498,6 +581,8 @@
     addEventListener('pagehide', () => { if (saveTimer) saveNow(); });
   }
 
+  const readCounts = () => { try { const v = JSON.parse(localStorage.getItem(COUNTS_KEY) || 'null'); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
+
   if (typeof window !== 'undefined') {
     window.YomuIntegrity = {
       verifyAll,
@@ -505,6 +590,22 @@
       rank: (items) => rank(items, load()),
       rankSources: (sources) => rankSources(sources, load()),
       health: (providerId) => healthOf(load(), toProviderId(providerId)),
+      /** Picker labels for ranked, verified copies: Map(item -> label). */
+      labels: pickerLabels,
+      /** Whether two providers cut this device's shared chapters identically. */
+      sameSlicing: (p, q) => sameSlicing(loadLayout(), toProviderId(p), toProviderId(q)),
+      /**
+       * A chapter the reader just opened: is it much shorter than this source's
+       * other chapters of the series? Records it either way (unless short).
+       */
+      checkCount: (sourceId, seriesId, chapterId, count) => {
+        const key = `${toProviderId(sourceId)}|${seriesId}`;
+        const store = readCounts();
+        const short = shortAgainstHistory(count, countsFor(store, key, chapterId));
+        noteCount(store, key, chapterId, count, short);
+        try { localStorage.setItem(COUNTS_KEY, JSON.stringify(store)); } catch {}
+        return short;
+      },
       /** For the console: every source this device has seen, best first. */
       snapshot: () => Object.keys(load())
         .map((id) => ({ id, health: Math.round(healthOf(load(), id) * 100) }))
@@ -513,6 +614,6 @@
   }
   /* An object literal: Node's CJS lexer reads named exports statically. */
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { assess, rank, rankSources, verifyAll, healthOf, record, recordLatency, median, latencyScore, learnLayout, learnedRatio, HALF_LIFE_MS, TINY_WIDTH };
+    module.exports = { assess, rank, rankSources, verifyAll, healthOf, record, recordLatency, median, latencyScore, learnLayout, learnedRatio, pickerLabels, sameSlicing, shortAgainstHistory, countsFor, noteCount, HALF_LIFE_MS, TINY_WIDTH };
   }
 })();

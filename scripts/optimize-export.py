@@ -15,12 +15,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist-app"
 
 COMMON = [
-    '<script src="/yomu-reader-settings.js" defer></script>',
-    '<script src="/yomu-integrity.js" defer></script>',
-    '<script src="/yomu-reader-plus.js" defer></script>',
-    '<script src="/yomu-page-rescue.js" defer></script>',
-    '<script src="/yomu-chapter-switch.js" defer></script>',
-
     # The rails, the ratings and Mori all read graphql.anilist.co straight from
     # the browser -- it answers a Cloudflare Worker with 403, so the page is the
     # only thing that can ask. Opening the connection while the rest of the head
@@ -90,6 +84,15 @@ SEARCH = [
 ]
 
 READER = [
+    # The reading helpers, for a reader or series page served as its own
+    # document. Everywhere else yomu-fabric-route.js loads them on entering
+    # /read/ or /series/ (READING_SCRIPTS) -- never on every page: Home's warm
+    # revisit budget has no room for five scripts it does not use.
+    '<script src="/yomu-reader-settings.js" defer></script>',
+    '<script src="/yomu-integrity.js" defer></script>',
+    '<script src="/yomu-reader-plus.js" defer></script>',
+    '<script src="/yomu-page-rescue.js" defer></script>',
+    '<script src="/yomu-chapter-switch.js" defer></script>',
     '<script src="/yomu-performance.js" defer></script>',
     '<script src="/source-auto-switch.js" defer></script>',
     '<script src="/yomu-source-reliability.js" defer></script>',

@@ -514,7 +514,21 @@
       });
     }
 
-    return [...byId.values()].sort((a, b) => b.at - a.at).slice(0, MAX_CARDS);
+    /* One card per title. A chapter that switched to another source's copy
+       is the same title under a second series id, and two cards for it --
+       one of them stale -- is the Continue row contradicting itself. The
+       newest wins; untitled rows are left alone, there is no name to match. */
+    const seenTitles = new Set();
+    return [...byId.values()]
+      .sort((a, b) => b.at - a.at)
+      .filter((item) => {
+        const name = String(item.title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (!name || name === 'untitled') return true;
+        if (seenTitles.has(name)) return false;
+        seenTitles.add(name);
+        return true;
+      })
+      .slice(0, MAX_CARDS);
   }
 
   /* --- selection ------------------------------------------------------- */
@@ -1022,6 +1036,11 @@
    * bottom. The tolerance covers sub-pixel heights and elastic overscroll.
    */
   function atChapterEnd() {
+    /* Page mode has no strip to reach the foot of: its last screen, or the
+       end panel after it, is the end (yomu-reader-settings.js sets this). */
+    const paged = document.querySelector('[data-testid="reader-paged"]');
+    if (paged) return paged.getAttribute('data-at-end') === '1';
+
     const scroller = document.querySelector('[data-testid="reader-scroll"]');
     if (!scroller) return false;
 
@@ -1945,8 +1964,10 @@
     note.id = IMM_HINT_KEY;
     note.className = 'yomu-imm-note';
     note.setAttribute('role', 'status');
+    /* One tap now (patch-bundle.mjs, "one tap toggles the chrome, and leaves
+       immersive first"); this still said double. */
     note.textContent = window.matchMedia?.('(pointer: coarse)').matches
-      ? 'Double-tap to exit' : 'Double-click to exit';
+      ? 'Tap to exit' : 'Click to exit';
     document.body.append(note);
 
     setTimeout(() => {

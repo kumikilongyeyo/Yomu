@@ -27,14 +27,147 @@ const BUNDLE_DIR = 'dist-app/_expo/static/js/web';
 const check = process.argv.includes('--check');
 
 const EDITS = [
-{"name": "reader: keep current page when changing mode", "why": "Switching between scroll and paged views must not reset the reading position.", "from": "H?.pageIndex??0,initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition", "to": "(globalThis.__yomuReader?.chapterId===v&&globalThis.__yomuReader?.count>0&&globalThis.__yomuReader?.mode!==Q?globalThis.__yomuReader.page:H?.pageIndex??0),initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition"},
-{"name": "reader: MangaDex data saver images", "why": "Use the source-provided smaller variant when requested.", "from": "url:`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`})),delivery:", "to": "dataSaverUrl:s.chapter?.dataSaver?.[a]?`/api/img?u=${encodeURIComponent(`${u}/data-saver/${c}/${s.chapter.dataSaver[a]}`)}`:null,url:(`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`)})),delivery:"},
-{"name": "reader: bounded mounted pages", "why": "Reader reliability and comfort controls.", "from": "const H=(0,n.mountedRange)(E,h.length,t.MOUNT_RADIUS);", "to": "const H=globalThis.YomuReaderSettings?.windowRange(E,h.length)??(0,n.mountedRange)(E,h.length,3);"},
-{"name": "reader: adjustable width", "why": "Reader reliability and comfort controls.", "from": "Math.min(e.clientWidth,l);S", "to": "Math.min(e.clientWidth,globalThis.YomuReaderSettings?.prefs.width||l);T(e=>new Map(e));S"},
-{"name": "reader: paged seek", "why": "Reader reliability and comfort controls.", "from": "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);s&&a&&s.scrollTo", "to": "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);globalThis.dispatchEvent(new CustomEvent(\"yomu:seek-page\",{detail:e}));s&&a&&s.scrollTo"},
-{"name": "reader: true paged component", "why": "Reader reliability and comfort controls.", "from": "(0,o.jsx)(a.ChapterReader,{adapter:f,pages:J,chapterId:v,initialIndex:", "to": "(0,o.jsx)(Q===\"page\"&&globalThis.YomuReaderSettings?globalThis.YomuReaderSettings.Paged:a.ChapterReader,{React:e,spread:V,adapter:f,pages:J,chapterId:v,initialIndex:"},
-{"name": "reader: quality-aware page urls", "why": "Reader reliability and comfort controls.", "from": "uri:c.resolveImageUri(n),width:j", "to": "uri:globalThis.YomuReaderSettings?.uri(c,n)??c.resolveImageUri(n),width:j"},
-{"name": "reader: no hidden keyboard navigation", "why": "Reader reliability and comfort controls.", "from": "const e=e=>{if('ArrowRight'===e.key", "to": "const e=e=>{if(e.defaultPrevented||e.target.closest?.(\"input,select,textarea,button,[contenteditable],.rd-sheet\"))return;if('ArrowRight'===e.key"},
+  /* --- reader reliability — yomu-reader-settings.js is the other half -- *
+   *
+   * Every hook into YomuReaderSettings is optional-chained with the bundle's
+   * own behaviour as the fallback, because that file loads on demand
+   * (yomu-fabric-route.js, READING_SCRIPTS) and can arrive after the reader's
+   * first render. When it does arrive late it nudges a re-render itself.
+   */
+  {
+    name: 'reader: keep current page when changing mode',
+    why:
+      'Switching between Scroll and Page remounts the page component, which ' +
+      'would start again from the saved anchor -- the position of the last ' +
+      'debounced save, not the page on screen. The page the reader is showing ' +
+      'wins while the chapter is the same.',
+    from: 'H?.pageIndex??0,initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition',
+    to:
+      '(globalThis.__yomuReader?.chapterId===v&&globalThis.__yomuReader?.count>0&&globalThis.__yomuReader?.mode!==Q' +
+      '?globalThis.__yomuReader.page:H?.pageIndex??0),initialOffset:H?.offsetInPage??0,onPositionChange:W.reportPosition',
+  },
+  {
+    name: 'reader: MangaDex data saver images',
+    why:
+      'MangaDex serves every chapter twice: /data/ at full size and /data-saver/ ' +
+      'recompressed. The adapter already has both file lists; exposing the ' +
+      'second as dataSaverUrl lets the Data saver setting use it. Sources that ' +
+      'offer no smaller copy keep their original.',
+    from: 'url:`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`})),delivery:',
+    to:
+      'dataSaverUrl:s.chapter?.dataSaver?.[a]?`/api/img?u=${encodeURIComponent(`${u}/data-saver/${c}/${s.chapter.dataSaver[a]}`)}`:null,' +
+      'url:(`/api/img?u=${encodeURIComponent(`${u}/data/${c}/${t}`)}`)})),delivery:',
+  },
+  {
+    name: 'reader: bounded mounted pages',
+    why:
+      'The reader mounted three pages either side of the current one whatever ' +
+      'they weighed. Twelve 720x10000 strips is 350MB decoded, which is how ' +
+      'iPhone Safari ends up reloading the tab. windowRange sizes the window ' +
+      'in decoded bytes -- from the dimensions a manifest declares or the ' +
+      'reader has measured (P) -- and in how fast pages are actually arriving, ' +
+      'because iPhone Safari has no navigator.connection to ask.',
+    from: 'const H=(0,n.mountedRange)(E,h.length,t.MOUNT_RADIUS);',
+    to: 'const H=globalThis.YomuReaderSettings?.windowRange(E,h.length,h,P)??(0,n.mountedRange)(E,h.length,3);',
+  },
+  {
+    name: 'reader: adjustable width',
+    why:
+      'The page column was fixed at 900px. The Page width setting replaces the ' +
+      'constant; the fresh measured map forces a relayout, which is how a ' +
+      'settings change (it dispatches resize) reaches a mounted reader.',
+    from: 'Math.min(e.clientWidth,l);S',
+    to: 'Math.min(e.clientWidth,globalThis.YomuReaderSettings?.prefs.width||l);T(e=>new Map(e));S',
+  },
+  {
+    name: 'reader: relayout keeps the place it was measured at',
+    why:
+      'When the column narrows (a phone rotated to portrait, a window resized) ' +
+      'every page gets shorter, and the browser clamps scrollTop to the new, ' +
+      'smaller maximum during the commit -- before this effect runs. The ' +
+      'compensation then located the clamped value on the OLD layout and ' +
+      'faithfully carried the wrong page across: page 80 of 160 came back as ' +
+      '75.85 at 430px, and the save that followed made it permanent (the ' +
+      'runtime gauntlet caught it at 4x CPU). The scroll offset is read during ' +
+      'render instead, while the DOM still holds the old layout, and that is ' +
+      'what gets located. It falls back to the live value when there is none.',
+    from:
+      'const q=(0,e.useRef)(null);(0,e.useLayoutEffect)(()=>{const e=M.current,t=q.current;if(t===A)return;' +
+      'if(q.current=A,!e||!t||F.current!==p)return;if(!(0,n.canCompensate)(t,A))return;' +
+      'const i=(0,n.scrollTopAfterRelayout)(t,A,e.scrollTop);',
+    to:
+      'const q=(0,e.useRef)(null),__yt=M.current?M.current.scrollTop:null;(0,e.useLayoutEffect)(()=>{const e=M.current,t=q.current;if(t===A)return;' +
+      'if(q.current=A,!e||!t||F.current!==p)return;if(!(0,n.canCompensate)(t,A))return;' +
+      'const i=(0,n.scrollTopAfterRelayout)(t,A,__yt??e.scrollTop);',
+  },
+  {
+    name: 'reader: the decode budget defers a prefetch, never blocks the page you are on',
+    why:
+      'Pages whose manifest declares a size are checked against a 64MB decode ' +
+      'budget, and a refusal was final: "Page 12 unsupported", a dead frame, ' +
+      'even on the page being read, while pages further away held the budget. ' +
+      'A prefetch that does not fit now waits (the effect re-runs as its ' +
+      'priority rises and the window releases pages behind it); the visible and ' +
+      'adjacent pages always load. The window itself is sized in bytes, so ' +
+      'this is a backstop, not the limit.',
+    from: "if(!e.admitted)return void x({kind:'unsupported',",
+    to: "if(!e.admitted&&'prefetch'===u)return;if(!e.admitted&&!u)return void x({kind:'unsupported',",
+  },
+  {
+    name: 'reader: a page being rescued is still loading, not failed',
+    why:
+      'yomu-page-rescue.js retries a failed page through other doors, some after ' +
+      'a pause, and marks the image data-yomu-rescue="pending" while it does -- ' +
+      'its capture listener runs before this handler. The reader used to show ' +
+      '"Page 21 unavailable" the instant the first request failed, so every ' +
+      'successful rescue flashed a dead frame first. The queue slot is still ' +
+      'released, so a page under rescue does not hold up the pages behind it.',
+    from: "onError:()=>{j(),(0,i.mark)(`image:failed:${t.key}`),x({kind:'failed',",
+    to: "onError:e=>{if(j(),'pending'===e?.currentTarget?.dataset?.yomuRescue)return;(0,i.mark)(`image:failed:${t.key}`),x({kind:'failed',",
+  },
+  {
+    name: 'reader: paged seek',
+    why:
+      'The page slider and the arrow keys scroll the strip to a page. Page mode ' +
+      'has no strip, so the same request is also announced as yomu:seek-page, ' +
+      'which the paged view listens for.',
+    from:
+      "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);s&&a&&s.scrollTo",
+    to:
+      "const s=document.querySelector('[data-testid=\"reader-scroll\"]'),a=document.querySelector(`[data-page-index=\"${e}\"]`);" +
+      'globalThis.dispatchEvent(new CustomEvent("yomu:seek-page",{detail:e}));s&&a&&s.scrollTo',
+  },
+  {
+    name: 'reader: true paged component',
+    why:
+      'Page mode was the scroll strip with scroll-snap: one page at a time only ' +
+      'if the page happened to fit the screen, no right-to-left, no spreads. ' +
+      'YomuReaderSettings.Paged is a real paged view (single, spread, RTL, tap ' +
+      'zones, swipe, an end-of-chapter panel). Without the file, the old one.',
+    from: '(0,o.jsx)(a.ChapterReader,{adapter:f,pages:J,chapterId:v,initialIndex:',
+    to:
+      '(0,o.jsx)(Q==="page"&&globalThis.YomuReaderSettings?globalThis.YomuReaderSettings.Paged:a.ChapterReader,' +
+      '{React:e,spread:V,adapter:f,pages:J,chapterId:v,initialIndex:',
+  },
+  {
+    name: 'reader: quality-aware page urls',
+    why: 'The Data saver setting picks the smaller copy where the adapter has one.',
+    from: 'uri:c.resolveImageUri(n),width:j',
+    to: 'uri:globalThis.YomuReaderSettings?.uri(c,n)??c.resolveImageUri(n),width:j',
+  },
+  {
+    name: 'reader: no hidden keyboard navigation',
+    why:
+      'The arrow keys turned pages while focus was in a sheet or a text field ' +
+      '(the chapter search, the comment box), and after the paged view had ' +
+      'already handled the key. A focused button is not in that list: the ' +
+      'arrows mean nothing to a button, and after clicking Next chapter the ' +
+      'keyboard would otherwise be dead until you clicked the page.',
+    from: "const e=e=>{if('ArrowRight'===e.key",
+    to:
+      'const e=e=>{if(e.defaultPrevented||e.target.closest?.("input,select,textarea,[contenteditable],.rd-sheet"))return;' +
+      "if('ArrowRight'===e.key",
+  },
 
   /* --- reader chrome — app/read/[chapterId].web.tsx -------------------- */
   {
@@ -57,18 +190,18 @@ const EDITS = [
     to:   "onPointerMove:e=>{e.pointerType==='mouse'&&Y()}",
   },
   {
-    name: 'reader: double tap toggles the chrome, and leaves immersive first',
+    name: 'reader: one tap toggles the chrome, and leaves immersive first',
     why:
-      'Originally `onTap:()=>Z?F(!1):Y()` -- a single tap toggled the bars, so ' +
-      'any tap while reading flashed them up. An earlier pass made it two taps ' +
-      'within 320ms, the same window the native reader uses, and that form is ' +
-      'what the shipped bundle contains; it is the anchor below.\n' +
-      'Now that the shell can also take the reader fullscreen, the same double ' +
-      'tap has to be the way back out, or the only exit is a gesture the OS ' +
-      'owns. The shell installs __yomuExit and returns true when it actually ' +
-      'left something; the bar toggle is what happens when there was nothing to ' +
-      'leave. Kept as one edit rather than two so that re-running the script ' +
-      'sees exactly one anchor, applied or not.',
+      'Originally `onTap:()=>Z?F(!1):Y()`. An earlier pass made it two taps ' +
+      'within 320ms (the anchor below is that form); the reliability pass made ' +
+      'it one tap again, because a phone reader expects the page to own the ' +
+      'screen and a single tap to bring the controls: scrolling now hides and ' +
+      'shows them (yomu-reader-plus.js), so a stray tap is no longer the only ' +
+      'way they appear.\n' +
+      'The shell can also take the reader fullscreen, so the same tap is the ' +
+      'way back out, or the only exit is a gesture the OS owns. The shell ' +
+      'installs __yomuExit and returns true when it actually left something; ' +
+      'the bar toggle is what happens when there was nothing to leave.',
     from:
       'onTap:()=>{const t=Date.now();' +
       'if(t-(globalThis.__yomuTap??0)<320){globalThis.__yomuTap=0;Z?F(!1):Y()}' +
@@ -225,12 +358,17 @@ const EDITS = [
       'need to know the chapter the reader is on, its neighbours, the page and ' +
       'the page list -- none of which is in the DOM. Published on ' +
       'globalThis.__yomuReader after every render, with show/hide for the chrome, ' +
-      'and a yomu:reader event. Deleted on unmount.',
+      'and a yomu:reader event. Deleted on unmount.\n' +
+      'The reliability pass adds what its controls need: the stored mode choice ' +
+      'and its setter (Page/Scroll/Spread, for the mode suggestion and the M ' +
+      'shortcut), whether Spread fits, the sheet opener (C and S), the chrome ' +
+      'state, and the series, whose chapter list names the next chapter.',
     from: 'const re=K?(w+1)/K*100:0;return(0,o.jsxs)',
     to:
       'const re=K?(w+1)/K*100:0;' +
       '(0,e.useEffect)(()=>{globalThis.__yomuReader={adapter:f,source:f.id,chapterId:v,seriesId:k,' +
       'next:G?.nextChapterId??null,previous:G?.previousChapterId??null,page:w,count:K,pages:J,mode:Q,sheet:!!M,' +
+      'choice:_,setMode:P,wide:U,spread:V,openSheet:T,sheetName:M,chrome:Z,series:I,' +
       'navigate:se,flush:W.flush,show:Y,hide:()=>{X.current&&clearTimeout(X.current),F(!1)}};' +
       "try{dispatchEvent(new Event('yomu:reader'))}catch{}});" +
       '(0,e.useEffect)(()=>()=>{delete globalThis.__yomuReader},[]);' +
@@ -670,7 +808,6 @@ const PAGES_DIR = 'dist-app';
 // Each is matched by its own filename, so adding one later tops up pages that
 // already carry the other rather than being mistaken for done.
 const ASSETS = [
-  { file: 'yomu-reader-settings.js', tag: '<script src="/yomu-reader-settings.js" defer></scr' + 'ipt>' },
   /* Archivo is one variable family covering both roles -- width 62..125 gives
      the expanded display cut, so display and UI are a single request. No
      `file`, so the local-existence check skips it; `probe` is what marks a

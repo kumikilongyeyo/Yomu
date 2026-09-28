@@ -674,7 +674,9 @@
 
   function paintThread() {
     const context = readerContext();
-    const scroller = document.querySelector('[data-testid="reader-scroll"]');
+    /* The strip, or in Page mode the end-of-chapter panel, which is where a
+       chapter's conversation belongs when there is no strip to scroll past. */
+    const scroller = document.querySelector('[data-testid="reader-scroll"]') || document.querySelector('[data-yomu-thread-host]');
     const existing = document.getElementById(THREAD_ID);
 
     // No chapter number means the header has not resolved yet; a thread keyed

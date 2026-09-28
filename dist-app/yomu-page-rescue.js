@@ -1,40 +1,47 @@
 /**
  * A page that fails to load, quietly rescued.
  *
- * The reader's own handler for a broken page is one line: mark it failed and
- * print "This page could not be loaded." There is no retry. A chapter with one
- * dead image is a chapter you cannot finish, and the cause is almost never
- * permanent -- a hotlink check, an edge blip, an upstream that rate-limited
- * the third request in a burst of twenty.
+ * The reader's own handler for a broken page was one line: mark it failed and
+ * print "This page could not be loaded." A chapter with one dead image is a
+ * chapter you cannot finish, and the cause is almost never permanent -- a
+ * hotlink check, an edge blip, an upstream that rate-limited the third request
+ * in a burst of twenty.
  *
  * So: try again, through a different door, and say nothing when it works.
  * Silence on success is the whole point. The reader should not learn that
  * Yomu has a source system; they should just see page eighteen.
  *
- * The ladder, in order, at most twice per image:
+ * The ladder, per image:
  *
- *   1. The same URL with a cache-buster. Chapter pages are already proxied
+ *   1. At once: the same URL with a cache-buster. Chapter pages are proxied
  *      through this origin, so a failure here is usually the edge or the
  *      upstream having a moment, and asking again is the whole fix.
  *
- *   2. The other proxy. An extension page is `/api/ext/image?ext=…&u=<upstream>`,
- *      which enforces that extension's host allowlist; `/api/img?u=<upstream>`
- *      is a different path with its own allowlist, its own Referer (the image's
- *      own origin, which is what defeats a hotlink check) and a thirty-day edge
- *      cache. When the first proxy is the thing that is broken, this is a
- *      genuinely different attempt rather than the same one repeated.
+ *   2. After a short pause: the other proxy. An extension page is
+ *      `/api/ext/image?ext=…&u=<upstream>`, which enforces that extension's
+ *      host allowlist; `/api/img?u=<upstream>` is a different path with its
+ *      own allowlist, its own Referer (the image's own origin, which is what
+ *      defeats a hotlink check) and a thirty-day edge cache.
  *
- *   3. Another source's copy of the same page. When both doors refuse, the
- *      page is usually gone upstream, not blocked. The chapter ledger knows
- *      who else carries this chapter; a copy with *exactly* the same page
- *      count is fetched (one lookup per chapter, remembered) and page N is
- *      taken from it. Only an exact count: sites slice strips differently
- *      (Solo Leveling ch.200 is 15, 18 and 49 pages on three sites), so a
- *      different count has no page N that is this page N. A mismatched
- *      chapter is the whole-chapter recovery's job, not this one's.
+ *   3. Another source's copy of the same page -- only when that source is
+ *      known to cut the chapter exactly the same way: the same page count
+ *      here *and* the same count on every chapter this device has seen the
+ *      two carry together (yomu-integrity.js learns that), or matching content
+ *      hashes. Sites slice strips differently (Solo Leveling ch.200 is 15, 18
+ *      and 49 pages on three sites), so an equal count on one chapter alone
+ *      is a coincidence, not a page N that is this page N.
  *
- * Then it stops. Another try on a page that has refused every door is a
- * spinner, and the reader's own message is a better answer than a spinner.
+ *   4. After a longer pause: the last door once more. A rate limit that
+ *      refused a burst answers a single request a few seconds later.
+ *
+ * While any of that is in flight the image carries data-yomu-rescue="pending",
+ * which the reader reads (patch-bundle.mjs, "a page being rescued is still
+ * loading, not failed") so the page keeps its loading state instead of
+ * flashing "unavailable". When every door has refused, it becomes "exhausted"
+ * and the reader is told, by the same error event it would have had.
+ * yomu-chapter-switch.js counts exhausted pages toward swapping the chapter.
+ *
+ * Offline is not a failure: the page waits for the connection and then asks.
  *
  * Nothing here retries a UI image. A missing avatar is not worth a request.
  */
@@ -47,13 +54,16 @@
   const HERE = browser ? location.href : 'https://yomu.test/read/x';
   const ORIGIN = browser ? location.origin : 'https://yomu.test';
 
-  /** Rescues per image. Two doors; after that the answer is no. */
+  /** Door changes per image: the same door fresh, then the other door. */
   const MAX_TRIES = 2;
+  /** Before the second door, and before the last late try. */
+  const SECOND_DOOR_MS = 700;
+  const LATE_TRY_MS = 3500;
 
   /** Images that are furniture, not chapter pages. */
   const FURNITURE = /^\/(brand|pets|tags|icons|assets|_expo)\//;
 
-  /* --- the ladder, as a pure function -------------------------------------- *
+  /* --- the ladder, as pure functions -------------------------------------- *
    *
    * Exported for the tests: given the URL that failed and how many times this
    * image has already been rescued, the next thing to try, or null.
@@ -75,16 +85,23 @@
     } catch { return null; }
   }
 
+  /** Only a page this origin proxied: every chapter image goes out through /api/. */
+  function isOurs(href) {
+    try {
+      const url = new URL(href, HERE);
+      return url.origin === ORIGIN && url.pathname.startsWith('/api/');
+    } catch { return false; }
+  }
+
   function nextAttempt(href, tries) {
     if (!href || tries >= MAX_TRIES) return null;
     let url;
     try { url = new URL(href, HERE); } catch { return null; }
 
-    /* Only a page this origin proxied. Every chapter image goes out through
-       /api/ (the extension proxy, the general one, or the MangaDex relay), so
-       anything else is either furniture or a relative string that resolved
-       against the reader's own path -- and retrying that is a request nobody
-       asked for. Knowing how to retry something means knowing what it was. */
+    /* Only a page this origin proxied. Anything else is either furniture or a
+       relative string that resolved against the reader's own path -- and
+       retrying that is a request nobody asked for. Knowing how to retry
+       something means knowing what it was. */
     if (url.origin !== ORIGIN || !url.pathname.startsWith('/api/')) return null;
 
     if (tries === 0) {
@@ -102,10 +119,22 @@
     return `${ORIGIN}/api/img?u=${encodeURIComponent(upstream)}&yomuRetry=2`;
   }
 
+  /** How long to wait before try number `tries` (0-based) of nextAttempt. */
+  function retryDelay(tries) {
+    return tries <= 0 ? 0 : SECOND_DOOR_MS;
+  }
+
+  /** The late try: the door that failed last, asked once more, fresh. */
+  function lateAttempt(href) {
+    if (!isOurs(href)) return null;
+    const url = new URL(href, HERE);
+    url.searchParams.set('yomuRetry', 'late');
+    return url.toString();
+  }
+
   /**
-   * Which alternate copy to take page `index` from, given the copies that
-   * matched the page count and how many this image has already tried.
-   * Pure; exported for the tests.
+   * Which alternate copy to take page `index` from, given the copies proven
+   * to slice like this one and how many this image has already tried.
    */
   function pickAlternate(alternates, index, tried) {
     const usable = (alternates || []).filter((alt) => alt && typeof alt.pages?.[index]?.url === 'string');
@@ -113,21 +142,70 @@
     return alt ? { providerId: alt.providerId, providerName: alt.providerName, url: alt.pages[index].url } : null;
   }
 
+  /**
+   * Whether another source's manifest cuts this chapter exactly as ours does.
+   * Content hashes settle it when both have them. Otherwise the same count
+   * here AND a learned history of the same count together (`sameSlicing`).
+   */
+  function slicesAlike(ours, theirs, sameSlicing) {
+    if (!Array.isArray(ours) || !Array.isArray(theirs) || !ours.length || ours.length !== theirs.length) return false;
+    const hashed = ours.every((p) => p?.contentHash) && theirs.every((p) => p?.contentHash);
+    if (hashed) return ours.every((p, i) => p.contentHash === theirs[i].contentHash);
+    return sameSlicing === true;
+  }
+
   /* --- doing it ------------------------------------------------------------ */
 
   const isReader = () => browser && location.pathname.startsWith('/read/');
 
-  /** Attempts so far, keyed by the URL the image started from. */
-  const tries = new Map();
+  /**
+   * Per image element: where it started, how far up the ladder it is. Per
+   * element rather than per URL, so a page the reader unmounts and mounts
+   * again later -- or one the reader's own Retry recreates -- gets a fresh
+   * ladder; a failure an hour ago is not a reason to refuse now.
+   */
+  const ladder = new WeakMap();
+  /** Synthetic error events this file dispatched, so it does not rescue them. */
+  const ours = new WeakSet();
 
-  /** The src an image began with, before any rescue rewrote it. */
-  const origin = new WeakMap();
+  function stateOf(img, current) {
+    let state = ladder.get(img);
+    if (!state || state.src !== img.getAttribute('src') && !state.expect.has(img.getAttribute('src'))) {
+      state = { first: current, tries: 0, cross: 0, late: false, expect: new Set(), timer: 0 };
+      ladder.set(img, state);
+    }
+    return state;
+  }
+
+  const pending = (img) => { img.dataset.yomuRescue = 'pending'; };
+
+  /** Every door refused: tell the reader with the error event it would have had. */
+  function exhausted(img) {
+    if (!img.isConnected) return;
+    img.dataset.yomuRescue = 'exhausted';
+    try { performance.mark('image:rescue:exhausted'); } catch {}
+    const event = new Event('error');
+    ours.add(event);
+    img.dispatchEvent(event);
+  }
+
+  function knock(img, state, url, delay) {
+    clearTimeout(state.timer);
+    pending(img);
+    state.expect.add(url);
+    const go = () => {
+      if (!img.isConnected || ladder.get(img) !== state) return;
+      state.src = url;
+      img.src = url;
+    };
+    if (delay > 0) state.timer = setTimeout(go, delay);
+    else go();
+  }
 
   /* --- the third door: the same page from another source ------------------- */
 
   const CROSS_TRIES = 2;
-  const crossTries = new Map();
-  /** chapter key -> Promise of copies with this chapter's exact page count. */
+  /** chapter key -> Promise of copies proven to slice like this one. */
   const alternates = new Map();
   let toldFor = '';
 
@@ -146,6 +224,7 @@
   async function findAlternates(state) {
     const source = state.source;
     const provider = toProviderId(source);
+    const sameSlicing = (other) => window.YomuIntegrity?.sameSlicing?.(provider, other) === true;
     const params = new URLSearchParams();
     const links = readJSON('yomu.v1.readerContext')?.[`${source}:${state.chapterId}`]?.links
       || readJSON('yomu.v1.ledgerLinks')?.[`${source}:${state.seriesId}`];
@@ -156,12 +235,13 @@
       params.set('title', title);
     }
     params.set('prefer', provider);
-    const response = await fetch(`/api/catalog/chapters?${params}`, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+    const response = await fetch(`/api/catalog/chapters?${params}`, { cache: 'no-store', headers: { 'x-yomu-quiet': '1' }, signal: AbortSignal.timeout(15000) });
     const ledger = response.ok ? await response.json().catch(() => null) : null;
     if (!Array.isArray(ledger?.rows)) return [];
 
+    const bare = String(state.chapterId).includes(':') ? String(state.chapterId).slice(String(state.chapterId).indexOf(':') + 1) : String(state.chapterId);
     let row = ledger.rows.find((r) => (r.releases || []).some((rel) =>
-      String(rel.providerId) === provider && String(rel.chapterId) === state.chapterId));
+      String(rel.providerId) === provider && (String(rel.chapterId) === state.chapterId || String(rel.chapterId) === bare)));
     if (!row) {
       const text = String(document.querySelector('.rd-head__copy p')?.textContent || '');
       const m = text.match(/(?:chapter|ch\.?|episode|ep\.?)\s*([0-9]+(?:\.[0-9]+)?)/i);
@@ -169,17 +249,20 @@
     }
     const disabled = new Set((readJSON('yomu.v1.collection')?.sources || [])
       .filter((s) => s && s.enabled === false).map((s) => String(s.id)));
+    const hashed = Array.isArray(state.pages) && state.pages.length > 0 && state.pages.every((p) => p?.contentHash);
     const candidates = (row?.releases || [])
       .filter((rel) => String(rel.providerId) !== provider && manifestUrl(rel))
       .filter((rel) => !disabled.has(toAppSource(String(rel.providerId))))
+      /* Nothing to fetch for a pair with no history and no hashes to compare. */
+      .filter((rel) => hashed || sameSlicing(String(rel.providerId)))
       .slice(0, 4);
 
     const out = [];
     await Promise.all(candidates.map(async (rel) => {
       try {
-        const r = await fetch(manifestUrl(rel), { cache: 'no-store', signal: AbortSignal.timeout(12000) });
+        const r = await fetch(manifestUrl(rel), { cache: 'no-store', headers: { 'x-yomu-quiet': '1' }, signal: AbortSignal.timeout(12000) });
         const body = r.ok ? await r.json().catch(() => null) : null;
-        if (Array.isArray(body?.pages) && body.pages.length === state.count && body.pages.every((p, i) => p.contentHash && p.contentHash === state.pages?.[i]?.contentHash)) {
+        if (slicesAlike(state.pages, body?.pages, sameSlicing(String(rel.providerId)))) {
           out.push({ providerId: rel.providerId, providerName: rel.providerName, pages: body.pages });
         }
       } catch {}
@@ -197,34 +280,29 @@
     const note = document.createElement('div');
     note.className = 'yomu-rescue-note';
     note.setAttribute('role', 'status');
-    note.textContent = `Switched a page to ${name || 'another source'} to keep reading`;
-    Object.assign(note.style, {
-      position: 'fixed', left: '50%', bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))', transform: 'translateX(-50%)',
-      zIndex: '9999', maxWidth: 'min(88vw, 420px)', padding: '8px 14px', borderRadius: '999px',
-      background: 'rgba(12,14,18,.9)', color: '#f4f6fa', font: '600 12.5px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-      boxShadow: '0 8px 28px rgba(0,0,0,.3)', pointerEvents: 'none', transition: 'opacity .4s', textAlign: 'center',
-    });
+    note.textContent = `A page came from ${name || 'another source'}`;
     document.body.append(note);
-    setTimeout(() => { note.style.opacity = '0'; }, 2400);
+    setTimeout(() => { note.classList.add('is-leaving'); }, 2400);
     setTimeout(() => note.remove(), 2900);
   }
 
-  async function crossSource(img, first) {
-    const state = globalThis.__yomuReader;
+  /** Resolves true when it put another source's page in; false when there was none. */
+  async function crossSource(img, state) {
+    const reader = globalThis.__yomuReader;
     const holder = img.closest?.('[data-page-index]');
     const index = Number(holder?.getAttribute('data-page-index'));
-    if (!state?.chapterId || !state.source || !(state.count > 0) || !Number.isInteger(index)) return;
-    const tried = crossTries.get(first) || 0;
-    if (tried >= CROSS_TRIES) return;
-    crossTries.set(first, tried + 1);
+    if (!reader?.chapterId || !reader.source || !(reader.count > 0) || !Number.isInteger(index)) return false;
+    if (state.cross >= CROSS_TRIES) return false;
+    const tried = state.cross++;
 
-    const key = `${state.source}|${state.chapterId}`;
-    if (!alternates.has(key)) alternates.set(key, findAlternates(state).catch(() => []));
+    const key = `${reader.source}|${reader.chapterId}`;
+    if (!alternates.has(key)) alternates.set(key, findAlternates(reader).catch(() => []));
     const pick = pickAlternate(await alternates.get(key), index, tried);
-    if (!pick || !img.isConnected || origin.get(img) !== first) return;
+    if (!pick || !img.isConnected || ladder.get(img) !== state) return false;
     try { performance.mark('image:rescue:cross'); } catch {}
-    img.src = pick.url;
-    tell(state, pick.providerName);
+    knock(img, state, pick.url, 0);
+    tell(reader, pick.providerName);
+    return true;
   }
 
   function rescue(img) {
@@ -236,24 +314,44 @@
     let path;
     try { path = new URL(current, HERE).pathname; } catch { return; }
     if (FURNITURE.test(path)) return;
+    if (!isOurs(current) && !ladder.has(img)) return;
 
-    const first = origin.get(img) || current;
-    origin.set(img, first);
+    const state = stateOf(img, current);
+    state.src = current;
 
-    const count = tries.get(first) || 0;
-    const next = nextAttempt(current, count);
-    if (!next) {
-      /* Out of doors on this source: the third door has its own cap. */
-      crossSource(img, first);
+    /* Offline is not the page's fault. Wait for the line, then ask again. */
+    if (navigator.onLine === false) {
+      pending(img);
+      addEventListener('online', () => knock(img, state, lateAttempt(current) || current, 400), { once: true });
       return;
     }
 
-    tries.set(first, count + 1);
-    /* A performance mark rather than a console line: the reader already emits
-       image:failed/image:ready, so a rescue belongs in the same timeline and
-       costs nothing when nobody is looking. */
-    try { performance.mark(`image:rescue:${count + 1}`); } catch {}
-    img.src = next;
+    const next = nextAttempt(current, state.tries);
+    if (next) {
+      const delay = retryDelay(state.tries);
+      state.tries++;
+      /* A performance mark rather than a console line: the reader already
+         emits image:failed/image:ready, so a rescue belongs in the same
+         timeline and costs nothing when nobody is looking. */
+      try { performance.mark(`image:rescue:${state.tries}`); } catch {}
+      knock(img, state, next, delay);
+      return;
+    }
+
+    /* Out of doors on this source. Another source's copy of the page, if one
+       is proven to match; then the last door once more, later; then no. */
+    pending(img);
+    const lastTry = () => {
+      if (!img.isConnected || ladder.get(img) !== state) return;
+      if (!state.late) {
+        state.late = true;
+        const late = lateAttempt(current);
+        if (late) { knock(img, state, late, LATE_TRY_MS); return; }
+      }
+      exhausted(img);
+    };
+    if (state.cross < CROSS_TRIES) crossSource(img, state).then((ok) => { if (!ok) lastTry(); }, lastTry);
+    else lastTry();
   }
 
   if (browser) {
@@ -263,24 +361,35 @@
        and a missed failure. */
     addEventListener('error', (event) => {
       const target = event.target;
-      if (target && target.tagName === 'IMG') rescue(target);
+      if (!target || target.tagName !== 'IMG' || ours.has(event)) return;
+      rescue(target);
     }, true);
 
-    /* Leaving the chapter drops the counters. The next chapter's page eighteen
-       deserves its own two attempts, and a reader who comes back to a chapter
-       that failed an hour ago should not be told no immediately. */
-    for (const type of ['popstate', 'hashchange']) {
-      addEventListener(type, () => { if (!isReader()) { tries.clear(); crossTries.clear(); alternates.clear(); } });
+    /* A rescued page that loads is simply a page again. */
+    addEventListener('load', (event) => {
+      const target = event.target;
+      if (target && target.tagName === 'IMG' && target.dataset?.yomuRescue) delete target.dataset.yomuRescue;
+    }, true);
+
+    /* Leaving the chapter drops the lookups. The next chapter's page eighteen
+       deserves its own attempts. */
+    for (const type of ['popstate', 'hashchange', 'yomu:route']) {
+      addEventListener(type, () => { if (!isReader()) alternates.clear(); });
     }
   }
 
   if (typeof window !== 'undefined') {
-    window.YomuPageRescue = { nextAttempt, upstreamOf, pickAlternate, MAX_TRIES, __rescue: rescue };
+    window.YomuPageRescue = {
+      nextAttempt, upstreamOf, pickAlternate, slicesAlike, retryDelay, lateAttempt, MAX_TRIES,
+      __rescue: rescue,
+      /** A retry the reader asked for starts a fresh ladder (the image element is new anyway). */
+      reset: () => {},
+    };
   }
   /* An object literal, not a variable: Node's CJS lexer reads named exports
      statically, and `module.exports = api` gives an importing test nothing but
      a default. */
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { nextAttempt, upstreamOf, pickAlternate, MAX_TRIES };
+    module.exports = { nextAttempt, upstreamOf, pickAlternate, slicesAlike, retryDelay, lateAttempt, MAX_TRIES, SECOND_DOOR_MS, LATE_TRY_MS };
   }
 })();

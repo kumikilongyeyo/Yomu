@@ -120,12 +120,25 @@ function helperTags() {
 
 const WIRING = helperTags();
 
+/* Production has no reader page of its own: /read/ and /series/ are answered
+   with the app shell, index.html, and carry every stylesheet the shell does.
+   The export's bare route templates carry only the kit's CSS, so a reader
+   test here would run without yomu-overrides.css and the rest -- unstyled
+   overlays land under the page and a click that works in production cannot
+   land. The shell's own Yomu stylesheets go on those two routes. */
+const SHELL_STYLES = (() => {
+  try {
+    const shell = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+    return [...shell.matchAll(/<link rel="stylesheet" href="\/yomu-[^"]+\.css">/g)].map((m) => m[0]);
+  } catch { return []; }
+})();
+
 function tagsFor(relative) {
   const tags = [...WIRING.groups.COMMON];
   if (WIRING.catalogPages.has(relative)) tags.push(...WIRING.groups.CATALOG);
   else if (WIRING.searchPages.has(relative)) tags.push(...WIRING.groups.SEARCH);
   else if (WIRING.sourcePages.has(relative)) tags.push(...WIRING.groups.SOURCES);
-  else if (relative.startsWith('read/') || relative.startsWith('series/')) tags.push(...WIRING.groups.READER);
+  else if (relative.startsWith('read/') || relative.startsWith('series/')) tags.push(...SHELL_STYLES, ...WIRING.groups.READER);
   return [...new Set(tags)];
 }
 

@@ -109,3 +109,31 @@ test('no copies, or a copy without that page, is no answer rather than a wrong p
   assert.equal(pickAlternate(undefined, 0, 0), null);
   assert.equal(pickAlternate([alt('ext:short', 5)], 12, 0), null);
 });
+
+/* --- the reliability pass ---------------------------------------------------- */
+
+const { retryDelay, lateAttempt, slicesAlike, SECOND_DOOR_MS, LATE_TRY_MS } = await import('../../dist-app/yomu-page-rescue.js');
+
+test('the first retry is immediate, the second door waits a moment', () => {
+  assert.equal(retryDelay(0), 0);
+  assert.equal(retryDelay(1), SECOND_DOOR_MS);
+  assert.ok(SECOND_DOOR_MS >= 500 && SECOND_DOOR_MS <= 1500);
+  assert.ok(LATE_TRY_MS >= 2000, 'the late try waits out a rate limit');
+});
+
+test('the late try is the last door once more, fresh, and only for our own pages', () => {
+  const late = new URL(lateAttempt(imgPage));
+  assert.equal(late.pathname, '/api/img');
+  assert.equal(late.searchParams.get('u'), UPSTREAM);
+  assert.equal(late.searchParams.get('yomuRetry'), 'late');
+  assert.equal(lateAttempt('https://cdn.example.com/raw.jpg'), null);
+});
+
+test('another source\'s page N is only this page N when the cut is proven the same', () => {
+  const pages = (n, hash) => Array.from({ length: n }, (_, i) => ({ url: `u${i}`, ...(hash ? { contentHash: `${hash}${i}` } : {}) }));
+  assert.equal(slicesAlike(pages(20), pages(20), false), false, 'the same count on one chapter is a coincidence');
+  assert.equal(slicesAlike(pages(20), pages(20), true), true, 'the same count, and the same count every time before');
+  assert.equal(slicesAlike(pages(20), pages(21), true), false, 'a different count here is a different cut');
+  assert.equal(slicesAlike(pages(3, 'h'), pages(3, 'h'), false), true, 'matching hashes settle it');
+  assert.equal(slicesAlike(pages(3, 'h'), pages(3, 'k'), true), false, 'and so do different ones');
+});

@@ -63,6 +63,10 @@
   /* The chapter ledger (series page) and page rescue (reader) moved here too:
      44KB between them, parsed on Home for nothing. */
   const READING_SCRIPTS = [
+    /* First: the reader's first render reads it (page window, width, Page
+       mode). It is fetched on /series/ too, so by the time a chapter opens it
+       is already here; when it is not, it nudges one more render itself. */
+    '/yomu-reader-settings.js',
     '/yomu-integrity.js', '/yomu-reader-plus.js', '/yomu-page-rescue.js', '/yomu-ledger.js',
     /* Reader- and series-only features that used to ride on every page. Each
        guards its own route and boots on readyState, so a late load is fine.

@@ -300,7 +300,8 @@
     }
 
     try {
-      const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(12_000) });
+      /* Quiet: the picker says what it is checking; no loading screen over it. */
+      const response = await fetch(url, { cache: 'no-store', headers: { 'x-yomu-quiet': '1' }, signal: AbortSignal.timeout(12_000) });
       const body = await response.json().catch(() => null);
       const pages = Array.isArray(body?.pages) ? body.pages : [];
       return { release, ready: response.ok && pages.length > 0, pageCount: pages.length, pages, status: response.status };
@@ -368,10 +369,15 @@
     button.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:11px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(145,168,187,.18);background:rgba(7,17,26,.72);color:#f7f8fa;cursor:pointer';
 
     const left = document.createElement('span');
-    const badge = verified?.grade === 'suspect' ? 'Backup · low confidence' : verified?.grade === 'complete' ? (verified.ms < 1200 ? 'Fast' : 'Recommended') : '';
-    const meta = [badge, release.scanlator, verified?.summary].filter(Boolean).join(' · ')
+    /* One label per rank (yomu-integrity.js pickerLabels): Recommended, Fast,
+       Complete, Backup. Without the integrity layer, only what the check said. */
+    const badge = verified?.label || (verified?.grade === 'suspect' ? 'Backup · may be incomplete' : '');
+    const tone = /^Recommended/.test(badge) ? '#91e4ad' : /^Fast/.test(badge) ? '#8fc8ff' : /^Backup/.test(badge) ? '#ffc45f' : '#c9d4de';
+    const meta = [release.scanlator, verified?.summary].filter(Boolean).join(' · ')
       || (verified?.pageCount ? verified.pageCount + ' pages' : release.pageCount ? release.pageCount + ' pages' : release.kind || 'source');
-    left.innerHTML = `<b style="display:block">${escapeHtml(release.providerName || sourceLabel(appSourceId) || release.providerId)}</b><small style="color:#91a8bb">${escapeHtml(meta)}</small>`;
+    left.innerHTML = `<b style="display:block">${escapeHtml(release.providerName || sourceLabel(appSourceId) || release.providerId)}`
+      + (badge ? ` <span class="yomu-source-badge" style="font-size:11px;font-weight:800;color:${tone}">${escapeHtml(badge)}</span>` : '')
+      + `</b><small style="color:#91a8bb">${escapeHtml(meta)}</small>`;
 
     const state = document.createElement('span');
     state.textContent = isActive ? 'Current' : isEnabled ? 'Open →' : 'Enable & open →';
@@ -436,7 +442,8 @@
         if (/^Checking /.test(node.textContent || '')) node.remove();
       });
       const ready = checked.filter((item) => item.ready);
-      for (const item of ready) body.append(releaseButton(item.release, activeProvider, item));
+      const labels = window.YomuIntegrity?.labels?.(ready);
+      for (const item of ready) body.append(releaseButton(item.release, activeProvider, labels ? { ...item, label: labels.get(item) } : item));
       if (!ready.length) body.append(statusLine('Known alternatives did not pass the reader check.'));
     } else {
       body.append(statusLine('No other source is known for this exact chapter yet.'));
@@ -491,7 +498,8 @@
 
     if (ready.length) {
       body?.insertBefore(statusLine(`${ready.length} reader-ready source${ready.length === 1 ? '' : 's'} found.`, 'good'), button);
-      for (const item of ready) body?.insertBefore(releaseButton(item.release, activeProvider, item), button);
+      const labels = window.YomuIntegrity?.labels?.(ready);
+      for (const item of ready) body?.insertBefore(releaseButton(item.release, activeProvider, labels ? { ...item, label: labels.get(item) } : item), button);
       button.textContent = 'Refresh source search';
     } else {
       body?.insertBefore(statusLine(`Checked ${checked.length} candidate${checked.length === 1 ? '' : 's'}; none returned reader pages.`, 'bad'), button);

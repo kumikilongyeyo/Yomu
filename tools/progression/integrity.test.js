@@ -304,3 +304,55 @@ test('a declared compact layout is not penalized by raw peer counts', () => {
   const result = assess(copy('ext:compact', 4, { release: { providerId: 'ext:compact', pageCount: 4 } }), [sib('ext:a', 47), sib('ext:b', 45)]);
   assert.equal(result.grade, 'complete');
 });
+
+/* --- the reliability pass ---------------------------------------------------- */
+
+const { pickerLabels, sameSlicing, shortAgainstHistory, countsFor, noteCount } = await import('../../dist-app/yomu-integrity.js');
+
+test('picker labels go by rank: one Recommended, a Fast one, Complete, Backup', () => {
+  const a = { ready: true, grade: 'complete', ms: 2400 };
+  const b = { ready: true, grade: 'complete', ms: 600 };
+  const c = { ready: true, grade: 'complete', ms: 2000 };
+  const d = { ready: true, grade: 'suspect', ms: 300 };
+  const labels = pickerLabels([a, b, c, d]);
+  assert.equal(labels.get(a), 'Recommended');
+  assert.equal(labels.get(b), 'Fast');
+  assert.equal(labels.get(c), 'Complete');
+  assert.equal(labels.get(d), 'Backup · may be incomplete');
+});
+
+test('a fast label has to be earned: barely quicker than the best is just Complete', () => {
+  const a = { ready: true, grade: 'complete', ms: 1000 };
+  const b = { ready: true, grade: 'complete', ms: 900 };
+  assert.equal(pickerLabels([a, b]).get(b), 'Complete');
+});
+
+test('the same slicing needs history, not one chapter', () => {
+  const layout = {};
+  assert.equal(sameSlicing(layout, 'ext:a', 'ext:b'), false);
+  learnLayout(layout, 'ext:a', 20, 'ext:b', 20);
+  assert.equal(sameSlicing(layout, 'ext:a', 'ext:b'), false, 'seen together once');
+  learnLayout(layout, 'ext:a', 31, 'ext:b', 31);
+  assert.equal(sameSlicing(layout, 'ext:a', 'ext:b'), true);
+  learnLayout(layout, 'ext:c', 15, 'ext:d', 49);
+  learnLayout(layout, 'ext:c', 16, 'ext:d', 51);
+  assert.equal(sameSlicing(layout, 'ext:c', 'ext:d'), false, 'a steady 1:3 cut is a different cut');
+});
+
+test('a copy far shorter than its own source\'s chapters is short; a shorter chapter is not', () => {
+  assert.equal(shortAgainstHistory(4, [45, 47]), true);
+  assert.equal(shortAgainstHistory(20, [45, 47]), false);
+  assert.equal(shortAgainstHistory(4, [45]), false, 'one chapter is not a history');
+  assert.equal(shortAgainstHistory(2, [6, 7]), false, 'short chapters are allowed to be short');
+});
+
+test('the history keeps recent chapters, and never learns from a short copy', () => {
+  const store = {};
+  noteCount(store, 'ext:a|s', 'c1', 45, false);
+  noteCount(store, 'ext:a|s', 'c2', 47, false);
+  noteCount(store, 'ext:a|s', 'c3', 4, true);
+  assert.deepEqual(countsFor(store, 'ext:a|s', 'c3').sort(), [45, 47]);
+  for (let i = 4; i < 20; i++) noteCount(store, 'ext:a|s', `c${i}`, 40 + i, false);
+  assert.equal(Object.keys(store['ext:a|s'].c).length, 10);
+  assert.equal(countsFor(store, 'ext:a|s', 'c19').includes(59), false, 'the chapter being judged is not its own history');
+});

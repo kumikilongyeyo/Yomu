@@ -229,10 +229,31 @@
   }
 
   const targetOf = (i) => { try { return new URL(typeof i === 'string' || i instanceof URL ? i : i?.url || '', location.href); } catch { return null; } };
+  /* Work nobody is waiting for says so (x-yomu-quiet: 1): other sources'
+     copies checked in the background by the chapter switch, page rescue and
+     the source picker. None of it is a chapter opening. */
+  const quietFetch = (i, init) => {
+    try { return new Headers(init?.headers || (i instanceof Request ? i.headers : undefined)).get('x-yomu-quiet') === '1'; } catch { return false; }
+  };
+  /* The manifest of the chapter in the address bar, rather than the next
+     chapter fetched ahead (yomu-reader-plus.js) or another source's copy
+     being checked. Treating those as "the chapter opening" reset this file's
+     page counters to the other copy's count mid-chapter, so the reader got a
+     "Loading pages 0/47" pill for pages nobody was loading. (The full-screen
+     loader was already kept off a page with content by
+     yomu-loading-policy.js; the pill is not covered by that.) */
+  const opensThisChapter = (u) => {
+    let route = location.pathname.slice('/read/'.length);
+    try { route = decodeURIComponent(route); } catch {}
+    const bare = route.includes(':') ? route.slice(route.indexOf(':') + 1) : route;
+    let asked = (u.pathname.match(/\/chapters\/([^/]+)\/manifest$/) || [])[1] || '';
+    try { asked = decodeURIComponent(asked); } catch {}
+    return !!asked && (asked === bare || asked === route);
+  };
   const methodOf = (i, init) => String(init?.method || (i instanceof Request ? i.method : 'GET') || 'GET').toUpperCase();
 
   window.fetch = async (input, init) => {
-    const u = targetOf(input); if (!u || methodOf(input, init) !== 'GET') return prev(input, init);
+    const u = targetOf(input); if (!u || methodOf(input, init) !== 'GET' || quietFetch(input, init)) return prev(input, init);
     const local = u.origin === location.origin;
 
     if (local && u.pathname === '/api/catalog/search' && u.searchParams.get('q')?.trim()) {
@@ -275,7 +296,7 @@
       return json(r, merged, { 'x-yomu-source-balanced': '1' });
     }
 
-    if (/\/chapters\/[^/]+\/manifest$/.test(u.pathname) && location.pathname.startsWith('/read/')) {
+    if (/\/chapters\/[^/]+\/manifest$/.test(u.pathname) && location.pathname.startsWith('/read/') && opensThisChapter(u)) {
       expected = loaded = failed = 0; tracked = []; hidePill(); const t = start('Opening chapter…', 'Getting the page manifest from this source', 'Reader check', 70, 210);
       const r = await prev(input, init); if (!r.ok) { trouble(t, 'This source did not answer', `HTTP ${r.status} · Yomu is checking alternatives`); return r; }
       const b = await r.clone().json().catch(() => null), pages = Array.isArray(b?.pages) ? b.pages.length : 0;
@@ -283,7 +304,10 @@
       expected = pages; paint(88, 'Pages found', `${pages} pages · starting images`, 'Reader ready'); done(t, 'Chapter ready', `${pages} pages found`, 'Loading images below', 210); setTimeout(readerPaint, 80); return r;
     }
 
-    if (local && u.pathname === '/api/catalog/chapters' && (location.pathname.startsWith('/series/') || location.pathname.startsWith('/read/'))) {
+    /* The series page's chapter list. In the reader the ledger is only ever
+       asked for in the background (recovery, rescue, the picker's own status
+       line), never by someone waiting on it. */
+    if (local && u.pathname === '/api/catalog/chapters' && location.pathname.startsWith('/series/')) {
       const t = start('Checking chapters…', 'Comparing your enabled sources', 'Merged chapter list', 84, 300), r = await prev(input, init);
       if (r.ok) { const b = await r.clone().json().catch(() => null), n = Array.isArray(b?.sources) ? b.sources.filter((x) => x?.ok !== false).length : 0; done(t, 'Chapters ready', n ? `${n} sources matched this title` : 'Chapter list loaded', '', 130); }
       else trouble(t, 'Chapter source failed', `HTTP ${r.status} · checking another source`); return r;
