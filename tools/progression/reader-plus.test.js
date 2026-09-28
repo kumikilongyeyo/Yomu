@@ -72,6 +72,7 @@ test('the thresholds are asymmetric: quicker to come back than to leave', () => 
 /* --- the reliability pass ---------------------------------------------------- */
 
 const { handoffOffset, chapterName } = await import('../../dist-app/yomu-reader-plus.js');
+const YomuReaderPlusNames = await import('../../dist-app/yomu-reader-plus.js');
 
 test('the next chapter is asked for at 70% and warmed at 85%', () => {
   assert.equal(nextChapterStage(26, 40), 'none', '67%');
@@ -99,4 +100,16 @@ test('chapters are named from the series the reader loaded', () => {
   assert.deepEqual(chapterName(series, 'a:c12'), { number: 'Chapter 12', name: '' }, 'a name that is just the number is not repeated');
   assert.deepEqual(chapterName(series, 'a:c13'), { number: 'Chapter 13', name: 'The Gate' });
   assert.deepEqual(chapterName(null, 'x'), { number: '', name: '' });
+});
+
+test('a chapter name that only restates its number is not repeated', () => {
+  const { realName } = YomuReaderPlusNames;
+  assert.equal(realName('Chapter 1194', 1194), '', 'Weeb Central names every chapter like this');
+  assert.equal(realName('Ch. 12', 12), '');
+  assert.equal(realName('Episode 5:', 5), '');
+  assert.equal(realName('12', 12), '');
+  assert.equal(realName('The Quiet Door', 3), 'The Quiet Door');
+  assert.equal(realName('Chapter 12: The Gate', 12), 'Chapter 12: The Gate', 'a title after the number is a name');
+  const series = { chapters: [{ id: 'x:1194', number: 1194, name: 'Chapter 1194' }] };
+  assert.deepEqual(chapterName(series, 'x:1194'), { number: 'Chapter 1194', name: '' });
 });

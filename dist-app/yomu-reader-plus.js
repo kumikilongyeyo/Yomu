@@ -99,13 +99,27 @@
     return Math.min(0.995, Math.max(0, (scrollTop - pageTop) / pageHeight));
   }
 
+  /**
+   * A chapter's name when it says more than its number. Sources fill the
+   * field with "12", "Chapter 12", "Ch. 12" or "Episode 12" as often as with
+   * a title, and "Chapter 1194 / Chapter 1194" is a line saying nothing twice.
+   */
+  function realName(name, number) {
+    const text = String(name || '').trim();
+    if (!text) return '';
+    const n = String(number ?? '').trim();
+    if (text === n) return '';
+    const bare = text.replace(/^(?:chapter|ch\.?|episode|ep\.?)\s*/i, '').replace(/[\s:.\-–—]+$/, '');
+    return bare === n ? '' : text;
+  }
+
   /** "Chapter 13 · Name" for a chapter id, from the series the reader loaded. */
   function chapterName(series, chapterId) {
     const chapter = series?.chapters?.find?.((c) => c.id === chapterId);
     if (!chapter) return { number: '', name: '' };
     return {
       number: chapter.number != null ? `Chapter ${chapter.number}` : '',
-      name: chapter.name && chapter.name !== String(chapter.number) ? chapter.name : '',
+      name: realName(chapter.name, chapter.number),
     };
   }
 
@@ -483,9 +497,9 @@
   }
 
   if (typeof window !== 'undefined') {
-    window.YomuReaderPlus = { aheadCount, aheadPages, nextChapterStage, chromeStep, handoffOffset, chapterName };
+    window.YomuReaderPlus = { aheadCount, aheadPages, nextChapterStage, chromeStep, handoffOffset, chapterName, realName };
   }
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { aheadCount, aheadPages, nextChapterStage, chromeStep, handoffOffset, chapterName, SHOW_AFTER, HIDE_AFTER };
+    module.exports = { aheadCount, aheadPages, nextChapterStage, chromeStep, handoffOffset, chapterName, realName, SHOW_AFTER, HIDE_AFTER };
   }
 })();

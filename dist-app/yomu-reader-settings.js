@@ -348,7 +348,10 @@
   function chapterLabel(series, chapterId) {
     const chapter = series?.chapters?.find?.((c) => c.id === chapterId);
     if (!chapter) return '';
-    const name = chapter.name && chapter.name !== String(chapter.number) ? ` · ${chapter.name}` : '';
+    /* A name that only restates the number ("Chapter 1194") is not repeated. */
+    const plain = String(chapter.name || '').trim();
+    const bare = plain.replace(/^(?:chapter|ch\.?|episode|ep\.?)\s*/i, '').replace(/[\s:.\-–—]+$/, '');
+    const name = plain && plain !== String(chapter.number) && bare !== String(chapter.number) ? ` · ${plain}` : '';
     return `Chapter ${chapter.number}${name}`;
   }
 
@@ -448,7 +451,10 @@
       }
     }, [atEnd, g, groups, lastGroup]);
 
-    R.useEffect(() => {
+    /* A layout effect: the listeners exist before the view is painted, so a
+       seek sent the moment Page mode mounts (a source switch restoring the
+       place) is not dropped between the commit and a passive effect. */
+    R.useLayoutEffect(() => {
       const key = (event) => {
         if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
         const target = event.target;
