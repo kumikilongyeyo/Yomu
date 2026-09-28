@@ -14,14 +14,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect production ToonGod detail failure
+      - name: Inspect ToonGod public page structure
         run: |
-          set -u
-          ORIGIN='https://yomu.yomuread.workers.dev'
-          curl -L -sS "$ORIGIN/api/ext/refresh" -o /dev/null
-          ID=$(node -e "process.stdout.write(encodeURIComponent('https://www.toongod.cc/webtoon/tales-of-demons-and-gods/'))")
-          STATUS=$(curl -L -sS -w '%{http_code}' -o response.json "$ORIGIN/api/ext/source/toongod/series/$ID")
-          echo "status=$STATUS"
-          cat response.json
-          echo
-          test "$STATUS" = '200'
+          set -euo pipefail
+          URL='https://www.toongod.cc/webtoon/tales-of-demons-and-gods/'
+          curl -L --fail --silent --show-error --max-time 30 \
+            -A 'Mozilla/5.0 (compatible; Yomu/0.3; +https://yomu.yomuread.workers.dev)' \
+            -H 'Accept: text/html,application/xhtml+xml' \
+            -H 'Accept-Language: en-US,en;q=0.9' \
+            -H 'Referer: https://www.toongod.cc/' \
+            "$URL" -o page.html
+          node <<'NODE'
+          const fs=require('fs');
+          const h=fs.readFileSync('page.html','utf8');
+          const checks={
+            bytes:h.length,
+            h1PostTitle:(h.match(/<h1[^>]*class=["'][^"']*post-title/gi)||[]).length,
+            postTitleH1:(h.match(/class=["'][^"']*post-title[^"']*["'][^>]*>[\s\S]{0,300}<h1/gi)||[]).length,
+            ogTitle:(h.match(/property=["']og:title["']/gi)||[]).length,
+            summaryContent:(h.match(/summary__content/gi)||[]).length,
+            descriptionSummary:(h.match(/description-summary/gi)||[]).length,
+            genreContent:(h.match(/genres-content/gi)||[]).length,
+            chapterLinks:(h.match(/wp-manga-chapter/gi)||[]).length,
+            ajaxChapters:(h.match(/ajax\/chapters/gi)||[]).length,
+          };
+          console.log(JSON.stringify(checks,null,2));
+          for(const needle of ['og:title','post-title','summary__content','description-summary','genres-content','wp-manga-chapter','ajax/chapters']){
+            const i=h.toLowerCase().indexOf(needle.toLowerCase());
+            if(i>=0) console.log(`\n--- ${needle} ---\n${h.slice(Math.max(0,i-350),Math.min(h.length,i+900)).replace(/\s+/g,' ')}`);
+          }
+          NODE
+          echo '\nAJAX chapter endpoint:'
+          curl -L --silent --show-error --max-time 30 \
+            -A 'Mozilla/5.0 (compatible; Yomu/0.3; +https://yomu.yomuread.workers.dev)' \
+            -H 'Referer: https://www.toongod.cc/' \
+            -X POST "${URL}ajax/chapters/" \
+            -o ajax.html -w 'HTTP %{http_code} bytes=%{size_download}\n'
+          node <<'NODE'
+          const fs=require('fs');
+          const h=fs.readFileSync('ajax.html','utf8');
+          console.log('ajax wp-manga-chapter=',(h.match(/wp-manga-chapter/gi)||[]).length);
+          console.log(h.slice(0,1200).replace(/\s+/g,' '));
+          NODE
