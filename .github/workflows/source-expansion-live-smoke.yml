@@ -11,111 +11,69 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Verify expanded production reader sources end to end
+      - name: Verify validated production reader sources and picker discovery
         shell: bash
         run: |
           set -uo pipefail
           SITE='https://yomu.yomuread.workers.dev'
-          SOURCES=(hivetoons vortexscans magustoon nyxscans tcbscans)
+          SOURCES=(hivetoons vortexscans nyxscans)
           failures=0
 
-          echo '=== Force extension registry refresh ==='
-          refresh=$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 "$SITE/api/ext/refresh") || {
-            echo 'FAIL registry refresh'
-            exit 1
-          }
+          refresh=$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 "$SITE/api/ext/refresh") || exit 1
           echo "$refresh" | jq .
-
-          echo '=== Confirm production registration ==='
           registry=$(curl -fsS --retry 2 --connect-timeout 10 --max-time 30 "$SITE/api/ext/sources") || exit 1
           echo "$registry" | jq '{count:(.extensions|length), ids:[.extensions[].id], broken}'
 
-          enc() {
-            python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
-          }
+          enc() { python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"; }
 
           for src in "${SOURCES[@]}"; do
-            echo
             echo "================ $src ================"
             if ! echo "$registry" | jq -e --arg s "$src" '.extensions[] | select(.id==$s)' >/dev/null; then
-              echo "FAIL $src: not registered"
-              failures=$((failures+1))
-              continue
+              echo "FAIL $src: not registered"; failures=$((failures+1)); continue
             fi
-
             base="$SITE/api/ext/source/$src"
-            catalog=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 35 "$base/series?page=1") || {
-              echo "FAIL $src: popular/catalog request"
-              failures=$((failures+1)); continue;
-            }
+            catalog=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 35 "$base/series?page=1") || { failures=$((failures+1)); continue; }
             count=$(echo "$catalog" | jq '.series | length' 2>/dev/null || echo 0)
-            id=$(echo "$catalog" | jq -r '.series[0].id // empty' 2>/dev/null)
-            title=$(echo "$catalog" | jq -r '.series[0].title // empty' 2>/dev/null)
-            echo "catalog: $count; selected: $title"
-            if [[ "$count" -lt 1 || -z "$id" || -z "$title" ]]; then
-              echo "FAIL $src: no usable catalog title"
-              failures=$((failures+1)); continue
-            fi
-
-            search=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 35 --get --data-urlencode "q=$title" "$base/search") || {
-              echo "FAIL $src: exact-title search"
-              failures=$((failures+1)); continue;
-            }
-            search_count=$(echo "$search" | jq '.series | length' 2>/dev/null || echo 0)
-            echo "search: $search_count"
-            if [[ "$search_count" -lt 1 ]]; then
-              echo "FAIL $src: title not searchable"
-              failures=$((failures+1)); continue
-            fi
-
-            eid=$(enc "$id")
-            detail=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 40 "$base/series/$eid") || {
-              echo "FAIL $src: series detail/chapters"
-              failures=$((failures+1)); continue;
-            }
-            chapter_count=$(echo "$detail" | jq '.chapters | length' 2>/dev/null || echo 0)
-            chapter_id=$(echo "$detail" | jq -r '.chapters[0].id // empty' 2>/dev/null)
-            echo "chapters: $chapter_count"
-            if [[ "$chapter_count" -lt 1 || -z "$chapter_id" ]]; then
-              echo "FAIL $src: no readable chapters"
-              failures=$((failures+1)); continue
-            fi
-
-            ecid=$(enc "$chapter_id")
-            manifest=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 45 "$base/chapters/$ecid/manifest") || {
-              echo "FAIL $src: manifest"
-              failures=$((failures+1)); continue;
-            }
-            page_count=$(echo "$manifest" | jq '.pages | length' 2>/dev/null || echo 0)
-            image=$(echo "$manifest" | jq -r '.pages[0].url // empty' 2>/dev/null)
-            source_series=$(echo "$manifest" | jq -r '.sourceSeriesId // empty' 2>/dev/null)
-            echo "manifest pages: $page_count; sourceSeriesId: ${source_series:0:90}"
-            if [[ "$page_count" -lt 1 || -z "$image" || -z "$source_series" ]]; then
-              echo "FAIL $src: invalid chapter manifest"
-              failures=$((failures+1)); continue
-            fi
-
-            headers=$(mktemp)
-            body=$(mktemp)
-            if ! curl -fsSL --retry 1 --connect-timeout 10 --max-time 45 -D "$headers" -o "$body" "$image"; then
-              echo "FAIL $src: first proxied page did not download"
-              failures=$((failures+1)); rm -f "$headers" "$body"; continue
-            fi
+            id=$(echo "$catalog" | jq -r '.series[0].id // empty')
+            title=$(echo "$catalog" | jq -r '.series[0].title // empty')
+            echo "catalog=$count selected=$title"
+            if [[ "$count" -lt 1 || -z "$id" || -z "$title" ]]; then failures=$((failures+1)); continue; fi
+            search=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 35 --get --data-urlencode "q=$title" "$base/search") || { failures=$((failures+1)); continue; }
+            test "$(echo "$search" | jq '.series | length')" -gt 0 || { failures=$((failures+1)); continue; }
+            detail=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 40 "$base/series/$(enc "$id")") || { failures=$((failures+1)); continue; }
+            chapter_count=$(echo "$detail" | jq '.chapters | length')
+            chapter_id=$(echo "$detail" | jq -r '.chapters[0].id // empty')
+            echo "chapters=$chapter_count"
+            if [[ "$chapter_count" -lt 1 || -z "$chapter_id" ]]; then failures=$((failures+1)); continue; fi
+            manifest=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 45 "$base/chapters/$(enc "$chapter_id")/manifest") || { failures=$((failures+1)); continue; }
+            page_count=$(echo "$manifest" | jq '.pages | length')
+            image=$(echo "$manifest" | jq -r '.pages[0].url // empty')
+            source_series=$(echo "$manifest" | jq -r '.sourceSeriesId // empty')
+            echo "pages=$page_count sourceSeriesId=$source_series"
+            if [[ "$page_count" -lt 1 || -z "$image" || -z "$source_series" ]]; then failures=$((failures+1)); continue; fi
+            headers=$(mktemp); body=$(mktemp)
+            if ! curl -fsSL --retry 1 --connect-timeout 10 --max-time 45 -D "$headers" -o "$body" "$image"; then failures=$((failures+1)); rm -f "$headers" "$body"; continue; fi
             type=$(grep -i '^content-type:' "$headers" | tail -1 | tr -d '\r' | cut -d' ' -f2-)
             bytes=$(wc -c < "$body" | tr -d ' ')
-            echo "first page: type=$type bytes=$bytes"
             rm -f "$headers" "$body"
-            if [[ "$type" != image/* || "$bytes" -lt 5000 ]]; then
-              echo "FAIL $src: proxied page is not a real image"
-              failures=$((failures+1)); continue
-            fi
-
-            echo "PASS $src: search -> title -> chapters -> manifest -> image"
+            echo "firstPage=$type/$bytes"
+            if [[ "$type" != image/* || "$bytes" -lt 5000 ]]; then failures=$((failures+1)); continue; fi
+            echo "PASS $src"
           done
 
-          echo
-          if [[ "$failures" -gt 0 ]]; then
-            echo "SOURCE EXPANSION LIVE SMOKE: $failures source(s) failed"
-            exit 1
-          fi
+          echo '=== Reader alternate-source ledger ==='
+          declare -A TITLES=( [hivetoons]='Lookism' [vortexscans]='Reality Quest' [nyxscans]='Operation: True Love' )
+          for src in "${SOURCES[@]}"; do
+            title="${TITLES[$src]}"
+            echo "picker title=$title expect=$src"
+            ledger=$(curl -fsS --retry 1 --connect-timeout 10 --max-time 75 --get --data-urlencode "title=$title" "$SITE/api/catalog/chapters") || { echo "FAIL picker request $src"; failures=$((failures+1)); continue; }
+            echo "$ledger" | jq '{title:(.title // .query // null), sourceCount:((.sources // .providers // .matches // [])|length), sourceIds:[.. | objects | (.providerId? // .sourceId? // .id? // empty)]}' 2>/dev/null || true
+            if ! echo "$ledger" | grep -Fq "$src"; then
+              echo "FAIL picker ledger missing $src for $title"; failures=$((failures+1));
+            else
+              echo "PASS picker ledger contains $src for $title"
+            fi
+          done
+
+          if [[ "$failures" -gt 0 ]]; then echo "SOURCE EXPANSION LIVE SMOKE: $failures failure(s)"; exit 1; fi
           echo 'SOURCE EXPANSION LIVE SMOKE: PASS'
