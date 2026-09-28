@@ -15,6 +15,12 @@ import namicomi from '../../extensions/sources/namicomi.json';
 import comick from '../../extensions/sources/comick.json';
 import xoxocomics from '../../extensions/sources/xoxocomics.json';
 import readallcomics from '../../extensions/sources/readallcomics.json';
+import hivetoons from '../../extensions/sources/hivetoons.json';
+import vortexscans from '../../extensions/sources/vortexscans.json';
+import magustoon from '../../extensions/sources/magustoon.json';
+import nyxscans from '../../extensions/sources/nyxscans.json';
+import tcbscans from '../../extensions/sources/tcbscans.json';
+import toongod from '../../extensions/sources/toongod.json';
 
 export const BUNDLED_DESCRIPTORS: Record<string, unknown> = {
   weebcentral,
@@ -25,4 +31,10 @@ export const BUNDLED_DESCRIPTORS: Record<string, unknown> = {
   comick,
   xoxocomics,
   readallcomics,
+  hivetoons,
+  vortexscans,
+  magustoon,
+  nyxscans,
+  tcbscans,
+  toongod,
 };
