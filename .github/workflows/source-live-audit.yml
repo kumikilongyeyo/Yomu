@@ -1,0 +1,31 @@
+name: Strict live source audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/source-audit.mjs'
+      - 'extensions/**'
+      - 'worker/extensions/**'
+      - 'worker/routes-extensions.ts'
+      - '.github/workflows/source-live-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yomu-strict-source-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require every active source to read end to end
+        run: node tools/source-audit.mjs https://yomu.yomuread.workers.dev
