@@ -1,23 +1,5 @@
 #!/usr/bin/env node
-/**
- * Strict live-source acceptance for Yomu.
- *
- * An extension is active only when it can do the whole job a reader needs:
- * browse -> search -> details -> chapters -> manifest -> actual image bytes.
- *
- * This intentionally fails on provider refusals and deep reader failures.
- * If an upstream cannot answer Yomu, that source must not be advertised as
- * active. We never bypass authentication, CAPTCHA, anti-bot or access controls;
- * a blocked source is simply not a working Yomu source.
- *
- * Multiple titles/chapters are sampled so a legitimate title with no chapters
- * does not create a false negative.
- *
- * Usage:
- *   node tools/source-audit.mjs
- *   node tools/source-audit.mjs https://yomu.yomuread.workers.dev
- *   node tools/source-audit.mjs --json
- */
+/** Strict live-source acceptance for Yomu. */
 
 const BASE = (process.argv.slice(2).find((a) => /^https?:\/\//.test(a)) || 'https://yomu.yomuread.workers.dev').replace(/\/+$/, '');
 const AS_JSON = process.argv.includes('--json');
@@ -40,16 +22,8 @@ async function json(url) {
     });
     const ms = Date.now() - started;
     const type = response.headers.get('content-type') || '';
-    let body = null;
-    if (/json/i.test(type)) body = await response.json().catch(() => null);
-    if (!response.ok) {
-      return {
-        ok: false,
-        ms,
-        body,
-        error: `HTTP ${response.status}${body?.error ? `: ${String(body.error).slice(0, 140)}` : ''}`,
-      };
-    }
+    const body = /json/i.test(type) ? await response.json().catch(() => null) : null;
+    if (!response.ok) return { ok: false, ms, body, error: `HTTP ${response.status}${body?.error ? `: ${String(body.error).slice(0, 140)}` : ''}` };
     if (!/json/i.test(type)) return { ok: false, ms, error: `answered ${type || 'no content-type'}` };
     return { ok: true, ms, body };
   } catch (error) {
@@ -62,23 +36,14 @@ async function image(url) {
   try {
     const response = await fetch(url, {
       cache: 'no-store',
-      headers: {
-        accept: 'image/avif,image/webp,image/*,*/*;q=0.8',
-        'x-yomu-audit': '1',
-      },
+      headers: { accept: 'image/avif,image/webp,image/*,*/*;q=0.8', 'x-yomu-audit': '1' },
       signal: AbortSignal.timeout(IMAGE_TIMEOUT),
     });
     const ms = Date.now() - started;
     const type = response.headers.get('content-type') || '';
     const ok = response.ok && /^image\//i.test(type);
     try { await response.body?.cancel(); } catch {}
-    return {
-      ok,
-      ms,
-      type,
-      status: response.status,
-      error: ok ? undefined : `HTTP ${response.status}; content-type=${type || 'none'}`,
-    };
+    return { ok, ms, type, status: response.status, error: ok ? undefined : `HTTP ${response.status}; content-type=${type || 'none'}` };
   } catch (error) {
     return { ok: false, ms: Date.now() - started, error: String(error?.message || error).slice(0, 140) };
   }
@@ -102,38 +67,17 @@ async function audit(source) {
   const api = String(source.api || '').replace(/\/?$/, '/');
   const caps = source.capabilities || {};
   const missing = REQUIRED_CAPS.filter((name) => caps[name] !== true);
-  const out = {
-    id: source.id,
-    name: source.name,
-    api,
-    capabilities: caps,
-    status: source.status || 'unknown',
-    steps: {},
-  };
+  const out = { id: source.id, name: source.name, api, capabilities: caps, status: source.status || 'unknown', steps: {} };
 
-  out.steps.contract = {
-    ok: missing.length === 0,
-    error: missing.length ? `missing reader capabilities: ${missing.join(', ')}` : undefined,
-  };
+  out.steps.contract = { ok: missing.length === 0, error: missing.length ? `missing reader capabilities: ${missing.join(', ')}` : undefined };
   if (missing.length) return out;
 
-  // 1) Browse must return real titles with ids.
   const browse = await json(`${api}series?page=1`);
   const listed = seriesRows(browse.body).filter((r) => r?.id && r?.title);
-  out.steps.browse = {
-    ok: browse.ok && listed.length > 0,
-    ms: browse.ms,
-    count: listed.length,
-    withCover: listed.filter((r) => r?.cover).length,
-    error: browse.ok && !listed.length ? 'returned no usable titles' : browse.error,
-  };
+  out.steps.browse = { ok: browse.ok && listed.length > 0, ms: browse.ms, count: listed.length, withCover: listed.filter((r) => r?.cover).length, error: browse.ok && !listed.length ? 'returned no usable titles' : browse.error };
   if (!out.steps.browse.ok) return out;
 
-  // 2) Search for a title the source itself just advertised. This avoids an
-  // arbitrary query that a niche source simply might not carry.
-  let searchOk = false;
-  let searchResult = null;
-  let searchProbe = '';
+  let searchOk = false, searchResult = null, searchProbe = '';
   for (const candidate of listed.slice(0, 3)) {
     searchProbe = String(candidate.title).slice(0, 60);
     const attempt = await json(`${api}search?q=${encodeURIComponent(searchProbe)}&page=1`);
@@ -141,90 +85,52 @@ async function audit(source) {
     searchResult = { ...attempt, count: found.length };
     if (attempt.ok && found.length) { searchOk = true; break; }
   }
-  out.steps.search = {
-    ok: searchOk,
-    ms: searchResult?.ms,
-    count: searchResult?.count || 0,
-    probe: searchProbe,
-    error: searchOk ? undefined : (searchResult?.error || 'search returned no titles it had just advertised'),
-  };
+  out.steps.search = { ok: searchOk, ms: searchResult?.ms, count: searchResult?.count || 0, probe: searchProbe, error: searchOk ? undefined : (searchResult?.error || 'search returned no titles it had just advertised') };
   if (!searchOk) return out;
 
-  // 3-4) Open several listed titles until one proves both details and chapters.
-  // A one-shot first-title probe used to falsely condemn sources whose first
-  // listing was a one-shot, announcement, or empty licensed title.
-  let picked = null;
-  let lastDetailError = '';
-  let anyDetail = false;
+  let picked = null, lastDetailError = '', anyDetail = false;
   for (const candidate of listed.slice(0, SAMPLE_TITLES)) {
     const detail = await json(`${api}series/${encodeURIComponent(candidate.id)}`);
     if (detail.ok && detail.body?.title) anyDetail = true;
     const chapters = Array.isArray(detail.body?.chapters) ? detail.body.chapters.filter((c) => c?.id) : [];
-    if (detail.ok && detail.body?.title && chapters.length) {
-      picked = { candidate, detail, chapters };
-      break;
-    }
+    if (detail.ok && detail.body?.title && chapters.length) { picked = { candidate, detail, chapters }; break; }
     lastDetailError = detail.error || (detail.ok ? 'title had no chapters' : 'detail failed');
   }
 
-  out.steps.details = {
-    ok: anyDetail,
-    title: String(picked?.detail?.body?.title || '').slice(0, 60),
-    ms: picked?.detail?.ms,
-    error: anyDetail ? undefined : (lastDetailError || 'no sampled title opened'),
-  };
-  out.steps.chapters = {
-    ok: !!picked,
-    count: picked?.chapters?.length || 0,
-    ms: picked?.detail?.ms,
-    error: picked ? undefined : (lastDetailError || `none of ${Math.min(SAMPLE_TITLES, listed.length)} sampled titles had chapters`),
-  };
+  out.steps.details = { ok: anyDetail, title: String(picked?.detail?.body?.title || '').slice(0, 60), ms: picked?.detail?.ms, error: anyDetail ? undefined : (lastDetailError || 'no sampled title opened') };
+  out.steps.chapters = { ok: !!picked, count: picked?.chapters?.length || 0, ms: picked?.detail?.ms, error: picked ? undefined : (lastDetailError || `none of ${Math.min(SAMPLE_TITLES, listed.length)} sampled titles had chapters`) };
   if (!picked) return out;
 
-  // 5-6) A source is not reader-ready until at least one sampled chapter yields
-  // a reader-valid manifest AND the first page URL yields actual image bytes.
-  let pageAttempt = null;
-  let imageAttempt = null;
-  let openedChapter = null;
-  let lastPageError = '';
+  let pageAttempt = null, imageAttempt = null, openedChapter = null, lastPageError = '';
   for (const chapter of picked.chapters.slice(0, SAMPLE_CHAPTERS)) {
     const manifest = await json(`${api}chapters/${encodeURIComponent(chapter.id)}/manifest`);
     const pages = Array.isArray(manifest.body?.pages) ? manifest.body.pages : [];
     const valid = manifest.ok && validManifest(manifest.body);
     pageAttempt = { ...manifest, pages, valid };
-    if (!valid) {
-      lastPageError = manifest.error || `reader rejected manifest (schema=${manifest.body?.schema || 'none'}, pages=${pages.length})`;
-      continue;
-    }
+    if (!valid) { lastPageError = manifest.error || `reader rejected manifest (schema=${manifest.body?.schema || 'none'}, pages=${pages.length})`; continue; }
     const probe = await image(pages[0].url);
     imageAttempt = probe;
-    if (probe.ok) {
-      openedChapter = chapter;
-      break;
-    }
+    if (probe.ok) { openedChapter = chapter; break; }
     lastPageError = `manifest worked but image failed: ${probe.error || 'unknown image error'}`;
   }
 
-  out.steps.pages = {
-    ok: !!openedChapter,
-    ms: pageAttempt?.ms,
-    count: pageAttempt?.pages?.length || 0,
-    chapterId: openedChapter?.id,
-    error: openedChapter ? undefined : (lastPageError || 'no sampled chapter produced a reader-valid manifest'),
-  };
-  out.steps.image = {
-    ok: !!openedChapter && imageAttempt?.ok === true,
-    ms: imageAttempt?.ms,
-    type: imageAttempt?.type,
-    status: imageAttempt?.status,
-    error: openedChapter && imageAttempt?.ok ? undefined : (imageAttempt?.error || lastPageError || 'no image could be decoded'),
-  };
-
+  out.steps.pages = { ok: !!openedChapter, ms: pageAttempt?.ms, count: pageAttempt?.pages?.length || 0, chapterId: openedChapter?.id, error: openedChapter ? undefined : (lastPageError || 'no sampled chapter produced a reader-valid manifest') };
+  out.steps.image = { ok: !!openedChapter && imageAttempt?.ok === true, ms: imageAttempt?.ms, type: imageAttempt?.type, status: imageAttempt?.status, error: openedChapter && imageAttempt?.ok ? undefined : (imageAttempt?.error || lastPageError || 'no image could be decoded') };
   return out;
 }
 
 say(`Strict source audit: ${BASE}\n`);
-const registry = await json(`${BASE}/api/ext/sources`);
+
+// Critical: refresh the live registry before reading it. A release audit must
+// never certify a memoized/stale source snapshot from a previous Worker isolate.
+const refreshed = await json(`${BASE}/api/ext/refresh?audit=${Date.now()}`);
+if (!refreshed.ok) {
+  console.error(`Could not refresh the source registry: ${refreshed.error}`);
+  process.exit(1);
+}
+say(`Registry refreshed: ${Number(refreshed.body?.installed || 0)} active, ${Number(refreshed.body?.broken || 0)} broken.`);
+
+const registry = await json(`${BASE}/api/ext/sources?audit=${Date.now()}`);
 if (!registry.ok) {
   console.error(`Could not read the source registry: ${registry.error}`);
   process.exit(1);
@@ -236,8 +142,15 @@ if (!sources.length) {
   process.exit(1);
 }
 
-// Independent providers are audited concurrently; one slow host must not make
-// every other source wait behind it.
+// A refresh that says N active sources followed by a different active list is
+// itself a release failure: that is exactly the stale/ghost-source bug.
+const refreshedCount = Number(refreshed.body?.installed || 0);
+if (Number.isFinite(refreshedCount) && refreshedCount !== sources.length) {
+  console.error(`REGISTRY CONSISTENCY FAILED: refresh reported ${refreshedCount} active source(s), but /api/ext/sources returned ${sources.length}.`);
+  console.error(`Returned ids: ${sources.map((s) => s.id).join(', ')}`);
+  process.exit(1);
+}
+
 const report = await Promise.all(sources.map((source) => audit(source)));
 const mark = (step) => (step?.ok ? 'ok  ' : step ? 'FAIL' : '--  ');
 
@@ -246,17 +159,12 @@ if (AS_JSON) {
 } else {
   say(`${'source'.padEnd(18)}${STEPS.map((s) => s.padEnd(10)).join('')}`);
   say('-'.repeat(18 + STEPS.length * 10));
-  for (const row of report) {
-    say(row.id.padEnd(18) + STEPS.map((s) => mark(row.steps[s]).padEnd(10)).join(''));
-  }
+  for (const row of report) say(row.id.padEnd(18) + STEPS.map((s) => mark(row.steps[s]).padEnd(10)).join(''));
   say('');
   for (const row of report) {
     const broken = STEPS.filter((s) => !row.steps[s]?.ok);
-    if (!broken.length) {
-      say(`✓ ${row.id}: browse ${row.steps.browse.count} · search ${row.steps.search.count} · chapters ${row.steps.chapters.count} · pages ${row.steps.pages.count} · image ${row.steps.image.type}`);
-    } else {
-      say(`✗ ${row.id}: ${broken.map((s) => `${s} — ${row.steps[s]?.error || 'not reached'}`).join('; ')}`);
-    }
+    if (!broken.length) say(`✓ ${row.id}: browse ${row.steps.browse.count} · search ${row.steps.search.count} · chapters ${row.steps.chapters.count} · pages ${row.steps.pages.count} · image ${row.steps.image.type}`);
+    else say(`✗ ${row.id}: ${broken.map((s) => `${s} — ${row.steps[s]?.error || 'not reached'}`).join('; ')}`);
   }
 }
 
