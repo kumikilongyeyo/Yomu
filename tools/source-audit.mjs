@@ -9,8 +9,11 @@ const SAMPLE_TITLES = 5;
 const SAMPLE_CHAPTERS = 4;
 const REQUIRED_CAPS = ['search', 'details', 'chapters', 'pages'];
 const STEPS = ['contract', 'browse', 'search', 'details', 'chapters', 'pages', 'image'];
+const REGISTRY_CONVERGENCE_ATTEMPTS = 15;
+const REGISTRY_CONVERGENCE_DELAY = 2_000;
 
 const say = (...args) => { if (!AS_JSON) console.log(...args); };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function json(url) {
   const started = Date.now();
@@ -22,10 +25,12 @@ async function json(url) {
     });
     const ms = Date.now() - started;
     const type = response.headers.get('content-type') || '';
+    const sourceTruth = response.headers.get('x-yomu-source-truth') || '';
+    const entrypoint = response.headers.get('x-yomu-entrypoint') || '';
     const body = /json/i.test(type) ? await response.json().catch(() => null) : null;
-    if (!response.ok) return { ok: false, ms, body, error: `HTTP ${response.status}${body?.error ? `: ${String(body.error).slice(0, 140)}` : ''}` };
-    if (!/json/i.test(type)) return { ok: false, ms, error: `answered ${type || 'no content-type'}` };
-    return { ok: true, ms, body };
+    if (!response.ok) return { ok: false, ms, body, sourceTruth, entrypoint, error: `HTTP ${response.status}${body?.error ? `: ${String(body.error).slice(0, 140)}` : ''}` };
+    if (!/json/i.test(type)) return { ok: false, ms, sourceTruth, entrypoint, error: `answered ${type || 'no content-type'}` };
+    return { ok: true, ms, body, sourceTruth, entrypoint };
   } catch (error) {
     return { ok: false, ms: Date.now() - started, error: String(error?.message || error).slice(0, 140) };
   }
@@ -128,15 +133,44 @@ if (!refreshed.ok) {
   console.error(`Could not refresh the source registry: ${refreshed.error}`);
   process.exit(1);
 }
-say(`Registry refreshed: ${Number(refreshed.body?.installed || 0)} active, ${Number(refreshed.body?.broken || 0)} broken.`);
+const refreshedCount = Number(refreshed.body?.installed || 0);
+say(`Registry refreshed: ${refreshedCount} active, ${Number(refreshed.body?.broken || 0)} broken.`);
 
-const registry = await json(`${BASE}/api/ext/sources?audit=${Date.now()}`);
-if (!registry.ok) {
-  console.error(`Could not read the source registry: ${registry.error}`);
-  process.exit(1);
+// A Worker deploy can reach one Cloudflare edge a few seconds before another.
+// The registry endpoint has a v10-only response marker, so wait for that exact
+// release contract before judging the source pool. This does NOT relax the
+// gate: after convergence, any synthetic Fabric card or count mismatch still
+// fails the release.
+let registry = null;
+let sources = [];
+let syntheticIds = [];
+for (let attempt = 1; attempt <= REGISTRY_CONVERGENCE_ATTEMPTS; attempt += 1) {
+  registry = await json(`${BASE}/api/ext/sources?audit=${Date.now()}-${attempt}`);
+  if (registry.ok) {
+    sources = (registry.body?.extensions || []).filter((ext) => ext?.id && ext?.api);
+    syntheticIds = sources.map((source) => String(source.id)).filter((id) => id.startsWith('fabric-'));
+    const countMatches = !Number.isFinite(refreshedCount) || refreshedCount === sources.length;
+    const releaseMarker = registry.sourceTruth === 'registry-only';
+    if (releaseMarker && countMatches && syntheticIds.length === 0) break;
+    say(`Registry convergence ${attempt}/${REGISTRY_CONVERGENCE_ATTEMPTS}: marker=${registry.sourceTruth || 'old-worker'} count=${sources.length}/${refreshedCount} synthetic=${syntheticIds.join(',') || 'none'}`);
+  } else {
+    say(`Registry convergence ${attempt}/${REGISTRY_CONVERGENCE_ATTEMPTS}: ${registry.error}`);
+  }
+  if (attempt < REGISTRY_CONVERGENCE_ATTEMPTS) await sleep(REGISTRY_CONVERGENCE_DELAY);
 }
 
-const sources = (registry.body?.extensions || []).filter((ext) => ext?.id && ext?.api);
+if (!registry?.ok) {
+  console.error(`Could not read the source registry: ${registry?.error || 'unknown registry error'}`);
+  process.exit(1);
+}
+if (registry.sourceTruth !== 'registry-only') {
+  console.error(`REGISTRY RELEASE MARKER FAILED: /api/ext/sources never converged to the v10 registry-only Worker contract (last entrypoint=${registry.entrypoint || 'unknown'}).`);
+  process.exit(1);
+}
+if (syntheticIds.length) {
+  console.error(`REGISTRY TRUTH FAILED: synthetic compatibility source(s) leaked into the active registry: ${syntheticIds.join(', ')}`);
+  process.exit(1);
+}
 if (!sources.length) {
   console.error('No active extension sources were returned. MangaDex alone is not an acceptable federated source pool.');
   process.exit(1);
@@ -144,7 +178,6 @@ if (!sources.length) {
 
 // A refresh that says N active sources followed by a different active list is
 // itself a release failure: that is exactly the stale/ghost-source bug.
-const refreshedCount = Number(refreshed.body?.installed || 0);
 if (Number.isFinite(refreshedCount) && refreshedCount !== sources.length) {
   console.error(`REGISTRY CONSISTENCY FAILED: refresh reported ${refreshedCount} active source(s), but /api/ext/sources returned ${sources.length}.`);
   console.error(`Returned ids: ${sources.map((s) => s.id).join(', ')}`);

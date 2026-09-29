@@ -1,5 +1,5 @@
 import legacy, { type Env } from './index';
-import { fabricSourceCards, handleFabric } from './source-fabric-v6';
+import { handleFabric } from './source-fabric-v6';
 import { handleKaganeV53 } from './kagane-v53';
 import { handleFederatedResolve, handleStoreFederation } from './store-federation';
 
@@ -11,6 +11,11 @@ import { handleFederatedResolve, handleStoreFederation } from './store-federatio
  * sits in front of the same Add Source button: maintained ecosystem runtimes
  * get first crack, then the adaptive Worker ladder tries safe public methods.
  * The UI stays paste -> Add -> read.
+ *
+ * Fabric adapters are compatibility/runtime tools only. They must never be
+ * appended to /api/ext/sources: that endpoint is the validated reader registry.
+ * A Fabric experiment becomes active only after promotion into the normal
+ * extension registry and the strict end-to-end source gate passes it.
  */
 async function withPageScripts(request: Request, env: Env, scripts: string[]): Promise<Response> {
   const response = await legacy.fetch(request, env);
@@ -143,17 +148,6 @@ export default {
 
     if (url.pathname.startsWith('/api/fabric/stores/')) return handleStoreFederation(request, env, url);
     if (url.pathname.startsWith('/api/fabric/')) return handleFabric(request, env, url);
-
-    if (request.method === 'GET' && url.pathname === '/api/ext/sources') {
-      const response = await legacy.fetch(request, env);
-      if (!response.ok) return response;
-      const payload: any = await response.json().catch(() => null);
-      if (!payload || !Array.isArray(payload.extensions)) return response;
-      const fixed = fabricSourceCards(url.origin);
-      const seen = new Set(payload.extensions.map((x: any) => String(x?.id ?? '')));
-      payload.extensions.push(...fixed.filter((x) => !seen.has(x.id)));
-      return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
-    }
 
     if (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html') return withSourcesCommandCenter(request, env);
     if (url.pathname === '/discover' || url.pathname === '/discover/' || url.pathname === '/discover.html') return withExpandedDiscover(request, env);
