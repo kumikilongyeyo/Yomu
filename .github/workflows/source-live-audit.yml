@@ -27,5 +27,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Refresh live extension registry
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            https://yomu.yomuread.workers.dev/api/ext/refresh >/tmp/yomu-ext-refresh.json
+          cat /tmp/yomu-ext-refresh.json
       - name: Require every active source to read end to end
         run: node tools/source-audit.mjs https://yomu.yomuread.workers.dev
