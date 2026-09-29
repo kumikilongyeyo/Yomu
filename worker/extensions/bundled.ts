@@ -7,6 +7,7 @@
  * ever goes away; when the repo is configured and reachable, its copies win and
  * a version bump there takes effect without redeploying Yomu.
  */
+import mangapdf from '../../extensions/sources/mangapdf.json';
 import weebcentral from '../../extensions/sources/weebcentral.json';
 import flamecomics from '../../extensions/sources/flamecomics.json';
 import webtoons from '../../extensions/sources/webtoons.json';
@@ -23,6 +24,7 @@ import tcbscans from '../../extensions/sources/tcbscans.json';
 import toongod from '../../extensions/sources/toongod.json';
 
 export const BUNDLED_DESCRIPTORS: Record<string, unknown> = {
+  mangapdf,
   weebcentral,
   flamecomics,
   webtoons,
