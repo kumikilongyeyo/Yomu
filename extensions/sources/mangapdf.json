@@ -1,0 +1,21 @@
+{
+  "id": "mangapdf",
+  "name": "MangaPDF",
+  "version": 1,
+  "language": "en",
+  "content": ["manga", "manhwa"],
+  "base": "https://api.coffeemanga.shop",
+  "hosts": ["api.coffeemanga.shop", "api.mangapdf.org"],
+  "defaultCategory": "manga",
+  "timeoutMs": 15000,
+  "rateLimit": {"requests": 4, "perSeconds": 1},
+  "headers": {"Accept": "application/json", "X-Client": "api-consumer"},
+  "endpoints": {
+    "popular": {"path":"/api/v1/mihon/popular","query":{"page":"{{page}}"},"cacheTtl":600,"parse":{"type":"json","list":"items","limit":40,"fields":{"id":{"path":"id"},"title":{"path":"title"},"cover":{"path":"thumbnail_url"}}}},
+    "latest": {"path":"/api/v1/mihon/latest","query":{"page":"{{page}}"},"cacheTtl":300,"parse":{"type":"json","list":"items","limit":40,"fields":{"id":{"path":"id"},"title":{"path":"title"},"cover":{"path":"thumbnail_url"}}}},
+    "search": {"path":"/api/v1/mihon/search","query":{"q":"{{rawQuery}}","page":"{{page}}"},"cacheTtl":300,"parse":{"type":"json","list":"items","limit":40,"fields":{"id":{"path":"id"},"title":{"path":"title"},"cover":{"path":"thumbnail_url"}}}},
+    "series": {"path":"/api/v1/mihon/manga/{{id}}","cacheTtl":600,"parse":{"type":"json","fields":{"id":{"path":"manga.id"},"title":{"path":"manga.title"},"author":{"path":"manga.author"},"synopsis":{"path":"manga.description"},"genres":{"path":"manga.genres"},"status":{"path":"manga.status"},"cover":{"path":"manga.thumbnail_url"}}}},
+    "chapters": {"path":"/api/v1/mihon/manga/{{id}}","cacheTtl":300,"parse":{"type":"json","list":"chapters","limit":3000,"fields":{"id":{"path":"id"},"number":{"path":"number","transform":[{"number":true}]},"name":{"path":"name"},"scanlator":{"path":"scanlator"},"publishedAt":{"path":"uploaded_at","transform":[{"date":"iso"}]}}}},
+    "pages": {"path":"/api/v1/mihon/chapter/{{chapterId}}/pages","cacheTtl":1200,"parse":{"type":"json","list":"pages","limit":800,"fields":{"index":{"path":"index","transform":[{"number":true}]},"url":{"path":"image_url"}}}}
+  }
+}
