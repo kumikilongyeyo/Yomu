@@ -2,14 +2,10 @@ name: Strict live source audit
 
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: ['Deploy Yomu to Cloudflare']
+    types: [completed]
     branches: [main]
-    paths:
-      - 'tools/source-audit.mjs'
-      - 'extensions/**'
-      - 'worker/extensions/**'
-      - 'worker/routes-extensions.ts'
-      - '.github/workflows/source-live-audit.yml'
 
 permissions:
   contents: read
@@ -20,10 +16,16 @@ concurrency:
 
 jobs:
   audit:
+    # Only audit a release after the production deploy workflow itself succeeded.
+    # This prevents the audit from racing a push and testing the previous Worker.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          # On workflow_run, test with the exact source revision that was deployed.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
