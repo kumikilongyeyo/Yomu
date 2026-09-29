@@ -2,20 +2,7 @@ import v9 from './index-v9';
 import type { Env } from './index';
 
 /**
- * v10: reader continuity hardening.
- *
- * The continuity stack retries dead images, verifies alternate chapter copies,
- * switches sources, and carries reading position across. Reader Focus sits on
- * top of that proven stack and makes it proactive: warm alternate manifests,
- * faster visible-page recovery, short-session circuit breaking, and bounded
- * prefetch for the current and next chapter.
- *
- * Production source truth also lives here: older Source Fabric compatibility
- * layers append synthetic `fabric-*` cards to /api/ext/sources. Those cards are
- * useful experiments, but they are not validated registry extensions and must
- * not be advertised as active reader sources. A Fabric source only becomes
- * active after it is promoted into the normal extension registry and passes the
- * strict end-to-end source audit.
+ * v10: reader continuity hardening + production source truth.
  */
 
 const READER_SCRIPTS = [
@@ -25,23 +12,35 @@ const READER_SCRIPTS = [
   '/yomu-reader-focus.js',
 ];
 
-async function ensureReaderContinuity(response: Response): Promise<Response> {
+const SOURCE_TRUTH_SCRIPTS = [
+  '/yomu-source-pack-truth.js',
+  '/yomu-source-truth.js',
+];
+
+function injectScripts(html: string, scripts: string[]): string {
+  const missing = scripts.filter((script) => !html.includes(script));
+  if (!missing.length) return html;
+  const tags = missing.map((script) => `<script src="${script}" defer></script>`).join('');
+  return html.includes('</body>') ? html.replace('</body>', `${tags}</body>`) : html + tags;
+}
+
+async function ensureHtmlScripts(
+  response: Response,
+  scripts: string[],
+  markerName: string,
+  markerValue: string,
+): Promise<Response> {
   if (!response.ok) return response;
   const type = response.headers.get('content-type') ?? '';
   if (!type.includes('text/html')) return response;
 
-  let html = await response.text();
-  const missing = READER_SCRIPTS.filter((script) => !html.includes(script));
-  if (missing.length) {
-    const tags = missing.map((script) => `<script src="${script}" defer></script>`).join('');
-    html = html.includes('</body>') ? html.replace('</body>', `${tags}</body>`) : html + tags;
-  }
-
+  const html = injectScripts(await response.text(), scripts);
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-reader-continuity', 'v10-focus');
+  headers.set(markerName, markerValue);
+  headers.set('x-yomu-entrypoint', 'v10');
   return new Response(html, { status: response.status, statusText: response.statusText, headers });
 }
 
@@ -82,8 +81,16 @@ export default {
     }
 
     if (request.method === 'GET' && url.pathname.startsWith('/read/')) {
-      return ensureReaderContinuity(response);
+      return ensureHtmlScripts(response, READER_SCRIPTS, 'x-yomu-reader-continuity', 'v10-focus');
     }
+
+    if (
+      request.method === 'GET' &&
+      (url.pathname === '/sources' || url.pathname === '/sources/' || url.pathname === '/sources.html')
+    ) {
+      return ensureHtmlScripts(response, SOURCE_TRUTH_SCRIPTS, 'x-yomu-source-ui', 'registry-truth');
+    }
+
     return response;
   },
 };
