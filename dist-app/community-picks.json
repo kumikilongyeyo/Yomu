@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-09-28T10:48:48.768Z",
+ "generatedAt": "2026-09-29T10:36:40.368Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -607,8 +607,8 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.445,
-     "rank": 37,
+     "strength": 0.43,
+     "rank": 38,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -625,7 +625,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 1.904
+   "total": 1.88
   },
   {
    "title": "Kono Oto Tomare!",
@@ -799,8 +799,8 @@
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.46,
-     "rank": 36,
+     "strength": 0.445,
+     "rank": 37,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -817,7 +817,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.364
+   "total": 1.34
   },
   {
    "title": "Berserk",
@@ -1735,7 +1735,7 @@
    "year": 2017,
    "anilistId": 100954,
    "malId": 124845,
-   "score": 81,
+   "score": 82,
    "agree": 1,
    "total": 0.88
   },
@@ -2090,7 +2090,7 @@
    "total": 0.8425
   },
   {
-   "title": "Fullmetal Alchemist",
+   "title": "Ascendance of a Bookworm: Part 5",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2098,11 +2098,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113869-S4RyCDWsc0n9.jpg",
    "category": "manga",
-   "year": 2001,
-   "anilistId": 30025,
-   "malId": 25,
+   "year": 2020,
+   "anilistId": 113869,
+   "malId": null,
    "score": 89,
    "agree": 1,
    "total": 0.835
@@ -2238,7 +2238,7 @@
    "total": 0.8275
   },
   {
-   "title": "Ashita no Joe: Fighting for Tomorrow",
+   "title": "Fullmetal Alchemist",
    "signals": {
     "anilist": {
      "strength": 0.82,
@@ -2246,11 +2246,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
    "category": "manga",
-   "year": 1968,
-   "anilistId": 31303,
-   "malId": 1303,
+   "year": 2001,
+   "anilistId": 30025,
+   "malId": 25,
    "score": 89,
    "agree": 1,
    "total": 0.82
@@ -2330,7 +2330,7 @@
    "total": 0.8125
   },
   {
-   "title": "Kingdom",
+   "title": "Ashita no Joe: Fighting for Tomorrow",
    "signals": {
     "anilist": {
      "strength": 0.805,
@@ -2338,11 +2338,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
    "category": "manga",
-   "year": 2006,
-   "anilistId": 46765,
-   "malId": 16765,
+   "year": 1968,
+   "anilistId": 31303,
+   "malId": 1303,
    "score": 89,
    "agree": 1,
    "total": 0.805
