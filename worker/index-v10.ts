@@ -4,17 +4,18 @@ import type { Env } from './index';
 /**
  * v10: reader continuity hardening.
  *
- * The page-rescue and chapter-switch engines already know how to retry a dead
- * image, verify another source's copy of the same chapter, switch sources, and
- * carry the exact page/scroll position across. v10 guarantees that stack is
- * loaded on every /read/ response at the Worker edge, even when a stale static
- * reader shell omitted one of the scripts.
+ * The continuity stack retries dead images, verifies alternate chapter copies,
+ * switches sources, and carries reading position across. Reader Focus sits on
+ * top of that proven stack and makes it proactive: warm alternate manifests,
+ * faster visible-page recovery, short-session circuit breaking, and bounded
+ * prefetch for the current and next chapter.
  */
 
 const READER_SCRIPTS = [
   '/yomu-integrity.js',
   '/yomu-page-rescue.js',
   '/yomu-chapter-switch.js',
+  '/yomu-reader-focus.js',
 ];
 
 async function ensureReaderContinuity(response: Response): Promise<Response> {
@@ -33,7 +34,7 @@ async function ensureReaderContinuity(response: Response): Promise<Response> {
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('cache-control', 'no-store, max-age=0');
-  headers.set('x-yomu-reader-continuity', 'v10');
+  headers.set('x-yomu-reader-continuity', 'v10-focus');
   return new Response(html, { status: response.status, statusText: response.statusText, headers });
 }
 
