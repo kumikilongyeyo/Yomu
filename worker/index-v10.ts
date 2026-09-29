@@ -64,6 +64,7 @@ async function registryOnlySources(response: Response): Promise<Response> {
   headers.set('content-type', 'application/json; charset=utf-8');
   headers.set('cache-control', 'no-store, max-age=0');
   headers.set('x-yomu-source-truth', 'registry-only');
+  headers.set('x-yomu-entrypoint', 'v10');
   return new Response(JSON.stringify({ ...payload, extensions }), {
     status: response.status,
     statusText: response.statusText,
