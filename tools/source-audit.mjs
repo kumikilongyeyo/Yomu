@@ -1,42 +1,32 @@
 #!/usr/bin/env node
 /**
- * Does every enabled source actually work, end to end?
+ * Strict live-source acceptance for Yomu.
  *
- * "The source is added" is four different claims, and a source can pass one
- * and fail the next three:
+ * An extension is active only when it can do the whole job a reader needs:
+ * browse -> search -> details -> chapters -> manifest -> actual image bytes.
  *
- *   browse    /series                        does it list titles, with covers?
- *   search    /search?q=                     can you find a title by name?
- *   details   /series/<id>                   does a title resolve to a page?
- *   chapters  /series/<id> -> .chapters      does it list chapters to open?
- *   pages     /chapters/<id>/manifest        do those chapters have images?
+ * This intentionally fails on provider refusals and deep reader failures.
+ * If an upstream cannot answer Yomu, that source must not be advertised as
+ * active. We never bypass authentication, CAPTCHA, anti-bot or access controls;
+ * a blocked source is simply not a working Yomu source.
  *
- * The last two are not their own endpoints: worker/routes-extensions.ts returns
- * the chapter list inside the series detail, and the page list only through the
- * reader's manifest route. Auditing them as separate paths is how a first pass
- * of this file reported every source as broken when they were all fine.
+ * Multiple titles/chapters are sampled so a legitimate title with no chapters
+ * does not create a false negative.
  *
- * Each one is where the library, the search results, the series screen and
- * the reader get their content, so a source that browses but cannot serve
- * chapters looks perfect on Home and is useless the moment anybody taps it.
- * This walks the whole chain per source and says exactly which link broke.
- *
- *   node tools/source-audit.mjs                          # against production
- *   node tools/source-audit.mjs http://127.0.0.1:8787    # against wrangler dev
- *   node tools/source-audit.mjs --json                   # machine-readable
- *
- * Exit code is 0 when every source can at least browse and search, 1 when a
- * source is wholly dead. A source that browses but cannot serve pages is
- * reported loudly and does not fail the run, because that is usually the
- * provider having a bad day rather than a defect in this repository -- and a
- * gate that goes red for someone else's outage gets ignored.
+ * Usage:
+ *   node tools/source-audit.mjs
+ *   node tools/source-audit.mjs https://yomu.yomuread.workers.dev
+ *   node tools/source-audit.mjs --json
  */
+
 const BASE = (process.argv.slice(2).find((a) => /^https?:\/\//.test(a)) || 'https://yomu.yomuread.workers.dev').replace(/\/+$/, '');
 const AS_JSON = process.argv.includes('--json');
 const TIMEOUT = 20_000;
-/* NamiComi is excluded everywhere in the product, so auditing it would report
-   a failure for something deliberately never called. */
-const EXCLUDE = /nami\s*comi|namicomi/i;
+const IMAGE_TIMEOUT = 15_000;
+const SAMPLE_TITLES = 5;
+const SAMPLE_CHAPTERS = 4;
+const REQUIRED_CAPS = ['search', 'details', 'chapters', 'pages'];
+const STEPS = ['contract', 'browse', 'search', 'details', 'chapters', 'pages', 'image'];
 
 const say = (...args) => { if (!AS_JSON) console.log(...args); };
 
@@ -45,205 +35,236 @@ async function json(url) {
   try {
     const response = await fetch(url, {
       cache: 'no-store',
-      headers: { accept: 'application/json' },
+      headers: { accept: 'application/json', 'x-yomu-audit': '1' },
       signal: AbortSignal.timeout(TIMEOUT),
     });
     const ms = Date.now() - started;
-    if (!response.ok) {
-      /* The Worker says who refused it. `upstreamStatus` means the provider
-         answered and turned us away, which is a different fact from Yomu
-         being unable to ask -- and the two do not deserve the same verdict. */
-      const body = await response.json().catch(() => null);
-      const upstream = Number(body?.upstreamStatus) || null;
-      const detail = String(body?.error || '').slice(0, 120);
-      return { ok: false, ms, upstream, detail, error: `HTTP ${response.status}` };
-    }
     const type = response.headers.get('content-type') || '';
+    let body = null;
+    if (/json/i.test(type)) body = await response.json().catch(() => null);
+    if (!response.ok) {
+      return {
+        ok: false,
+        ms,
+        body,
+        error: `HTTP ${response.status}${body?.error ? `: ${String(body.error).slice(0, 140)}` : ''}`,
+      };
+    }
     if (!/json/i.test(type)) return { ok: false, ms, error: `answered ${type || 'no content-type'}` };
-    return { ok: true, ms, body: await response.json() };
+    return { ok: true, ms, body };
   } catch (error) {
-    return { ok: false, ms: Date.now() - started, error: String(error?.message || error).slice(0, 80) };
+    return { ok: false, ms: Date.now() - started, error: String(error?.message || error).slice(0, 140) };
   }
 }
 
-const rows = (body) => (Array.isArray(body?.series) ? body.series : []);
+async function image(url) {
+  const started = Date.now();
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        accept: 'image/avif,image/webp,image/*,*/*;q=0.8',
+        'x-yomu-audit': '1',
+      },
+      signal: AbortSignal.timeout(IMAGE_TIMEOUT),
+    });
+    const ms = Date.now() - started;
+    const type = response.headers.get('content-type') || '';
+    const ok = response.ok && /^image\//i.test(type);
+    try { await response.body?.cancel(); } catch {}
+    return {
+      ok,
+      ms,
+      type,
+      status: response.status,
+      error: ok ? undefined : `HTTP ${response.status}; content-type=${type || 'none'}`,
+    };
+  } catch (error) {
+    return { ok: false, ms: Date.now() - started, error: String(error?.message || error).slice(0, 140) };
+  }
+}
 
-/**
- * One source, all the way down. Stops descending once a step has no input.
- *
- * A source is only audited for what it claims. Comick declares
- * `chapters: false, pages: false` -- it finds titles, it does not serve them --
- * so calling those routes reports a 502 for a promise it never made. Declared
- * gaps come back as `n/a`, not as failures.
- */
+const seriesRows = (body) => (Array.isArray(body?.series) ? body.series : []);
+
+function validManifest(body) {
+  const pages = Array.isArray(body?.pages) ? body.pages : [];
+  return body?.schema === 'yomu.chapter-manifest/1'
+    && typeof body.chapterId === 'string' && !!body.chapterId
+    && typeof body.sourceSeriesId === 'string' && !!body.sourceSeriesId
+    && typeof body.manifestVersion === 'string' && !!body.manifestVersion
+    && Number.isFinite(body.pageListVersion)
+    && pages.length > 0
+    && new Set(pages.map((p) => p?.key)).size === pages.length
+    && pages.every((p) => typeof p?.url === 'string' && /^https?:\/\//.test(p.url));
+}
+
 async function audit(source) {
   const api = String(source.api || '').replace(/\/?$/, '/');
   const caps = source.capabilities || {};
-  const claims = (name) => caps[name] !== false;
-  const out = { id: source.id, name: source.name, api, capabilities: caps, steps: {} };
-  const NA = { ok: true, na: true, error: 'not claimed by this source' };
+  const missing = REQUIRED_CAPS.filter((name) => caps[name] !== true);
+  const out = {
+    id: source.id,
+    name: source.name,
+    api,
+    capabilities: caps,
+    status: source.status || 'unknown',
+    steps: {},
+  };
 
-  // 1. browse
+  out.steps.contract = {
+    ok: missing.length === 0,
+    error: missing.length ? `missing reader capabilities: ${missing.join(', ')}` : undefined,
+  };
+  if (missing.length) return out;
+
+  // 1) Browse must return real titles with ids.
   const browse = await json(`${api}series?page=1`);
-  const listed = rows(browse.body);
+  const listed = seriesRows(browse.body).filter((r) => r?.id && r?.title);
   out.steps.browse = {
     ok: browse.ok && listed.length > 0,
     ms: browse.ms,
     count: listed.length,
     withCover: listed.filter((r) => r?.cover).length,
-    error: browse.error,
-    upstream: browse.upstream,
-    detail: browse.detail,
+    error: browse.ok && !listed.length ? 'returned no usable titles' : browse.error,
   };
+  if (!out.steps.browse.ok) return out;
 
-  // 2. search -- for a title this source itself just listed, so a miss is the
-  //    search being broken rather than the query being unlucky.
-  const probe = listed.find((r) => r?.title)?.title || 'a';
-  const search = await json(`${api}search?q=${encodeURIComponent(String(probe).slice(0, 40))}&page=1`);
-  const found = rows(search.body);
+  // 2) Search for a title the source itself just advertised. This avoids an
+  // arbitrary query that a niche source simply might not carry.
+  let searchOk = false;
+  let searchResult = null;
+  let searchProbe = '';
+  for (const candidate of listed.slice(0, 3)) {
+    searchProbe = String(candidate.title).slice(0, 60);
+    const attempt = await json(`${api}search?q=${encodeURIComponent(searchProbe)}&page=1`);
+    const found = seriesRows(attempt.body).filter((r) => r?.id && r?.title);
+    searchResult = { ...attempt, count: found.length };
+    if (attempt.ok && found.length) { searchOk = true; break; }
+  }
   out.steps.search = {
-    ok: search.ok && found.length > 0,
-    ms: search.ms,
-    count: found.length,
-    probe: String(probe).slice(0, 48),
-    error: search.error,
-    upstream: search.upstream,
-    detail: search.detail,
+    ok: searchOk,
+    ms: searchResult?.ms,
+    count: searchResult?.count || 0,
+    probe: searchProbe,
+    error: searchOk ? undefined : (searchResult?.error || 'search returned no titles it had just advertised'),
   };
+  if (!searchOk) return out;
 
-  // 3. details + 4. chapters, for the first title it listed
-  const first = listed[0];
-  if (!first?.id) {
-    out.steps.details = { ok: false, error: 'nothing to open -- browse returned no id' };
-    out.steps.chapters = { ok: false, error: 'skipped' };
-    out.steps.pages = { ok: false, error: 'skipped' };
-    return out;
+  // 3-4) Open several listed titles until one proves both details and chapters.
+  // A one-shot first-title probe used to falsely condemn sources whose first
+  // listing was a one-shot, announcement, or empty licensed title.
+  let picked = null;
+  let lastDetailError = '';
+  let anyDetail = false;
+  for (const candidate of listed.slice(0, SAMPLE_TITLES)) {
+    const detail = await json(`${api}series/${encodeURIComponent(candidate.id)}`);
+    if (detail.ok && detail.body?.title) anyDetail = true;
+    const chapters = Array.isArray(detail.body?.chapters) ? detail.body.chapters.filter((c) => c?.id) : [];
+    if (detail.ok && detail.body?.title && chapters.length) {
+      picked = { candidate, detail, chapters };
+      break;
+    }
+    lastDetailError = detail.error || (detail.ok ? 'title had no chapters' : 'detail failed');
   }
 
-  if (!claims('details') && !claims('chapters')) {
-    out.steps.details = NA;
-    out.steps.chapters = NA;
-    out.steps.pages = NA;
-    return out;
-  }
-
-  /* One call answers both: the detail route returns the series *and* its
-     chapter list, so a source that opens but lists nothing is visible here. */
-  const details = await json(`${api}series/${encodeURIComponent(first.id)}`);
-  const list = Array.isArray(details.body?.chapters) ? details.body.chapters : [];
   out.steps.details = {
-    ok: details.ok && !!details.body?.title,
-    ms: details.ms,
-    title: String(details.body?.title || '').slice(0, 48),
-    error: details.error,
+    ok: anyDetail,
+    title: String(picked?.detail?.body?.title || '').slice(0, 60),
+    ms: picked?.detail?.ms,
+    error: anyDetail ? undefined : (lastDetailError || 'no sampled title opened'),
   };
   out.steps.chapters = {
-    ok: details.ok && list.length > 0,
-    ms: details.ms,
-    count: list.length,
-    error: details.ok ? (list.length ? undefined : 'the series carries no chapters') : details.error,
+    ok: !!picked,
+    count: picked?.chapters?.length || 0,
+    ms: picked?.detail?.ms,
+    error: picked ? undefined : (lastDetailError || `none of ${Math.min(SAMPLE_TITLES, listed.length)} sampled titles had chapters`),
   };
+  if (!picked) return out;
 
-  // 5. pages, through the same manifest route the reader itself uses -- and
-  //    validated the same way, because a manifest the reader rejects is a
-  //    chapter that does not open however healthy the source looks.
-  if (!claims('pages')) { out.steps.pages = NA; return out; }
-
-  const chapter = list[0];
-  if (!chapter?.id) {
-    out.steps.pages = { ok: false, error: 'no chapter id to open' };
-    return out;
+  // 5-6) A source is not reader-ready until at least one sampled chapter yields
+  // a reader-valid manifest AND the first page URL yields actual image bytes.
+  let pageAttempt = null;
+  let imageAttempt = null;
+  let openedChapter = null;
+  let lastPageError = '';
+  for (const chapter of picked.chapters.slice(0, SAMPLE_CHAPTERS)) {
+    const manifest = await json(`${api}chapters/${encodeURIComponent(chapter.id)}/manifest`);
+    const pages = Array.isArray(manifest.body?.pages) ? manifest.body.pages : [];
+    const valid = manifest.ok && validManifest(manifest.body);
+    pageAttempt = { ...manifest, pages, valid };
+    if (!valid) {
+      lastPageError = manifest.error || `reader rejected manifest (schema=${manifest.body?.schema || 'none'}, pages=${pages.length})`;
+      continue;
+    }
+    const probe = await image(pages[0].url);
+    imageAttempt = probe;
+    if (probe.ok) {
+      openedChapter = chapter;
+      break;
+    }
+    lastPageError = `manifest worked but image failed: ${probe.error || 'unknown image error'}`;
   }
-  const manifest = await json(`${api}chapters/${encodeURIComponent(chapter.id)}/manifest`);
-  const images = Array.isArray(manifest.body?.pages) ? manifest.body.pages : [];
-  const body = manifest.body || {};
-  const valid = body.schema === 'yomu.chapter-manifest/1'
-    && typeof body.chapterId === 'string' && body.chapterId
-    && typeof body.sourceSeriesId === 'string' && body.sourceSeriesId
-    && typeof body.manifestVersion === 'string' && body.manifestVersion
-    && Number.isFinite(body.pageListVersion)
-    && images.length > 0
-    && new Set(images.map((p) => p?.key)).size === images.length;
+
   out.steps.pages = {
-    ok: manifest.ok && valid,
-    ms: manifest.ms,
-    count: images.length,
-    error: manifest.ok
-      ? (valid ? undefined : `manifest would be rejected by the reader (schema=${body.schema || 'none'}, pages=${images.length})`)
-      : manifest.error,
+    ok: !!openedChapter,
+    ms: pageAttempt?.ms,
+    count: pageAttempt?.pages?.length || 0,
+    chapterId: openedChapter?.id,
+    error: openedChapter ? undefined : (lastPageError || 'no sampled chapter produced a reader-valid manifest'),
   };
+  out.steps.image = {
+    ok: !!openedChapter && imageAttempt?.ok === true,
+    ms: imageAttempt?.ms,
+    type: imageAttempt?.type,
+    status: imageAttempt?.status,
+    error: openedChapter && imageAttempt?.ok ? undefined : (imageAttempt?.error || lastPageError || 'no image could be decoded'),
+  };
+
   return out;
 }
 
-/* --- run ----------------------------------------------------------------- */
-
-say(`Auditing ${BASE}\n`);
+say(`Strict source audit: ${BASE}\n`);
 const registry = await json(`${BASE}/api/ext/sources`);
 if (!registry.ok) {
   console.error(`Could not read the source registry: ${registry.error}`);
   process.exit(1);
 }
 
-const sources = (registry.body?.extensions || [])
-  .filter((ext) => ext?.id && ext?.api && !EXCLUDE.test(`${ext.id} ${ext.name || ''}`));
+const sources = (registry.body?.extensions || []).filter((ext) => ext?.id && ext?.api);
+if (!sources.length) {
+  console.error('No active extension sources were returned. MangaDex alone is not an acceptable federated source pool.');
+  process.exit(1);
+}
 
-/* Sources are independent, so audit them together rather than in a queue --
-   one slow provider should not decide how long the whole audit takes. */
+// Independent providers are audited concurrently; one slow host must not make
+// every other source wait behind it.
 const report = await Promise.all(sources.map((source) => audit(source)));
-
-const STEPS = ['browse', 'search', 'details', 'chapters', 'pages'];
-const mark = (step) => (step?.na ? 'n/a ' : step?.ok ? 'ok  ' : step?.error === 'skipped' ? '--  ' : 'FAIL');
+const mark = (step) => (step?.ok ? 'ok  ' : step ? 'FAIL' : '--  ');
 
 if (AS_JSON) {
   console.log(JSON.stringify({ base: BASE, audited: report.length, report }, null, 2));
 } else {
-  say(`${'source'.padEnd(16)}${STEPS.map((s) => s.padEnd(10)).join('')}`);
-  say('-'.repeat(16 + STEPS.length * 10));
+  say(`${'source'.padEnd(18)}${STEPS.map((s) => s.padEnd(10)).join('')}`);
+  say('-'.repeat(18 + STEPS.length * 10));
   for (const row of report) {
-    say(row.id.padEnd(16) + STEPS.map((s) => mark(row.steps[s]).padEnd(10)).join(''));
+    say(row.id.padEnd(18) + STEPS.map((s) => mark(row.steps[s]).padEnd(10)).join(''));
   }
   say('');
   for (const row of report) {
-    const broken = STEPS.filter((s) => !row.steps[s]?.ok && !row.steps[s]?.na);
+    const broken = STEPS.filter((s) => !row.steps[s]?.ok);
     if (!broken.length) {
-      const deep = row.steps.chapters.na
-        ? 'discovery-only by declaration — finds titles, does not serve them'
-        : `chapters ${row.steps.chapters.count} · pages ${row.steps.pages.count}`;
-      say(`✓ ${row.id}: browse ${row.steps.browse.count} (${row.steps.browse.withCover} with covers) · search ${row.steps.search.count} · ${deep}`);
-      continue;
+      say(`✓ ${row.id}: browse ${row.steps.browse.count} · search ${row.steps.search.count} · chapters ${row.steps.chapters.count} · pages ${row.steps.pages.count} · image ${row.steps.image.type}`);
+    } else {
+      say(`✗ ${row.id}: ${broken.map((s) => `${s} — ${row.steps[s]?.error || 'not reached'}`).join('; ')}`);
     }
-    say(`✗ ${row.id}: ${broken.map((s) => `${s} — ${row.steps[s]?.error || 'empty'}`).join('; ')}`);
   }
 }
 
-/* A source that cannot browse AND cannot search is not a source. Anything
-   deeper failing is reported but does not block: providers have bad days, and
-   a release gate that goes red for someone else's outage stops being read.
-
-   The same reasoning decides what to do about a source that is unreachable at
-   both ends. If the provider answered and refused us -- a 403 bot challenge, a
-   geoblock, a rate limit -- then nothing in the release under test caused it,
-   and failing here reverts good work for a change on somebody else's server.
-   That happened: Kagane put its API behind an interstitial, and the next two
-   releases were rolled back for it, one of which was only a catalog refresh.
-   So a refusal is reported loudly and does not block. A source that is dark
-   for any other reason still does, because that is the shape a routing bug,
-   a broken adapter or a bad deploy takes, and this gate exists to catch those. */
-const dark = report.filter((row) => !row.steps.browse.ok && !row.steps.search.ok);
-const refused = dark.filter((row) => row.steps.browse.upstream || row.steps.search.upstream);
-const broken = dark.filter((row) => !refused.includes(row));
-
-for (const row of refused) {
-  const step = row.steps.browse.upstream ? row.steps.browse : row.steps.search;
-  console.error(
-    `\n! ${row.id} is unreachable because its provider refused us (upstream HTTP ${step.upstream})` +
-      `${step.detail ? `: ${step.detail}` : ''}` +
-      '\n  Reported, not blocking: no change in this release can cause or fix it.',
-  );
-}
-
+const broken = report.filter((row) => STEPS.some((s) => !row.steps[s]?.ok));
 if (broken.length) {
-  console.error(`\n${broken.length} source(s) are wholly unreachable: ${broken.map((r) => r.id).join(', ')}`);
+  console.error(`\nSTRICT SOURCE GATE FAILED: ${broken.length}/${report.length} active extension source(s) are not reader-ready: ${broken.map((r) => r.id).join(', ')}`);
+  console.error('Repair or disable every failing source. Active means usable all the way to image bytes.');
   process.exit(1);
 }
-say(`\n${report.length} sources audited, ${report.filter((r) => STEPS.every((s) => r.steps[s]?.ok)).length} flawless end to end.`);
+
+say(`\nSTRICT SOURCE GATE PASSED: ${report.length}/${report.length} active extension sources read end to end.`);
