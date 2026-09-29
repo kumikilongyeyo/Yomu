@@ -1,9 +1,9 @@
 {
   // One Worker serves both the app's files and its fetching.
   //
-  // v9 wraps the v8 Source Fabric entrypoint with Browser Run capacity
-  // diagnostics so Source Beast can wait on Cloudflare's real acquisition
-  // window instead of guessing a fixed retry delay.
+  // v10 wraps v9 and guarantees the reader continuity stack (integrity,
+  // per-page rescue, chapter source switching + position handoff) is present
+  // on every /read/ response, even when a stale static shell omits it.
   //
   // Browser Run powers Source Beast's cloud-only human verification path. The
   // browser binding is authenticated by Cloudflare, so Yomu never needs a
@@ -15,7 +15,7 @@
   //
   // Deploy with: npx wrangler deploy
   "name": "yomu",
-  "main": "worker/index-v9.ts",
+  "main": "worker/index-v10.ts",
   "compatibility_date": "2026-09-19",
   "compatibility_flags": ["nodejs_compat"],
   "browser": {
