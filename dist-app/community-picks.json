@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-02T10:27:01.819Z",
+ "generatedAt": "2026-10-03T09:48:49.898Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -62,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.65/10 from 462 MangaUpdates readers",
+     "note": "8.65/10 from 465 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
     }
    },
@@ -223,8 +223,8 @@
    "title": "Chang Ge Xing",
    "signals": {
     "anilist": {
-     "strength": 0.805,
-     "rank": 13,
+     "strength": 0.82,
+     "rank": 12,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -241,7 +241,7 @@
    "malId": 42001,
    "score": 81,
    "agree": 2,
-   "total": 2.876
+   "total": 2.9
   },
   {
    "title": "The Devil Butler",
@@ -631,8 +631,8 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.43,
-     "rank": 38,
+     "strength": 0.445,
+     "rank": 37,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -649,7 +649,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 1.868
+   "total": 1.892
   },
   {
    "title": "Dorohedoro",
@@ -758,7 +758,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.33/10 from 836 MangaUpdates readers",
+     "note": "8.33/10 from 837 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
    },
@@ -1570,7 +1570,7 @@
    "year": 2011,
    "anilistId": 63327,
    "malId": 33327,
-   "score": 84,
+   "score": 85,
    "agree": 1,
    "total": 0.91
   },
@@ -1997,7 +1997,7 @@
    "total": 0.85
   },
   {
-   "title": "Pirouette into My Heart",
+   "title": "The Ravages of Time",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -2005,11 +2005,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
    "category": "manhua",
-   "year": 2019,
-   "anilistId": 113350,
-   "malId": 150293,
+   "year": 2001,
+   "anilistId": 31320,
+   "malId": 1320,
    "score": 81,
    "agree": 1,
    "total": 0.85
@@ -2109,7 +2109,7 @@
    "total": 0.8425
   },
   {
-   "title": "Fullmetal Alchemist",
+   "title": "Ascendance of a Bookworm: Part 5",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2117,11 +2117,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113869-S4RyCDWsc0n9.jpg",
    "category": "manga",
-   "year": 2001,
-   "anilistId": 30025,
-   "malId": 25,
+   "year": 2020,
+   "anilistId": 113869,
+   "malId": null,
    "score": 89,
    "agree": 1,
    "total": 0.835
@@ -2163,7 +2163,7 @@
    "total": 0.835
   },
   {
-   "title": "The Ravages of Time",
+   "title": "Pirouette into My Heart",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2171,11 +2171,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
    "category": "manhua",
-   "year": 2001,
-   "anilistId": 31320,
-   "malId": 1320,
+   "year": 2019,
+   "anilistId": 113350,
+   "malId": 150293,
    "score": 81,
    "agree": 1,
    "total": 0.835
@@ -2257,7 +2257,7 @@
    "total": 0.8275
   },
   {
-   "title": "Ashita no Joe: Fighting for Tomorrow",
+   "title": "Fullmetal Alchemist",
    "signals": {
     "anilist": {
      "strength": 0.82,
@@ -2265,11 +2265,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
    "category": "manga",
-   "year": 1968,
-   "anilistId": 31303,
-   "malId": 1303,
+   "year": 2001,
+   "anilistId": 30025,
+   "malId": 25,
    "score": 89,
    "agree": 1,
    "total": 0.82
@@ -2293,24 +2293,6 @@
    "total": 0.82
   },
   {
-   "title": "Soulmate",
-   "signals": {
-    "anilist": {
-     "strength": 0.82,
-     "rank": 12,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
-   "category": "manhua",
-   "year": 2020,
-   "anilistId": 118269,
-   "malId": null,
-   "score": 81,
-   "agree": 1,
-   "total": 0.82
-  },
-  {
    "title": "Your Talent Is Mine",
    "signals": {
     "anilist": {
@@ -2324,7 +2306,7 @@
    "year": 2021,
    "anilistId": 138366,
    "malId": null,
-   "score": 70,
+   "score": 71,
    "agree": 1,
    "total": 0.82
   },
@@ -2367,7 +2349,7 @@
    "total": 0.8125
   },
   {
-   "title": "Kingdom",
+   "title": "Ashita no Joe: Fighting for Tomorrow",
    "signals": {
     "anilist": {
      "strength": 0.805,
@@ -2375,11 +2357,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
    "category": "manga",
-   "year": 2006,
-   "anilistId": 46765,
-   "malId": 16765,
+   "year": 1968,
+   "anilistId": 31303,
+   "malId": 1303,
    "score": 89,
    "agree": 1,
    "total": 0.805
@@ -2399,6 +2381,24 @@
    "anilistId": 87423,
    "malId": 100128,
    "score": 79,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
    "agree": 1,
    "total": 0.805
   },
