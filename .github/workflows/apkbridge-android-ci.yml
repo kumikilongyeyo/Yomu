@@ -1,0 +1,121 @@
+name: Android Exact APK Runtime CI
+
+on:
+  push:
+    branches:
+      - main
+      - feat/universal-apk-executor-v6
+    paths:
+      - 'runtime/apkbridge-executor/**'
+      - '.github/workflows/apkbridge-android-ci.yml'
+  pull_request:
+    paths:
+      - 'runtime/apkbridge-executor/**'
+      - '.github/workflows/apkbridge-android-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apkbridge-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact-apk-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Fetch pinned ApkBridge and current MangaDex extension
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fL --retry 3 --retry-all-errors \
+            -o /tmp/ApkBridge-v1.8.apk \
+            https://github.com/Schnitzel5/ApkBridge/releases/download/v1.8/ApkBridge-v1.8.apk
+          echo '35656955d2997bde5b17f9b3d84e135106638e58de3b5f245b07cfdfd1dbba19  /tmp/ApkBridge-v1.8.apk' | sha256sum -c -
+
+          curl -fL --retry 3 --retry-all-errors \
+            -o /tmp/keiyoushi-index.html \
+            https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.html
+
+          MANGADEX_APK_URL="$(grep -oE 'https://github.com/keiyoushi/extensions/releases/download/[^"< ]+/tachiyomi-all\.mangadex-v[0-9.]+\.apk' /tmp/keiyoushi-index.html | head -n 1)"
+          test -n "$MANGADEX_APK_URL"
+          echo "MangaDex canary: $MANGADEX_APK_URL"
+
+          curl -fL --retry 3 --retry-all-errors \
+            -o /tmp/mangadex-extension.apk \
+            "$MANGADEX_APK_URL"
+          test "$(head -c 4 /tmp/mangadex-extension.apk)" = $'PK\003\004'
+          sha256sum /tmp/mangadex-extension.apk
+
+      - name: Boot optimized Android and execute real Mihon extension
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: aosp_atd
+          arch: x86
+          channel: canary
+          cores: 2
+          ram-size: 2048M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          disable-animations: true
+          script: |
+            set -euo pipefail
+
+            adb install -r /tmp/ApkBridge-v1.8.apk
+            adb shell am start -W -n me.schnitzel.apkbridge/.MainActivity
+
+            # Upstream keeps WebService non-exported. Trigger its own visible
+            # Start server button instead of weakening Android component security.
+            adb shell uiautomator dump /sdcard/apkbridge-window.xml >/dev/null
+            adb exec-out cat /sdcard/apkbridge-window.xml > /tmp/apkbridge-window.xml
+            python3 - <<'PY'
+            import re
+            import subprocess
+            import xml.etree.ElementTree as ET
+
+            root = ET.parse('/tmp/apkbridge-window.xml').getroot()
+            for node in root.iter('node'):
+                if node.attrib.get('text') == 'Start server':
+                    match = re.fullmatch(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', node.attrib['bounds'])
+                    if not match:
+                        raise SystemExit('Could not parse Start server bounds')
+                    x1, y1, x2, y2 = map(int, match.groups())
+                    subprocess.run(['adb', 'shell', 'input', 'tap', str((x1+x2)//2), str((y1+y2)//2)], check=True)
+                    break
+            else:
+                raise SystemExit('Start server button was not found')
+            PY
+
+            adb forward tcp:18081 tcp:8080
+            for attempt in $(seq 1 40); do
+              if curl -fsS http://127.0.0.1:18081/ >/tmp/apkbridge-root.txt 2>/dev/null; then
+                break
+              fi
+              if [ "$attempt" = "40" ]; then
+                echo 'APKBridge server failed to become reachable'
+                adb logcat -d -t 400 | tail -n 400
+                exit 1
+              fi
+              sleep 1
+            done
+
+            python3 runtime/apkbridge-executor/ci_canary.py \
+              --bridge-url http://127.0.0.1:18081 \
+              --apk /tmp/mangadex-extension.apk
+
+      - name: Android diagnostics
+        if: failure()
+        run: |
+          adb devices || true
+          adb logcat -d -t 800 2>/dev/null | tail -n 800 || true
