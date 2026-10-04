@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-03T09:48:49.898Z",
+ "generatedAt": "2026-10-04T10:31:58.360Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -10,7 +10,7 @@
   },
   "mangaupdates": {
    "ok": true,
-   "rows": 164,
+   "rows": 163,
    "label": "MangaUpdates",
    "about": "Reader ratings, weighted by vote count"
   },
@@ -19,11 +19,11 @@
    "rows": 0,
    "label": "MyAnimeList",
    "about": "MAL rankings and favourites, via Jikan",
-   "error": "HTTP 504"
+   "error": "fetch failed"
   }
  },
  "counts": {
-  "works": 369,
+  "works": 368,
   "picks": 120
  },
  "picks": [
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 942 MangaUpdates readers",
+     "note": "8.82/10 from 943 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,301 MangaUpdates readers",
+     "note": "8.47/10 from 2,302 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -292,6 +292,30 @@
    "total": 2.828
   },
   {
+   "title": "The Horizon",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.79,
+     "rank": 28,
+     "note": "8.38/10 from 284 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100568-4BC0PsdwU4bL.png",
+   "category": "manhwa",
+   "year": 2016,
+   "anilistId": 100568,
+   "malId": 125036,
+   "score": 85,
+   "agree": 2,
+   "total": 2.72
+  },
+  {
    "title": "I Am The Fated Villain",
    "signals": {
     "anilist": {
@@ -326,7 +350,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.72/10 from 876 MangaUpdates readers",
+     "note": "8.72/10 from 877 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ul2du3n/haikyu"
     }
    },
@@ -338,30 +362,6 @@
    "score": 88,
    "agree": 2,
    "total": 2.576
-  },
-  {
-   "title": "The Horizon",
-   "signals": {
-    "anilist": {
-     "strength": 0.91,
-     "rank": 6,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.6475,
-     "rank": 47,
-     "note": "8.29/10 from 283 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100568-4BC0PsdwU4bL.png",
-   "category": "manhwa",
-   "year": 2016,
-   "anilistId": 100568,
-   "malId": 125036,
-   "score": 85,
-   "agree": 2,
-   "total": 2.492
   },
   {
    "title": "Who Made Me a Princess",
@@ -444,9 +444,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.76,
-     "rank": 32,
-     "note": "8.37/10 from 478 MangaUpdates readers",
+     "strength": 0.7525,
+     "rank": 33,
+     "note": "8.37/10 from 477 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -457,7 +457,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.192
+   "total": 2.18
   },
   {
    "title": "Myst, Might, Mayhem",
@@ -468,8 +468,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.6625,
-     "rank": 45,
+     "strength": 0.655,
+     "rank": 46,
      "note": "8.3/10 from 304 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
@@ -481,7 +481,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.18
+   "total": 2.168
   },
   {
    "title": "Noblesse",
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.9175,
      "rank": 11,
-     "note": "8.61/10 from 362 MangaUpdates readers",
+     "note": "8.61/10 from 363 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -602,6 +602,30 @@
    "score": 81,
    "agree": 2,
    "total": 1.988
+  },
+  {
+   "title": "Absolute Regression",
+   "signals": {
+    "anilist": {
+     "strength": 0.475,
+     "rank": 35,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.73,
+     "rank": 36,
+     "note": "8.37/10 from 267 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 180891,
+   "malId": 172750,
+   "score": 82,
+   "agree": 2,
+   "total": 1.928
   },
   {
    "title": "Kono Oto Tomare!",
@@ -626,30 +650,6 @@
    "score": 88,
    "agree": 2,
    "total": 1.916
-  },
-  {
-   "title": "Absolute Regression",
-   "signals": {
-    "anilist": {
-     "strength": 0.445,
-     "rank": 37,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
-     "note": "8.37/10 from 267 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 180891,
-   "malId": 172750,
-   "score": 82,
-   "agree": 2,
-   "total": 1.892
   },
   {
    "title": "Dorohedoro",
@@ -732,8 +732,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7825,
-     "rank": 29,
+     "strength": 0.775,
+     "rank": 30,
      "note": "8.38/10 from 523 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
     }
@@ -745,7 +745,7 @@
    "malId": 140921,
    "score": 81,
    "agree": 2,
-   "total": 1.724
+   "total": 1.712
   },
   {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7,
-     "rank": 40,
+     "strength": 0.6925,
+     "rank": 41,
      "note": "8.33/10 from 837 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
@@ -769,7 +769,7 @@
    "malId": 118646,
    "score": 81,
    "agree": 2,
-   "total": 1.664
+   "total": 1.652
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -780,8 +780,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.3925,
-     "rank": 81,
+     "strength": 0.385,
+     "rank": 82,
      "note": "8.16/10 from 386 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.412
+   "total": 1.4
   },
   {
    "title": "How to Win My Husband Over",
@@ -1211,7 +1211,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.71/10 from 372 MangaUpdates readers",
+     "note": "8.71/10 from 373 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
     }
    },
@@ -1487,7 +1487,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.74/10 from 1,150 MangaUpdates readers",
+     "note": "8.74/10 from 1,151 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/tkck7k7/saezuru-tori-wa-habatakanai"
     }
    },
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.55/10 from 270 MangaUpdates readers",
+     "note": "8.55/10 from 271 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1929,7 +1929,7 @@
     "mangaupdates": {
      "strength": 0.865,
      "rank": 18,
-     "note": "8.48/10 from 298 MangaUpdates readers",
+     "note": "8.48/10 from 299 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
     }
    },
@@ -2186,7 +2186,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 327 MangaUpdates readers",
+     "note": "8.69/10 from 328 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2243,7 +2243,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 420 MangaUpdates readers",
+     "note": "8.45/10 from 421 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
