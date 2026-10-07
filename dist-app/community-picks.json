@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-06T11:12:02.357Z",
+ "generatedAt": "2026-10-07T11:00:07.377Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 944 MangaUpdates readers",
+     "note": "8.82/10 from 945 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -247,8 +247,8 @@
    "title": "Chang Ge Xing",
    "signals": {
     "anilist": {
-     "strength": 0.82,
-     "rank": 12,
+     "strength": 0.805,
+     "rank": 13,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -265,7 +265,7 @@
    "malId": 42001,
    "score": 81,
    "agree": 2,
-   "total": 2.9
+   "total": 2.876
   },
   {
    "title": "Villains Are Destined to Die",
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 793 MangaUpdates readers",
+     "note": "8.71/10 from 794 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -324,9 +324,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
-     "note": "7.75/10 from 293 MangaUpdates readers",
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "7.84/10 from 293 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -337,7 +337,7 @@
    "malId": null,
    "score": 76,
    "agree": 2,
-   "total": 2.588
+   "total": 2.708
   },
   {
    "title": "Haikyu!!",
@@ -484,6 +484,30 @@
    "total": 2.156
   },
   {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4375,
+     "rank": 75,
+     "note": "8.18/10 from 468 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
+   "agree": 2,
+   "total": 2.132
+  },
+  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -504,30 +528,6 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
-     "note": "8.18/10 from 468 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -636,8 +636,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.49,
-     "rank": 68,
+     "strength": 0.4975,
+     "rank": 67,
      "note": "8.21/10 from 305 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
@@ -649,7 +649,31 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 1.904
+   "total": 1.916
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.625,
+     "rank": 25,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.5125,
+     "rank": 65,
+     "note": "8.21/10 from 304 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 82,
+   "agree": 2,
+   "total": 1.82
   },
   {
    "title": "Dorohedoro",
@@ -662,7 +686,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,094 MangaUpdates readers",
+     "note": "8.64/10 from 1,095 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -672,30 +696,6 @@
    "anilistId": 31133,
    "malId": 1133,
    "score": 86,
-   "agree": 2,
-   "total": 1.808
-  },
-  {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.625,
-     "rank": 25,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.505,
-     "rank": 66,
-     "note": "8.21/10 from 304 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 82,
    "agree": 2,
    "total": 1.808
   },
@@ -780,8 +780,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.385,
-     "rank": 82,
+     "strength": 0.3925,
+     "rank": 81,
      "note": "8.16/10 from 386 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.4
+   "total": 1.412
   },
   {
    "title": "How to Win My Husband Over",
@@ -1299,7 +1299,7 @@
    "total": 0.94
   },
   {
-   "title": "My Bias Gets on the Last Train",
+   "title": "The Legend of the Northern Blade",
    "signals": {
     "anilist": {
      "strength": 0.94,
@@ -1307,11 +1307,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
    "category": "manhwa",
-   "year": 2024,
-   "anilistId": 187944,
-   "malId": 178671,
+   "year": 2019,
+   "anilistId": 119521,
+   "malId": 134744,
    "score": 85,
    "agree": 1,
    "total": 0.94
@@ -1428,7 +1428,7 @@
    "total": 0.925
   },
   {
-   "title": "The Legend of the Northern Blade",
+   "title": "My Bias Gets on the Last Train",
    "signals": {
     "anilist": {
      "strength": 0.925,
@@ -1436,11 +1436,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
    "category": "manhwa",
-   "year": 2019,
-   "anilistId": 119521,
-   "malId": 134744,
+   "year": 2024,
+   "anilistId": 187944,
+   "malId": 178671,
    "score": 85,
    "agree": 1,
    "total": 0.925
@@ -1506,7 +1506,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.63/10 from 250 MangaUpdates readers",
+     "note": "8.63/10 from 251 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
     }
    },
@@ -1997,7 +1997,7 @@
    "total": 0.85
   },
   {
-   "title": "The Ravages of Time",
+   "title": "Pirouette into My Heart",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -2005,11 +2005,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
    "category": "manhua",
-   "year": 2001,
-   "anilistId": 31320,
-   "malId": 1320,
+   "year": 2019,
+   "anilistId": 113350,
+   "malId": 150293,
    "score": 81,
    "agree": 1,
    "total": 0.85
@@ -2163,7 +2163,7 @@
    "total": 0.835
   },
   {
-   "title": "Pirouette into My Heart",
+   "title": "The Ravages of Time",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2171,11 +2171,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
    "category": "manhua",
-   "year": 2019,
-   "anilistId": 113350,
-   "malId": 150293,
+   "year": 2001,
+   "anilistId": 31320,
+   "malId": 1320,
    "score": 81,
    "agree": 1,
    "total": 0.835
@@ -2186,7 +2186,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 329 MangaUpdates readers",
+     "note": "8.69/10 from 330 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2293,6 +2293,24 @@
    "total": 0.82
   },
   {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
    "title": "Your Talent Is Mine",
    "signals": {
     "anilist": {
@@ -2381,24 +2399,6 @@
    "anilistId": 87423,
    "malId": 100128,
    "score": 79,
-   "agree": 1,
-   "total": 0.805
-  },
-  {
-   "title": "Soulmate",
-   "signals": {
-    "anilist": {
-     "strength": 0.805,
-     "rank": 13,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
-   "category": "manhua",
-   "year": 2020,
-   "anilistId": 118269,
-   "malId": null,
-   "score": 81,
    "agree": 1,
    "total": 0.805
   },
