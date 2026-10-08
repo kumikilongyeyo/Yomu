@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-07T11:00:07.377Z",
+ "generatedAt": "2026-10-08T11:17:22.525Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 794 MangaUpdates readers",
+     "note": "8.71/10 from 795 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -446,7 +446,7 @@
     "mangaupdates": {
      "strength": 0.7525,
      "rank": 33,
-     "note": "8.37/10 from 478 MangaUpdates readers",
+     "note": "8.37/10 from 479 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -727,8 +727,8 @@
    "title": "Positively Yours",
    "signals": {
     "anilist": {
-     "strength": 0.295,
-     "rank": 47,
+     "strength": 0.28,
+     "rank": 48,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -745,7 +745,7 @@
    "malId": 140921,
    "score": 81,
    "agree": 2,
-   "total": 1.712
+   "total": 1.688
   },
   {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
@@ -1506,7 +1506,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.63/10 from 251 MangaUpdates readers",
+     "note": "8.63/10 from 252 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
     }
    },
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.55/10 from 271 MangaUpdates readers",
+     "note": "8.56/10 from 273 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1797,6 +1797,25 @@
    "total": 0.8725
   },
   {
+   "title": "You Get Me Going",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.8725,
+     "rank": 17,
+     "note": "8.49/10 from 303 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.8725
+  },
+  {
    "title": "Real",
    "signals": {
     "anilist": {
@@ -1924,25 +1943,6 @@
    "total": 0.865
   },
   {
-   "title": "You Get Me Going",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.865,
-     "rank": 18,
-     "note": "8.48/10 from 300 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2021,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.865
-  },
-  {
    "title": "Fata Morgana no Yakata: Anata no Genten ni Itaru Monogatari",
    "signals": {
     "anilist": {
@@ -1997,7 +1997,7 @@
    "total": 0.85
   },
   {
-   "title": "Pirouette into My Heart",
+   "title": "The Ravages of Time",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -2005,11 +2005,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
    "category": "manhua",
-   "year": 2019,
-   "anilistId": 113350,
-   "malId": 150293,
+   "year": 2001,
+   "anilistId": 31320,
+   "malId": 1320,
    "score": 81,
    "agree": 1,
    "total": 0.85
@@ -2163,7 +2163,7 @@
    "total": 0.835
   },
   {
-   "title": "The Ravages of Time",
+   "title": "Pirouette into My Heart",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2171,11 +2171,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
    "category": "manhua",
-   "year": 2001,
-   "anilistId": 31320,
-   "malId": 1320,
+   "year": 2019,
+   "anilistId": 113350,
+   "malId": 150293,
    "score": 81,
    "agree": 1,
    "total": 0.835
@@ -2243,7 +2243,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 422 MangaUpdates readers",
+     "note": "8.45/10 from 423 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
