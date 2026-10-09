@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-08T11:17:22.525Z",
+ "generatedAt": "2026-10-09T11:16:14.952Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.05/10 from 327 MangaUpdates readers",
+     "note": "9.15/10 from 328 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 795 MangaUpdates readers",
+     "note": "8.71/10 from 796 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -300,8 +300,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.79,
-     "rank": 28,
+     "strength": 0.7825,
+     "rank": 29,
      "note": "8.38/10 from 286 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
     }
@@ -313,7 +313,7 @@
    "malId": 125036,
    "score": 85,
    "agree": 2,
-   "total": 2.72
+   "total": 2.708
   },
   {
    "title": "I Am The Fated Villain",
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.43/10 from 847 MangaUpdates readers",
+     "note": "8.43/10 from 848 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -436,6 +436,30 @@
    "total": 2.24
   },
   {
+   "title": "Myst, Might, Mayhem",
+   "signals": {
+    "anilist": {
+     "strength": 0.7,
+     "rank": 20,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6625,
+     "rank": 45,
+     "note": "8.31/10 from 306 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 175946,
+   "malId": 168980,
+   "score": 83,
+   "agree": 2,
+   "total": 2.18
+  },
+  {
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
@@ -494,7 +518,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.18/10 from 468 MangaUpdates readers",
+     "note": "8.18/10 from 469 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
     }
    },
@@ -628,54 +652,6 @@
    "total": 1.916
   },
   {
-   "title": "Myst, Might, Mayhem",
-   "signals": {
-    "anilist": {
-     "strength": 0.7,
-     "rank": 20,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.4975,
-     "rank": 67,
-     "note": "8.21/10 from 305 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 175946,
-   "malId": 168980,
-   "score": 83,
-   "agree": 2,
-   "total": 1.916
-  },
-  {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.625,
-     "rank": 25,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.5125,
-     "rank": 65,
-     "note": "8.21/10 from 304 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 82,
-   "agree": 2,
-   "total": 1.82
-  },
-  {
    "title": "Dorohedoro",
    "signals": {
     "anilist": {
@@ -696,6 +672,30 @@
    "anilistId": 31133,
    "malId": 1133,
    "score": 86,
+   "agree": 2,
+   "total": 1.808
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.625,
+     "rank": 25,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.505,
+     "rank": 66,
+     "note": "8.21/10 from 304 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 82,
    "agree": 2,
    "total": 1.808
   },
@@ -732,9 +732,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.775,
-     "rank": 30,
-     "note": "8.38/10 from 523 MangaUpdates readers",
+     "strength": 0.7675,
+     "rank": 31,
+     "note": "8.38/10 from 524 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
     }
    },
@@ -745,7 +745,7 @@
    "malId": 140921,
    "score": 81,
    "agree": 2,
-   "total": 1.688
+   "total": 1.676
   },
   {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
@@ -782,7 +782,7 @@
     "mangaupdates": {
      "strength": 0.3925,
      "rank": 81,
-     "note": "8.16/10 from 386 MangaUpdates readers",
+     "note": "8.16/10 from 387 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -804,8 +804,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.55,
-     "rank": 60,
+     "strength": 0.5425,
+     "rank": 61,
      "note": "8.23/10 from 341 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -817,7 +817,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.376
+   "total": 1.364
   },
   {
    "title": "Berserk",
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 273 MangaUpdates readers",
+     "note": "8.56/10 from 274 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1943,7 +1943,7 @@
    "total": 0.865
   },
   {
-   "title": "Fata Morgana no Yakata: Anata no Genten ni Itaru Monogatari",
+   "title": "Ascendance of a Bookworm: Part 5",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1951,11 +1951,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx110992-ROmqSnw0QDTK.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113869-S4RyCDWsc0n9.jpg",
    "category": "manga",
-   "year": 2014,
-   "anilistId": 110992,
-   "malId": 102875,
+   "year": 2020,
+   "anilistId": 113869,
+   "malId": null,
    "score": 89,
    "agree": 1,
    "total": 0.85
@@ -2109,7 +2109,7 @@
    "total": 0.8425
   },
   {
-   "title": "Ascendance of a Bookworm: Part 5",
+   "title": "Fullmetal Alchemist",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2117,11 +2117,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113869-S4RyCDWsc0n9.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
    "category": "manga",
-   "year": 2020,
-   "anilistId": 113869,
-   "malId": null,
+   "year": 2001,
+   "anilistId": 30025,
+   "malId": 25,
    "score": 89,
    "agree": 1,
    "total": 0.835
@@ -2257,7 +2257,7 @@
    "total": 0.8275
   },
   {
-   "title": "Fullmetal Alchemist",
+   "title": "Ashita no Joe: Fighting for Tomorrow",
    "signals": {
     "anilist": {
      "strength": 0.82,
@@ -2265,11 +2265,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30025-mpPVpCKFTowt.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
    "category": "manga",
-   "year": 2001,
-   "anilistId": 30025,
-   "malId": 25,
+   "year": 1968,
+   "anilistId": 31303,
+   "malId": 1303,
    "score": 89,
    "agree": 1,
    "total": 0.82
@@ -2367,7 +2367,7 @@
    "total": 0.8125
   },
   {
-   "title": "Ashita no Joe: Fighting for Tomorrow",
+   "title": "Kingdom",
    "signals": {
     "anilist": {
      "strength": 0.805,
@@ -2375,11 +2375,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
    "category": "manga",
-   "year": 1968,
-   "anilistId": 31303,
-   "malId": 1303,
+   "year": 2006,
+   "anilistId": 46765,
+   "malId": 16765,
    "score": 89,
    "agree": 1,
    "total": 0.805
