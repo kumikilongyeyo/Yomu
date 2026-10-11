@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-10T10:33:09.290Z",
+ "generatedAt": "2026-10-11T10:45:47.958Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 328 MangaUpdates readers",
+     "note": "9.05/10 from 328 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -244,30 +244,6 @@
    "total": 2.876
   },
   {
-   "title": "Villains Are Destined to Die",
-   "signals": {
-    "anilist": {
-     "strength": 0.82,
-     "rank": 12,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.9625,
-     "rank": 5,
-     "note": "8.71/10 from 798 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118408-zZuOINqjBZYn.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 118408,
-   "malId": 133641,
-   "score": 84,
-   "agree": 2,
-   "total": 2.852
-  },
-  {
    "title": "The Devil Butler",
    "signals": {
     "anilist": {
@@ -290,6 +266,30 @@
    "score": 82,
    "agree": 2,
    "total": 2.852
+  },
+  {
+   "title": "Villains Are Destined to Die",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9625,
+     "rank": 5,
+     "note": "8.71/10 from 798 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118408-zZuOINqjBZYn.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 118408,
+   "malId": 133641,
+   "score": 84,
+   "agree": 2,
+   "total": 2.828
   },
   {
    "title": "The Horizon",
@@ -422,7 +422,7 @@
     "mangaupdates": {
      "strength": 0.49,
      "rank": 68,
-     "note": "7.38/10 from 279 MangaUpdates readers",
+     "note": "7.38/10 from 280 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8xr9kqx/martial-peak"
     }
    },
@@ -439,8 +439,8 @@
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
-     "strength": 0.61,
-     "rank": 26,
+     "strength": 0.595,
+     "rank": 27,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -457,7 +457,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.18
+   "total": 2.156
   },
   {
    "title": "Noblesse",
@@ -679,8 +679,8 @@
    "title": "The Stellar Swordmaster",
    "signals": {
     "anilist": {
-     "strength": 0.625,
-     "rank": 25,
+     "strength": 0.61,
+     "rank": 26,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -697,7 +697,7 @@
    "malId": 163116,
    "score": 82,
    "agree": 2,
-   "total": 1.808
+   "total": 1.784
   },
   {
    "title": "Death Note",
@@ -724,11 +724,35 @@
    "total": 1.772
   },
   {
+   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
+   "signals": {
+    "anilist": {
+     "strength": 0.34,
+     "rank": 44,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6925,
+     "rank": 41,
+     "note": "8.33/10 from 838 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 104973,
+   "malId": 118646,
+   "score": 81,
+   "agree": 2,
+   "total": 1.652
+  },
+  {
    "title": "Positively Yours",
    "signals": {
     "anilist": {
-     "strength": 0.28,
-     "rank": 48,
+     "strength": 0.265,
+     "rank": 49,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -743,30 +767,6 @@
    "year": 2020,
    "anilistId": 120440,
    "malId": 140921,
-   "score": 81,
-   "agree": 2,
-   "total": 1.676
-  },
-  {
-   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
-   "signals": {
-    "anilist": {
-     "strength": 0.34,
-     "rank": 44,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.6925,
-     "rank": 41,
-     "note": "8.33/10 from 837 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
-   "category": "manhwa",
-   "year": 2017,
-   "anilistId": 104973,
-   "malId": 118646,
    "score": 81,
    "agree": 2,
    "total": 1.652
@@ -989,7 +989,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.9/10 from 745 MangaUpdates readers",
+     "note": "8.9/10 from 746 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/22jigcm/jojo-no-kimyou-na-bouken-part-7-steel-ball-run"
     }
    },
@@ -2257,7 +2257,7 @@
    "total": 0.8275
   },
   {
-   "title": "Ashita no Joe: Fighting for Tomorrow",
+   "title": "Kingdom",
    "signals": {
     "anilist": {
      "strength": 0.82,
@@ -2265,11 +2265,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
    "category": "manga",
-   "year": 1968,
-   "anilistId": 31303,
-   "malId": 1303,
+   "year": 2006,
+   "anilistId": 46765,
+   "malId": 16765,
    "score": 89,
    "agree": 1,
    "total": 0.82
@@ -2367,7 +2367,7 @@
    "total": 0.8125
   },
   {
-   "title": "Kingdom",
+   "title": "Fata Morgana no Yakata: Anata no Genten ni Itaru Monogatari",
    "signals": {
     "anilist": {
      "strength": 0.805,
@@ -2375,11 +2375,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx110992-ROmqSnw0QDTK.jpg",
    "category": "manga",
-   "year": 2006,
-   "anilistId": 46765,
-   "malId": 16765,
+   "year": 2014,
+   "anilistId": 110992,
+   "malId": 102875,
    "score": 89,
    "agree": 1,
    "total": 0.805
