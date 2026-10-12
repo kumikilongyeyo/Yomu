@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-11T10:45:47.958Z",
+ "generatedAt": "2026-10-12T11:51:40.607Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.05/10 from 328 MangaUpdates readers",
+     "note": "9.15/10 from 329 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -62,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.65/10 from 465 MangaUpdates readers",
+     "note": "8.65/10 from 466 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,305 MangaUpdates readers",
+     "note": "8.47/10 from 2,306 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.63/10 from 412 MangaUpdates readers",
+     "note": "8.63/10 from 413 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 798 MangaUpdates readers",
+     "note": "8.71/10 from 799 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -324,9 +324,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
-     "note": "7.75/10 from 294 MangaUpdates readers",
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "7.84/10 from 295 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -337,7 +337,7 @@
    "malId": null,
    "score": 76,
    "agree": 2,
-   "total": 2.588
+   "total": 2.708
   },
   {
    "title": "Haikyu!!",
@@ -439,8 +439,8 @@
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
-     "strength": 0.595,
-     "rank": 27,
+     "strength": 0.61,
+     "rank": 26,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -457,7 +457,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.156
+   "total": 2.18
   },
   {
    "title": "Noblesse",
@@ -508,30 +508,6 @@
    "total": 2.132
   },
   {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.4375,
-     "rank": 75,
-     "note": "8.18/10 from 469 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
-   "agree": 2,
-   "total": 2.132
-  },
-  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -552,6 +528,30 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
+   "agree": 2,
+   "total": 2.12
+  },
+  {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.43,
+     "rank": 76,
+     "note": "8.18/10 from 469 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -607,14 +607,14 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.475,
-     "rank": 35,
+     "strength": 0.505,
+     "rank": 33,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
      "strength": 0.73,
      "rank": 36,
-     "note": "8.37/10 from 267 MangaUpdates readers",
+     "note": "8.37/10 from 268 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -625,7 +625,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 1.928
+   "total": 1.976
   },
   {
    "title": "Kono Oto Tomare!",
@@ -679,13 +679,13 @@
    "title": "The Stellar Swordmaster",
    "signals": {
     "anilist": {
-     "strength": 0.61,
-     "rank": 26,
+     "strength": 0.625,
+     "rank": 25,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.505,
-     "rank": 66,
+     "strength": 0.4975,
+     "rank": 67,
      "note": "8.21/10 from 304 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
@@ -697,7 +697,7 @@
    "malId": 163116,
    "score": 82,
    "agree": 2,
-   "total": 1.784
+   "total": 1.796
   },
   {
    "title": "Death Note",
@@ -775,14 +775,14 @@
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.49,
-     "rank": 34,
+     "strength": 0.475,
+     "rank": 35,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.3925,
-     "rank": 81,
-     "note": "8.16/10 from 388 MangaUpdates readers",
+     "strength": 0.385,
+     "rank": 82,
+     "note": "8.16/10 from 389 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.412
+   "total": 1.376
   },
   {
    "title": "How to Win My Husband Over",
@@ -1211,7 +1211,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.71/10 from 373 MangaUpdates readers",
+     "note": "8.71/10 from 374 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
     }
    },
@@ -1299,7 +1299,7 @@
    "total": 0.94
   },
   {
-   "title": "The Legend of the Northern Blade",
+   "title": "My Bias Gets on the Last Train",
    "signals": {
     "anilist": {
      "strength": 0.94,
@@ -1307,11 +1307,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
    "category": "manhwa",
-   "year": 2019,
-   "anilistId": 119521,
-   "malId": 134744,
+   "year": 2024,
+   "anilistId": 187944,
+   "malId": 178671,
    "score": 85,
    "agree": 1,
    "total": 0.94
@@ -1428,7 +1428,7 @@
    "total": 0.925
   },
   {
-   "title": "My Bias Gets on the Last Train",
+   "title": "The Legend of the Northern Blade",
    "signals": {
     "anilist": {
      "strength": 0.925,
@@ -1436,11 +1436,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
    "category": "manhwa",
-   "year": 2024,
-   "anilistId": 187944,
-   "malId": 178671,
+   "year": 2019,
+   "anilistId": 119521,
+   "malId": 134744,
    "score": 85,
    "agree": 1,
    "total": 0.925
@@ -1575,6 +1575,24 @@
    "total": 0.91
   },
   {
+   "title": "Lord of Mysteries",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx188249-Z9pRMdXVc4dh.png",
+   "category": "manhua",
+   "year": 2025,
+   "anilistId": 188249,
+   "malId": null,
+   "score": 82,
+   "agree": 1,
+   "total": 0.91
+  },
+  {
    "title": "Doraemon",
    "signals": {
     "mangaupdates": {
@@ -1627,24 +1645,6 @@
    "anilistId": 34632,
    "malId": 4632,
    "score": 88,
-   "agree": 1,
-   "total": 0.895
-  },
-  {
-   "title": "Lord of Mysteries",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx188249-Z9pRMdXVc4dh.png",
-   "category": "manhua",
-   "year": 2025,
-   "anilistId": 188249,
-   "malId": null,
-   "score": 82,
    "agree": 1,
    "total": 0.895
   },
@@ -2257,7 +2257,7 @@
    "total": 0.8275
   },
   {
-   "title": "Kingdom",
+   "title": "Ashita no Joe: Fighting for Tomorrow",
    "signals": {
     "anilist": {
      "strength": 0.82,
@@ -2265,11 +2265,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31303-l21HJn9AXl7w.jpg",
    "category": "manga",
-   "year": 2006,
-   "anilistId": 46765,
-   "malId": 16765,
+   "year": 1968,
+   "anilistId": 31303,
+   "malId": 1303,
    "score": 89,
    "agree": 1,
    "total": 0.82
@@ -2367,7 +2367,7 @@
    "total": 0.8125
   },
   {
-   "title": "Fata Morgana no Yakata: Anata no Genten ni Itaru Monogatari",
+   "title": "Kingdom",
    "signals": {
     "anilist": {
      "strength": 0.805,
@@ -2375,11 +2375,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx110992-ROmqSnw0QDTK.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/nx46765-KPXir4sRqJBW.png",
    "category": "manga",
-   "year": 2014,
-   "anilistId": 110992,
-   "malId": 102875,
+   "year": 2006,
+   "anilistId": 46765,
+   "malId": 16765,
    "score": 89,
    "agree": 1,
    "total": 0.805
