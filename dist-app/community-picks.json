@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-12T11:51:40.607Z",
+ "generatedAt": "2026-10-13T11:40:34.729Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 329 MangaUpdates readers",
+     "note": "9.15/10 from 330 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 945 MangaUpdates readers",
+     "note": "8.82/10 from 948 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,306 MangaUpdates readers",
+     "note": "8.47/10 from 2,307 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.63/10 from 413 MangaUpdates readers",
+     "note": "8.63/10 from 414 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -244,6 +244,30 @@
    "total": 2.876
   },
   {
+   "title": "Villains Are Destined to Die",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.9625,
+     "rank": 5,
+     "note": "8.71/10 from 800 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118408-zZuOINqjBZYn.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 118408,
+   "malId": 133641,
+   "score": 84,
+   "agree": 2,
+   "total": 2.852
+  },
+  {
    "title": "The Devil Butler",
    "signals": {
     "anilist": {
@@ -266,30 +290,6 @@
    "score": 82,
    "agree": 2,
    "total": 2.852
-  },
-  {
-   "title": "Villains Are Destined to Die",
-   "signals": {
-    "anilist": {
-     "strength": 0.805,
-     "rank": 13,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.9625,
-     "rank": 5,
-     "note": "8.71/10 from 799 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118408-zZuOINqjBZYn.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 118408,
-   "malId": 133641,
-   "score": 84,
-   "agree": 2,
-   "total": 2.828
   },
   {
    "title": "The Horizon",
@@ -444,9 +444,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7525,
-     "rank": 33,
-     "note": "8.37/10 from 479 MangaUpdates readers",
+     "strength": 0.745,
+     "rank": 34,
+     "note": "8.37/10 from 480 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -457,7 +457,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.18
+   "total": 2.168
   },
   {
    "title": "Noblesse",
@@ -494,7 +494,7 @@
     "mangaupdates": {
      "strength": 0.6625,
      "rank": 45,
-     "note": "8.31/10 from 306 MangaUpdates readers",
+     "note": "8.31/10 from 307 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
    },
@@ -504,6 +504,30 @@
    "anilistId": 175946,
    "malId": 168980,
    "score": 83,
+   "agree": 2,
+   "total": 2.132
+  },
+  {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4375,
+     "rank": 75,
+     "note": "8.18/10 from 470 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
    "agree": 2,
    "total": 2.132
   },
@@ -532,30 +556,6 @@
    "total": 2.12
   },
   {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
-     "note": "8.18/10 from 469 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
    "title": "SPY x FAMILY",
    "signals": {
     "anilist": {
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 962 MangaUpdates readers",
+     "note": "8.53/10 from 963 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -607,13 +607,13 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.505,
-     "rank": 33,
+     "strength": 0.475,
+     "rank": 35,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.73,
-     "rank": 36,
+     "strength": 0.7225,
+     "rank": 37,
      "note": "8.37/10 from 268 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
@@ -625,7 +625,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 1.976
+   "total": 1.916
   },
   {
    "title": "Kono Oto Tomare!",
@@ -636,8 +636,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.6175,
-     "rank": 51,
+     "strength": 0.61,
+     "rank": 52,
      "note": "8.59/10 from 330 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
     }
@@ -649,7 +649,7 @@
    "malId": 45143,
    "score": 88,
    "agree": 2,
-   "total": 1.916
+   "total": 1.904
   },
   {
    "title": "Dorohedoro",
@@ -684,9 +684,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.4975,
-     "rank": 67,
-     "note": "8.21/10 from 304 MangaUpdates readers",
+     "strength": 0.505,
+     "rank": 66,
+     "note": "8.21/10 from 305 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
    },
@@ -697,7 +697,7 @@
    "malId": 163116,
    "score": 82,
    "agree": 2,
-   "total": 1.796
+   "total": 1.808
   },
   {
    "title": "Death Note",
@@ -724,6 +724,30 @@
    "total": 1.772
   },
   {
+   "title": "Positively Yours",
+   "signals": {
+    "anilist": {
+     "strength": 0.295,
+     "rank": 47,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7675,
+     "rank": 31,
+     "note": "8.38/10 from 524 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 120440,
+   "malId": 140921,
+   "score": 81,
+   "agree": 2,
+   "total": 1.7
+  },
+  {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
    "signals": {
     "anilist": {
@@ -748,41 +772,17 @@
    "total": 1.652
   },
   {
-   "title": "Positively Yours",
-   "signals": {
-    "anilist": {
-     "strength": 0.265,
-     "rank": 49,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7675,
-     "rank": 31,
-     "note": "8.38/10 from 524 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 120440,
-   "malId": 140921,
-   "score": 81,
-   "agree": 2,
-   "total": 1.652
-  },
-  {
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.475,
-     "rank": 35,
+     "strength": 0.49,
+     "rank": 34,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.385,
-     "rank": 82,
-     "note": "8.16/10 from 389 MangaUpdates readers",
+     "strength": 0.3925,
+     "rank": 81,
+     "note": "8.16/10 from 391 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.376
+   "total": 1.412
   },
   {
    "title": "How to Win My Husband Over",
@@ -1299,7 +1299,7 @@
    "total": 0.94
   },
   {
-   "title": "My Bias Gets on the Last Train",
+   "title": "The Legend of the Northern Blade",
    "signals": {
     "anilist": {
      "strength": 0.94,
@@ -1307,11 +1307,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
    "category": "manhwa",
-   "year": 2024,
-   "anilistId": 187944,
-   "malId": 178671,
+   "year": 2019,
+   "anilistId": 119521,
+   "malId": 134744,
    "score": 85,
    "agree": 1,
    "total": 0.94
@@ -1428,7 +1428,7 @@
    "total": 0.925
   },
   {
-   "title": "The Legend of the Northern Blade",
+   "title": "My Bias Gets on the Last Train",
    "signals": {
     "anilist": {
      "strength": 0.925,
@@ -1436,11 +1436,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
    "category": "manhwa",
-   "year": 2019,
-   "anilistId": 119521,
-   "malId": 134744,
+   "year": 2024,
+   "anilistId": 187944,
+   "malId": 178671,
    "score": 85,
    "agree": 1,
    "total": 0.925
@@ -2186,7 +2186,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 330 MangaUpdates readers",
+     "note": "8.69/10 from 331 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2205,7 +2205,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.45/10 from 424 MangaUpdates readers",
+     "note": "8.45/10 from 425 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
     }
    },
