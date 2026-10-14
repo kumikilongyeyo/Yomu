@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-13T11:40:34.729Z",
+ "generatedAt": "2026-10-14T09:27:19.803Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.63/10 from 414 MangaUpdates readers",
+     "note": "8.63/10 from 415 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -223,8 +223,8 @@
    "title": "Chang Ge Xing",
    "signals": {
     "anilist": {
-     "strength": 0.805,
-     "rank": 13,
+     "strength": 0.82,
+     "rank": 12,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -241,7 +241,7 @@
    "malId": 42001,
    "score": 81,
    "agree": 2,
-   "total": 2.876
+   "total": 2.9
   },
   {
    "title": "Villains Are Destined to Die",
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 800 MangaUpdates readers",
+     "note": "8.71/10 from 801 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "7.85/10 from 313 MangaUpdates readers",
+     "note": "7.85/10 from 314 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
    },
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.43/10 from 848 MangaUpdates readers",
+     "note": "8.43/10 from 849 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -1378,7 +1378,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.74/10 from 1,267 MangaUpdates readers",
+     "note": "8.74/10 from 1,268 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
     }
    },
@@ -1520,18 +1520,18 @@
    "total": 0.925
   },
   {
-   "title": "Koimonogatari (TAGURA Tohru)",
+   "title": "Ballroom e Youkoso",
    "signals": {
     "mangaupdates": {
      "strength": 0.9175,
      "rank": 11,
-     "note": "8.72/10 from 254 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/do1ph4j/koimonogatari-tagura-tohru"
+     "note": "8.73/10 from 409 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/r5llz8p/ballroom-e-youkoso"
     }
    },
    "cover": "",
    "category": "manga",
-   "year": 2013,
+   "year": 2011,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1593,18 +1593,18 @@
    "total": 0.91
   },
   {
-   "title": "Doraemon",
+   "title": "Koimonogatari (TAGURA Tohru)",
    "signals": {
     "mangaupdates": {
      "strength": 0.91,
      "rank": 12,
-     "note": "8.72/10 from 405 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/gzp5lsi/doraemon"
+     "note": "8.72/10 from 254 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/do1ph4j/koimonogatari-tagura-tohru"
     }
    },
    "cover": "",
    "category": "manga",
-   "year": 1969,
+   "year": 2013,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1612,18 +1612,18 @@
    "total": 0.91
   },
   {
-   "title": "Ballroom e Youkoso",
+   "title": "Doraemon",
    "signals": {
     "mangaupdates": {
      "strength": 0.9025,
      "rank": 13,
-     "note": "8.72/10 from 408 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/r5llz8p/ballroom-e-youkoso"
+     "note": "8.72/10 from 405 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/gzp5lsi/doraemon"
     }
    },
    "cover": "",
    "category": "manga",
-   "year": 2011,
+   "year": 1969,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 274 MangaUpdates readers",
+     "note": "8.56/10 from 276 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -2186,7 +2186,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 331 MangaUpdates readers",
+     "note": "8.69/10 from 333 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2293,24 +2293,6 @@
    "total": 0.82
   },
   {
-   "title": "Soulmate",
-   "signals": {
-    "anilist": {
-     "strength": 0.82,
-     "rank": 12,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
-   "category": "manhua",
-   "year": 2020,
-   "anilistId": 118269,
-   "malId": null,
-   "score": 81,
-   "agree": 1,
-   "total": 0.82
-  },
-  {
    "title": "Your Talent Is Mine",
    "signals": {
     "anilist": {
@@ -2399,6 +2381,24 @@
    "anilistId": 87423,
    "malId": 100128,
    "score": 79,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
    "agree": 1,
    "total": 0.805
   },
