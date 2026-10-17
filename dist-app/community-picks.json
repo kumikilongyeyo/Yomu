@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-16T08:57:43.250Z",
+ "generatedAt": "2026-10-17T08:29:46.467Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 801 MangaUpdates readers",
+     "note": "8.71/10 from 802 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -326,7 +326,7 @@
     "mangaupdates": {
      "strength": 0.7375,
      "rank": 35,
-     "note": "7.75/10 from 297 MangaUpdates readers",
+     "note": "7.75/10 from 298 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -564,8 +564,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
+     "strength": 0.535,
+     "rank": 62,
      "note": "8.22/10 from 308 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
@@ -577,31 +577,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 1.94
-  },
-  {
-   "title": "Absolute Regression",
-   "signals": {
-    "anilist": {
-     "strength": 0.49,
-     "rank": 34,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7225,
-     "rank": 37,
-     "note": "8.37/10 from 269 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 180891,
-   "malId": 172750,
-   "score": 82,
-   "agree": 2,
-   "total": 1.94
+   "total": 1.952
   },
   {
    "title": "See You in My 19th Life",
@@ -626,6 +602,30 @@
    "score": 81,
    "agree": 2,
    "total": 1.94
+  },
+  {
+   "title": "Absolute Regression",
+   "signals": {
+    "anilist": {
+     "strength": 0.475,
+     "rank": 35,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7225,
+     "rank": 37,
+     "note": "8.37/10 from 271 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 180891,
+   "malId": 172750,
+   "score": 82,
+   "agree": 2,
+   "total": 1.916
   },
   {
    "title": "Kono Oto Tomare!",
@@ -780,8 +780,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5575,
-     "rank": 59,
+     "strength": 0.55,
+     "rank": 60,
      "note": "8.23/10 from 342 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -793,7 +793,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.436
+   "total": 1.424
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -804,8 +804,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.4,
-     "rank": 80,
+     "strength": 0.3925,
+     "rank": 81,
      "note": "8.16/10 from 392 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
@@ -817,7 +817,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.352
+   "total": 1.34
   },
   {
    "title": "Berserk",
@@ -1081,7 +1081,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.77/10 from 2,166 MangaUpdates readers",
+     "note": "8.77/10 from 2,167 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/auem2hr/yotsuba-to"
     }
    },
@@ -1802,7 +1802,7 @@
     "mangaupdates": {
      "strength": 0.8725,
      "rank": 17,
-     "note": "8.49/10 from 303 MangaUpdates readers",
+     "note": "8.49/10 from 304 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
     }
    },
