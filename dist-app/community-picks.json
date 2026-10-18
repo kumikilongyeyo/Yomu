@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-17T08:29:46.467Z",
+ "generatedAt": "2026-10-18T08:47:47.906Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -564,8 +564,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.535,
-     "rank": 62,
+     "strength": 0.5275,
+     "rank": 63,
      "note": "8.22/10 from 308 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
@@ -577,7 +577,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 1.952
+   "total": 1.94
   },
   {
    "title": "See You in My 19th Life",
@@ -614,7 +614,7 @@
     "mangaupdates": {
      "strength": 0.7225,
      "rank": 37,
-     "note": "8.37/10 from 271 MangaUpdates readers",
+     "note": "8.37/10 from 272 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -662,7 +662,7 @@
     "mangaupdates": {
      "strength": 0.5125,
      "rank": 65,
-     "note": "8.21/10 from 305 MangaUpdates readers",
+     "note": "8.21/10 from 306 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
    },
