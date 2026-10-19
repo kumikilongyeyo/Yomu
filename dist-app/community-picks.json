@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-18T08:47:47.906Z",
+ "generatedAt": "2026-10-19T09:48:37.042Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,309 MangaUpdates readers",
+     "note": "8.47/10 from 2,311 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 802 MangaUpdates readers",
+     "note": "8.71/10 from 804 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -422,7 +422,7 @@
     "mangaupdates": {
      "strength": 0.49,
      "rank": 68,
-     "note": "7.38/10 from 280 MangaUpdates readers",
+     "note": "7.38/10 from 281 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8xr9kqx/martial-peak"
     }
    },
@@ -556,6 +556,30 @@
    "total": 2.036
   },
   {
+   "title": "Absolute Regression",
+   "signals": {
+    "anilist": {
+     "strength": 0.505,
+     "rank": 33,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7225,
+     "rank": 37,
+     "note": "8.37/10 from 272 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 180891,
+   "malId": 172750,
+   "score": 82,
+   "agree": 2,
+   "total": 1.964
+  },
+  {
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
@@ -590,7 +614,7 @@
     "mangaupdates": {
      "strength": 0.9175,
      "rank": 11,
-     "note": "8.61/10 from 364 MangaUpdates readers",
+     "note": "8.61/10 from 365 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -602,30 +626,6 @@
    "score": 81,
    "agree": 2,
    "total": 1.94
-  },
-  {
-   "title": "Absolute Regression",
-   "signals": {
-    "anilist": {
-     "strength": 0.475,
-     "rank": 35,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7225,
-     "rank": 37,
-     "note": "8.37/10 from 272 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 180891,
-   "malId": 172750,
-   "score": 82,
-   "agree": 2,
-   "total": 1.916
   },
   {
    "title": "Kono Oto Tomare!",
@@ -686,7 +686,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,096 MangaUpdates readers",
+     "note": "8.64/10 from 1,097 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -1008,7 +1008,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.78/10 from 4,353 MangaUpdates readers",
+     "note": "8.78/10 from 4,354 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8q91xb4/hagane-no-renkinjutsushi"
     }
    },
@@ -1100,7 +1100,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.75/10 from 284 MangaUpdates readers",
+     "note": "8.75/10 from 285 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
     }
    },
@@ -1119,7 +1119,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.77/10 from 2,430 MangaUpdates readers",
+     "note": "8.77/10 from 2,431 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q97i9pa/watashitachi-no-shiawase-na-jikan"
     }
    },
@@ -1182,7 +1182,7 @@
    "year": 2017,
    "anilistId": 101563,
    "malId": 137200,
-   "score": 84,
+   "score": 85,
    "agree": 1,
    "total": 0.955
   },
@@ -1192,7 +1192,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.77/10 from 2,563 MangaUpdates readers",
+     "note": "8.77/10 from 2,564 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/spwkkqi/angel-densetsu"
     }
    },
@@ -1299,7 +1299,7 @@
    "total": 0.94
   },
   {
-   "title": "My Bias Gets on the Last Train",
+   "title": "The Legend of the Northern Blade",
    "signals": {
     "anilist": {
      "strength": 0.94,
@@ -1307,12 +1307,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
    "category": "manhwa",
-   "year": 2024,
-   "anilistId": 187944,
-   "malId": 178671,
-   "score": 86,
+   "year": 2019,
+   "anilistId": 119521,
+   "malId": 134744,
+   "score": 85,
    "agree": 1,
    "total": 0.94
   },
@@ -1340,7 +1340,7 @@
     "mangaupdates": {
      "strength": 0.94,
      "rank": 8,
-     "note": "8.76/10 from 1,856 MangaUpdates readers",
+     "note": "8.76/10 from 1,857 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ktr1ti2/20-seiki-shounen"
     }
    },
@@ -1428,7 +1428,7 @@
    "total": 0.925
   },
   {
-   "title": "The Legend of the Northern Blade",
+   "title": "My Bias Gets on the Last Train",
    "signals": {
     "anilist": {
      "strength": 0.925,
@@ -1436,11 +1436,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx119521-qYqxFvn0NnXo.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx187944-gzNbL7zeY7Ma.jpg",
    "category": "manhwa",
-   "year": 2019,
-   "anilistId": 119521,
-   "malId": 134744,
+   "year": 2024,
+   "anilistId": 187944,
+   "malId": 178671,
    "score": 85,
    "agree": 1,
    "total": 0.925
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 277 MangaUpdates readers",
+     "note": "8.56/10 from 278 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1764,7 +1764,7 @@
     "mangaupdates": {
      "strength": 0.88,
      "rank": 16,
-     "note": "8.7/10 from 728 MangaUpdates readers",
+     "note": "8.7/10 from 729 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/80p3b9d/sakamichi-no-apollon"
     }
    },
@@ -1790,25 +1790,6 @@
    "cover": "",
    "category": "manga",
    "year": 1997,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.8725
-  },
-  {
-   "title": "You Get Me Going",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.8725,
-     "rank": 17,
-     "note": "8.49/10 from 304 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2021,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1936,6 +1917,25 @@
    "cover": "",
    "category": "manga",
    "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.865
+  },
+  {
+   "title": "You Get Me Going",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.865,
+     "rank": 18,
+     "note": "8.49/10 from 306 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
    "anilistId": null,
    "malId": null,
    "score": null,
