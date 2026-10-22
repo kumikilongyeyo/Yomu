@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-21T09:18:07.613Z",
+ "generatedAt": "2026-10-22T09:21:09.380Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 331 MangaUpdates readers",
+     "note": "9.15/10 from 332 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -62,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.65/10 from 467 MangaUpdates readers",
+     "note": "8.65/10 from 468 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
     }
    },
@@ -86,7 +86,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "8.96/10 from 1,941 MangaUpdates readers",
+     "note": "8.96/10 from 1,942 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
     }
    },
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 948 MangaUpdates readers",
+     "note": "8.82/10 from 949 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,311 MangaUpdates readers",
+     "note": "8.47/10 from 2,313 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.63/10 from 416 MangaUpdates readers",
+     "note": "8.64/10 from 418 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 805 MangaUpdates readers",
+     "note": "8.71/10 from 807 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "7.85/10 from 315 MangaUpdates readers",
+     "note": "7.85/10 from 316 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
    },
@@ -468,8 +468,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.445,
-     "rank": 74,
+     "strength": 0.4375,
+     "rank": 75,
      "note": "8.18/10 from 470 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
     }
@@ -480,30 +480,6 @@
    "anilistId": 126297,
    "malId": 146966,
    "score": 79,
-   "agree": 2,
-   "total": 2.144
-  },
-  {
-   "title": "I Shall Master this Family!",
-   "signals": {
-    "anilist": {
-     "strength": 0.595,
-     "rank": 27,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
-     "note": "8.37/10 from 480 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
-   "category": "manhwa",
-   "year": 2021,
-   "anilistId": 130429,
-   "malId": 147692,
-   "score": 82,
    "agree": 2,
    "total": 2.132
   },
@@ -527,6 +503,30 @@
    "year": 2011,
    "anilistId": 72451,
    "malId": 42451,
+   "score": 82,
+   "agree": 2,
+   "total": 2.12
+  },
+  {
+   "title": "I Shall Master this Family!",
+   "signals": {
+    "anilist": {
+     "strength": 0.595,
+     "rank": 27,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.73,
+     "rank": 36,
+     "note": "8.37/10 from 480 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 130429,
+   "malId": 147692,
    "score": 82,
    "agree": 2,
    "total": 2.12
@@ -564,9 +564,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7225,
-     "rank": 37,
-     "note": "8.37/10 from 272 MangaUpdates readers",
+     "strength": 0.7525,
+     "rank": 33,
+     "note": "8.38/10 from 273 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -577,7 +577,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 1.964
+   "total": 2.012
   },
   {
    "title": "See You in My 19th Life",
@@ -724,30 +724,6 @@
    "total": 1.772
   },
   {
-   "title": "Positively Yours",
-   "signals": {
-    "anilist": {
-     "strength": 0.28,
-     "rank": 48,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7675,
-     "rank": 31,
-     "note": "8.38/10 from 526 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 120440,
-   "malId": 140921,
-   "score": 81,
-   "agree": 2,
-   "total": 1.676
-  },
-  {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
    "signals": {
     "anilist": {
@@ -767,6 +743,30 @@
    "year": 2017,
    "anilistId": 104973,
    "malId": 118646,
+   "score": 81,
+   "agree": 2,
+   "total": 1.652
+  },
+  {
+   "title": "Positively Yours",
+   "signals": {
+    "anilist": {
+     "strength": 0.265,
+     "rank": 49,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7675,
+     "rank": 31,
+     "note": "8.38/10 from 526 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 120440,
+   "malId": 140921,
    "score": 81,
    "agree": 2,
    "total": 1.652
@@ -1100,7 +1100,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.75/10 from 285 MangaUpdates readers",
+     "note": "8.75/10 from 286 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
     }
    },
