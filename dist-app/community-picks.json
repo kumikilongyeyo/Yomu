@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-22T09:21:09.380Z",
+ "generatedAt": "2026-10-23T09:16:47.859Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -204,9 +204,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.9325,
-     "rank": 9,
-     "note": "8.64/10 from 418 MangaUpdates readers",
+     "strength": 0.925,
+     "rank": 10,
+     "note": "8.64/10 from 419 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -217,7 +217,7 @@
    "malId": 170427,
    "score": 85,
    "agree": 2,
-   "total": 2.948
+   "total": 2.936
   },
   {
    "title": "Chang Ge Xing",
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 807 MangaUpdates readers",
+     "note": "8.71/10 from 808 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -446,7 +446,7 @@
     "mangaupdates": {
      "strength": 0.9025,
      "rank": 13,
-     "note": "8.57/10 from 2,374 MangaUpdates readers",
+     "note": "8.57/10 from 2,375 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/snvji36/noblesse"
     }
    },
@@ -494,7 +494,7 @@
     "mangaupdates": {
      "strength": 0.55,
      "rank": 60,
-     "note": "8.57/10 from 2,065 MangaUpdates readers",
+     "note": "8.57/10 from 2,066 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
     }
    },
@@ -540,8 +540,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.4375,
-     "rank": 75,
+     "strength": 0.43,
+     "rank": 76,
      "note": "8.53/10 from 963 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
@@ -553,7 +553,7 @@
    "malId": 119161,
    "score": 83,
    "agree": 2,
-   "total": 2.036
+   "total": 2.024
   },
   {
    "title": "Absolute Regression",
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.7525,
      "rank": 33,
-     "note": "8.38/10 from 273 MangaUpdates readers",
+     "note": "8.38/10 from 274 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -578,30 +578,6 @@
    "score": 82,
    "agree": 2,
    "total": 2.012
-  },
-  {
-   "title": "See You in My 19th Life",
-   "signals": {
-    "anilist": {
-     "strength": 0.295,
-     "rank": 47,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.9175,
-     "rank": 11,
-     "note": "8.61/10 from 365 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx122060-ZDEmnfRw0YCb.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 122060,
-   "malId": 147062,
-   "score": 81,
-   "agree": 2,
-   "total": 1.94
   },
   {
    "title": "Kono Oto Tomare!",
@@ -648,6 +624,30 @@
    "anilistId": 175946,
    "malId": 168980,
    "score": 83,
+   "agree": 2,
+   "total": 1.928
+  },
+  {
+   "title": "See You in My 19th Life",
+   "signals": {
+    "anilist": {
+     "strength": 0.295,
+     "rank": 47,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.91,
+     "rank": 12,
+     "note": "8.61/10 from 365 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx122060-ZDEmnfRw0YCb.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 122060,
+   "malId": 147062,
+   "score": 81,
    "agree": 2,
    "total": 1.928
   },
@@ -758,7 +758,7 @@
     "mangaupdates": {
      "strength": 0.7675,
      "rank": 31,
-     "note": "8.38/10 from 526 MangaUpdates readers",
+     "note": "8.38/10 from 527 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
     }
    },
@@ -799,8 +799,8 @@
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.445,
-     "rank": 37,
+     "strength": 0.46,
+     "rank": 36,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -817,7 +817,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.34
+   "total": 1.364
   },
   {
    "title": "Berserk",
@@ -1119,7 +1119,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.77/10 from 2,431 MangaUpdates readers",
+     "note": "8.77/10 from 2,432 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q97i9pa/watashitachi-no-shiawase-na-jikan"
     }
    },
@@ -1244,25 +1244,6 @@
    "total": 0.9475
   },
   {
-   "title": "Bring the Love",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.9475,
-     "rank": 7,
-     "note": "8.67/10 from 309 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2019,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.9475
-  },
-  {
    "title": "Umineko When They Cry Episode 8: Twilight of the Golden Witch",
    "signals": {
     "anilist": {
@@ -1354,18 +1335,18 @@
    "total": 0.94
   },
   {
-   "title": "Annarasumanara",
+   "title": "Bring the Love",
    "signals": {
     "mangaupdates": {
      "strength": 0.94,
      "rank": 8,
-     "note": "8.66/10 from 1,688 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/7so3t9i/annarasumanara"
+     "note": "8.67/10 from 309 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
     }
    },
    "cover": "",
    "category": "manhwa",
-   "year": 2010,
+   "year": 2019,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1385,6 +1366,25 @@
    "cover": "",
    "category": "manga",
    "year": 2009,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9325
+  },
+  {
+   "title": "Annarasumanara",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9325,
+     "rank": 9,
+     "note": "8.66/10 from 1,688 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/7so3t9i/annarasumanara"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2010,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1501,25 +1501,6 @@
    "total": 0.925
   },
   {
-   "title": "Trapped (Haemuri)",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.925,
-     "rank": 10,
-     "note": "8.63/10 from 252 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2019,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.925
-  },
-  {
    "title": "Ballroom e Youkoso",
    "signals": {
     "mangaupdates": {
@@ -1532,6 +1513,25 @@
    "cover": "",
    "category": "manga",
    "year": 2011,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9175
+  },
+  {
+   "title": "Trapped (Haemuri)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9175,
+     "rank": 11,
+     "note": "8.63/10 from 253 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2019,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 279 MangaUpdates readers",
+     "note": "8.56/10 from 281 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -2186,7 +2186,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 335 MangaUpdates readers",
+     "note": "8.69/10 from 336 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
