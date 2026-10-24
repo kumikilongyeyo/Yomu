@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-23T09:16:47.859Z",
+ "generatedAt": "2026-10-24T08:49:13.103Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -223,8 +223,8 @@
    "title": "Chang Ge Xing",
    "signals": {
     "anilist": {
-     "strength": 0.82,
-     "rank": 12,
+     "strength": 0.805,
+     "rank": 13,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -241,7 +241,7 @@
    "malId": 42001,
    "score": 81,
    "agree": 2,
-   "total": 2.9
+   "total": 2.876
   },
   {
    "title": "Villains Are Destined to Die",
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "7.85/10 from 316 MangaUpdates readers",
+     "note": "7.85/10 from 317 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
    },
@@ -290,6 +290,30 @@
    "score": 82,
    "agree": 2,
    "total": 2.852
+  },
+  {
+   "title": "The Horizon",
+   "signals": {
+    "anilist": {
+     "strength": 0.91,
+     "rank": 6,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.79,
+     "rank": 28,
+     "note": "8.38/10 from 286 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100568-4BC0PsdwU4bL.png",
+   "category": "manhwa",
+   "year": 2016,
+   "anilistId": 100568,
+   "malId": 125036,
+   "score": 85,
+   "agree": 2,
+   "total": 2.72
   },
   {
    "title": "I Am The Fated Villain",
@@ -314,30 +338,6 @@
    "score": 76,
    "agree": 2,
    "total": 2.72
-  },
-  {
-   "title": "The Horizon",
-   "signals": {
-    "anilist": {
-     "strength": 0.91,
-     "rank": 6,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.7825,
-     "rank": 29,
-     "note": "8.38/10 from 286 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100568-4BC0PsdwU4bL.png",
-   "category": "manhwa",
-   "year": 2016,
-   "anilistId": 100568,
-   "malId": 125036,
-   "score": 85,
-   "agree": 2,
-   "total": 2.708
   },
   {
    "title": "Haikyu!!",
@@ -436,6 +436,30 @@
    "total": 2.24
   },
   {
+   "title": "I Shall Master this Family!",
+   "signals": {
+    "anilist": {
+     "strength": 0.61,
+     "rank": 26,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7375,
+     "rank": 35,
+     "note": "8.37/10 from 480 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 130429,
+   "malId": 147692,
+   "score": 82,
+   "agree": 2,
+   "total": 2.156
+  },
+  {
    "title": "Noblesse",
    "signals": {
     "anilist": {
@@ -508,30 +532,6 @@
    "total": 2.12
   },
   {
-   "title": "I Shall Master this Family!",
-   "signals": {
-    "anilist": {
-     "strength": 0.595,
-     "rank": 27,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.73,
-     "rank": 36,
-     "note": "8.37/10 from 480 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
-   "category": "manhwa",
-   "year": 2021,
-   "anilistId": 130429,
-   "malId": 147692,
-   "score": 82,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
    "title": "SPY x FAMILY",
    "signals": {
     "anilist": {
@@ -564,8 +564,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7525,
-     "rank": 33,
+     "strength": 0.76,
+     "rank": 32,
      "note": "8.38/10 from 274 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
@@ -577,7 +577,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 2.012
+   "total": 2.024
   },
   {
    "title": "Kono Oto Tomare!",
@@ -724,30 +724,6 @@
    "total": 1.772
   },
   {
-   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
-   "signals": {
-    "anilist": {
-     "strength": 0.34,
-     "rank": 44,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.6925,
-     "rank": 41,
-     "note": "8.33/10 from 839 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
-   "category": "manhwa",
-   "year": 2017,
-   "anilistId": 104973,
-   "malId": 118646,
-   "score": 81,
-   "agree": 2,
-   "total": 1.652
-  },
-  {
    "title": "Positively Yours",
    "signals": {
     "anilist": {
@@ -756,8 +732,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7675,
-     "rank": 31,
+     "strength": 0.775,
+     "rank": 30,
      "note": "8.38/10 from 527 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
     }
@@ -769,14 +745,38 @@
    "malId": 140921,
    "score": 81,
    "agree": 2,
-   "total": 1.652
+   "total": 1.664
+  },
+  {
+   "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
+   "signals": {
+    "anilist": {
+     "strength": 0.325,
+     "rank": 45,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7,
+     "rank": 40,
+     "note": "8.33/10 from 840 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx104973-5KZSV2FK9BMt.jpg",
+   "category": "manhwa",
+   "year": 2017,
+   "anilistId": 104973,
+   "malId": 118646,
+   "score": 81,
+   "agree": 2,
+   "total": 1.64
   },
   {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
-     "strength": 0.325,
-     "rank": 45,
+     "strength": 0.355,
+     "rank": 43,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -793,7 +793,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.4
+   "total": 1.448
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -1654,7 +1654,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 281 MangaUpdates readers",
+     "note": "8.56/10 from 282 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1929,7 +1929,7 @@
     "mangaupdates": {
      "strength": 0.865,
      "rank": 18,
-     "note": "8.49/10 from 306 MangaUpdates readers",
+     "note": "8.49/10 from 307 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8bsumye/you-get-me-going"
     }
    },
@@ -2293,6 +2293,24 @@
    "total": 0.82
   },
   {
+   "title": "Soulmate",
+   "signals": {
+    "anilist": {
+     "strength": 0.82,
+     "rank": 12,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
+   "category": "manhua",
+   "year": 2020,
+   "anilistId": 118269,
+   "malId": null,
+   "score": 81,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
    "title": "Your Talent Is Mine",
    "signals": {
     "anilist": {
@@ -2381,24 +2399,6 @@
    "anilistId": 87423,
    "malId": 100128,
    "score": 79,
-   "agree": 1,
-   "total": 0.805
-  },
-  {
-   "title": "Soulmate",
-   "signals": {
-    "anilist": {
-     "strength": 0.805,
-     "rank": 13,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx118269-EDtI7KeGpewU.jpg",
-   "category": "manhua",
-   "year": 2020,
-   "anilistId": 118269,
-   "malId": null,
-   "score": 81,
    "agree": 1,
    "total": 0.805
   },
