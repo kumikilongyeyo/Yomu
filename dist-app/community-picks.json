@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-24T08:49:13.103Z",
+ "generatedAt": "2026-10-25T09:05:41.475Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 368,
+  "works": 369,
   "picks": 120
  },
  "picks": [
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 949 MangaUpdates readers",
+     "note": "8.82/10 from 950 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 808 MangaUpdates readers",
+     "note": "8.71/10 from 809 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -420,9 +420,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.49,
-     "rank": 68,
-     "note": "7.38/10 from 281 MangaUpdates readers",
+     "strength": 0.4825,
+     "rank": 69,
+     "note": "7.38/10 from 282 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8xr9kqx/martial-peak"
     }
    },
@@ -433,31 +433,7 @@
    "malId": null,
    "score": 73,
    "agree": 2,
-   "total": 2.24
-  },
-  {
-   "title": "I Shall Master this Family!",
-   "signals": {
-    "anilist": {
-     "strength": 0.61,
-     "rank": 26,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
-     "note": "8.37/10 from 480 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
-   "category": "manhwa",
-   "year": 2021,
-   "anilistId": 130429,
-   "malId": 147692,
-   "score": 82,
-   "agree": 2,
-   "total": 2.156
+   "total": 2.228
   },
   {
    "title": "Noblesse",
@@ -532,6 +508,30 @@
    "total": 2.12
   },
   {
+   "title": "I Shall Master this Family!",
+   "signals": {
+    "anilist": {
+     "strength": 0.58,
+     "rank": 28,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.7375,
+     "rank": 35,
+     "note": "8.37/10 from 480 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx130429-m3PuqOmxBgoo.png",
+   "category": "manhwa",
+   "year": 2021,
+   "anilistId": 130429,
+   "malId": 147692,
+   "score": 82,
+   "agree": 2,
+   "total": 2.108
+  },
+  {
    "title": "SPY x FAMILY",
    "signals": {
     "anilist": {
@@ -540,8 +540,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
+     "strength": 0.4375,
+     "rank": 75,
      "note": "8.53/10 from 963 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
@@ -553,7 +553,7 @@
    "malId": 119161,
    "score": 83,
    "agree": 2,
-   "total": 2.024
+   "total": 2.036
   },
   {
    "title": "Absolute Regression",
@@ -724,35 +724,11 @@
    "total": 1.772
   },
   {
-   "title": "Positively Yours",
-   "signals": {
-    "anilist": {
-     "strength": 0.265,
-     "rank": 49,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.775,
-     "rank": 30,
-     "note": "8.38/10 from 527 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/lnh6rw5/positively-yours"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx120440-PdrYcdsMheyO.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 120440,
-   "malId": 140921,
-   "score": 81,
-   "agree": 2,
-   "total": 1.664
-  },
-  {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
    "signals": {
     "anilist": {
-     "strength": 0.325,
-     "rank": 45,
+     "strength": 0.31,
+     "rank": 46,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -769,14 +745,14 @@
    "malId": 118646,
    "score": 81,
    "agree": 2,
-   "total": 1.64
+   "total": 1.616
   },
   {
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
-     "strength": 0.355,
-     "rank": 43,
+     "strength": 0.34,
+     "rank": 44,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -793,7 +769,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.448
+   "total": 1.424
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -1211,7 +1187,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.71/10 from 375 MangaUpdates readers",
+     "note": "8.71/10 from 376 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
     }
    },
@@ -2417,6 +2393,25 @@
    "anilistId": 108152,
    "malId": 136488,
    "score": 72,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
+   "title": "Koe no Katachi",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.805,
+     "rank": 26,
+     "note": "8.67/10 from 2,250 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
+    }
+   },
+   "cover": "",
+   "category": "manga",
+   "year": 2013,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
    "agree": 1,
    "total": 0.805
   }
