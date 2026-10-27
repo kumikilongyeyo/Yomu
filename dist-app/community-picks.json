@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-26T10:01:21.690Z",
+ "generatedAt": "2026-10-27T09:45:08.437Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,314 MangaUpdates readers",
+     "note": "8.47/10 from 2,316 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.64/10 from 419 MangaUpdates readers",
+     "note": "8.64/10 from 420 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -276,8 +276,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.8275,
-     "rank": 23,
+     "strength": 0.82,
+     "rank": 24,
      "note": "7.85/10 from 317 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
@@ -289,7 +289,7 @@
    "malId": null,
    "score": 82,
    "agree": 2,
-   "total": 2.852
+   "total": 2.84
   },
   {
    "title": "The Horizon",
@@ -300,8 +300,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.79,
-     "rank": 28,
+     "strength": 0.7825,
+     "rank": 29,
      "note": "8.38/10 from 286 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/42udii9/the-horizon"
     }
@@ -313,7 +313,7 @@
    "malId": 125036,
    "score": 85,
    "agree": 2,
-   "total": 2.72
+   "total": 2.708
   },
   {
    "title": "I Am The Fated Villain",
@@ -324,9 +324,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.82,
-     "rank": 24,
-     "note": "7.85/10 from 299 MangaUpdates readers",
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "7.85/10 from 300 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -337,20 +337,20 @@
    "malId": null,
    "score": 77,
    "agree": 2,
-   "total": 2.72
+   "total": 2.708
   },
   {
    "title": "Haikyu!!",
    "signals": {
     "anilist": {
-     "strength": 0.625,
-     "rank": 25,
+     "strength": 0.64,
+     "rank": 24,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.72/10 from 878 MangaUpdates readers",
+     "note": "8.72/10 from 879 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ul2du3n/haikyu"
     }
    },
@@ -361,7 +361,7 @@
    "malId": 35243,
    "score": 88,
    "agree": 2,
-   "total": 2.432
+   "total": 2.456
   },
   {
    "title": "Who Made Me a Princess",
@@ -372,8 +372,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.82,
-     "rank": 24,
+     "strength": 0.8125,
+     "rank": 25,
      "note": "8.43/10 from 852 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
@@ -385,7 +385,7 @@
    "malId": 121269,
    "score": 83,
    "agree": 2,
-   "total": 2.384
+   "total": 2.372
   },
   {
    "title": "Feng Shen Ji",
@@ -436,6 +436,30 @@
    "total": 2.228
   },
   {
+   "title": "Myst, Might, Mayhem",
+   "signals": {
+    "anilist": {
+     "strength": 0.685,
+     "rank": 21,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6625,
+     "rank": 45,
+     "note": "8.31/10 from 309 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 175946,
+   "malId": 168980,
+   "score": 83,
+   "agree": 2,
+   "total": 2.156
+  },
+  {
    "title": "Noblesse",
    "signals": {
     "anilist": {
@@ -468,9 +492,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.4375,
-     "rank": 75,
-     "note": "8.18/10 from 470 MangaUpdates readers",
+     "strength": 0.445,
+     "rank": 74,
+     "note": "8.18/10 from 471 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
     }
    },
@@ -481,7 +505,7 @@
    "malId": 146966,
    "score": 79,
    "agree": 2,
-   "total": 2.132
+   "total": 2.144
   },
   {
    "title": "Horimiya",
@@ -506,6 +530,30 @@
    "score": 82,
    "agree": 2,
    "total": 2.12
+  },
+  {
+   "title": "Absolute Regression",
+   "signals": {
+    "anilist": {
+     "strength": 0.46,
+     "rank": 36,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.85,
+     "rank": 20,
+     "note": "8.47/10 from 277 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": 180891,
+   "malId": 172750,
+   "score": 82,
+   "agree": 2,
+   "total": 2.096
   },
   {
    "title": "I Shall Master this Family!",
@@ -540,9 +588,9 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.4375,
-     "rank": 75,
-     "note": "8.53/10 from 964 MangaUpdates readers",
+     "strength": 0.445,
+     "rank": 74,
+     "note": "8.53/10 from 965 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -553,55 +601,7 @@
    "malId": 119161,
    "score": 83,
    "agree": 2,
-   "total": 2.036
-  },
-  {
-   "title": "Absolute Regression",
-   "signals": {
-    "anilist": {
-     "strength": 0.46,
-     "rank": 36,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.76,
-     "rank": 32,
-     "note": "8.38/10 from 274 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx180891-ZBbyOWSYI41R.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 180891,
-   "malId": 172750,
-   "score": 82,
-   "agree": 2,
-   "total": 1.952
-  },
-  {
-   "title": "Myst, Might, Mayhem",
-   "signals": {
-    "anilist": {
-     "strength": 0.685,
-     "rank": 21,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
-     "note": "8.22/10 from 308 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": 175946,
-   "malId": 168980,
-   "score": 83,
-   "agree": 2,
-   "total": 1.94
+   "total": 2.048
   },
   {
    "title": "See You in My 19th Life",
@@ -636,8 +636,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.535,
-     "rank": 62,
+     "strength": 0.5275,
+     "rank": 63,
      "note": "8.22/10 from 307 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
@@ -649,7 +649,7 @@
    "malId": 163116,
    "score": 82,
    "agree": 2,
-   "total": 1.832
+   "total": 1.82
   },
   {
    "title": "Dorohedoro",
@@ -676,30 +676,6 @@
    "total": 1.808
   },
   {
-   "title": "Kono Oto Tomare!",
-   "signals": {
-    "anilist": {
-     "strength": 0.49,
-     "rank": 34,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.625,
-     "rank": 50,
-     "note": "8.6/10 from 330 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
-   "category": "manga",
-   "year": 2012,
-   "anilistId": 75143,
-   "malId": 45143,
-   "score": 88,
-   "agree": 2,
-   "total": 1.784
-  },
-  {
    "title": "Death Note",
    "signals": {
     "anilist": {
@@ -724,6 +700,30 @@
    "total": 1.772
   },
   {
+   "title": "Kono Oto Tomare!",
+   "signals": {
+    "anilist": {
+     "strength": 0.49,
+     "rank": 34,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.6025,
+     "rank": 53,
+     "note": "8.59/10 from 330 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 75143,
+   "malId": 45143,
+   "score": 88,
+   "agree": 2,
+   "total": 1.748
+  },
+  {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
    "signals": {
     "anilist": {
@@ -732,8 +732,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.6925,
-     "rank": 41,
+     "strength": 0.685,
+     "rank": 42,
      "note": "8.33/10 from 840 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
@@ -745,7 +745,7 @@
    "malId": 118646,
    "score": 81,
    "agree": 2,
-   "total": 1.604
+   "total": 1.592
   },
   {
    "title": "How to Win My Husband Over",
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5575,
-     "rank": 59,
+     "strength": 0.55,
+     "rank": 60,
      "note": "8.23/10 from 342 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 81,
    "agree": 2,
-   "total": 1.412
+   "total": 1.4
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -910,7 +910,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "9.01/10 from 276 MangaUpdates readers",
+     "note": "9.01/10 from 277 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
     }
    },
@@ -984,7 +984,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.78/10 from 4,354 MangaUpdates readers",
+     "note": "8.78/10 from 4,355 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8q91xb4/hagane-no-renkinjutsushi"
     }
    },
@@ -1858,7 +1858,7 @@
    "year": 2001,
    "anilistId": 31320,
    "malId": 1320,
-   "score": 81,
+   "score": 82,
    "agree": 1,
    "total": 0.865
   },
@@ -2028,25 +2028,6 @@
    "total": 0.85
   },
   {
-   "title": "A Night of a Thousand Dreams",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.85,
-     "rank": 20,
-     "note": "8.47/10 from 490 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/zyp4ssq/a-night-of-a-thousand-dreams"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2004,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.85
-  },
-  {
    "title": "Kusuriya no Hitorigoto",
    "signals": {
     "mangaupdates": {
@@ -2066,18 +2047,18 @@
    "total": 0.8425
   },
   {
-   "title": "Can't See Can't Hear But Love",
+   "title": "A Night of a Thousand Dreams",
    "signals": {
     "mangaupdates": {
      "strength": 0.8425,
      "rank": 21,
-     "note": "8.46/10 from 449 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/9lmn52r/can-t-see-can-t-hear-but-love"
+     "note": "8.47/10 from 490 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/zyp4ssq/a-night-of-a-thousand-dreams"
     }
    },
    "cover": "",
    "category": "manhwa",
-   "year": 2010,
+   "year": 2004,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -2176,18 +2157,18 @@
    "total": 0.835
   },
   {
-   "title": "The Fantasie of a Stepmother",
+   "title": "Can't See Can't Hear But Love",
    "signals": {
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.45/10 from 425 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
+     "note": "8.46/10 from 449 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/9lmn52r/can-t-see-can-t-hear-but-love"
     }
    },
    "cover": "",
    "category": "manhwa",
-   "year": 2019,
+   "year": 2010,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -2214,18 +2195,18 @@
    "total": 0.8275
   },
   {
-   "title": "Roxana",
+   "title": "The Fantasie of a Stepmother",
    "signals": {
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 424 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/utubdan/roxana"
+     "note": "8.45/10 from 425 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
     }
    },
    "cover": "",
    "category": "manhwa",
-   "year": 2021,
+   "year": 2019,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -2317,6 +2298,25 @@
    "cover": "",
    "category": "manga",
    "year": 2015,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.82
+  },
+  {
+   "title": "Roxana",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.82,
+     "rank": 24,
+     "note": "8.45/10 from 424 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/utubdan/roxana"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2021,
    "anilistId": null,
    "malId": null,
    "score": null,
