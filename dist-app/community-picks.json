@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-30T10:49:00.939Z",
+ "generatedAt": "2026-10-31T10:18:59.152Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 377,
+  "works": 376,
   "picks": 120
  },
  "picks": [
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 332 MangaUpdates readers",
+     "note": "9.15/10 from 333 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -484,6 +484,30 @@
    "total": 2.156
   },
   {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.445,
+     "rank": 74,
+     "note": "8.18/10 from 471 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
+   "agree": 2,
+   "total": 2.144
+  },
+  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -504,30 +528,6 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
-     "note": "8.18/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -604,6 +604,30 @@
    "total": 1.964
   },
   {
+   "title": "See You in My 19th Life",
+   "signals": {
+    "anilist": {
+     "strength": 0.265,
+     "rank": 49,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.91,
+     "rank": 12,
+     "note": "8.61/10 from 366 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx122060-ZDEmnfRw0YCb.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 122060,
+   "malId": 147062,
+   "score": 81,
+   "agree": 2,
+   "total": 1.88
+  },
+  {
    "title": "The Stellar Swordmaster",
    "signals": {
     "anilist": {
@@ -638,7 +662,7 @@
     "mangaupdates": {
      "strength": 0.625,
      "rank": 50,
-     "note": "8.6/10 from 330 MangaUpdates readers",
+     "note": "8.6/10 from 331 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
     }
    },
@@ -758,7 +782,7 @@
     "mangaupdates": {
      "strength": 0.3925,
      "rank": 81,
-     "note": "8.16/10 from 394 MangaUpdates readers",
+     "note": "8.16/10 from 395 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -1564,25 +1588,6 @@
    "total": 0.91
   },
   {
-   "title": "See You in My 19th Life",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.91,
-     "rank": 12,
-     "note": "8.61/10 from 366 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.91
-  },
-  {
    "title": "Doraemon",
    "signals": {
     "mangaupdates": {
@@ -1680,7 +1685,7 @@
     "mangaupdates": {
      "strength": 0.8875,
      "rank": 15,
-     "note": "8.71/10 from 814 MangaUpdates readers",
+     "note": "8.71/10 from 815 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/biidya3/gekkan-shoujo-nozaki-kun"
     }
    },
@@ -2138,7 +2143,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 336 MangaUpdates readers",
+     "note": "8.69/10 from 337 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2286,7 +2291,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.68/10 from 589 MangaUpdates readers",
+     "note": "8.68/10 from 590 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/wmjgub7/yagate-kimi-ni-naru"
     }
    },
