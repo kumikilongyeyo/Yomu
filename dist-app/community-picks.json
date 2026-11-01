@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-10-31T10:18:59.152Z",
+ "generatedAt": "2026-11-01T11:13:16.444Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -564,8 +564,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.445,
-     "rank": 74,
+     "strength": 0.4375,
+     "rank": 75,
      "note": "8.53/10 from 965 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
@@ -577,7 +577,7 @@
    "malId": 119161,
    "score": 83,
    "agree": 2,
-   "total": 2.048
+   "total": 2.036
   },
   {
    "title": "I Shall Master this Family!",
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.7375,
      "rank": 35,
-     "note": "8.37/10 from 479 MangaUpdates readers",
+     "note": "8.37/10 from 481 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -614,7 +614,7 @@
     "mangaupdates": {
      "strength": 0.91,
      "rank": 12,
-     "note": "8.61/10 from 366 MangaUpdates readers",
+     "note": "8.61/10 from 368 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -626,30 +626,6 @@
    "score": 81,
    "agree": 2,
    "total": 1.88
-  },
-  {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.61,
-     "rank": 26,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
-     "note": "8.22/10 from 309 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 83,
-   "agree": 2,
-   "total": 1.82
   },
   {
    "title": "Kono Oto Tomare!",
@@ -686,7 +662,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,097 MangaUpdates readers",
+     "note": "8.64/10 from 1,098 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -698,6 +674,30 @@
    "score": 86,
    "agree": 2,
    "total": 1.808
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.595,
+     "rank": 27,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.5275,
+     "rank": 63,
+     "note": "8.22/10 from 309 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 83,
+   "agree": 2,
+   "total": 1.796
   },
   {
    "title": "Death Note",
@@ -782,7 +782,7 @@
     "mangaupdates": {
      "strength": 0.3925,
      "rank": 81,
-     "note": "8.16/10 from 395 MangaUpdates readers",
+     "note": "8.16/10 from 396 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -1876,7 +1876,7 @@
    "year": 2019,
    "anilistId": 107966,
    "malId": null,
-   "score": 72,
+   "score": 71,
    "agree": 1,
    "total": 0.865
   },
