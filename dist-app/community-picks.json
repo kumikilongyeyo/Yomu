@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-01T11:13:16.444Z",
+ "generatedAt": "2026-11-02T12:15:56.846Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -86,7 +86,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "8.96/10 from 1,942 MangaUpdates readers",
+     "note": "8.96/10 from 1,943 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
     }
    },
@@ -204,9 +204,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.925,
-     "rank": 10,
-     "note": "8.64/10 from 421 MangaUpdates readers",
+     "strength": 0.9325,
+     "rank": 9,
+     "note": "8.64/10 from 422 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -217,7 +217,7 @@
    "malId": 170427,
    "score": 85,
    "agree": 2,
-   "total": 2.936
+   "total": 2.948
   },
   {
    "title": "Chang Ge Xing",
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 813 MangaUpdates readers",
+     "note": "8.71/10 from 814 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -276,8 +276,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.82,
-     "rank": 24,
+     "strength": 0.8275,
+     "rank": 23,
      "note": "7.85/10 from 317 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
@@ -289,7 +289,31 @@
    "malId": null,
    "score": 82,
    "agree": 2,
-   "total": 2.84
+   "total": 2.852
+  },
+  {
+   "title": "I Am The Fated Villain",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.82,
+     "rank": 24,
+     "note": "7.85/10 from 300 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142287-nlT7oSUzHnNv.jpg",
+   "category": "manhua",
+   "year": 2021,
+   "anilistId": 142287,
+   "malId": null,
+   "score": 77,
+   "agree": 2,
+   "total": 2.72
   },
   {
    "title": "The Horizon",
@@ -312,30 +336,6 @@
    "anilistId": 100568,
    "malId": 125036,
    "score": 85,
-   "agree": 2,
-   "total": 2.708
-  },
-  {
-   "title": "I Am The Fated Villain",
-   "signals": {
-    "anilist": {
-     "strength": 0.88,
-     "rank": 8,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.8125,
-     "rank": 25,
-     "note": "7.85/10 from 300 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142287-nlT7oSUzHnNv.jpg",
-   "category": "manhua",
-   "year": 2021,
-   "anilistId": 142287,
-   "malId": null,
-   "score": 77,
    "agree": 2,
    "total": 2.708
   },
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.8125,
      "rank": 25,
-     "note": "8.43/10 from 852 MangaUpdates readers",
+     "note": "8.43/10 from 853 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 965 MangaUpdates readers",
+     "note": "8.53/10 from 966 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -612,8 +612,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.91,
-     "rank": 12,
+     "strength": 0.9175,
+     "rank": 11,
      "note": "8.61/10 from 368 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
@@ -625,7 +625,7 @@
    "malId": 147062,
    "score": 81,
    "agree": 2,
-   "total": 1.88
+   "total": 1.892
   },
   {
    "title": "Kono Oto Tomare!",
@@ -679,13 +679,13 @@
    "title": "The Stellar Swordmaster",
    "signals": {
     "anilist": {
-     "strength": 0.595,
-     "rank": 27,
+     "strength": 0.61,
+     "rank": 26,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
+     "strength": 0.52,
+     "rank": 64,
      "note": "8.22/10 from 309 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
@@ -697,7 +697,7 @@
    "malId": 163116,
    "score": 83,
    "agree": 2,
-   "total": 1.796
+   "total": 1.808
   },
   {
    "title": "Death Note",
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.55,
-     "rank": 60,
+     "strength": 0.5425,
+     "rank": 61,
      "note": "8.23/10 from 342 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.424
+   "total": 1.412
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -1220,6 +1220,25 @@
    "total": 0.9475
   },
   {
+   "title": "Bring the Love",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9475,
+     "rank": 7,
+     "note": "8.67/10 from 309 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2019,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9475
+  },
+  {
    "title": "Ascendance of a Bookworm: Part 5",
    "signals": {
     "anilist": {
@@ -1311,18 +1330,18 @@
    "total": 0.94
   },
   {
-   "title": "Bring the Love",
+   "title": "Annarasumanara",
    "signals": {
     "mangaupdates": {
      "strength": 0.94,
      "rank": 8,
-     "note": "8.67/10 from 309 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
+     "note": "8.66/10 from 1,688 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/7so3t9i/annarasumanara"
     }
    },
    "cover": "",
    "category": "manhwa",
-   "year": 2019,
+   "year": 2010,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1335,32 +1354,13 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.74/10 from 1,268 MangaUpdates readers",
+     "note": "8.74/10 from 1,269 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
     }
    },
    "cover": "",
    "category": "manga",
    "year": 2009,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.9325
-  },
-  {
-   "title": "Annarasumanara",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.9325,
-     "rank": 9,
-     "note": "8.66/10 from 1,688 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/7so3t9i/annarasumanara"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2010,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1477,6 +1477,25 @@
    "total": 0.925
   },
   {
+   "title": "Trapped (Haemuri)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.925,
+     "rank": 10,
+     "note": "8.63/10 from 254 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2019,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.925
+  },
+  {
    "title": "Ballroom e Youkoso",
    "signals": {
     "mangaupdates": {
@@ -1489,25 +1508,6 @@
    "cover": "",
    "category": "manga",
    "year": 2011,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.9175
-  },
-  {
-   "title": "Trapped (Haemuri)",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.9175,
-     "rank": 11,
-     "note": "8.63/10 from 253 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2019,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1876,7 +1876,7 @@
    "year": 2019,
    "anilistId": 107966,
    "malId": null,
-   "score": 71,
+   "score": 72,
    "agree": 1,
    "total": 0.865
   },
@@ -2033,7 +2033,7 @@
     "mangaupdates": {
      "strength": 0.8425,
      "rank": 21,
-     "note": "8.69/10 from 631 MangaUpdates readers",
+     "note": "8.69/10 from 632 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6y4x7mq/kusuriya-no-hitorigoto"
     }
    },
@@ -2079,7 +2079,7 @@
    "year": 2013,
    "anilistId": 143747,
    "malId": null,
-   "score": 89,
+   "score": 90,
    "agree": 1,
    "total": 0.835
   },
