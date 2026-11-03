@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-02T12:15:56.846Z",
+ "generatedAt": "2026-11-03T11:50:43.908Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 376,
+  "works": 375,
   "picks": 120
  },
  "picks": [
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 333 MangaUpdates readers",
+     "note": "9.15/10 from 334 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.64/10 from 422 MangaUpdates readers",
+     "note": "8.64/10 from 423 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -751,8 +751,8 @@
    "title": "How to Win My Husband Over",
    "signals": {
     "anilist": {
-     "strength": 0.34,
-     "rank": 44,
+     "strength": 0.325,
+     "rank": 45,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.412
+   "total": 1.388
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
-   "score": 84,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
+   "score": 85,
    "agree": 1,
    "total": 0.85
   },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
    "score": 84,
    "agree": 1,
    "total": 0.835
