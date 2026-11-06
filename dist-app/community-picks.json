@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-05T12:10:20.955Z",
+ "generatedAt": "2026-11-06T11:59:22.945Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 815 MangaUpdates readers",
+     "note": "8.71/10 from 816 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -422,7 +422,7 @@
     "mangaupdates": {
      "strength": 0.4825,
      "rank": 69,
-     "note": "7.38/10 from 282 MangaUpdates readers",
+     "note": "7.38/10 from 283 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8xr9kqx/martial-peak"
     }
    },
@@ -484,30 +484,6 @@
    "total": 2.156
   },
   {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.445,
-     "rank": 74,
-     "note": "8.18/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
-   "agree": 2,
-   "total": 2.144
-  },
-  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -528,6 +504,30 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
+   "agree": 2,
+   "total": 2.12
+  },
+  {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.43,
+     "rank": 76,
+     "note": "8.18/10 from 471 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -780,8 +780,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.3925,
-     "rank": 81,
+     "strength": 0.385,
+     "rank": 82,
      "note": "8.16/10 from 396 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.244
+   "total": 1.232
   },
   {
    "title": "Berserk",
@@ -1225,7 +1225,7 @@
     "mangaupdates": {
      "strength": 0.9475,
      "rank": 7,
-     "note": "8.67/10 from 309 MangaUpdates readers",
+     "note": "8.67/10 from 310 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
     }
    },
@@ -1482,7 +1482,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.63/10 from 254 MangaUpdates readers",
+     "note": "8.63/10 from 255 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
     }
    },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 424 MangaUpdates readers",
+     "note": "8.45/10 from 425 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
