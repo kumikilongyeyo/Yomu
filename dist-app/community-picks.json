@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-06T11:59:22.945Z",
+ "generatedAt": "2026-11-07T10:59:10.589Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -10,7 +10,7 @@
   },
   "mangaupdates": {
    "ok": true,
-   "rows": 163,
+   "rows": 162,
    "label": "MangaUpdates",
    "about": "Reader ratings, weighted by vote count"
   },
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 374,
+  "works": 373,
   "picks": 120
  },
  "picks": [
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 335 MangaUpdates readers",
+     "note": "9.15/10 from 336 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -62,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.985,
      "rank": 2,
-     "note": "8.65/10 from 469 MangaUpdates readers",
+     "note": "8.65/10 from 470 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
     }
    },
@@ -86,7 +86,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "8.96/10 from 1,943 MangaUpdates readers",
+     "note": "8.96/10 from 1,944 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
     }
    },
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 952 MangaUpdates readers",
+     "note": "8.82/10 from 953 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,316 MangaUpdates readers",
+     "note": "8.47/10 from 2,317 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -254,7 +254,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 816 MangaUpdates readers",
+     "note": "8.71/10 from 817 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "7.85/10 from 317 MangaUpdates readers",
+     "note": "7.85/10 from 318 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ooc3x6/the-devil-butler"
     }
    },
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.8125,
      "rank": 25,
-     "note": "8.43/10 from 853 MangaUpdates readers",
+     "note": "8.43/10 from 854 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -484,6 +484,30 @@
    "total": 2.156
   },
   {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4375,
+     "rank": 75,
+     "note": "8.18/10 from 472 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
+   "agree": 2,
+   "total": 2.132
+  },
+  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -494,7 +518,7 @@
     "mangaupdates": {
      "strength": 0.55,
      "rank": 60,
-     "note": "8.57/10 from 2,068 MangaUpdates readers",
+     "note": "8.57/10 from 2,069 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
     }
    },
@@ -504,30 +528,6 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
-     "note": "8.18/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 966 MangaUpdates readers",
+     "note": "8.53/10 from 967 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.7375,
      "rank": 35,
-     "note": "8.37/10 from 481 MangaUpdates readers",
+     "note": "8.37/10 from 482 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -614,7 +614,7 @@
     "mangaupdates": {
      "strength": 0.9175,
      "rank": 11,
-     "note": "8.62/10 from 370 MangaUpdates readers",
+     "note": "8.62/10 from 371 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -734,7 +734,7 @@
     "mangaupdates": {
      "strength": 0.6925,
      "rank": 41,
-     "note": "8.33/10 from 842 MangaUpdates readers",
+     "note": "8.33/10 from 843 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
    },
@@ -891,7 +891,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "8.7/10 from 703 MangaUpdates readers",
+     "note": "8.7/10 from 704 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n21qm5h/19-days"
     }
    },
@@ -1076,7 +1076,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.75/10 from 288 MangaUpdates readers",
+     "note": "8.75/10 from 289 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
     }
    },
@@ -1095,7 +1095,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.77/10 from 2,433 MangaUpdates readers",
+     "note": "8.77/10 from 2,434 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q97i9pa/watashitachi-no-shiawase-na-jikan"
     }
    },
@@ -1354,7 +1354,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.74/10 from 1,269 MangaUpdates readers",
+     "note": "8.74/10 from 1,271 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
     }
    },
@@ -1666,7 +1666,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.56/10 from 284 MangaUpdates readers",
+     "note": "8.57/10 from 285 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
     }
    },
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
-   "score": 84,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
+   "score": 85,
    "agree": 1,
    "total": 0.85
   },
@@ -2033,7 +2033,7 @@
     "mangaupdates": {
      "strength": 0.8425,
      "rank": 21,
-     "note": "8.69/10 from 632 MangaUpdates readers",
+     "note": "8.69/10 from 633 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6y4x7mq/kusuriya-no-hitorigoto"
     }
    },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
    "score": 84,
    "agree": 1,
    "total": 0.835
@@ -2200,7 +2200,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 425 MangaUpdates readers",
+     "note": "8.45/10 from 426 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
     }
    },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 425 MangaUpdates readers",
+     "note": "8.45/10 from 426 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
@@ -2402,7 +2402,7 @@
     "mangaupdates": {
      "strength": 0.805,
      "rank": 26,
-     "note": "8.67/10 from 2,250 MangaUpdates readers",
+     "note": "8.67/10 from 2,251 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
     }
    },
