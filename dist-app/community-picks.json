@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-08T11:13:30.692Z",
+ "generatedAt": "2026-11-09T12:44:49.814Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 373,
+  "works": 374,
   "picks": 120
  },
  "picks": [
@@ -439,8 +439,8 @@
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
-     "strength": 0.7,
-     "rank": 20,
+     "strength": 0.715,
+     "rank": 19,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -457,7 +457,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.192
+   "total": 2.216
   },
   {
    "title": "Teenage Mercenary",
@@ -535,8 +535,8 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.475,
-     "rank": 35,
+     "strength": 0.46,
+     "rank": 36,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -553,7 +553,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 2.12
+   "total": 2.096
   },
   {
    "title": "SPY x FAMILY",
@@ -583,8 +583,8 @@
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
-     "strength": 0.505,
-     "rank": 33,
+     "strength": 0.52,
+     "rank": 32,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -601,7 +601,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 1.988
+   "total": 2.012
   },
   {
    "title": "See You in My 19th Life",
@@ -758,7 +758,7 @@
     "mangaupdates": {
      "strength": 0.55,
      "rank": 60,
-     "note": "8.23/10 from 342 MangaUpdates readers",
+     "note": "8.23/10 from 343 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
    },
@@ -910,7 +910,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "9.01/10 from 278 MangaUpdates readers",
+     "note": "9.01/10 from 279 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
     }
    },
@@ -1011,7 +1011,7 @@
    "year": 2018,
    "anilistId": 126986,
    "malId": 147769,
-   "score": 87,
+   "score": 88,
    "agree": 1,
    "total": 0.97
   },
@@ -1206,7 +1206,7 @@
     "mangaupdates": {
      "strength": 0.9475,
      "rank": 7,
-     "note": "8.76/10 from 1,750 MangaUpdates readers",
+     "note": "8.76/10 from 1,751 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/9knig0a/otoyomegatari"
     }
    },
@@ -1225,7 +1225,7 @@
     "mangaupdates": {
      "strength": 0.9475,
      "rank": 7,
-     "note": "8.67/10 from 310 MangaUpdates readers",
+     "note": "8.67/10 from 311 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
     }
    },
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
-   "score": 85,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
+   "score": 84,
    "agree": 1,
    "total": 0.85
   },
@@ -2033,7 +2033,7 @@
     "mangaupdates": {
      "strength": 0.8425,
      "rank": 21,
-     "note": "8.69/10 from 634 MangaUpdates readers",
+     "note": "8.69/10 from 635 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6y4x7mq/kusuriya-no-hitorigoto"
     }
    },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
    "score": 84,
    "agree": 1,
    "total": 0.835
@@ -2143,7 +2143,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 337 MangaUpdates readers",
+     "note": "8.69/10 from 338 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
