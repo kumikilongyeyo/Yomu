@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-10T12:29:06.767Z",
+ "generatedAt": "2026-11-11T11:47:58.552Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,318 MangaUpdates readers",
+     "note": "8.47/10 from 2,319 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 817 MangaUpdates readers",
+     "note": "8.71/10 from 818 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -350,7 +350,7 @@
     "mangaupdates": {
      "strength": 0.895,
      "rank": 14,
-     "note": "8.72/10 from 881 MangaUpdates readers",
+     "note": "8.72/10 from 882 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ul2du3n/haikyu"
     }
    },
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.8125,
      "rank": 25,
-     "note": "8.43/10 from 855 MangaUpdates readers",
+     "note": "8.43/10 from 857 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -468,8 +468,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.9025,
-     "rank": 13,
+     "strength": 0.91,
+     "rank": 12,
      "note": "8.57/10 from 2,375 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/snvji36/noblesse"
     }
@@ -481,7 +481,7 @@
    "malId": 29983,
    "score": 76,
    "agree": 2,
-   "total": 2.132
+   "total": 2.144
   },
   {
    "title": "Horimiya",
@@ -542,7 +542,7 @@
     "mangaupdates": {
      "strength": 0.85,
      "rank": 20,
-     "note": "8.47/10 from 277 MangaUpdates readers",
+     "note": "8.47/10 from 278 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 968 MangaUpdates readers",
+     "note": "8.53/10 from 970 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.7375,
      "rank": 35,
-     "note": "8.37/10 from 482 MangaUpdates readers",
+     "note": "8.37/10 from 483 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -612,9 +612,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.9175,
-     "rank": 11,
-     "note": "8.62/10 from 371 MangaUpdates readers",
+     "strength": 0.88,
+     "rank": 16,
+     "note": "8.52/10 from 372 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -625,7 +625,7 @@
    "malId": 147062,
    "score": 81,
    "agree": 2,
-   "total": 1.892
+   "total": 1.832
   },
   {
    "title": "Kono Oto Tomare!",
@@ -662,7 +662,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,098 MangaUpdates readers",
+     "note": "8.64/10 from 1,099 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -734,7 +734,7 @@
     "mangaupdates": {
      "strength": 0.6925,
      "rank": 41,
-     "note": "8.33/10 from 843 MangaUpdates readers",
+     "note": "8.33/10 from 844 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
    },
@@ -1354,7 +1354,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.74/10 from 1,271 MangaUpdates readers",
+     "note": "8.74/10 from 1,272 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/hefidju/akatsuki-no-yona"
     }
    },
@@ -1501,7 +1501,7 @@
     "mangaupdates": {
      "strength": 0.9175,
      "rank": 11,
-     "note": "8.73/10 from 410 MangaUpdates readers",
+     "note": "8.73/10 from 411 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/r5llz8p/ballroom-e-youkoso"
     }
    },
@@ -1607,6 +1607,25 @@
    "total": 0.9025
   },
   {
+   "title": "Legroom",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9025,
+     "rank": 13,
+     "note": "8.57/10 from 286 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9025
+  },
+  {
    "title": "Monster",
    "signals": {
     "anilist": {
@@ -1657,25 +1676,6 @@
    "anilistId": 121565,
    "malId": 145539,
    "score": 85,
-   "agree": 1,
-   "total": 0.895
-  },
-  {
-   "title": "Legroom",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.895,
-     "rank": 14,
-     "note": "8.57/10 from 286 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
    "agree": 1,
    "total": 0.895
   },
@@ -1845,7 +1845,7 @@
    "total": 0.865
   },
   {
-   "title": "The Ravages of Time",
+   "title": "10 Years That I Loved You the Most",
    "signals": {
     "anilist": {
      "strength": 0.865,
@@ -1853,11 +1853,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx111593-5w8OXLib51hs.png",
    "category": "manhua",
-   "year": 2001,
-   "anilistId": 31320,
-   "malId": 1320,
+   "year": 2018,
+   "anilistId": 111593,
+   "malId": null,
    "score": 81,
    "agree": 1,
    "total": 0.865
@@ -1973,7 +1973,7 @@
    "total": 0.85
   },
   {
-   "title": "10 Years That I Loved You the Most",
+   "title": "Pirouette into My Heart",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1981,11 +1981,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx111593-5w8OXLib51hs.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
    "category": "manhua",
-   "year": 2018,
-   "anilistId": 111593,
-   "malId": null,
+   "year": 2019,
+   "anilistId": 113350,
+   "malId": 150293,
    "score": 81,
    "agree": 1,
    "total": 0.85
@@ -2120,7 +2120,7 @@
    "total": 0.835
   },
   {
-   "title": "Pirouette into My Heart",
+   "title": "The Ravages of Time",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2128,11 +2128,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx113350-8dSb0i5DjScf.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx31320-34hlJNSVlvbb.jpg",
    "category": "manhua",
-   "year": 2019,
-   "anilistId": 113350,
-   "malId": 150293,
+   "year": 2001,
+   "anilistId": 31320,
+   "malId": 1320,
    "score": 81,
    "agree": 1,
    "total": 0.835
@@ -2162,7 +2162,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.46/10 from 449 MangaUpdates readers",
+     "note": "8.46/10 from 450 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/9lmn52r/can-t-see-can-t-hear-but-love"
     }
    },
@@ -2200,7 +2200,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 426 MangaUpdates readers",
+     "note": "8.45/10 from 427 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
     }
    },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 426 MangaUpdates readers",
+     "note": "8.45/10 from 427 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
