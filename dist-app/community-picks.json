@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-11T11:47:58.552Z",
+ "generatedAt": "2026-11-12T12:32:31.115Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 338 MangaUpdates readers",
+     "note": "9.15/10 from 339 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,319 MangaUpdates readers",
+     "note": "8.47/10 from 2,320 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.64/10 from 423 MangaUpdates readers",
+     "note": "8.64/10 from 424 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -494,7 +494,7 @@
     "mangaupdates": {
      "strength": 0.55,
      "rank": 60,
-     "note": "8.57/10 from 2,069 MangaUpdates readers",
+     "note": "8.57/10 from 2,070 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
     }
    },
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 970 MangaUpdates readers",
+     "note": "8.53/10 from 971 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -588,8 +588,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.7375,
-     "rank": 35,
+     "strength": 0.73,
+     "rank": 36,
      "note": "8.37/10 from 483 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
@@ -601,7 +601,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 2.012
+   "total": 2
   },
   {
    "title": "See You in My 19th Life",
@@ -628,30 +628,6 @@
    "total": 1.832
   },
   {
-   "title": "Kono Oto Tomare!",
-   "signals": {
-    "anilist": {
-     "strength": 0.505,
-     "rank": 33,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.625,
-     "rank": 50,
-     "note": "8.6/10 from 331 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
-   "category": "manga",
-   "year": 2012,
-   "anilistId": 75143,
-   "malId": 45143,
-   "score": 88,
-   "agree": 2,
-   "total": 1.808
-  },
-  {
    "title": "Dorohedoro",
    "signals": {
     "anilist": {
@@ -674,6 +650,30 @@
    "score": 86,
    "agree": 2,
    "total": 1.808
+  },
+  {
+   "title": "Kono Oto Tomare!",
+   "signals": {
+    "anilist": {
+     "strength": 0.49,
+     "rank": 34,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.625,
+     "rank": 50,
+     "note": "8.6/10 from 331 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 75143,
+   "malId": 45143,
+   "score": 88,
+   "agree": 2,
+   "total": 1.784
   },
   {
    "title": "The Stellar Swordmaster",
@@ -905,25 +905,6 @@
    "total": 1
   },
   {
-   "title": "Reunion (2coin)",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.9925,
-     "rank": 1,
-     "note": "9.01/10 from 280 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2022,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.9925
-  },
-  {
    "title": "JoJo's Bizarre Adventure: Part 7–Steel Ball Run",
    "signals": {
     "anilist": {
@@ -979,12 +960,31 @@
    "total": 0.985
   },
   {
+   "title": "Reunion (2coin)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.92/10 from 281 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2022,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.985
+  },
+  {
    "title": "Hagane no Renkinjutsushi",
    "signals": {
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.78/10 from 4,356 MangaUpdates readers",
+     "note": "8.78/10 from 4,357 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8q91xb4/hagane-no-renkinjutsushi"
     }
    },
@@ -1095,7 +1095,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.77/10 from 2,434 MangaUpdates readers",
+     "note": "8.77/10 from 2,435 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q97i9pa/watashitachi-no-shiawase-na-jikan"
     }
    },
@@ -1804,7 +1804,7 @@
    "year": 2012,
    "anilistId": 74347,
    "malId": 44347,
-   "score": 85,
+   "score": 84,
    "agree": 1,
    "total": 0.865
   },
