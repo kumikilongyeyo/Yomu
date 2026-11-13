@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-12T12:32:31.115Z",
+ "generatedAt": "2026-11-13T12:04:30.839Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 818 MangaUpdates readers",
+     "note": "8.71/10 from 820 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -450,7 +450,7 @@
      "link": "https://www.mangaupdates.com/series/ulhdzmu/myst-might-mayhem"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-rx6eIfakvWYV.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx175946-2JKP3rRr3LMa.jpg",
    "category": "manhwa",
    "year": 2024,
    "anilistId": 175946,
@@ -484,6 +484,30 @@
    "total": 2.144
   },
   {
+   "title": "Teenage Mercenary",
+   "signals": {
+    "anilist": {
+     "strength": 0.895,
+     "rank": 7,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.4375,
+     "rank": 75,
+     "note": "8.18/10 from 472 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
+   "category": "manhwa",
+   "year": 2020,
+   "anilistId": 126297,
+   "malId": 146966,
+   "score": 79,
+   "agree": 2,
+   "total": 2.132
+  },
+  {
    "title": "Horimiya",
    "signals": {
     "anilist": {
@@ -504,30 +528,6 @@
    "anilistId": 72451,
    "malId": 42451,
    "score": 82,
-   "agree": 2,
-   "total": 2.12
-  },
-  {
-   "title": "Teenage Mercenary",
-   "signals": {
-    "anilist": {
-     "strength": 0.895,
-     "rank": 7,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.43,
-     "rank": 76,
-     "note": "8.18/10 from 472 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx126297-SPiM7QtUnJ4P.jpg",
-   "category": "manhwa",
-   "year": 2020,
-   "anilistId": 126297,
-   "malId": 146966,
-   "score": 79,
    "agree": 2,
    "total": 2.12
   },
@@ -638,7 +638,7 @@
     "mangaupdates": {
      "strength": 0.7,
      "rank": 40,
-     "note": "8.64/10 from 1,099 MangaUpdates readers",
+     "note": "8.64/10 from 1,100 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xfuhued/dorohedoro"
     }
    },
@@ -650,6 +650,30 @@
    "score": 86,
    "agree": 2,
    "total": 1.808
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.595,
+     "rank": 27,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.5275,
+     "rank": 63,
+     "note": "8.22/10 from 311 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 83,
+   "agree": 2,
+   "total": 1.796
   },
   {
    "title": "Kono Oto Tomare!",
@@ -676,30 +700,6 @@
    "total": 1.784
   },
   {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.595,
-     "rank": 27,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.52,
-     "rank": 64,
-     "note": "8.22/10 from 310 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 83,
-   "agree": 2,
-   "total": 1.784
-  },
-  {
    "title": "Death Note",
    "signals": {
     "anilist": {
@@ -710,7 +710,7 @@
     "mangaupdates": {
      "strength": 0.5875,
      "rank": 55,
-     "note": "8.58/10 from 3,697 MangaUpdates readers",
+     "note": "8.58/10 from 3,699 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1ljv3bs/death-note"
     }
    },
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5425,
-     "rank": 61,
+     "strength": 0.55,
+     "rank": 60,
      "note": "8.23/10 from 343 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.388
+   "total": 1.4
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -782,7 +782,7 @@
     "mangaupdates": {
      "strength": 0.385,
      "rank": 82,
-     "note": "8.16/10 from 396 MangaUpdates readers",
+     "note": "8.16/10 from 397 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -905,6 +905,25 @@
    "total": 1
   },
   {
+   "title": "Reunion (2coin)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9925,
+     "rank": 1,
+     "note": "9.02/10 from 282 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2022,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9925
+  },
+  {
    "title": "JoJo's Bizarre Adventure: Part 7–Steel Ball Run",
    "signals": {
     "anilist": {
@@ -953,25 +972,6 @@
    "cover": "",
    "category": "manga",
    "year": 2004,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.985
-  },
-  {
-   "title": "Reunion (2coin)",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.985,
-     "rank": 2,
-     "note": "8.92/10 from 281 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2022,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1225,7 +1225,7 @@
     "mangaupdates": {
      "strength": 0.9475,
      "rank": 7,
-     "note": "8.68/10 from 312 MangaUpdates readers",
+     "note": "8.68/10 from 313 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/x85llom/bring-the-love"
     }
    },
@@ -1574,7 +1574,7 @@
     "mangaupdates": {
      "strength": 0.91,
      "rank": 12,
-     "note": "8.72/10 from 255 MangaUpdates readers",
+     "note": "8.72/10 from 256 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/do1ph4j/koimonogatari-tagura-tohru"
     }
    },
@@ -2143,7 +2143,7 @@
     "mangaupdates": {
      "strength": 0.835,
      "rank": 22,
-     "note": "8.69/10 from 338 MangaUpdates readers",
+     "note": "8.69/10 from 339 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/vs5ce1n/kimi-no-yoru-ni-fureru"
     }
    },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 427 MangaUpdates readers",
+     "note": "8.45/10 from 428 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
@@ -2402,7 +2402,7 @@
     "mangaupdates": {
      "strength": 0.805,
      "rank": 26,
-     "note": "8.67/10 from 2,251 MangaUpdates readers",
+     "note": "8.67/10 from 2,252 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
     }
    },
