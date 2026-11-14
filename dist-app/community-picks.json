@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-13T12:04:30.839Z",
+ "generatedAt": "2026-11-14T11:22:38.147Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 339 MangaUpdates readers",
+     "note": "9.15/10 from 340 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 953 MangaUpdates readers",
+     "note": "8.82/10 from 954 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 820 MangaUpdates readers",
+     "note": "8.71/10 from 821 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -439,8 +439,8 @@
    "title": "Myst, Might, Mayhem",
    "signals": {
     "anilist": {
-     "strength": 0.715,
-     "rank": 19,
+     "strength": 0.7,
+     "rank": 20,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -457,7 +457,7 @@
    "malId": 168980,
    "score": 83,
    "agree": 2,
-   "total": 2.216
+   "total": 2.192
   },
   {
    "title": "Noblesse",
@@ -516,8 +516,8 @@
      "note": "Widely read on AniList"
     },
     "mangaupdates": {
-     "strength": 0.55,
-     "rank": 60,
+     "strength": 0.5425,
+     "rank": 61,
      "note": "8.57/10 from 2,070 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
     }
@@ -529,7 +529,7 @@
    "malId": 42451,
    "score": 82,
    "agree": 2,
-   "total": 2.12
+   "total": 2.108
   },
   {
    "title": "Absolute Regression",
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 971 MangaUpdates readers",
+     "note": "8.53/10 from 972 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -686,7 +686,7 @@
     "mangaupdates": {
      "strength": 0.625,
      "rank": 50,
-     "note": "8.6/10 from 331 MangaUpdates readers",
+     "note": "8.6/10 from 332 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
     }
    },
@@ -1187,7 +1187,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.71/10 from 377 MangaUpdates readers",
+     "note": "8.71/10 from 378 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
     }
    },
@@ -2033,7 +2033,7 @@
     "mangaupdates": {
      "strength": 0.8425,
      "rank": 21,
-     "note": "8.69/10 from 635 MangaUpdates readers",
+     "note": "8.69/10 from 636 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6y4x7mq/kusuriya-no-hitorigoto"
     }
    },
@@ -2402,7 +2402,7 @@
     "mangaupdates": {
      "strength": 0.805,
      "rank": 26,
-     "note": "8.67/10 from 2,252 MangaUpdates readers",
+     "note": "8.67/10 from 2,253 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
     }
    },
