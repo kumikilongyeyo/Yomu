@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-15T11:53:34.091Z",
+ "generatedAt": "2026-11-16T12:38:24.943Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -10,7 +10,7 @@
   },
   "mangaupdates": {
    "ok": true,
-   "rows": 161,
+   "rows": 162,
    "label": "MangaUpdates",
    "about": "Reader ratings, weighted by vote count"
   },
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 373,
+  "works": 374,
   "picks": 120
  },
  "picks": [
@@ -50,6 +50,30 @@
    "score": 89,
    "agree": 2,
    "total": 3.176
+  },
+  {
+   "title": "Here U Are",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.65/10 from 471 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 100805,
+   "malId": 119072,
+   "score": 85,
+   "agree": 2,
+   "total": 3.152
   },
   {
    "title": "Vagabond",
@@ -100,30 +124,6 @@
    "total": 3.14
   },
   {
-   "title": "Here U Are",
-   "signals": {
-    "anilist": {
-     "strength": 0.97,
-     "rank": 2,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.985,
-     "rank": 2,
-     "note": "8.65/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
-   "category": "manhua",
-   "year": 2017,
-   "anilistId": 100805,
-   "malId": 119072,
-   "score": 85,
-   "agree": 2,
-   "total": 3.128
-  },
-  {
    "title": "Slam Dunk",
    "signals": {
     "anilist": {
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,322 MangaUpdates readers",
+     "note": "8.47/10 from 2,323 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 822 MangaUpdates readers",
+     "note": "8.71/10 from 823 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -463,14 +463,14 @@
    "title": "Absolute Regression",
    "signals": {
     "anilist": {
-     "strength": 0.49,
-     "rank": 34,
+     "strength": 0.505,
+     "rank": 33,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
      "strength": 0.85,
      "rank": 20,
-     "note": "8.47/10 from 279 MangaUpdates readers",
+     "note": "8.47/10 from 280 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -481,31 +481,7 @@
    "malId": 172750,
    "score": 82,
    "agree": 2,
-   "total": 2.144
-  },
-  {
-   "title": "Noblesse",
-   "signals": {
-    "anilist": {
-     "strength": 0.43,
-     "rank": 38,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.91,
-     "rank": 12,
-     "note": "8.57/10 from 2,375 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/snvji36/noblesse"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx59983-cfSjrRxuAlAD.png",
-   "category": "manhwa",
-   "year": 2007,
-   "anilistId": 59983,
-   "malId": 29983,
-   "score": 76,
-   "agree": 2,
-   "total": 2.144
+   "total": 2.168
   },
   {
    "title": "Teenage Mercenary",
@@ -528,6 +504,30 @@
    "anilistId": 126297,
    "malId": 146966,
    "score": 79,
+   "agree": 2,
+   "total": 2.132
+  },
+  {
+   "title": "Noblesse",
+   "signals": {
+    "anilist": {
+     "strength": 0.43,
+     "rank": 38,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.9025,
+     "rank": 13,
+     "note": "8.57/10 from 2,375 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/snvji36/noblesse"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx59983-cfSjrRxuAlAD.png",
+   "category": "manhwa",
+   "year": 2007,
+   "anilistId": 59983,
+   "malId": 29983,
+   "score": 76,
    "agree": 2,
    "total": 2.132
   },
@@ -583,8 +583,8 @@
    "title": "I Shall Master this Family!",
    "signals": {
     "anilist": {
-     "strength": 0.505,
-     "rank": 33,
+     "strength": 0.52,
+     "rank": 32,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -601,7 +601,7 @@
    "malId": 147692,
    "score": 82,
    "agree": 2,
-   "total": 1.976
+   "total": 2
   },
   {
    "title": "See You in My 19th Life",
@@ -612,9 +612,9 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.88,
-     "rank": 16,
-     "note": "8.52/10 from 372 MangaUpdates readers",
+     "strength": 0.9175,
+     "rank": 11,
+     "note": "8.62/10 from 373 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/q4a6wba/see-you-in-my-19th-life"
     }
    },
@@ -625,7 +625,31 @@
    "malId": 147062,
    "score": 81,
    "agree": 2,
-   "total": 1.832
+   "total": 1.892
+  },
+  {
+   "title": "Kono Oto Tomare!",
+   "signals": {
+    "anilist": {
+     "strength": 0.505,
+     "rank": 33,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.625,
+     "rank": 50,
+     "note": "8.6/10 from 332 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 75143,
+   "malId": 45143,
+   "score": 88,
+   "agree": 2,
+   "total": 1.808
   },
   {
    "title": "Dorohedoro",
@@ -674,30 +698,6 @@
    "score": 83,
    "agree": 2,
    "total": 1.796
-  },
-  {
-   "title": "Kono Oto Tomare!",
-   "signals": {
-    "anilist": {
-     "strength": 0.49,
-     "rank": 34,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.625,
-     "rank": 50,
-     "note": "8.6/10 from 332 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
-   "category": "manga",
-   "year": 2012,
-   "anilistId": 75143,
-   "malId": 45143,
-   "score": 88,
-   "agree": 2,
-   "total": 1.784
   },
   {
    "title": "Death Note",
@@ -960,24 +960,6 @@
    "total": 0.985
   },
   {
-   "title": "Little Mushroom",
-   "signals": {
-    "anilist": {
-     "strength": 0.985,
-     "rank": 1,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
-   "category": "manhua",
-   "year": 2023,
-   "anilistId": 168843,
-   "malId": 167788,
-   "score": 85,
-   "agree": 1,
-   "total": 0.985
-  },
-  {
    "title": "JoJo no Kimyou na Bouken Part 7: Steel Ball Run",
    "signals": {
     "mangaupdates": {
@@ -1048,6 +1030,24 @@
    "anilistId": 85143,
    "malId": 122663,
    "score": 81,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Little Mushroom",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
+   "category": "manhua",
+   "year": 2023,
+   "anilistId": 168843,
+   "malId": 167788,
+   "score": 85,
    "agree": 1,
    "total": 0.97
   },
@@ -1607,25 +1607,6 @@
    "total": 0.9025
   },
   {
-   "title": "Legroom",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.9025,
-     "rank": 13,
-     "note": "8.57/10 from 287 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2024,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.9025
-  },
-  {
    "title": "Koimonogatari: Love Tale",
    "signals": {
     "anilist": {
@@ -1676,6 +1657,25 @@
    "anilistId": 121565,
    "malId": 145539,
    "score": 85,
+   "agree": 1,
+   "total": 0.895
+  },
+  {
+   "title": "Legroom",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.895,
+     "rank": 14,
+     "note": "8.57/10 from 287 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/ss6fu0x/legroom"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2024,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
    "agree": 1,
    "total": 0.895
   },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 428 MangaUpdates readers",
+     "note": "8.45/10 from 429 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
@@ -2379,6 +2379,24 @@
    "total": 0.805
   },
   {
+   "title": "Goedame Tteoreojyeodo Chulgeuneul Haeya Haneunguna",
+   "signals": {
+    "anilist": {
+     "strength": 0.805,
+     "rank": 13,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx212562-huzVxCEUCcfM.jpg",
+   "category": "manhwa",
+   "year": 2026,
+   "anilistId": 212562,
+   "malId": 193929,
+   "score": 84,
+   "agree": 1,
+   "total": 0.805
+  },
+  {
    "title": "Release that Witch",
    "signals": {
     "anilist": {
@@ -2393,25 +2411,6 @@
    "anilistId": 108152,
    "malId": 136488,
    "score": 72,
-   "agree": 1,
-   "total": 0.805
-  },
-  {
-   "title": "Koe no Katachi",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.805,
-     "rank": 26,
-     "note": "8.67/10 from 2,253 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/28u5ym7/koe-no-katachi"
-    }
-   },
-   "cover": "",
-   "category": "manga",
-   "year": 2013,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
    "agree": 1,
    "total": 0.805
   }
