@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-16T12:38:24.943Z",
+ "generatedAt": "2026-11-17T13:07:11.060Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 374,
+  "works": 373,
   "picks": 120
  },
  "picks": [
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 823 MangaUpdates readers",
+     "note": "8.71/10 from 824 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -302,7 +302,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "7.85/10 from 300 MangaUpdates readers",
+     "note": "7.85/10 from 301 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -679,13 +679,13 @@
    "title": "The Stellar Swordmaster",
    "signals": {
     "anilist": {
-     "strength": 0.595,
-     "rank": 27,
+     "strength": 0.58,
+     "rank": 28,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
+     "strength": 0.535,
+     "rank": 62,
      "note": "8.22/10 from 311 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
@@ -697,7 +697,7 @@
    "malId": 163116,
    "score": 83,
    "agree": 2,
-   "total": 1.796
+   "total": 1.784
   },
   {
    "title": "Death Note",
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.55,
-     "rank": 60,
+     "strength": 0.5575,
+     "rank": 59,
      "note": "8.23/10 from 343 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.4
+   "total": 1.412
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -984,7 +984,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.78/10 from 4,357 MangaUpdates readers",
+     "note": "8.78/10 from 4,358 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8q91xb4/hagane-no-renkinjutsushi"
     }
    },
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
-   "score": 85,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
+   "score": 84,
    "agree": 1,
    "total": 0.85
   },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
    "score": 84,
    "agree": 1,
    "total": 0.835
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 429 MangaUpdates readers",
+     "note": "8.45/10 from 430 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
