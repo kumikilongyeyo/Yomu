@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-17T13:07:11.060Z",
+ "generatedAt": "2026-11-18T12:56:47.235Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 373,
+  "works": 374,
   "picks": 120
  },
  "picks": [
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 956 MangaUpdates readers",
+     "note": "8.82/10 from 957 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,323 MangaUpdates readers",
+     "note": "8.47/10 from 2,324 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -566,7 +566,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.53/10 from 972 MangaUpdates readers",
+     "note": "8.53/10 from 973 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/v5is1fi/spy-x-family"
     }
    },
@@ -891,7 +891,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "8.7/10 from 705 MangaUpdates readers",
+     "note": "8.7/10 from 706 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n21qm5h/19-days"
     }
    },
