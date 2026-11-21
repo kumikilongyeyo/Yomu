@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-20T12:44:02.308Z",
+ "generatedAt": "2026-11-21T12:29:43.091Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 374,
+  "works": 375,
   "picks": 120
  },
  "picks": [
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 957 MangaUpdates readers",
+     "note": "8.82/10 from 958 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -182,7 +182,7 @@
     "mangaupdates": {
      "strength": 0.865,
      "rank": 18,
-     "note": "7.93/10 from 659 MangaUpdates readers",
+     "note": "7.93/10 from 660 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/kfqq1qc/tales-of-demons-and-gods"
     }
    },
@@ -302,7 +302,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "7.85/10 from 301 MangaUpdates readers",
+     "note": "7.85/10 from 302 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -470,7 +470,7 @@
     "mangaupdates": {
      "strength": 0.85,
      "rank": 20,
-     "note": "8.47/10 from 281 MangaUpdates readers",
+     "note": "8.47/10 from 282 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -2245,7 +2245,7 @@
    "year": 2020,
    "anilistId": 120980,
    "malId": 147863,
-   "score": 80,
+   "score": 81,
    "agree": 1,
    "total": 0.82
   },
