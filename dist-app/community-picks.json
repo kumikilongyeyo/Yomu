@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-23T14:25:18.771Z",
+ "generatedAt": "2026-11-24T14:44:38.688Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -10,7 +10,7 @@
   },
   "mangaupdates": {
    "ok": true,
-   "rows": 162,
+   "rows": 161,
    "label": "MangaUpdates",
    "about": "Reader ratings, weighted by vote count"
   },
@@ -23,7 +23,7 @@
   }
  },
  "counts": {
-  "works": 375,
+  "works": 374,
   "picks": 120
  },
  "picks": [
@@ -676,30 +676,6 @@
    "total": 1.808
   },
   {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.58,
-     "rank": 28,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.535,
-     "rank": 62,
-     "note": "8.22/10 from 313 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 83,
-   "agree": 2,
-   "total": 1.784
-  },
-  {
    "title": "Death Note",
    "signals": {
     "anilist": {
@@ -720,6 +696,30 @@
    "anilistId": 30021,
    "malId": 21,
    "score": 84,
+   "agree": 2,
+   "total": 1.772
+  },
+  {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.58,
+     "rank": 28,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.5275,
+     "rank": 63,
+     "note": "8.22/10 from 313 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 83,
    "agree": 2,
    "total": 1.772
   },
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.5575,
-     "rank": 59,
+     "strength": 0.55,
+     "rank": 60,
      "note": "8.23/10 from 343 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,7 +769,7 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.412
+   "total": 1.4
   },
   {
    "title": "The Extra’s Academy Survival Guide",
@@ -905,6 +905,25 @@
    "total": 1
   },
   {
+   "title": "Reunion (2coin)",
+   "signals": {
+    "mangaupdates": {
+     "strength": 0.9925,
+     "rank": 1,
+     "note": "9.02/10 from 284 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
+    }
+   },
+   "cover": "",
+   "category": "manhwa",
+   "year": 2022,
+   "anilistId": null,
+   "malId": null,
+   "score": null,
+   "agree": 1,
+   "total": 0.9925
+  },
+  {
    "title": "JoJo's Bizarre Adventure: Part 7–Steel Ball Run",
    "signals": {
     "anilist": {
@@ -971,25 +990,6 @@
    "cover": "",
    "category": "manga",
    "year": 2004,
-   "anilistId": null,
-   "malId": null,
-   "score": null,
-   "agree": 1,
-   "total": 0.985
-  },
-  {
-   "title": "Reunion (2coin)",
-   "signals": {
-    "mangaupdates": {
-     "strength": 0.985,
-     "rank": 2,
-     "note": "8.93/10 from 283 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
-    }
-   },
-   "cover": "",
-   "category": "manhwa",
-   "year": 2022,
    "anilistId": null,
    "malId": null,
    "score": null,
@@ -1187,7 +1187,7 @@
     "mangaupdates": {
      "strength": 0.955,
      "rank": 6,
-     "note": "8.71/10 from 379 MangaUpdates readers",
+     "note": "8.71/10 from 381 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/8b7t1sj/smyrna-capri"
     }
    },
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
-   "score": 85,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
+   "score": 84,
    "agree": 1,
    "total": 0.85
   },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
    "score": 84,
    "agree": 1,
    "total": 0.835
