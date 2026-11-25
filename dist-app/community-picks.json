@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-24T14:44:38.688Z",
+ "generatedAt": "2026-11-25T14:09:10.866Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.15/10 from 342 MangaUpdates readers",
+     "note": "9.06/10 from 343 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -47,9 +47,33 @@
    "year": 2024,
    "anilistId": 187189,
    "malId": 178182,
-   "score": 88,
+   "score": 89,
    "agree": 2,
    "total": 3.176
+  },
+  {
+   "title": "Here U Are",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.65/10 from 471 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 100805,
+   "malId": 119072,
+   "score": 85,
+   "agree": 2,
+   "total": 3.152
   },
   {
    "title": "Vagabond",
@@ -86,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 959 MangaUpdates readers",
+     "note": "8.82/10 from 962 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -98,30 +122,6 @@
    "score": 86,
    "agree": 2,
    "total": 3.14
-  },
-  {
-   "title": "Here U Are",
-   "signals": {
-    "anilist": {
-     "strength": 0.97,
-     "rank": 2,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.985,
-     "rank": 2,
-     "note": "8.65/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
-   "category": "manhua",
-   "year": 2017,
-   "anilistId": 100805,
-   "malId": 119072,
-   "score": 85,
-   "agree": 2,
-   "total": 3.128
   },
   {
    "title": "Slam Dunk",
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,327 MangaUpdates readers",
+     "note": "8.47/10 from 2,329 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -206,7 +206,7 @@
     "mangaupdates": {
      "strength": 0.9325,
      "rank": 9,
-     "note": "8.64/10 from 426 MangaUpdates readers",
+     "note": "8.64/10 from 428 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/gcls85m/the-knight-only-lives-today"
     }
    },
@@ -278,7 +278,7 @@
     "mangaupdates": {
      "strength": 0.9625,
      "rank": 5,
-     "note": "8.71/10 from 825 MangaUpdates readers",
+     "note": "8.71/10 from 826 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/1vhzf5i/villains-are-destined-to-die"
     }
    },
@@ -302,7 +302,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "7.85/10 from 302 MangaUpdates readers",
+     "note": "7.85/10 from 301 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
     }
    },
@@ -470,7 +470,7 @@
     "mangaupdates": {
      "strength": 0.85,
      "rank": 20,
-     "note": "8.47/10 from 283 MangaUpdates readers",
+     "note": "8.47/10 from 284 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -494,7 +494,7 @@
     "mangaupdates": {
      "strength": 0.4375,
      "rank": 75,
-     "note": "8.18/10 from 472 MangaUpdates readers",
+     "note": "8.18/10 from 474 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/sclnjge/teenage-mercenary"
     }
    },
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.73,
      "rank": 36,
-     "note": "8.37/10 from 483 MangaUpdates readers",
+     "note": "8.37/10 from 484 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -628,30 +628,6 @@
    "total": 1.892
   },
   {
-   "title": "Kono Oto Tomare!",
-   "signals": {
-    "anilist": {
-     "strength": 0.505,
-     "rank": 33,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.625,
-     "rank": 50,
-     "note": "8.6/10 from 332 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
-   "category": "manga",
-   "year": 2012,
-   "anilistId": 75143,
-   "malId": 45143,
-   "score": 88,
-   "agree": 2,
-   "total": 1.808
-  },
-  {
    "title": "Dorohedoro",
    "signals": {
     "anilist": {
@@ -674,6 +650,30 @@
    "score": 86,
    "agree": 2,
    "total": 1.808
+  },
+  {
+   "title": "Kono Oto Tomare!",
+   "signals": {
+    "anilist": {
+     "strength": 0.49,
+     "rank": 34,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.625,
+     "rank": 50,
+     "note": "8.6/10 from 332 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/c6b40j8/kono-oto-tomare"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx75143-qPFON51fyZpt.png",
+   "category": "manga",
+   "year": 2012,
+   "anilistId": 75143,
+   "malId": 45143,
+   "score": 88,
+   "agree": 2,
+   "total": 1.784
   },
   {
    "title": "Death Note",
@@ -710,7 +710,7 @@
     "mangaupdates": {
      "strength": 0.5275,
      "rank": 63,
-     "note": "8.22/10 from 313 MangaUpdates readers",
+     "note": "8.22/10 from 315 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
     }
    },
@@ -758,7 +758,7 @@
     "mangaupdates": {
      "strength": 0.55,
      "rank": 60,
-     "note": "8.23/10 from 343 MangaUpdates readers",
+     "note": "8.23/10 from 344 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
    },
@@ -782,7 +782,7 @@
     "mangaupdates": {
      "strength": 0.385,
      "rank": 82,
-     "note": "8.16/10 from 399 MangaUpdates readers",
+     "note": "8.16/10 from 402 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/iy9ya7q/the-extra-s-academy-survival-guide"
     }
    },
@@ -960,24 +960,6 @@
    "total": 0.985
   },
   {
-   "title": "Little Mushroom",
-   "signals": {
-    "anilist": {
-     "strength": 0.985,
-     "rank": 1,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
-   "category": "manhua",
-   "year": 2023,
-   "anilistId": 168843,
-   "malId": 167788,
-   "score": 85,
-   "agree": 1,
-   "total": 0.985
-  },
-  {
    "title": "JoJo no Kimyou na Bouken Part 7: Steel Ball Run",
    "signals": {
     "mangaupdates": {
@@ -1048,6 +1030,24 @@
    "anilistId": 85143,
    "malId": 122663,
    "score": 81,
+   "agree": 1,
+   "total": 0.97
+  },
+  {
+   "title": "Little Mushroom",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
+   "category": "manhua",
+   "year": 2023,
+   "anilistId": 168843,
+   "malId": 167788,
+   "score": 85,
    "agree": 1,
    "total": 0.97
   },
@@ -1937,7 +1937,7 @@
    "total": 0.85
   },
   {
-   "title": "Wind Breaker",
+   "title": "Return of the Blossoming Blade",
    "signals": {
     "anilist": {
      "strength": 0.85,
@@ -1945,12 +1945,12 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
    "category": "manhwa",
-   "year": 2013,
-   "anilistId": 86099,
-   "malId": 103237,
-   "score": 84,
+   "year": 2021,
+   "anilistId": 132144,
+   "malId": 146878,
+   "score": 85,
    "agree": 1,
    "total": 0.85
   },
@@ -2084,7 +2084,7 @@
    "total": 0.835
   },
   {
-   "title": "Return of the Blossoming Blade",
+   "title": "Wind Breaker",
    "signals": {
     "anilist": {
      "strength": 0.835,
@@ -2092,11 +2092,11 @@
      "note": "Rated highly by AniList readers"
     }
    },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx132144-i5B4VnG9sRgh.png",
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx86099-lgjjEP3wqzB8.jpg",
    "category": "manhwa",
-   "year": 2021,
-   "anilistId": 132144,
-   "malId": 146878,
+   "year": 2013,
+   "anilistId": 86099,
+   "malId": 103237,
    "score": 84,
    "agree": 1,
    "total": 0.835
