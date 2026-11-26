@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-25T14:09:10.866Z",
+ "generatedAt": "2026-11-26T13:47:01.133Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -47,7 +47,7 @@
    "year": 2024,
    "anilistId": 187189,
    "malId": 178182,
-   "score": 89,
+   "score": 88,
    "agree": 2,
    "total": 3.176
   },
@@ -86,7 +86,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "8.96/10 from 1,944 MangaUpdates readers",
+     "note": "8.96/10 from 1,945 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
     }
    },
@@ -542,7 +542,7 @@
     "mangaupdates": {
      "strength": 0.5425,
      "rank": 61,
-     "note": "8.57/10 from 2,070 MangaUpdates readers",
+     "note": "8.57/10 from 2,071 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/uu6yf6n/horimiya"
     }
    },
@@ -775,8 +775,8 @@
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.4,
-     "rank": 40,
+     "strength": 0.385,
+     "rank": 41,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.256
+   "total": 1.232
   },
   {
    "title": "Berserk",
@@ -2281,7 +2281,7 @@
    "year": 2021,
    "anilistId": 138366,
    "malId": null,
-   "score": 71,
+   "score": 70,
    "agree": 1,
    "total": 0.82
   },
@@ -2329,7 +2329,7 @@
     "mangaupdates": {
      "strength": 0.8125,
      "rank": 25,
-     "note": "8.68/10 from 597 MangaUpdates readers",
+     "note": "8.68/10 from 598 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/yobj9va/aria"
     }
    },
