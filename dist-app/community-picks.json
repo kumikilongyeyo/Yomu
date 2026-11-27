@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-26T13:47:01.133Z",
+ "generatedAt": "2026-11-27T13:44:01.381Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -110,7 +110,7 @@
     "mangaupdates": {
      "strength": 0.9775,
      "rank": 3,
-     "note": "8.82/10 from 962 MangaUpdates readers",
+     "note": "8.82/10 from 964 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/n50wl4o/omniscient-reader"
     }
    },
@@ -590,7 +590,7 @@
     "mangaupdates": {
      "strength": 0.73,
      "rank": 36,
-     "note": "8.37/10 from 484 MangaUpdates readers",
+     "note": "8.37/10 from 485 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/rez09u5/i-shall-master-this-family"
     }
    },
@@ -734,7 +734,7 @@
     "mangaupdates": {
      "strength": 0.6925,
      "rank": 41,
-     "note": "8.33/10 from 844 MangaUpdates readers",
+     "note": "8.33/10 from 845 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
    },
@@ -1076,7 +1076,7 @@
     "mangaupdates": {
      "strength": 0.97,
      "rank": 4,
-     "note": "8.75/10 from 291 MangaUpdates readers",
+     "note": "8.75/10 from 292 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/i96b052/taming-the-tiger"
     }
    },
@@ -1381,7 +1381,7 @@
    "year": 2012,
    "anilistId": 64053,
    "malId": 34053,
-   "score": 90,
+   "score": 91,
    "agree": 1,
    "total": 0.925
   },
@@ -1482,7 +1482,7 @@
     "mangaupdates": {
      "strength": 0.925,
      "rank": 10,
-     "note": "8.63/10 from 255 MangaUpdates readers",
+     "note": "8.63/10 from 256 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ohzywgh/trapped-haemuri"
     }
    },
@@ -2200,7 +2200,7 @@
     "mangaupdates": {
      "strength": 0.8275,
      "rank": 23,
-     "note": "8.45/10 from 427 MangaUpdates readers",
+     "note": "8.45/10 from 428 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/m12y3ml/the-fantasie-of-a-stepmother"
     }
    },
@@ -2310,7 +2310,7 @@
     "mangaupdates": {
      "strength": 0.82,
      "rank": 24,
-     "note": "8.45/10 from 430 MangaUpdates readers",
+     "note": "8.45/10 from 431 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/utubdan/roxana"
     }
    },
