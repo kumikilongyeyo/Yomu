@@ -1,6 +1,6 @@
 {
  "schema": "yomu.community-picks/1",
- "generatedAt": "2026-11-27T13:44:01.381Z",
+ "generatedAt": "2026-11-28T12:52:44.777Z",
  "sources": {
   "anilist": {
    "ok": true,
@@ -38,7 +38,7 @@
     "mangaupdates": {
      "strength": 1,
      "rank": 0,
-     "note": "9.06/10 from 343 MangaUpdates readers",
+     "note": "9.06/10 from 345 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/5rxs1es/on-the-way-to-meet-mom"
     }
    },
@@ -52,30 +52,6 @@
    "total": 3.176
   },
   {
-   "title": "Here U Are",
-   "signals": {
-    "anilist": {
-     "strength": 0.985,
-     "rank": 1,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.985,
-     "rank": 2,
-     "note": "8.65/10 from 471 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
-   "category": "manhua",
-   "year": 2017,
-   "anilistId": 100805,
-   "malId": 119072,
-   "score": 85,
-   "agree": 2,
-   "total": 3.152
-  },
-  {
    "title": "Vagabond",
    "signals": {
     "anilist": {
@@ -86,7 +62,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "8.96/10 from 1,945 MangaUpdates readers",
+     "note": "8.96/10 from 1,946 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/su6blie/vagabond"
     }
    },
@@ -124,6 +100,30 @@
    "total": 3.14
   },
   {
+   "title": "Here U Are",
+   "signals": {
+    "anilist": {
+     "strength": 0.97,
+     "rank": 2,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.985,
+     "rank": 2,
+     "note": "8.65/10 from 471 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/85fhu9e/here-u-are"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx100805-3DCHMdZ5blWl.jpg",
+   "category": "manhua",
+   "year": 2017,
+   "anilistId": 100805,
+   "malId": 119072,
+   "score": 85,
+   "agree": 2,
+   "total": 3.128
+  },
+  {
    "title": "Slam Dunk",
    "signals": {
     "anilist": {
@@ -158,7 +158,7 @@
     "mangaupdates": {
      "strength": 0.8575,
      "rank": 19,
-     "note": "8.47/10 from 2,329 MangaUpdates readers",
+     "note": "8.47/10 from 2,328 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/6z1uqw7/solo-leveling"
     }
    },
@@ -292,30 +292,6 @@
    "total": 2.852
   },
   {
-   "title": "I Am The Fated Villain",
-   "signals": {
-    "anilist": {
-     "strength": 0.88,
-     "rank": 8,
-     "note": "Widely read on AniList"
-    },
-    "mangaupdates": {
-     "strength": 0.82,
-     "rank": 24,
-     "note": "7.85/10 from 301 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142287-nlT7oSUzHnNv.jpg",
-   "category": "manhua",
-   "year": 2021,
-   "anilistId": 142287,
-   "malId": null,
-   "score": 77,
-   "agree": 2,
-   "total": 2.72
-  },
-  {
    "title": "The Horizon",
    "signals": {
     "anilist": {
@@ -336,6 +312,30 @@
    "anilistId": 100568,
    "malId": 125036,
    "score": 85,
+   "agree": 2,
+   "total": 2.708
+  },
+  {
+   "title": "I Am The Fated Villain",
+   "signals": {
+    "anilist": {
+     "strength": 0.88,
+     "rank": 8,
+     "note": "Widely read on AniList"
+    },
+    "mangaupdates": {
+     "strength": 0.8125,
+     "rank": 25,
+     "note": "7.85/10 from 301 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/yjebcls/i-am-the-fated-villain"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx142287-nlT7oSUzHnNv.jpg",
+   "category": "manhua",
+   "year": 2021,
+   "anilistId": 142287,
+   "malId": null,
+   "score": 77,
    "agree": 2,
    "total": 2.708
   },
@@ -374,7 +374,7 @@
     "mangaupdates": {
      "strength": 0.8125,
      "rank": 25,
-     "note": "8.43/10 from 857 MangaUpdates readers",
+     "note": "8.43/10 from 858 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/18xbor6/who-made-me-a-princess"
     }
    },
@@ -470,7 +470,7 @@
     "mangaupdates": {
      "strength": 0.85,
      "rank": 20,
-     "note": "8.47/10 from 284 MangaUpdates readers",
+     "note": "8.47/10 from 285 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/xutrph6/absolute-regression"
     }
    },
@@ -676,6 +676,30 @@
    "total": 1.784
   },
   {
+   "title": "The Stellar Swordmaster",
+   "signals": {
+    "anilist": {
+     "strength": 0.58,
+     "rank": 28,
+     "note": "Rated highly by AniList readers"
+    },
+    "mangaupdates": {
+     "strength": 0.535,
+     "rank": 62,
+     "note": "8.22/10 from 315 MangaUpdates readers",
+     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
+   "category": "manhwa",
+   "year": 2023,
+   "anilistId": 170400,
+   "malId": 163116,
+   "score": 83,
+   "agree": 2,
+   "total": 1.784
+  },
+  {
    "title": "Death Note",
    "signals": {
     "anilist": {
@@ -700,30 +724,6 @@
    "total": 1.772
   },
   {
-   "title": "The Stellar Swordmaster",
-   "signals": {
-    "anilist": {
-     "strength": 0.58,
-     "rank": 28,
-     "note": "Rated highly by AniList readers"
-    },
-    "mangaupdates": {
-     "strength": 0.5275,
-     "rank": 63,
-     "note": "8.22/10 from 315 MangaUpdates readers",
-     "link": "https://www.mangaupdates.com/series/cnro3u3/the-stellar-swordmaster"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx170400-yMIuOIboWuoO.jpg",
-   "category": "manhwa",
-   "year": 2023,
-   "anilistId": 170400,
-   "malId": 163116,
-   "score": 83,
-   "agree": 2,
-   "total": 1.772
-  },
-  {
    "title": "The Reason Why Raeliana Ended Up at the Duke's Mansion",
    "signals": {
     "anilist": {
@@ -734,7 +734,7 @@
     "mangaupdates": {
      "strength": 0.6925,
      "rank": 41,
-     "note": "8.33/10 from 845 MangaUpdates readers",
+     "note": "8.33/10 from 846 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/d5ohj6w/the-reason-why-raeliana-ended-up-at-the-duke-s-mansion"
     }
    },
@@ -756,8 +756,8 @@
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
-     "strength": 0.55,
-     "rank": 60,
+     "strength": 0.5575,
+     "rank": 59,
      "note": "8.23/10 from 344 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/bb8sp8m/how-to-win-my-husband-over"
     }
@@ -769,14 +769,14 @@
    "malId": 148234,
    "score": 82,
    "agree": 2,
-   "total": 1.4
+   "total": 1.412
   },
   {
    "title": "The Extra’s Academy Survival Guide",
    "signals": {
     "anilist": {
-     "strength": 0.385,
-     "rank": 41,
+     "strength": 0.4,
+     "rank": 40,
      "note": "Rated highly by AniList readers"
     },
     "mangaupdates": {
@@ -793,7 +793,7 @@
    "malId": 166865,
    "score": 82,
    "agree": 2,
-   "total": 1.232
+   "total": 1.256
   },
   {
    "title": "Berserk",
@@ -910,7 +910,7 @@
     "mangaupdates": {
      "strength": 0.9925,
      "rank": 1,
-     "note": "9.02/10 from 284 MangaUpdates readers",
+     "note": "9.02/10 from 285 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/pa8eq28/reunion-2coin"
     }
    },
@@ -956,6 +956,24 @@
    "anilistId": 101517,
    "malId": 113138,
    "score": 80,
+   "agree": 1,
+   "total": 0.985
+  },
+  {
+   "title": "Little Mushroom",
+   "signals": {
+    "anilist": {
+     "strength": 0.985,
+     "rank": 1,
+     "note": "Rated highly by AniList readers"
+    }
+   },
+   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
+   "category": "manhua",
+   "year": 2023,
+   "anilistId": 168843,
+   "malId": 167788,
+   "score": 85,
    "agree": 1,
    "total": 0.985
   },
@@ -1030,24 +1048,6 @@
    "anilistId": 85143,
    "malId": 122663,
    "score": 81,
-   "agree": 1,
-   "total": 0.97
-  },
-  {
-   "title": "Little Mushroom",
-   "signals": {
-    "anilist": {
-     "strength": 0.97,
-     "rank": 2,
-     "note": "Rated highly by AniList readers"
-    }
-   },
-   "cover": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/b168843-k8r2I9zLc9ks.jpg",
-   "category": "manhua",
-   "year": 2023,
-   "anilistId": 168843,
-   "malId": 167788,
-   "score": 85,
    "agree": 1,
    "total": 0.97
   },
@@ -1316,7 +1316,7 @@
     "mangaupdates": {
      "strength": 0.94,
      "rank": 8,
-     "note": "8.76/10 from 1,859 MangaUpdates readers",
+     "note": "8.76/10 from 1,860 MangaUpdates readers",
      "link": "https://www.mangaupdates.com/series/ktr1ti2/20-seiki-shounen"
     }
    },
